@@ -1,0 +1,387 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  username      String         @unique
+  password      String
+  active        Boolean        @default(true)
+  timezone      String         @default("UTC")
+  twofaStatus   Boolean        @default(false) @map("twofa_status")
+  twofaSecret   String?        @map("twofa_secret")
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  monitors      Monitor[]
+  notifications Notification[]
+  apiKeys       ApiKey[]
+
+  @@map("users")
+}
+
+model Monitor {
+  id              Int       @id @default(autoincrement())
+  name            String
+  description     String?
+  active          Boolean   @default(true)
+  userId          Int       @map("user_id")
+  interval        Int       @default(60)
+  retryInterval   Int       @default(60) @map("retry_interval")
+  maxretries      Int       @default(0)
+  timeout         Int       @default(48)
+  type            String    // http, tcp, ping, dns, push, docker, keyword, json-query, grpc-keyword, etc.
+  url             String?
+  hostname        String?
+  port            Int?
+  method          String    @default("GET")
+  body            String?
+  headers         Json?
+  keyword         String?
+  invertKeyword   Boolean   @default(false) @map("invert_keyword")
+  ignoreTls       Boolean   @default(false) @map("ignore_tls")
+  upsideDown      Boolean   @default(false) @map("upside_down")
+  authMethod      String?   @map("auth_method")
+  basicAuthUser   String?   @map("basic_auth_user")
+  basicAuthPass   String?   @map("basic_auth_pass")
+  pushToken       String?   @unique @map("push_token")
+  proxyId         Int?      @map("proxy_id")
+  weight          Int       @default(1000)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // HTTP specific
+  maxRedirects    Int       @default(10) @map("max_redirects")
+  acceptedStatuscodes Json? @map("accepted_statuscodes") // JSON array of accepted status codes
+  
+  // JSON Query specific
+  jsonPath        String?   @map("json_path")
+  expectedValue   String?   @map("expected_value")
+  
+  // gRPC specific
+  grpcUrl         String?   @map("grpc_url")
+  grpcProtoContent String?  @map("grpc_proto_content")
+  grpcMethod      String?   @map("grpc_method")
+  grpcServiceName String?   @map("grpc_service_name")
+  grpcEnableTls   Boolean   @default(false) @map("grpc_enable_tls")
+  grpcBody        String?   @map("grpc_body")
+  grpcMetadata    String?   @map("grpc_metadata")
+  
+  // Database specific
+  databaseType    String?   @map("database_type")
+  databaseConnectionString String? @map("database_connection_string")
+  databaseQuery   String?   @map("database_query")
+  
+  // Docker specific
+  dockerHost      String?   @map("docker_host")
+  dockerDaemon    String?   @map("docker_daemon")
+  dockerContainer String?   @map("docker_container")
+  
+  // MQTT specific
+  mqttTopic       String?   @map("mqtt_topic")
+  mqttUsername    String?   @map("mqtt_username")
+  mqttPassword    String?   @map("mqtt_password")
+  mqttSuccessMessage String? @map("mqtt_success_message")
+  
+  // Kafka specific  
+  kafkaBrokers    Json?     @map("kafka_brokers")
+  kafkaTopic      String?   @map("kafka_topic")
+  kafkaSaslMechanism String? @map("kafka_sasl_mechanism")
+  kafkaUsername   String?   @map("kafka_username")
+  kafkaPassword   String?   @map("kafka_password")
+  
+  // RabbitMQ specific
+  rabbitmqNodes   Json?     @map("rabbitmq_nodes")
+  rabbitmqUsername String?  @map("rabbitmq_username")
+  rabbitmqPassword String?  @map("rabbitmq_password")
+  
+  // Redis specific
+  redisConnectionString String? @map("redis_connection_string")
+  
+  // Radius specific
+  radiusSecret    String?   @map("radius_secret")
+  radiusCalledStationId String? @map("radius_called_station_id")
+  radiusCallingStationId String? @map("radius_calling_station_id")
+  
+  // Game server specific
+  game            String?
+  
+  // Group specific
+  parent          Int?
+  childrenIds     Json?     @map("children_ids")
+  
+  // Real Browser specific
+  remoteBrowserId Int?      @map("remote_browser_id")
+
+  // DNS specific
+  dnsRecordType   String?   @map("dns_record_type")
+  dnsResolver     String?   @map("dns_resolver")
+
+  // TLS Certificate specific
+  expiryNotification Boolean @default(false) @map("expiry_notification")
+  tlsExpiryDays     Json?   @map("tls_expiry_days") // JSON array of days before expiry to notify
+  tlsInfo           Json?   @map("tls_info") // Cached TLS certificate info
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proxy                Proxy?                @relation(fields: [proxyId], references: [id])
+  heartbeats           Heartbeat[]
+  tags                 MonitorTag[]
+  statusPageMonitors   StatusPageMonitor[]
+  monitorNotifications MonitorNotification[]
+
+  @@index([userId])
+  @@index([active])
+  @@map("monitors")
+}
+
+model Heartbeat {
+  id        BigInt   @id @default(autoincrement())
+  monitorId Int      @map("monitor_id")
+  status    Int      @db.SmallInt // 0: DOWN, 1: UP, 2: PENDING, 3: MAINTENANCE
+  time      DateTime @default(now()) @db.Timestamptz
+  msg       String?
+  ping      Int?
+  important Boolean  @default(false)
+  duration  Int      @default(0)
+
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId, time(sort: Desc)])
+  @@map("heartbeats")
+}
+
+model Notification {
+  id        Int     @id @default(autoincrement())
+  name      String
+  userId    Int     @map("user_id")
+  type      String  // discord, slack, telegram, email, webhook
+  config    Json
+  isDefault Boolean @default(false) @map("is_default")
+  active    Boolean @default(true)
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitorNotifications MonitorNotification[]
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model MonitorNotification {
+  monitorId      Int @map("monitor_id")
+  notificationId Int @map("notification_id")
+
+  monitor      Monitor      @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@id([monitorId, notificationId])
+  @@map("monitor_notifications")
+}
+
+model StatusPage {
+  id                Int      @id @default(autoincrement())
+  slug              String   @unique
+  title             String
+  description       String?
+  icon              String?
+  theme             String   @default("auto")
+  published         Boolean  @default(true)
+  showTags          Boolean  @default(false) @map("show_tags")
+  showPoweredBy     Boolean  @default(true) @map("show_powered_by")
+  customCss         String?  @map("custom_css")
+  footerText        String?  @map("footer_text")
+  googleAnalyticsId String?  @map("google_analytics_id")
+  userId            Int      @map("user_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  groups    StatusPageGroup[]
+  incidents Incident[]
+
+  @@index([userId])
+  @@map("status_pages")
+}
+
+model StatusPageGroup {
+  id           Int     @id @default(autoincrement())
+  statusPageId Int     @map("status_page_id")
+  name         String
+  weight       Int     @default(1000)
+
+  statusPage StatusPage          @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+  monitors   StatusPageMonitor[]
+
+  @@map("status_page_groups")
+}
+
+model StatusPageMonitor {
+  id        Int     @id @default(autoincrement())
+  groupId   Int     @map("group_id")
+  monitorId Int     @map("monitor_id")
+  sendUrl   Boolean @default(false) @map("send_url")
+
+  group   StatusPageGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  monitor Monitor         @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@map("status_page_monitors")
+}
+
+model Incident {
+  id           Int       @id @default(autoincrement())
+  statusPageId Int       @map("status_page_id")
+  title        String
+  content      String
+  style        String    @default("warning") // info, warning, danger, success
+  pin          Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @map("updated_at")
+
+  statusPage StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+
+  @@map("incidents")
+}
+
+model Tag {
+  id     Int    @id @default(autoincrement())
+  name   String
+  color  String
+  userId Int    @map("user_id")
+
+  monitors MonitorTag[]
+
+  @@index([userId])
+  @@map("tags")
+}
+
+model MonitorTag {
+  monitorId Int     @map("monitor_id")
+  tagId     Int     @map("tag_id")
+  value     String?
+
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([monitorId, tagId])
+  @@map("monitor_tags")
+}
+
+model Proxy {
+  id        Int      @id @default(autoincrement())
+  protocol  String   // http, https, socks5
+  host      String
+  port      Int
+  auth      Boolean  @default(false)
+  username  String?
+  password  String?
+  active    Boolean  @default(true)
+  isDefault Boolean  @default(false) @map("is_default")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  monitors Monitor[]
+
+  @@index([userId])
+  @@map("proxies")
+}
+
+model DockerHost {
+  id            Int      @id @default(autoincrement())
+  name          String
+  dockerType    String   @default("socket") @map("docker_type") // socket, tcp
+  dockerDaemon  String?  @map("docker_daemon")
+  connectionUrl String?  @map("connection_url")
+  active        Boolean  @default(true)
+  userId        Int      @map("user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("docker_hosts")
+}
+
+model Maintenance {
+  id             Int       @id @default(autoincrement())
+  title          String
+  description    String?
+  strategy       String    @default("manual") // manual, recurring, single, cron
+  active         Boolean   @default(true)
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  dateRange      String?   @map("date_range") // JSON string for date ranges
+  intervalDay    Int       @default(1) @map("interval_day")
+  weekdays       String?   // JSON array of weekdays
+  daysOfMonth    String?   @map("days_of_month") // JSON array of days
+  timeRange      String?   @map("time_range") // JSON string for time ranges
+  cron           String?
+  duration       Int       @default(60)
+  timezone       String    @default("UTC")
+  timezoneOption String?   @map("timezone_option")
+  timezoneOffset String?   @map("timezone_offset")
+  userId         Int       @map("user_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  monitors    MaintenanceMonitor[]
+  statusPages MaintenanceStatusPage[]
+
+  @@index([userId])
+  @@map("maintenances")
+}
+
+model MaintenanceMonitor {
+  id            Int @id @default(autoincrement())
+  maintenanceId Int @map("maintenance_id")
+  monitorId     Int @map("monitor_id")
+
+  maintenance Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+
+  @@unique([maintenanceId, monitorId])
+  @@map("maintenance_monitors")
+}
+
+model MaintenanceStatusPage {
+  id            Int @id @default(autoincrement())
+  maintenanceId Int @map("maintenance_id")
+  statusPageId  Int @map("status_page_id")
+
+  maintenance Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+
+  @@unique([maintenanceId, statusPageId])
+  @@map("maintenance_status_pages")
+}
+
+model ApiKey {
+  id        Int       @id @default(autoincrement())
+  key       String    @unique
+  name      String
+  userId    Int       @map("user_id")
+  active    Boolean   @default(true)
+  expires   DateTime?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+model Setting {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique
+  value String?
+  type  String  @default("string")
+
+  @@map("settings")
+}
+
+model RemoteBrowser {
+  id        Int      @id @default(autoincrement())
+  name      String
+  url       String
+  active    Boolean  @default(true)
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("remote_browsers")
+}
