@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
       id: true,
       name: true,
       createdAt: true,
-      expiresAt: true,
+      expires: true,
       active: true
       // Don't return the actual key value
     },

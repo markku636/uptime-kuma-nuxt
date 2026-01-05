@@ -1,10 +1,13 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
 
 const toast = useToast()
 
+// Password change
 const passwordForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
 const changingPassword = ref(false)
+
+// Two-Factor Authentication
 const twoFactorEnabled = ref(false)
 const showTwoFactorSetup = ref(false)
 const showTwoFactorDisable = ref(false)
@@ -13,21 +16,35 @@ const twoFactorToken = ref('')
 const settingUpTwoFactor = ref(false)
 const disablingTwoFactor = ref(false)
 const disablePassword = ref('')
-const apiKeys = ref<any[]>([])
-const loadingKeys = ref(true)
-const showAddKeyForm = ref(false)
-const newKeyName = ref('')
-const newKeyValue = ref('')
+
+// Disable Auth
+const disableAuth = ref(false)
+const showDisableAuthWarning = ref(false)
+const disableAuthPassword = ref('')
+
+// Active Sessions
+const activeSessions = ref<any[]>([])
+const loadingSessions = ref(true)
 
 onMounted(async () => {
-  await Promise.all([fetchApiKeys(), fetchTwoFactorStatus()])
+  await Promise.all([fetchTwoFactorStatus(), fetchActiveSessions()])
 })
 
 async function fetchTwoFactorStatus() {
   try {
     const result = await $fetch('/api/auth/2fa/status') as any
     twoFactorEnabled.value = result.enabled
+    disableAuth.value = result.disableAuth || false
   } catch (error) {}
+}
+
+async function fetchActiveSessions() {
+  loadingSessions.value = true
+  try {
+    const result = await $fetch('/api/auth/sessions') as any[]
+    activeSessions.value = result || []
+  } catch (error) {}
+  finally { loadingSessions.value = false }
 }
 
 async function startTwoFactorSetup() {
@@ -79,13 +96,6 @@ async function disableTwoFactor() {
   }
 }
 
-async function fetchApiKeys() {
-  loadingKeys.value = true
-  try { apiKeys.value = await $fetch('/api/v1/api-keys') as any[] }
-  catch (error) {}
-  finally { loadingKeys.value = false }
-}
-
 async function changePassword() {
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
     toast.add({ title: 'Error', description: 'Passwords do not match', color: 'error' })
@@ -107,29 +117,57 @@ async function changePassword() {
   }
 }
 
-async function generateApiKey() {
-  if (!newKeyName.value) {
-    toast.add({ title: 'Error', description: 'Please enter a name for the API key', color: 'error' })
-    return
-  }
-  try {
-    const result = await $fetch('/api/v1/api-keys', { method: 'POST', body: { name: newKeyName.value } }) as any
-    newKeyValue.value = result.key
-    toast.add({ title: 'Success', description: 'API key generated', color: 'success' })
-    await fetchApiKeys()
-  } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || 'Failed to generate API key', color: 'error' })
+async function toggleDisableAuth() {
+  if (!disableAuth.value) {
+    // Trying to enable "disable auth" - show warning
+    showDisableAuthWarning.value = true
+  } else {
+    // Re-enabling auth
+    try {
+      await $fetch('/api/auth/toggle-auth', { method: 'POST', body: { disableAuth: false } })
+      disableAuth.value = false
+      toast.add({ title: 'Success', description: 'Authentication re-enabled', color: 'success' })
+    } catch (error: any) {
+      toast.add({ title: 'Error', description: error.data?.message || 'Failed to enable auth', color: 'error' })
+    }
   }
 }
 
-async function deleteApiKey(id: number) {
-  if (!confirm('Are you sure you want to delete this API key?')) return
+async function confirmDisableAuth() {
+  if (!disableAuthPassword.value) {
+    toast.add({ title: 'Error', description: 'Please enter your password', color: 'error' })
+    return
+  }
   try {
-    await $fetch(`/api/v1/api-keys/${id}`, { method: 'DELETE' })
-    toast.add({ title: 'Success', description: 'API key deleted', color: 'success' })
-    await fetchApiKeys()
+    await $fetch('/api/auth/toggle-auth', { method: 'POST', body: { disableAuth: true, password: disableAuthPassword.value } })
+    disableAuth.value = true
+    showDisableAuthWarning.value = false
+    disableAuthPassword.value = ''
+    toast.add({ title: 'Warning', description: 'Authentication has been disabled!', color: 'warning' })
   } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || 'Failed to delete API key', color: 'error' })
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to disable auth', color: 'error' })
+  }
+}
+
+async function revokeSession(sessionId: string) {
+  if (!confirm('Revoke this session?')) return
+  try {
+    await $fetch(`/api/auth/sessions/${sessionId}`, { method: 'DELETE' })
+    toast.add({ title: 'Success', description: 'Session revoked', color: 'success' })
+    await fetchActiveSessions()
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to revoke session', color: 'error' })
+  }
+}
+
+async function revokeAllSessions() {
+  if (!confirm('Revoke all other sessions? You will remain logged in.')) return
+  try {
+    await $fetch('/api/auth/sessions/revoke-all', { method: 'POST' })
+    toast.add({ title: 'Success', description: 'All other sessions revoked', color: 'success' })
+    await fetchActiveSessions()
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to revoke sessions', color: 'error' })
   }
 }
 
@@ -171,50 +209,89 @@ function copyToClipboard(text: string) {
           {{ twoFactorEnabled ? 'Enabled' : 'Disabled' }}
         </span>
       </div>
-      <p class="text-gray-400 mb-4">Add an extra layer of security to your account.</p>
+      <p class="text-gray-400 mb-4">Add an extra layer of security to your account using a TOTP authenticator app.</p>
       <button v-if="!twoFactorEnabled" class="btn btn-primary" @click="startTwoFactorSetup">Enable 2FA</button>
       <button v-else class="btn btn-danger" @click="showTwoFactorDisable = true">Disable 2FA</button>
     </div>
 
-    <!-- API Keys -->
+    <!-- Advanced Security -->
+    <div class="section-card border border-red-500/30">
+      <h5 class="text-lg font-semibold text-red-400 mb-4">⚠️ Advanced Security</h5>
+      
+      <!-- Disable Auth Toggle -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-white font-medium">Disable Authentication</p>
+            <p class="text-gray-400 text-sm">Allow anyone to access the dashboard without logging in</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" :checked="disableAuth" class="sr-only peer" @change="toggleDisableAuth">
+            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+          </label>
+        </div>
+        <div v-if="disableAuth" class="mt-3 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+          <p class="text-red-400 text-sm">⚠️ Authentication is currently disabled. Anyone can access your dashboard!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Sessions -->
     <div class="section-card">
       <div class="flex justify-between items-center mb-4">
-        <h5 class="text-lg font-semibold text-white">API Keys</h5>
-        <button class="btn btn-primary" @click="showAddKeyForm = true">Generate Key</button>
+        <h5 class="text-lg font-semibold text-white">Active Sessions</h5>
+        <button v-if="activeSessions.length > 1" class="btn btn-sm btn-secondary" @click="revokeAllSessions">
+          Revoke All Others
+        </button>
       </div>
-      <div v-if="loadingKeys" class="text-center py-8 text-gray-400">Loading...</div>
-      <div v-else-if="apiKeys.length === 0" class="text-center py-8 text-gray-400">No API keys generated yet</div>
-      <div v-else class="space-y-2">
-        <div v-for="key in apiKeys" :key="key.id" class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
-          <div>
-            <span class="font-medium text-white">{{ key.name }}</span>
-            <span class="text-sm text-gray-400 ml-2">Created: {{ new Date(key.createdAt).toLocaleDateString() }}</span>
+      
+      <div v-if="loadingSessions" class="text-center py-8 text-gray-400">Loading sessions...</div>
+      <div v-else-if="activeSessions.length === 0" class="text-center py-8 text-gray-400">No active sessions</div>
+      <div v-else class="space-y-3">
+        <div v-for="session in activeSessions" :key="session.id" class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+          <div class="flex items-center gap-3">
+            <UIcon :name="session.current ? 'i-heroicons-device-phone-mobile' : 'i-heroicons-computer-desktop'" class="w-6 h-6 text-gray-400" />
+            <div>
+              <p class="text-white">{{ session.userAgent || 'Unknown Device' }}</p>
+              <p class="text-sm text-gray-400">
+                {{ session.ip || 'Unknown IP' }} · Last active: {{ new Date(session.lastActive).toLocaleString() }}
+                <span v-if="session.current" class="text-green-400 ml-2">(Current)</span>
+              </p>
+            </div>
           </div>
-          <button class="btn btn-danger" @click="deleteApiKey(key.id)">Delete</button>
+          <button v-if="!session.current" class="btn btn-sm btn-danger" @click="revokeSession(session.id)">Revoke</button>
         </div>
       </div>
     </div>
 
     <!-- 2FA Setup Modal -->
     <div v-if="showTwoFactorSetup" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-gray-800 rounded-xl p-6 max-w-lg w-full mx-4">
+      <div class="bg-gray-800 rounded-xl p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h3 class="text-xl font-bold text-white mb-4">Setup Two-Factor Authentication</h3>
         <div v-if="twoFactorSetupData" class="space-y-4">
           <div>
-            <p class="text-gray-300 mb-2">1. Scan this QR code</p>
+            <p class="text-gray-300 mb-2">1. Scan this QR code with your authenticator app</p>
             <div class="bg-white p-4 rounded-lg text-center">
               <img :src="twoFactorSetupData.qrCode" alt="2FA QR Code" class="mx-auto" style="max-width: 200px" />
             </div>
-            <p class="text-sm text-gray-400 mt-2 text-center">Or enter: <code class="bg-gray-700 px-2 py-1 rounded">{{ twoFactorSetupData.secret }}</code></p>
+            <p class="text-sm text-gray-400 mt-2 text-center">
+              Or enter manually: 
+              <code class="bg-gray-700 px-2 py-1 rounded cursor-pointer" @click="copyToClipboard(twoFactorSetupData.secret)">
+                {{ twoFactorSetupData.secret }}
+              </code>
+            </p>
           </div>
           <div>
-            <p class="text-gray-300 mb-2">2. Save backup codes</p>
+            <p class="text-gray-300 mb-2">2. Save these backup codes in a safe place</p>
             <div class="grid grid-cols-2 gap-2 p-3 bg-gray-700 rounded-lg font-mono text-sm">
               <span v-for="code in twoFactorSetupData.backupCodes" :key="code" class="text-gray-300">{{ code }}</span>
             </div>
+            <button class="text-green-400 text-sm mt-2" @click="copyToClipboard(twoFactorSetupData.backupCodes.join('\n'))">
+              Copy all codes
+            </button>
           </div>
           <div>
-            <p class="text-gray-300 mb-2">3. Enter 6-digit code</p>
+            <p class="text-gray-300 mb-2">3. Enter the 6-digit code from your app</p>
             <input v-model="twoFactorToken" type="text" class="input-field text-center text-2xl tracking-widest" maxlength="6" placeholder="000000" />
           </div>
           <div class="flex gap-3">
@@ -231,7 +308,7 @@ function copyToClipboard(text: string) {
     <div v-if="showTwoFactorDisable" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
         <h3 class="text-xl font-bold text-red-400 mb-4">Disable Two-Factor Authentication</h3>
-        <p class="text-gray-400 mb-4">Enter your password to confirm.</p>
+        <p class="text-gray-400 mb-4">Enter your password to confirm disabling 2FA.</p>
         <input v-model="disablePassword" type="password" class="input-field mb-4" placeholder="Password" />
         <div class="flex gap-3">
           <button class="btn btn-secondary flex-1" @click="showTwoFactorDisable = false">Cancel</button>
@@ -242,28 +319,24 @@ function copyToClipboard(text: string) {
       </div>
     </div>
 
-    <!-- Add API Key Modal -->
-    <div v-if="showAddKeyForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <!-- Disable Auth Warning Modal -->
+    <div v-if="showDisableAuthWarning" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-xl font-bold text-white mb-4">Generate API Key</h3>
-        <div v-if="newKeyValue">
-          <div class="alert alert-warning mb-4">This key will only be shown once!</div>
-          <div class="flex gap-2 mb-4">
-            <input :value="newKeyValue" type="text" class="input-field flex-1 font-mono" readonly />
-            <button class="btn btn-secondary" @click="copyToClipboard(newKeyValue)">Copy</button>
-          </div>
-          <button class="btn btn-primary w-full" @click="showAddKeyForm = false; newKeyValue = ''; newKeyName = ''">Done</button>
+        <h3 class="text-xl font-bold text-red-400 mb-4">⚠️ Warning: Disable Authentication</h3>
+        <div class="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-4">
+          <p class="text-red-400 text-sm">
+            This will allow <strong>anyone</strong> to access your Uptime Kuma dashboard without logging in. 
+            Only do this if you're sure your instance is not publicly accessible.
+          </p>
         </div>
-        <form v-else @submit.prevent="generateApiKey" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Key Name</label>
-            <input v-model="newKeyName" type="text" class="input-field" placeholder="e.g., CI/CD Pipeline" />
-          </div>
-          <div class="flex gap-3">
-            <button type="button" class="btn btn-secondary flex-1" @click="showAddKeyForm = false">Cancel</button>
-            <button type="submit" class="btn btn-primary flex-1">Generate</button>
-          </div>
-        </form>
+        <p class="text-gray-400 mb-4">Enter your password to confirm.</p>
+        <input v-model="disableAuthPassword" type="password" class="input-field mb-4" placeholder="Password" />
+        <div class="flex gap-3">
+          <button class="btn btn-secondary flex-1" @click="showDisableAuthWarning = false">Cancel</button>
+          <button class="btn btn-danger flex-1" @click="confirmDisableAuth">
+            Disable Auth
+          </button>
+        </div>
       </div>
     </div>
   </div>

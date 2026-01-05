@@ -541,13 +541,19 @@ onUnmounted(() => {
 })
 
 // Auto-refresh every 30 seconds as fallback
-const refreshInterval = setInterval(() => {
-  if (!socketConnected.value) {
-    refresh()
-  }
-}, 30000)
+let refreshInterval: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  refreshInterval = setInterval(() => {
+    if (!socketConnected.value) {
+      refresh()
+    }
+  }, 30000)
+})
 
 onUnmounted(() => {
-  clearInterval(refreshInterval)
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
 })
 </script>

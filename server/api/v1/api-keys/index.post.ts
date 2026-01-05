@@ -5,7 +5,7 @@ import { prisma } from '~/server/utils/prisma'
 
 const schema = z.object({
   name: z.string().min(1).max(100),
-  expiresAt: z.string().datetime().optional()
+  expires: z.string().datetime().optional()
 })
 
 export default defineEventHandler(async (event) => {
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
       name: body.name,
       key: keyValue,
       userId: session.user.id,
-      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+      expires: body.expires ? new Date(body.expires) : null,
       active: true
     }
   })
@@ -31,6 +31,6 @@ export default defineEventHandler(async (event) => {
     name: apiKey.name,
     key: keyValue,
     createdAt: apiKey.createdAt,
-    expiresAt: apiKey.expiresAt
+    expires: apiKey.expires
   }
 })

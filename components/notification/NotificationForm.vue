@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Notification } from '~/types'
+import { NotificationProviderMap, NotificationTypes } from './providers'
 
 interface Props {
   notification?: Notification | null
@@ -16,89 +17,22 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
+// Get the current provider component
+const currentProvider = computed(() => {
+  const type = form.value.type
+  if (NotificationProviderMap[type]) {
+    return defineAsyncComponent(NotificationProviderMap[type])
+  }
+  return null
+})
+
+// Check if current type has a dedicated provider component
+const hasProviderComponent = computed(() => {
+  return NotificationProviderMap[form.value.type] !== undefined
+})
+
 // Notification types with their configuration fields
-const notificationTypes = [
-  { value: 'discord', label: 'Discord' },
-  { value: 'slack', label: 'Slack' },
-  { value: 'telegram', label: 'Telegram' },
-  { value: 'email', label: 'Email (SMTP)' },
-  { value: 'webhook', label: 'Webhook' },
-  { value: 'line', label: 'LINE' },
-  { value: 'pushover', label: 'Pushover' },
-  { value: 'gotify', label: 'Gotify' },
-  { value: 'ntfy', label: 'ntfy' },
-  { value: 'matrix', label: 'Matrix' },
-  { value: 'teams', label: 'Microsoft Teams' },
-  { value: 'apprise', label: 'Apprise' },
-  { value: 'feishu', label: 'Feishu (飛書)' },
-  { value: 'dingtalk', label: 'DingTalk (釘釘)' },
-  { value: 'wecom', label: 'WeCom (企業微信)' },
-  { value: 'pagerduty', label: 'PagerDuty' },
-  { value: 'opsgenie', label: 'OpsGenie' },
-  { value: 'aliyun-sms', label: 'Aliyun SMS (阿里雲短信)' },
-  { value: 'signal', label: 'Signal' },
-  { value: 'rocket.chat', label: 'Rocket.Chat' },
-  { value: 'mattermost', label: 'Mattermost' },
-  { value: 'google-chat', label: 'Google Chat' },
-  { value: 'twilio', label: 'Twilio' },
-  { value: 'pushbullet', label: 'Pushbullet' },
-  { value: 'home-assistant', label: 'Home Assistant' },
-  { value: 'splunk', label: 'Splunk' },
-  { value: 'grafana-oncall', label: 'Grafana OnCall' },
-  // New providers
-  { value: 'bark', label: 'Bark' },
-  { value: 'serverchan', label: 'ServerChan (方糖)' },
-  { value: 'squadcast', label: 'Squadcast' },
-  { value: 'signl4', label: 'SIGNL4' },
-  { value: 'lunasea', label: 'LunaSea' },
-  { value: 'goalert', label: 'GoAlert' },
-  { value: 'pagertree', label: 'PagerTree' },
-  { value: 'techulus-push', label: 'Push by Techulus' },
-  { value: 'pushy', label: 'Pushy' },
-  { value: 'pushplus', label: 'PushPlus (推送加)' },
-  { value: 'pushdeer', label: 'PushDeer' },
-  { value: 'threema', label: 'Threema' },
-  { value: 'kook', label: 'Kook (KOOK/開黑啦)' },
-  { value: 'zoho-cliq', label: 'Zoho Cliq' },
-  { value: 'alerta', label: 'Alerta' },
-  { value: 'clicksend-sms', label: 'ClickSend SMS' },
-  { value: 'sendgrid', label: 'SendGrid' },
-  { value: 'flashduty', label: 'FlashDuty (閃值)' },
-  { value: 'pumble', label: 'Pumble' },
-  { value: 'stackfield', label: 'Stackfield' },
-  { value: 'onebot', label: 'OneBot' },
-  { value: 'spugpush', label: 'SpugPush' },
-  { value: 'keep', label: 'Keep' },
-  { value: 'wpush', label: 'WPush' },
-  // Batch 3
-  { value: 'linenotify', label: 'LINE Notify' },
-  { value: 'gorush', label: 'Gorush' },
-  { value: 'alertnow', label: 'AlertNow' },
-  { value: '46elks', label: '46elks SMS' },
-  { value: 'bitrix24', label: 'Bitrix24' },
-  { value: 'callmebot', label: 'CallMeBot' },
-  { value: 'cellsynt', label: 'Cellsynt' },
-  { value: 'freemobile', label: 'Free Mobile SMS' },
-  { value: 'heii-oncall', label: 'Heii On-Call' },
-  { value: 'notifery', label: 'Notifery' },
-  // Batch 4 - SMS gateways
-  { value: 'octopush', label: 'Octopush' },
-  { value: 'onechat', label: 'OneChat' },
-  { value: 'onesender', label: 'Onesender' },
-  { value: 'promosms', label: 'PromoSMS' },
-  { value: 'serwersms', label: 'SerwerSMS' },
-  { value: 'sevenio', label: 'Seven.io' },
-  { value: 'smsmanager', label: 'SMS Manager' },
-  { value: 'smspartner', label: 'SMS Partner' },
-  { value: 'smsplanet', label: 'SMS Planet' },
-  { value: 'smsc', label: 'SMSC' },
-  { value: 'smseagle', label: 'SMSEagle' },
-  { value: 'waha', label: 'WAHA (WhatsApp)' },
-  { value: 'whapi', label: 'Whapi (WhatsApp)' },
-  { value: 'yzj', label: 'YZJ (云之家)' },
-  { value: 'gtx-messaging', label: 'GTX Messaging' },
-  { value: 'nostr', label: 'Nostr' }
-]
+const notificationTypes = NotificationTypes
 
 // Form data
 const form = ref({
@@ -623,51 +557,61 @@ function handleSubmit() {
       </UFormField>
     </div>
 
-    <!-- Dynamic Config Fields -->
+    <!-- Dynamic Provider Component or Fallback Config Fields -->
     <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">
         {{ notificationTypes.find(t => t.value === form.type)?.label }} Settings
       </h3>
       
-      <template v-for="field in configFields" :key="field.key">
-        <UFormField :label="field.label" :required="field.required">
-          <UInput
-            v-if="field.type === 'text'"
-            v-model="form.config[field.key]"
-            :placeholder="field.placeholder"
-            :required="field.required"
-          />
-          <UInput
-            v-else-if="field.type === 'password'"
-            v-model="form.config[field.key]"
-            type="password"
-            :placeholder="field.placeholder"
-            :required="field.required"
-          />
-          <UInput
-            v-else-if="field.type === 'number'"
-            v-model.number="form.config[field.key]"
-            type="number"
-            :placeholder="field.placeholder"
-            :required="field.required"
-          />
-          <UTextarea
-            v-else-if="field.type === 'textarea'"
-            v-model="form.config[field.key]"
-            :placeholder="field.placeholder"
-            :required="field.required"
-            :rows="3"
-          />
-          <UCheckbox
-            v-else-if="field.type === 'checkbox'"
-            v-model="form.config[field.key]"
-          />
-          <USelect
-            v-else-if="field.type === 'select'"
-            v-model="form.config[field.key]"
-            :items="(field.options || []).map((o: string) => ({ label: o, value: o }))"
-          />
-        </UFormField>
+      <!-- Use dedicated provider component if available -->
+      <component
+        v-if="hasProviderComponent && currentProvider"
+        :is="currentProvider"
+        v-model="form.config"
+      />
+      
+      <!-- Fallback to configFields for providers without dedicated components -->
+      <template v-else>
+        <template v-for="field in configFields" :key="field.key">
+          <UFormField :label="field.label" :required="field.required">
+            <UInput
+              v-if="field.type === 'text'"
+              v-model="form.config[field.key]"
+              :placeholder="field.placeholder"
+              :required="field.required"
+            />
+            <UInput
+              v-else-if="field.type === 'password'"
+              v-model="form.config[field.key]"
+              type="password"
+              :placeholder="field.placeholder"
+              :required="field.required"
+            />
+            <UInput
+              v-else-if="field.type === 'number'"
+              v-model.number="form.config[field.key]"
+              type="number"
+              :placeholder="field.placeholder"
+              :required="field.required"
+            />
+            <UTextarea
+              v-else-if="field.type === 'textarea'"
+              v-model="form.config[field.key]"
+              :placeholder="field.placeholder"
+              :required="field.required"
+              :rows="3"
+            />
+            <UCheckbox
+              v-else-if="field.type === 'checkbox'"
+              v-model="form.config[field.key]"
+            />
+            <USelect
+              v-else-if="field.type === 'select'"
+              v-model="form.config[field.key]"
+              :items="(field.options || []).map((o: string) => ({ label: o, value: o }))"
+            />
+          </UFormField>
+        </template>
       </template>
     </div>
 

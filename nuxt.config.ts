@@ -10,7 +10,27 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@pinia/nuxt',
     'nuxt-auth-utils',
+    '@nuxtjs/i18n',
   ],
+
+  i18n: {
+    vueI18n: './i18n.config.ts',
+    locales: [
+      { code: 'en', name: 'English' },
+      { code: 'zh-CN', name: '简体中文' },
+      { code: 'zh-TW', name: '繁體中文' },
+    ],
+    defaultLocale: 'en',
+    strategy: 'no_prefix',
+    bundle: {
+      optimizeTranslationDirective: false,
+    },
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'uptime_kuma_locale',
+      fallbackLocale: 'en',
+    },
+  },
 
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET || 'default-secret-change-in-production',

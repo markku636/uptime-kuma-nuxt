@@ -3,9 +3,9 @@
     <div class="w-full max-w-sm">
       <form @submit.prevent="handleLogin" class="space-y-6">
         <!-- Logo -->
-        <div class="text-center">
+        <div class="text-center mb-8">
           <img src="/icon.svg" alt="Uptime Kuma" width="64" height="64" class="mx-auto" />
-          <h1 class="text-2xl font-bold text-gray-100 mt-3">Uptime Kuma</h1>
+          <h1 class="text-2xl font-bold text-gray-100 mt-4">Uptime Kuma</h1>
         </div>
 
         <!-- Username -->
@@ -42,10 +42,12 @@
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="btn btn-primary w-full" :disabled="loading">
-          <span v-if="loading" class="spinner w-4 h-4 mr-2"></span>
-          Login
-        </button>
+        <div class="pt-4">
+          <button type="submit" class="btn btn-primary w-full" :disabled="loading">
+            <span v-if="loading" class="spinner w-4 h-4 mr-2"></span>
+            Login
+          </button>
+        </div>
       </form>
     </div>
   </div>

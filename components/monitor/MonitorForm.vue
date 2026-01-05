@@ -1,371 +1,384 @@
 <template>
-  <form @submit.prevent="handleSubmit">
+  <form @submit.prevent="handleSubmit" class="space-y-6">
     <!-- Basic Info -->
-    <div class="mb-4">
-      <h4 class="section-title"><i class="bi bi-info-circle me-2"></i>Basic Information</h4>
+    <div class="section-card">
+      <h2 class="section-title">Basic Information</h2>
       
-      <div class="mb-3">
-        <label class="form-label">Monitor Type <span class="text-danger">*</span></label>
-        <select v-model="form.type" class="form-select" :disabled="loading">
-          <option v-for="type in monitorTypes" :key="type.value" :value="type.value">
-            {{ type.label }}
-          </option>
-        </select>
-      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Monitor Type <span class="text-red-400">*</span></label>
+          <select v-model="form.type" class="select-field" :disabled="loading">
+            <option v-for="type in monitorTypes" :key="type.value" :value="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Friendly Name <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.name" 
-          type="text" 
-          class="form-control" 
-          placeholder="My Monitor"
-          :disabled="loading"
-        />
-      </div>
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Friendly Name <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.name" 
+            type="text" 
+            class="input-field" 
+            placeholder="My Monitor"
+            :disabled="loading"
+          />
+        </div>
 
-      <!-- URL for HTTP monitors -->
-      <div v-if="showUrlField" class="mb-3">
-        <label class="form-label">URL <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.url" 
-          type="text" 
-          class="form-control" 
-          placeholder="https://example.com"
-          :disabled="loading"
-        />
-      </div>
+        <!-- URL for HTTP monitors -->
+        <div v-if="showUrlField" class="form-group md:col-span-2">
+          <label class="input-label">URL <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.url" 
+            type="text" 
+            class="input-field" 
+            placeholder="https://example.com"
+            :disabled="loading"
+          />
+        </div>
 
-      <!-- Hostname for TCP/Ping/DNS monitors -->
-      <div v-if="showHostnameField" class="mb-3">
-        <label class="form-label">Hostname <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.hostname" 
-          type="text" 
-          class="form-control" 
-          placeholder="example.com"
-          :disabled="loading"
-        />
-      </div>
+        <!-- Hostname for TCP/Ping/DNS monitors -->
+        <div v-if="showHostnameField" class="form-group" :class="showPortField ? '' : 'md:col-span-2'">
+          <label class="input-label">Hostname <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.hostname" 
+            type="text" 
+            class="input-field" 
+            placeholder="example.com"
+            :disabled="loading"
+          />
+        </div>
 
-      <!-- Port for TCP/Game monitors -->
-      <div v-if="showPortField" class="mb-3">
-        <label class="form-label">Port <span class="text-danger">*</span></label>
-        <input 
-          v-model.number="form.port" 
-          type="number" 
-          class="form-control" 
-          placeholder="443"
-          :disabled="loading"
-        />
+        <!-- Port for TCP/Game monitors -->
+        <div v-if="showPortField" class="form-group">
+          <label class="input-label">Port <span class="text-red-400">*</span></label>
+          <input 
+            v-model.number="form.port" 
+            type="number" 
+            class="input-field" 
+            placeholder="443"
+            :disabled="loading"
+          />
+        </div>
       </div>
     </div>
 
     <!-- HTTP Settings -->
-    <div v-if="showHttpSettings" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-globe me-2"></i>HTTP Settings</h4>
+    <div v-if="showHttpSettings" class="section-card">
+      <h2 class="section-title">HTTP Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">Method</label>
-        <select v-model="form.method" class="form-select" :disabled="loading">
-          <option v-for="method in httpMethods" :key="method.value" :value="method.value">
-            {{ method.label }}
-          </option>
-        </select>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">Method</label>
+          <select v-model="form.method" class="select-field" :disabled="loading">
+            <option v-for="method in httpMethods" :key="method.value" :value="method.value">
+              {{ method.label }}
+            </option>
+          </select>
+        </div>
+
+        <div v-if="form.type === 'http' || form.type === 'keyword'" class="form-group">
+          <label class="input-label">Expected Keyword</label>
+          <input 
+            v-model="form.keyword" 
+            type="text" 
+            class="input-field" 
+            placeholder="OK"
+            :disabled="loading"
+          />
+        </div>
       </div>
 
-      <div v-if="form.type === 'http' || form.type === 'keyword'" class="mb-3">
-        <label class="form-label">Expected Keyword</label>
-        <input 
-          v-model="form.keyword" 
-          type="text" 
-          class="form-control" 
-          placeholder="OK"
-          :disabled="loading"
-        />
-      </div>
+      <div class="mt-4 space-y-3">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input 
+            v-model="form.invertKeyword" 
+            type="checkbox" 
+            class="checkbox"
+            :disabled="loading"
+          />
+          <span class="text-gray-300">Invert Keyword (alert if found)</span>
+        </label>
 
-      <div class="mb-3 form-check">
-        <input 
-          v-model="form.invertKeyword" 
-          type="checkbox" 
-          class="form-check-input" 
-          id="invertKeyword"
-          :disabled="loading"
-        />
-        <label class="form-check-label" for="invertKeyword">Invert Keyword (alert if found)</label>
-      </div>
-
-      <div class="mb-3 form-check">
-        <input 
-          v-model="form.ignoreTls" 
-          type="checkbox" 
-          class="form-check-input" 
-          id="ignoreTls"
-          :disabled="loading"
-        />
-        <label class="form-check-label" for="ignoreTls">Ignore TLS/SSL Certificate</label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input 
+            v-model="form.ignoreTls" 
+            type="checkbox" 
+            class="checkbox"
+            :disabled="loading"
+          />
+          <span class="text-gray-300">Ignore TLS/SSL Certificate</span>
+        </label>
       </div>
     </div>
 
     <!-- JSON Query Settings -->
-    <div v-if="form.type === 'json-query'" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-braces me-2"></i>JSON Query Settings</h4>
+    <div v-if="form.type === 'json-query'" class="section-card">
+      <h2 class="section-title">JSON Query Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">JSON Path <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.jsonPath" 
-          type="text" 
-          class="form-control" 
-          placeholder="$.data.status"
-          :disabled="loading"
-        />
-        <div class="form-text">Use JSONPath syntax (e.g., $.data.status)</div>
-      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">JSON Path <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.jsonPath" 
+            type="text" 
+            class="input-field" 
+            placeholder="$.data.status"
+            :disabled="loading"
+          />
+          <p class="text-xs text-gray-500 mt-1">Use JSONPath syntax (e.g., $.data.status)</p>
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Expected Value</label>
-        <input 
-          v-model="form.expectedValue" 
-          type="text" 
-          class="form-control" 
-          placeholder="ok"
-          :disabled="loading"
-        />
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Expected Value</label>
+          <input 
+            v-model="form.expectedValue" 
+            type="text" 
+            class="input-field" 
+            placeholder="ok"
+            :disabled="loading"
+          />
+        </div>
       </div>
     </div>
 
     <!-- gRPC Settings -->
-    <div v-if="form.type === 'grpc-keyword'" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-hdd-network me-2"></i>gRPC Settings</h4>
+    <div v-if="form.type === 'grpc-keyword'" class="section-card">
+      <h2 class="section-title">gRPC Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">gRPC URL <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.grpcUrl" 
-          type="text" 
-          class="form-control" 
-          placeholder="localhost:50051"
-          :disabled="loading"
-        />
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">gRPC URL <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.grpcUrl" 
+            type="text" 
+            class="input-field" 
+            placeholder="localhost:50051"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Service Name <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.grpcServiceName" 
+            type="text" 
+            class="input-field" 
+            placeholder="mypackage.MyService"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Method <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.grpcMethod" 
+            type="text" 
+            class="input-field" 
+            placeholder="HealthCheck"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Proto Definition</label>
+          <textarea 
+            v-model="form.grpcProtoContent" 
+            class="input-field" 
+            rows="6" 
+            placeholder="Paste your .proto file content here"
+            :disabled="loading"
+          ></textarea>
+        </div>
+
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Request Body (JSON)</label>
+          <textarea 
+            v-model="form.grpcBody" 
+            class="input-field" 
+            rows="3" 
+            placeholder='{"key": "value"}'
+            :disabled="loading"
+          ></textarea>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label class="form-label">Service Name <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.grpcServiceName" 
-          type="text" 
-          class="form-control" 
-          placeholder="mypackage.MyService"
-          :disabled="loading"
-        />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Method <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.grpcMethod" 
-          type="text" 
-          class="form-control" 
-          placeholder="HealthCheck"
-          :disabled="loading"
-        />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Proto Definition</label>
-        <textarea 
-          v-model="form.grpcProtoContent" 
-          class="form-control" 
-          rows="6" 
-          placeholder="Paste your .proto file content here"
-          :disabled="loading"
-        ></textarea>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Request Body (JSON)</label>
-        <textarea 
-          v-model="form.grpcBody" 
-          class="form-control" 
-          rows="3" 
-          placeholder='{"key": "value"}'
-          :disabled="loading"
-        ></textarea>
-      </div>
-
-      <div class="mb-3 form-check">
-        <input 
-          v-model="form.grpcEnableTls" 
-          type="checkbox" 
-          class="form-check-input" 
-          id="grpcEnableTls"
-          :disabled="loading"
-        />
-        <label class="form-check-label" for="grpcEnableTls">Enable TLS</label>
+      <div class="mt-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input 
+            v-model="form.grpcEnableTls" 
+            type="checkbox" 
+            class="checkbox"
+            :disabled="loading"
+          />
+          <span class="text-gray-300">Enable TLS</span>
+        </label>
       </div>
     </div>
 
     <!-- Database Settings -->
-    <div v-if="showDatabaseSettings" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-database me-2"></i>Database Settings</h4>
+    <div v-if="showDatabaseSettings" class="section-card">
+      <h2 class="section-title">Database Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">Connection String <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.databaseConnectionString" 
-          type="text" 
-          class="form-control" 
-          :placeholder="databasePlaceholder"
-          :disabled="loading"
-        />
-      </div>
+      <div class="grid gap-4">
+        <div class="form-group">
+          <label class="input-label">Connection String <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.databaseConnectionString" 
+            type="text" 
+            class="input-field" 
+            :placeholder="databasePlaceholder"
+            :disabled="loading"
+          />
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Query (optional)</label>
-        <textarea 
-          v-model="form.databaseQuery" 
-          class="form-control" 
-          rows="3" 
-          placeholder="SELECT 1"
-          :disabled="loading"
-        ></textarea>
-        <div class="form-text">Optional query to execute for health check</div>
+        <div class="form-group">
+          <label class="input-label">Query (optional)</label>
+          <textarea 
+            v-model="form.databaseQuery" 
+            class="input-field" 
+            rows="3" 
+            placeholder="SELECT 1"
+            :disabled="loading"
+          ></textarea>
+          <p class="text-xs text-gray-500 mt-1">Optional query to execute for health check</p>
+        </div>
       </div>
     </div>
 
     <!-- Docker Settings -->
-    <div v-if="form.type === 'docker'" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-boxes me-2"></i>Docker Settings</h4>
+    <div v-if="form.type === 'docker'" class="section-card">
+      <h2 class="section-title">Docker Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">Container Name/ID <span class="text-danger">*</span></label>
-        <input 
-          v-model="form.dockerContainer" 
-          type="text" 
-          class="form-control" 
-          placeholder="my-container"
-          :disabled="loading"
-        />
-      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Container Name/ID <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.dockerContainer" 
+            type="text" 
+            class="input-field" 
+            placeholder="my-container"
+            :disabled="loading"
+          />
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Docker Host</label>
-        <input 
-          v-model="form.dockerHost" 
-          type="text" 
-          class="form-control" 
-          placeholder="/var/run/docker.sock"
-          :disabled="loading"
-        />
-      </div>
+        <div class="form-group">
+          <label class="input-label">Docker Host</label>
+          <input 
+            v-model="form.dockerHost" 
+            type="text" 
+            class="input-field" 
+            placeholder="/var/run/docker.sock"
+            :disabled="loading"
+          />
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Connection Type</label>
-        <select v-model="form.dockerDaemon" class="form-select" :disabled="loading">
-          <option value="socket">Socket</option>
-          <option value="tcp">TCP</option>
-          <option value="tls">TCP + TLS</option>
-        </select>
+        <div class="form-group">
+          <label class="input-label">Connection Type</label>
+          <select v-model="form.dockerDaemon" class="select-field" :disabled="loading">
+            <option value="socket">Socket</option>
+            <option value="tcp">TCP</option>
+            <option value="tls">TCP + TLS</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <!-- MQTT Settings -->
-    <div v-if="form.type === 'mqtt'" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-wifi me-2"></i>MQTT Settings</h4>
+    <div v-if="form.type === 'mqtt'" class="section-card">
+      <h2 class="section-title">MQTT Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">Topic</label>
-        <input 
-          v-model="form.mqttTopic" 
-          type="text" 
-          class="form-control" 
-          placeholder="my/topic"
-          :disabled="loading"
-        />
-      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Topic</label>
+          <input 
+            v-model="form.mqttTopic" 
+            type="text" 
+            class="input-field" 
+            placeholder="my/topic"
+            :disabled="loading"
+          />
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Username</label>
-        <input 
-          v-model="form.mqttUsername" 
-          type="text" 
-          class="form-control"
-          :disabled="loading"
-        />
-      </div>
+        <div class="form-group">
+          <label class="input-label">Username</label>
+          <input 
+            v-model="form.mqttUsername" 
+            type="text" 
+            class="input-field"
+            :disabled="loading"
+          />
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input 
-          v-model="form.mqttPassword" 
-          type="password" 
-          class="form-control"
-          :disabled="loading"
-        />
-      </div>
+        <div class="form-group">
+          <label class="input-label">Password</label>
+          <input 
+            v-model="form.mqttPassword" 
+            type="password" 
+            class="input-field"
+            :disabled="loading"
+          />
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label">Success Message</label>
-        <input 
-          v-model="form.mqttSuccessMessage" 
-          type="text" 
-          class="form-control" 
-          placeholder="Expected message content"
-          :disabled="loading"
-        />
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Success Message</label>
+          <input 
+            v-model="form.mqttSuccessMessage" 
+            type="text" 
+            class="input-field" 
+            placeholder="Expected message content"
+            :disabled="loading"
+          />
+        </div>
       </div>
     </div>
 
     <!-- Kafka Settings -->
-    <div v-if="form.type === 'kafka'" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-diagram-3 me-2"></i>Kafka Settings</h4>
+    <div v-if="form.type === 'kafka'" class="section-card">
+      <h2 class="section-title">Kafka Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">Topic</label>
-        <input 
-          v-model="form.kafkaTopic" 
-          type="text" 
-          class="form-control" 
-          placeholder="my-topic"
-          :disabled="loading"
-        />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">SASL Mechanism</label>
-        <select v-model="form.kafkaSaslMechanism" class="form-select" :disabled="loading">
-          <option value="">None</option>
-          <option value="plain">PLAIN</option>
-          <option value="scram-sha-256">SCRAM-SHA-256</option>
-          <option value="scram-sha-512">SCRAM-SHA-512</option>
-        </select>
-      </div>
-
-      <div v-if="form.kafkaSaslMechanism" class="row">
-        <div class="col-6">
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input v-model="form.kafkaUsername" type="text" class="form-control" :disabled="loading" />
-          </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Topic</label>
+          <input 
+            v-model="form.kafkaTopic" 
+            type="text" 
+            class="input-field" 
+            placeholder="my-topic"
+            :disabled="loading"
+          />
         </div>
-        <div class="col-6">
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input v-model="form.kafkaPassword" type="password" class="form-control" :disabled="loading" />
-          </div>
+
+        <div class="form-group md:col-span-2">
+          <label class="input-label">SASL Mechanism</label>
+          <select v-model="form.kafkaSaslMechanism" class="select-field" :disabled="loading">
+            <option value="">None</option>
+            <option value="plain">PLAIN</option>
+            <option value="scram-sha-256">SCRAM-SHA-256</option>
+            <option value="scram-sha-512">SCRAM-SHA-512</option>
+          </select>
         </div>
+
+        <template v-if="form.kafkaSaslMechanism">
+          <div class="form-group">
+            <label class="input-label">Username</label>
+            <input v-model="form.kafkaUsername" type="text" class="input-field" :disabled="loading" />
+          </div>
+          <div class="form-group">
+            <label class="input-label">Password</label>
+            <input v-model="form.kafkaPassword" type="password" class="input-field" :disabled="loading" />
+          </div>
+        </template>
       </div>
     </div>
 
     <!-- Game Server Settings -->
-    <div v-if="form.type === 'gamedig'" class="mb-4">
-      <h4 class="section-title"><i class="bi bi-controller me-2"></i>Game Server Settings</h4>
+    <div v-if="form.type === 'gamedig'" class="section-card">
+      <h2 class="section-title">Game Server Settings</h2>
       
-      <div class="mb-3">
-        <label class="form-label">Game <span class="text-danger">*</span></label>
-        <select v-model="form.game" class="form-select" :disabled="loading">
+      <div class="form-group">
+        <label class="input-label">Game <span class="text-red-400">*</span></label>
+        <select v-model="form.game" class="select-field" :disabled="loading">
           <option v-for="game in gameTypes" :key="game.value" :value="game.value">
             {{ game.label }}
           </option>
@@ -374,82 +387,70 @@
     </div>
 
     <!-- Timing -->
-    <div class="mb-4">
-      <h4 class="section-title"><i class="bi bi-clock me-2"></i>Timing</h4>
+    <div class="section-card">
+      <h2 class="section-title">Timing</h2>
       
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Check Interval (seconds)</label>
-            <input 
-              v-model.number="form.interval" 
-              type="number" 
-              class="form-control"
-              :disabled="loading"
-            />
-          </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">Check Interval (seconds)</label>
+          <input 
+            v-model.number="form.interval" 
+            type="number" 
+            class="input-field"
+            :disabled="loading"
+          />
         </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Timeout (seconds)</label>
-            <input 
-              v-model.number="form.timeout" 
-              type="number" 
-              class="form-control"
-              :disabled="loading"
-            />
-          </div>
+        <div class="form-group">
+          <label class="input-label">Timeout (seconds)</label>
+          <input 
+            v-model.number="form.timeout" 
+            type="number" 
+            class="input-field"
+            :disabled="loading"
+          />
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Retry Interval (seconds)</label>
-            <input 
-              v-model.number="form.retryInterval" 
-              type="number" 
-              class="form-control"
-              :disabled="loading"
-            />
-          </div>
+        <div class="form-group">
+          <label class="input-label">Retry Interval (seconds)</label>
+          <input 
+            v-model.number="form.retryInterval" 
+            type="number" 
+            class="input-field"
+            :disabled="loading"
+          />
         </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Max Retries</label>
-            <input 
-              v-model.number="form.maxretries" 
-              type="number" 
-              class="form-control"
-              :disabled="loading"
-            />
-          </div>
+        <div class="form-group">
+          <label class="input-label">Max Retries</label>
+          <input 
+            v-model.number="form.maxretries" 
+            type="number" 
+            class="input-field"
+            :disabled="loading"
+          />
         </div>
       </div>
     </div>
 
     <!-- Advanced Options -->
-    <div class="mb-4">
-      <h4 class="section-title"><i class="bi bi-gear me-2"></i>Advanced Options</h4>
+    <div class="section-card">
+      <h2 class="section-title">Advanced Options</h2>
       
-      <div class="mb-3 form-check">
+      <label class="flex items-center gap-2 cursor-pointer">
         <input 
           v-model="form.upsideDown" 
           type="checkbox" 
-          class="form-check-input" 
-          id="upsideDown"
+          class="checkbox"
           :disabled="loading"
         />
-        <label class="form-check-label" for="upsideDown">Upside Down Mode (alert when UP)</label>
-      </div>
+        <span class="text-gray-300">Upside Down Mode (alert when UP)</span>
+      </label>
     </div>
 
     <!-- Description -->
-    <div class="mb-4">
-      <label class="form-label">Description</label>
+    <div class="section-card">
+      <h2 class="section-title">Description</h2>
       <textarea 
         v-model="form.description" 
-        class="form-control" 
+        class="input-field" 
         rows="3" 
         placeholder="Optional description"
         :disabled="loading"
@@ -457,10 +458,10 @@
     </div>
 
     <!-- Submit -->
-    <div class="d-flex justify-content-end gap-2">
+    <div class="flex justify-end gap-3">
       <button 
         type="button" 
-        class="btn btn-outline-secondary"
+        class="btn btn-outline"
         @click="navigateTo('/monitors')"
         :disabled="loading"
       >
@@ -471,7 +472,7 @@
         class="btn btn-primary"
         :disabled="loading"
       >
-        <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+        <UIcon v-if="loading" name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin mr-2" />
         {{ submitLabel }}
       </button>
     </div>
@@ -574,16 +575,50 @@ const httpMethods = [
 ]
 
 const gameTypes = [
+  // Popular Games
   { value: 'minecraft', label: 'Minecraft' },
+  { value: 'minecraftpe', label: 'Minecraft: Bedrock Edition' },
   { value: 'csgo', label: 'CS:GO / CS2' },
+  { value: 'cs16', label: 'Counter-Strike 1.6' },
   { value: 'tf2', label: 'Team Fortress 2' },
-  { value: 'arkse', label: 'ARK: Survival Evolved' },
   { value: 'rust', label: 'Rust' },
   { value: 'valheim', label: 'Valheim' },
   { value: 'terraria', label: 'Terraria' },
   { value: 'garrysmod', label: "Garry's Mod" },
   { value: 'dayz', label: 'DayZ' },
   { value: '7d2d', label: '7 Days to Die' },
+  // Survival Games
+  { value: 'arkse', label: 'ARK: Survival Evolved' },
+  { value: 'asa', label: 'ARK: Survival Ascended' },
+  { value: 'conanexiles', label: 'Conan Exiles' },
+  { value: 'palworld', label: 'Palworld' },
+  { value: 'vrising', label: 'V Rising' },
+  { value: 'projectzomboid', label: 'Project Zomboid' },
+  { value: 'satisfactory', label: 'Satisfactory' },
+  { value: 'enshrouded', label: 'Enshrouded' },
+  // FPS/Shooter
+  { value: 'squad', label: 'Squad' },
+  { value: 'insurgency', label: 'Insurgency: Sandstorm' },
+  { value: 'arma3', label: 'ARMA 3' },
+  { value: 'bf1942', label: 'Battlefield 1942' },
+  { value: 'bf2', label: 'Battlefield 2' },
+  { value: 'l4d2', label: 'Left 4 Dead 2' },
+  { value: 'mordhau', label: 'Mordhau' },
+  { value: 'unturned', label: 'Unturned' },
+  // Racing/Sports
+  { value: 'assettocorsa', label: 'Assetto Corsa' },
+  { value: 'fivem', label: 'FiveM (GTA V)' },
+  { value: 'ragemp', label: 'RAGE:MP (GTA V)' },
+  // Other Popular
+  { value: 'factorio', label: 'Factorio' },
+  { value: 'spaceengineers', label: 'Space Engineers' },
+  { value: 'starbound', label: 'Starbound' },
+  { value: 'starmade', label: 'StarMade' },
+  { value: 'empyrion', label: 'Empyrion' },
+  { value: 'killingfloor2', label: 'Killing Floor 2' },
+  { value: 'mumble', label: 'Mumble' },
+  { value: 'teamspeak3', label: 'TeamSpeak 3' },
+  { value: 'discord', label: 'Discord Bot' },
 ]
 
 // Computed properties for conditional fields
@@ -707,32 +742,40 @@ const handleSubmit = () => {
 
 <style scoped>
 .section-title {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--bs-border-color);
-  color: var(--bs-heading-color);
+  color: rgb(243 244 246);
 }
 
-.form-label {
+.form-group {
+  margin-bottom: 0;
+}
+
+.input-label {
+  display: block;
   font-weight: 500;
   margin-bottom: 0.5rem;
-}
-
-.form-control,
-.form-select {
-  border-radius: 0.375rem;
-}
-
-.form-control:focus,
-.form-select:focus {
-  border-color: var(--bs-primary);
-  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
-}
-
-.form-text {
+  color: rgb(209 213 219);
   font-size: 0.875rem;
-  color: var(--bs-secondary);
+}
+
+.checkbox {
+  width: 1rem;
+  height: 1rem;
+  background-color: rgb(31 41 55);
+  border: 1px solid rgb(75 85 99);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.checkbox:checked {
+  background-color: rgb(16 185 129);
+  border-color: rgb(16 185 129);
+}
+
+.checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
 }
 </style>

@@ -51,6 +51,17 @@
               </svg>
             </button>
 
+            <!-- Keyboard shortcuts help -->
+            <button
+              @click="showShortcutsHelp = true"
+              class="p-2 text-gray-400 hover:text-white transition-colors"
+              title="Keyboard shortcuts (Ctrl+/)"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+
             <!-- Profile dropdown -->
             <UDropdownMenu
               :items="profileMenuItems"
@@ -114,12 +125,44 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <slot />
     </main>
+
+    <!-- Keyboard shortcuts help modal -->
+    <KeyboardShortcutsHelp v-model="showShortcutsHelp" />
   </div>
 </template>
 
 <script setup lang="ts">
 const mobileMenuOpen = ref(false)
 const isDark = ref(true)
+const showShortcutsHelp = ref(false)
+
+// Initialize keyboard shortcuts
+const { toggleHelp } = useKeyboardShortcuts()
+
+// Override the help toggle to control our modal
+watch(() => toggleHelp, () => {
+  showShortcutsHelp.value = !showShortcutsHelp.value
+})
+
+// Listen for keyboard shortcut to show help
+onMounted(() => {
+  const handleKeydown = (e: KeyboardEvent) => {
+    // Show help on Ctrl+/ or ?
+    if ((e.ctrlKey && e.key === '/') || (e.key === '?' && !e.ctrlKey && !e.altKey)) {
+      const target = e.target as HTMLElement
+      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
+        e.preventDefault()
+        showShortcutsHelp.value = !showShortcutsHelp.value
+      }
+    }
+  }
+  
+  window.addEventListener('keydown', handleKeydown)
+  
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
+  })
+})
 
 const toggleDarkMode = () => {
   isDark.value = !isDark.value

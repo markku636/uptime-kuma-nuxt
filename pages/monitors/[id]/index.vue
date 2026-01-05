@@ -55,6 +55,16 @@
               <UIcon name="i-heroicons-document-duplicate" class="w-4 h-4 mr-1" />
               {{ cloning ? "Cloning..." : "Clone" }}
             </button>
+            <!-- Badge Generator -->
+            <button @click="showBadgeGenerator = true" class="btn btn-secondary">
+              <UIcon name="i-heroicons-rectangle-stack" class="w-4 h-4 mr-1" />
+              Badge
+            </button>
+            <!-- Screenshot (for real-browser type) -->
+            <button v-if="monitor.type === 'real-browser'" @click="showScreenshot = true" class="btn btn-secondary">
+              <UIcon name="i-heroicons-camera" class="w-4 h-4 mr-1" />
+              Screenshot
+            </button>
             <button @click="showDeleteConfirm = true" class="btn btn-danger">
               <UIcon name="i-heroicons-trash" class="w-4 h-4 mr-1" />
               Delete
@@ -320,6 +330,21 @@
       </Transition>
     </div>
     </Transition>
+
+    <!-- Badge Generator Modal -->
+    <MonitorBadgeGeneratorModal 
+      v-if="monitor"
+      v-model="showBadgeGenerator" 
+      :monitor-id="monitorId" 
+      :monitor-name="monitor.name" 
+    />
+
+    <!-- Screenshot Modal -->
+    <MonitorScreenshotModal 
+      v-if="monitor?.type === 'real-browser'"
+      v-model="showScreenshot" 
+      :monitor-id="monitorId" 
+    />
   </div>
 </template>
 
@@ -342,6 +367,8 @@ const loading = ref(true)
 const deleting = ref(false)
 const cloning = ref(false)
 const showDeleteConfirm = ref(false)
+const showBadgeGenerator = ref(false)
+const showScreenshot = ref(false)
 const currentPage = ref(1)
 const perPage = 25
 

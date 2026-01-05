@@ -36,9 +36,8 @@
       <!-- Language -->
       <div>
         <label class="block text-sm font-medium text-gray-300 mb-2">Language</label>
-        <select v-model="language" class="select-field">
-          <option v-for="lang in languageOptions" :key="lang.value" :value="lang.value">{{ lang.label }}</option>
-        </select>
+        <CommonLanguageSelector />
+        <p class="text-xs text-gray-500 mt-1">Select your preferred language</p>
       </div>
 
       <!-- Uptime Display -->
@@ -56,6 +55,32 @@
         </div>
       </div>
 
+      <!-- Heartbeat Bar Style -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-3">Heartbeat Bar Style</label>
+        <div class="flex gap-4">
+          <button v-for="style in heartbeatBarOptions" :key="style.value" type="button"
+            class="flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all"
+            :class="heartbeatBarStyle === style.value ? 'border-green-500 bg-gray-700' : 'border-gray-600 hover:border-gray-500'"
+            @click="heartbeatBarStyle = style.value">
+            <span class="text-gray-300">{{ style.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Elapsed Time Style -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-3">Elapsed Time Style</label>
+        <div class="flex gap-4 flex-wrap">
+          <button v-for="style in elapsedTimeOptions" :key="style.value" type="button"
+            class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all"
+            :class="elapsedTimeStyle === style.value ? 'border-green-500 bg-gray-700' : 'border-gray-600 hover:border-gray-500'"
+            @click="elapsedTimeStyle = style.value">
+            <span class="text-gray-300 text-sm">{{ style.label }}</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Show Certificate Expiry -->
       <div>
         <label class="flex items-center gap-2 cursor-pointer">
@@ -65,7 +90,9 @@
       </div>
 
       <div class="pt-4">
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary" :disabled="loading">
+          {{ loading ? 'Saving...' : 'Save' }}
+        </button>
       </div>
     </form>
   </div>
@@ -73,17 +100,58 @@
 
 <script setup lang="ts">
 const toast = useToast()
+const colorMode = useColorMode()
 
 const theme = ref('auto')
 const primaryColor = ref('green')
 const language = ref('en')
 const uptimeDisplayStyle = ref('percentage')
+const heartbeatBarStyle = ref('normal')
+const elapsedTimeStyle = ref('no-line')
 const showCertificateExpiry = ref(true)
+const loading = ref(false)
+
+// Load settings on mount
+onMounted(async () => {
+  try {
+    const settings = await $fetch('/api/settings/appearance') as any
+    if (settings) {
+      theme.value = settings.theme || 'auto'
+      primaryColor.value = settings.primaryColor || 'green'
+      uptimeDisplayStyle.value = settings.uptimeDisplayStyle || 'percentage'
+      heartbeatBarStyle.value = settings.heartbeatBarStyle || 'normal'
+      elapsedTimeStyle.value = settings.elapsedTimeStyle || 'no-line'
+      showCertificateExpiry.value = settings.showCertificateExpiry ?? true
+      
+      // Apply theme
+      colorMode.preference = theme.value === 'auto' ? 'system' : theme.value
+    }
+  } catch (error) {
+    console.error('Failed to load appearance settings:', error)
+  }
+})
+
+// Watch theme changes and update colorMode
+watch(theme, (newTheme) => {
+  colorMode.preference = newTheme === 'auto' ? 'system' : newTheme
+})
 
 const themeOptions = [
-  { value: 'light', label: 'Light', icon: '' },
-  { value: 'dark', label: 'Dark', icon: '' },
-  { value: 'auto', label: 'Auto', icon: '' }
+  { value: 'light', label: 'Light', icon: '☀️' },
+  { value: 'dark', label: 'Dark', icon: '🌙' },
+  { value: 'system', label: 'Auto', icon: '💻' }
+]
+
+const heartbeatBarOptions = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'bottom', label: 'Bottom' },
+  { value: 'none', label: 'None' }
+]
+
+const elapsedTimeOptions = [
+  { value: 'no-line', label: 'No Line' },
+  { value: 'with-line', label: 'With Line' },
+  { value: 'none', label: 'None' }
 ]
 
 const colorOptions = [
@@ -104,14 +172,24 @@ const languageOptions = [
 ]
 
 const saveAppearance = async () => {
+  loading.value = true
   try {
     await $fetch('/api/settings/appearance', {
       method: 'POST',
-      body: { theme: theme.value, primaryColor: primaryColor.value, language: language.value, uptimeDisplayStyle: uptimeDisplayStyle.value, showCertificateExpiry: showCertificateExpiry.value }
+      body: { 
+        theme: theme.value, 
+        primaryColor: primaryColor.value, 
+        uptimeDisplayStyle: uptimeDisplayStyle.value, 
+        heartbeatBarStyle: heartbeatBarStyle.value,
+        elapsedTimeStyle: elapsedTimeStyle.value,
+        showCertificateExpiry: showCertificateExpiry.value 
+      }
     })
     toast.add({ title: 'Success', description: 'Appearance saved', color: 'success' })
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to save', color: 'error' })
+  } finally {
+    loading.value = false
   }
 }
 </script>
