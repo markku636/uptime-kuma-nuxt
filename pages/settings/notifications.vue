@@ -162,7 +162,9 @@ onMounted(async () => {
 async function fetchNotifications() {
   loading.value = true
   try {
-    notifications.value = await $fetch('/api/v1/notifications') as any[]
+    const response = await $fetch('/api/v1/notifications') as any
+    // Handle both { ok, data } format and direct array format
+    notifications.value = response?.data || response || []
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to load notifications', color: 'error' })
   } finally {

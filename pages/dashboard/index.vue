@@ -11,7 +11,7 @@
           class="w-2 h-2 rounded-full" 
           :class="socketConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'"
         ></span>
-        <span class="text-gray-400">{{ socketConnected ? 'Live' : 'Offline' }}</span>
+        <span class="text-secondary">{{ socketConnected ? 'Live' : 'Offline' }}</span>
       </div>
     </div>
 
@@ -20,29 +20,29 @@
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-emerald-500/50" @click="filterByStatus('up')">
         <div class="stat-label">Up</div>
-        <div class="stat-value" :class="stats.up > 0 ? 'text-emerald-400' : 'text-gray-500'">
+        <div class="stat-value" :class="stats.up > 0 ? 'text-emerald-500' : 'text-tertiary'">
           {{ stats.up }}
         </div>
       </div>
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-red-500/50" @click="filterByStatus('down')">
         <div class="stat-label">Down</div>
-        <div class="stat-value" :class="stats.down > 0 ? 'text-red-400' : 'text-gray-500'">
+        <div class="stat-value" :class="stats.down > 0 ? 'text-red-500' : 'text-tertiary'">
           {{ stats.down }}
         </div>
       </div>
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-blue-500/50" @click="filterByStatus('maintenance')">
         <div class="stat-label">Maintenance</div>
-        <div class="stat-value" :class="stats.maintenance > 0 ? 'text-blue-400' : 'text-gray-500'">
+        <div class="stat-value" :class="stats.maintenance > 0 ? 'text-blue-500' : 'text-tertiary'">
           {{ stats.maintenance }}
         </div>
       </div>
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-gray-500/50" @click="filterByStatus('unknown')">
         <div class="stat-label">Unknown</div>
-        <div class="stat-value text-gray-500">{{ stats.unknown }}</div>
+        <div class="stat-value text-tertiary">{{ stats.unknown }}</div>
       </div>
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-gray-500/50" @click="filterByStatus('paused')">
         <div class="stat-label">Paused</div>
-        <div class="stat-value text-gray-500">{{ stats.paused }}</div>
+        <div class="stat-value text-tertiary">{{ stats.paused }}</div>
       </div>
     </div>
 
@@ -50,7 +50,7 @@
     <div class="card card-body mb-6">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
-          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-tertiary" />
           <input 
             v-model="searchQuery" 
             type="text" 
@@ -82,9 +82,9 @@
 
     <!-- Important Events -->
     <div class="card mb-6">
-      <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-100">Important Events</h3>
-        <span class="text-sm text-gray-400">{{ importantHeartbeats.length }} events</span>
+      <div class="p-4 border-b border-default flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-primary">Important Events</h3>
+        <span class="text-sm text-secondary">{{ importantHeartbeats.length }} events</span>
       </div>
       <div class="overflow-x-auto">
         <table class="table">
@@ -97,7 +97,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(beat, index) in importantHeartbeats" :key="index" class="hover:bg-gray-700/50">
+            <tr v-for="(beat, index) in importantHeartbeats" :key="index" class="hover-row">
               <td>
                 <NuxtLink :to="`/monitors/${beat.monitorId}`" class="link">
                   {{ getMonitorName(beat.monitorId) }}
@@ -108,11 +108,11 @@
                   {{ getStatusText(beat.status) }}
                 </span>
               </td>
-              <td class="text-gray-400">{{ formatDateTime(beat.time) }}</td>
-              <td class="text-gray-400 max-w-xs truncate">{{ beat.msg || '-' }}</td>
+              <td class="text-secondary">{{ formatDateTime(beat.time) }}</td>
+              <td class="text-secondary max-w-xs truncate">{{ beat.msg || '-' }}</td>
             </tr>
             <tr v-if="importantHeartbeats.length === 0">
-              <td colspan="4" class="text-center text-gray-500 py-8">
+              <td colspan="4" class="text-center text-tertiary py-8">
                 <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500" />
                 <p>No important events - all systems operational</p>
               </td>
@@ -128,15 +128,15 @@
       <div class="flex items-center gap-2">
         <button 
           @click="viewMode = 'grid'" 
-          class="p-2 rounded" 
-          :class="viewMode === 'grid' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'"
+          class="p-2 rounded view-toggle" 
+          :class="viewMode === 'grid' ? 'active' : ''"
         >
           <UIcon name="i-heroicons-squares-2x2" class="w-5 h-5" />
         </button>
         <button 
           @click="viewMode = 'list'" 
-          class="p-2 rounded"
-          :class="viewMode === 'list' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'"
+          class="p-2 rounded view-toggle"
+          :class="viewMode === 'list' ? 'active' : ''"
         >
           <UIcon name="i-heroicons-list-bullet" class="w-5 h-5" />
         </button>
@@ -145,9 +145,9 @@
 
     <div v-if="pending" class="text-center py-8">
       <div class="spinner w-8 h-8 mx-auto"></div>
-      <p class="text-gray-400 mt-2">Loading monitors...</p>
+      <p class="text-secondary mt-2">Loading monitors...</p>
     </div>
-    <div v-else-if="filteredMonitors.length === 0" class="card card-body text-center text-gray-400 py-8">
+    <div v-else-if="filteredMonitors.length === 0" class="card card-body text-center text-secondary py-8">
       <template v-if="monitors.length === 0">
         No monitors yet. Click "Add New Monitor" to create one.
       </template>
@@ -163,20 +163,20 @@
         v-for="monitor in filteredMonitors"
         :key="monitor.id"
         :to="`/monitors/${monitor.id}`"
-        class="card card-body hover:bg-gray-700 transition-colors cursor-pointer group"
+        class="card card-body card-interactive cursor-pointer group"
       >
         <div class="flex items-center justify-between mb-2">
-          <span class="font-semibold text-gray-100 group-hover:text-emerald-400 transition-colors">{{ monitor.name }}</span>
+          <span class="font-semibold text-primary group-hover:text-emerald-500 transition-colors">{{ monitor.name }}</span>
           <span :class="getMonitorStatusClass(monitor)" class="badge">
             {{ getMonitorStatusText(monitor) }}
           </span>
         </div>
-        <div class="text-sm text-gray-400 mb-1">
+        <div class="text-sm text-secondary mb-1">
           <span class="uppercase font-medium">{{ monitor.type }}</span>
           <span v-if="monitor.url" class="ml-2 truncate block">{{ monitor.url }}</span>
           <span v-else-if="monitor.hostname" class="ml-2">{{ monitor.hostname }}{{ monitor.port ? `:${monitor.port}` : '' }}</span>
         </div>
-        <div v-if="getLatestPing(monitor)" class="text-xs text-gray-500 mb-2">
+        <div v-if="getLatestPing(monitor)" class="text-xs text-tertiary mb-2">
           Response: {{ getLatestPing(monitor) }}ms
         </div>
         <div class="mt-auto flex items-center gap-0.5">
@@ -206,7 +206,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="monitor in filteredMonitors" :key="monitor.id" class="hover:bg-gray-700/50">
+          <tr v-for="monitor in filteredMonitors" :key="monitor.id" class="hover-row">
             <td>
               <span :class="getMonitorStatusClass(monitor)" class="badge">
                 {{ getMonitorStatusText(monitor) }}
@@ -217,11 +217,11 @@
                 {{ monitor.name }}
               </NuxtLink>
             </td>
-            <td class="text-gray-400 uppercase text-sm">{{ monitor.type }}</td>
-            <td class="text-gray-400 text-sm max-w-xs truncate">
+            <td class="text-secondary uppercase text-sm">{{ monitor.type }}</td>
+            <td class="text-secondary text-sm max-w-xs truncate">
               {{ monitor.url || monitor.hostname || '-' }}
             </td>
-            <td class="text-gray-400">
+            <td class="text-secondary">
               {{ getLatestPing(monitor) ? `${getLatestPing(monitor)}ms` : '-' }}
             </td>
             <td>
@@ -239,7 +239,7 @@
                 <button 
                   v-if="monitor.active"
                   @click.prevent="pauseMonitor(monitor.id)" 
-                  class="p-1.5 rounded hover:bg-gray-600 text-gray-400 hover:text-yellow-400"
+                  class="action-btn"
                   title="Pause"
                 >
                   <UIcon name="i-heroicons-pause" class="w-4 h-4" />
@@ -247,14 +247,14 @@
                 <button 
                   v-else
                   @click.prevent="resumeMonitor(monitor.id)" 
-                  class="p-1.5 rounded hover:bg-gray-600 text-gray-400 hover:text-emerald-400"
+                  class="action-btn action-btn-success"
                   title="Resume"
                 >
                   <UIcon name="i-heroicons-play" class="w-4 h-4" />
                 </button>
                 <NuxtLink 
                   :to="`/monitors/${monitor.id}/edit`" 
-                  class="p-1.5 rounded hover:bg-gray-600 text-gray-400 hover:text-blue-400"
+                  class="action-btn action-btn-info"
                   title="Edit"
                 >
                   <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
@@ -541,19 +541,13 @@ onUnmounted(() => {
 })
 
 // Auto-refresh every 30 seconds as fallback
-let refreshInterval: ReturnType<typeof setInterval> | null = null
-
-onMounted(() => {
-  refreshInterval = setInterval(() => {
-    if (!socketConnected.value) {
-      refresh()
-    }
-  }, 30000)
-})
+const refreshInterval = setInterval(() => {
+  if (!socketConnected.value) {
+    refresh()
+  }
+}, 30000)
 
 onUnmounted(() => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
-  }
+  clearInterval(refreshInterval)
 })
 </script>

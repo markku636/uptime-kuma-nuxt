@@ -2,7 +2,7 @@
 definePageMeta({ middleware: ['auth'] })
 
 const toast = useToast()
-const { data: session } = useAuth()
+const { user } = useAuth()
 
 const loading = ref(false)
 const avatarFile = ref<File | null>(null)
@@ -30,10 +30,10 @@ async function fetchProfile() {
       avatarPreview.value = profile.avatar || null
     }
   } catch (error) {
-    // Use session data as fallback
-    if (session.value?.user) {
-      form.username = (session.value.user as any).username || ''
-      form.email = (session.value.user as any).email || ''
+    // Use auth user data as fallback
+    if (user.value) {
+      form.username = user.value.username || ''
+      form.email = user.value.email || ''
     }
   }
 }

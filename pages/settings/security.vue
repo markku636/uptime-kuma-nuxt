@@ -33,9 +33,13 @@ onMounted(async () => {
 async function fetchTwoFactorStatus() {
   try {
     const result = await $fetch('/api/auth/2fa/status') as any
-    twoFactorEnabled.value = result.enabled
-    disableAuth.value = result.disableAuth || false
-  } catch (error) {}
+    // Handle both { ok, data } format and direct format
+    const data = result?.data || result
+    twoFactorEnabled.value = data?.enabled || false
+    disableAuth.value = data?.disableAuth || false
+  } catch (error) {
+    console.error('Failed to fetch 2FA status:', error)
+  }
 }
 
 async function fetchActiveSessions() {

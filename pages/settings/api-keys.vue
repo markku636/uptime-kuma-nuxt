@@ -10,9 +10,15 @@ onMounted(async () => { await fetchKeys() })
 
 async function fetchKeys() {
   loading.value = true
-  try { apiKeys.value = await $fetch('/api/v1/api-keys') as any[] }
-  catch (error: any) { toast.add({ title: 'Error', description: error.data?.message || 'Failed to load', color: 'error' }) }
-  finally { loading.value = false }
+  try {
+    const response = await $fetch('/api/v1/api-keys') as any
+    // Handle both { ok, data } format and direct array format
+    apiKeys.value = response?.data || response || []
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to load', color: 'error' })
+  } finally {
+    loading.value = false
+  }
 }
 
 async function generateKey() {

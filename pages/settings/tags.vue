@@ -12,9 +12,15 @@ onMounted(async () => { await fetchTags() })
 
 async function fetchTags() {
   loading.value = true
-  try { tags.value = await $fetch('/api/v1/tags') as any[] }
-  catch (error: any) { toast.add({ title: 'Error', description: error.data?.message || 'Failed to load', color: 'error' }) }
-  finally { loading.value = false }
+  try {
+    const response = await $fetch('/api/v1/tags') as any
+    // Handle both { ok, data } format and direct array format
+    tags.value = response?.data || response || []
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to load', color: 'error' })
+  } finally {
+    loading.value = false
+  }
 }
 
 function openAddForm() {

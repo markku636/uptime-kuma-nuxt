@@ -10,9 +10,15 @@ onMounted(async () => { await fetchBrowsers() })
 
 async function fetchBrowsers() {
   loading.value = true
-  try { browsers.value = await $fetch('/api/v1/remote-browsers') as any[] }
-  catch (error: any) { toast.add({ title: 'Error', description: error.data?.message || 'Failed to load', color: 'error' }) }
-  finally { loading.value = false }
+  try {
+    const response = await $fetch('/api/v1/remote-browsers') as any
+    // Handle both { ok, data } format and direct array format
+    browsers.value = response?.data || response || []
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to load', color: 'error' })
+  } finally {
+    loading.value = false
+  }
 }
 
 function openAddForm() {

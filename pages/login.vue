@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+  <div class="login-page">
     <div class="w-full max-w-sm">
       <form @submit.prevent="handleLogin" class="space-y-6">
         <!-- Logo -->
-        <div class="text-center mb-8">
+        <div class="text-center">
           <img src="/icon.svg" alt="Uptime Kuma" width="64" height="64" class="mx-auto" />
-          <h1 class="text-2xl font-bold text-gray-100 mt-4">Uptime Kuma</h1>
+          <h1 class="text-2xl font-bold text-primary mt-3">Uptime Kuma</h1>
         </div>
 
         <!-- Username -->
@@ -42,12 +42,10 @@
         </div>
 
         <!-- Submit -->
-        <div class="pt-4">
-          <button type="submit" class="btn btn-primary w-full" :disabled="loading">
-            <span v-if="loading" class="spinner w-4 h-4 mr-2"></span>
-            Login
-          </button>
-        </div>
+        <button type="submit" class="btn btn-primary w-full" :disabled="loading">
+          <span v-if="loading" class="spinner w-4 h-4 mr-2"></span>
+          Login
+        </button>
       </form>
     </div>
   </div>
@@ -100,3 +98,14 @@ const handleLogin = async () => {
   }
 }
 </script>
+
+<style scoped>
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-primary);
+  padding: 1rem;
+}
+</style>

@@ -6,6 +6,32 @@
 
 <script setup lang="ts">
 // App entry point
+const colorMode = useColorMode()
+
+// Compute if dark mode is active
+const isDark = computed(() => {
+  return colorMode.value === 'dark'
+})
+
+// Apply dark class to html element when color mode changes
+watch(isDark, (dark) => {
+  if (import.meta.client) {
+    if (dark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }
+}, { immediate: true })
+
+// Also apply on mount
+onMounted(() => {
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+})
 
 // PWA meta tags
 useHead({

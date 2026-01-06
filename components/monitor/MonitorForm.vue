@@ -575,50 +575,16 @@ const httpMethods = [
 ]
 
 const gameTypes = [
-  // Popular Games
   { value: 'minecraft', label: 'Minecraft' },
-  { value: 'minecraftpe', label: 'Minecraft: Bedrock Edition' },
   { value: 'csgo', label: 'CS:GO / CS2' },
-  { value: 'cs16', label: 'Counter-Strike 1.6' },
   { value: 'tf2', label: 'Team Fortress 2' },
+  { value: 'arkse', label: 'ARK: Survival Evolved' },
   { value: 'rust', label: 'Rust' },
   { value: 'valheim', label: 'Valheim' },
   { value: 'terraria', label: 'Terraria' },
   { value: 'garrysmod', label: "Garry's Mod" },
   { value: 'dayz', label: 'DayZ' },
   { value: '7d2d', label: '7 Days to Die' },
-  // Survival Games
-  { value: 'arkse', label: 'ARK: Survival Evolved' },
-  { value: 'asa', label: 'ARK: Survival Ascended' },
-  { value: 'conanexiles', label: 'Conan Exiles' },
-  { value: 'palworld', label: 'Palworld' },
-  { value: 'vrising', label: 'V Rising' },
-  { value: 'projectzomboid', label: 'Project Zomboid' },
-  { value: 'satisfactory', label: 'Satisfactory' },
-  { value: 'enshrouded', label: 'Enshrouded' },
-  // FPS/Shooter
-  { value: 'squad', label: 'Squad' },
-  { value: 'insurgency', label: 'Insurgency: Sandstorm' },
-  { value: 'arma3', label: 'ARMA 3' },
-  { value: 'bf1942', label: 'Battlefield 1942' },
-  { value: 'bf2', label: 'Battlefield 2' },
-  { value: 'l4d2', label: 'Left 4 Dead 2' },
-  { value: 'mordhau', label: 'Mordhau' },
-  { value: 'unturned', label: 'Unturned' },
-  // Racing/Sports
-  { value: 'assettocorsa', label: 'Assetto Corsa' },
-  { value: 'fivem', label: 'FiveM (GTA V)' },
-  { value: 'ragemp', label: 'RAGE:MP (GTA V)' },
-  // Other Popular
-  { value: 'factorio', label: 'Factorio' },
-  { value: 'spaceengineers', label: 'Space Engineers' },
-  { value: 'starbound', label: 'Starbound' },
-  { value: 'starmade', label: 'StarMade' },
-  { value: 'empyrion', label: 'Empyrion' },
-  { value: 'killingfloor2', label: 'Killing Floor 2' },
-  { value: 'mumble', label: 'Mumble' },
-  { value: 'teamspeak3', label: 'TeamSpeak 3' },
-  { value: 'discord', label: 'Discord Bot' },
 ]
 
 // Computed properties for conditional fields

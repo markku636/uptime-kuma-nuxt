@@ -2,20 +2,20 @@
   <div class="settings-page">
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-white">Settings</h1>
+      <h1 class="text-2xl font-bold text-primary">Settings</h1>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-6">
       <!-- Settings Sidebar -->
       <div class="w-full lg:w-64 flex-shrink-0">
-        <div class="bg-gray-800 rounded-xl p-4 sticky top-20">
+        <div class="settings-sidebar">
           <nav class="space-y-1">
             <NuxtLink
               v-for="item in settingsNav"
               :key="item.to"
               :to="item.to"
-              class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-all"
-              :class="{ 'bg-green-500/20 text-green-400 border-l-4 border-green-500': isActive(item.to) }"
+              class="settings-nav-item"
+              :class="{ 'settings-nav-item-active': isActive(item.to) }"
             >
               <UIcon :name="item.icon" class="w-5 h-5 flex-shrink-0" />
               <span>{{ item.label }}</span>
@@ -26,10 +26,10 @@
 
       <!-- Settings Content -->
       <div class="flex-1 min-w-0">
-        <div class="bg-gray-800 rounded-xl">
+        <div class="settings-content">
           <!-- Content Header -->
-          <div v-if="currentPageTitle" class="px-6 py-4 border-b border-gray-700">
-            <h2 class="text-xl font-semibold text-white">{{ currentPageTitle }}</h2>
+          <div v-if="currentPageTitle" class="settings-content-header">
+            <h2 class="text-xl font-semibold text-primary">{{ currentPageTitle }}</h2>
           </div>
           
           <!-- Content Body -->
@@ -87,6 +87,45 @@ const isActive = (path: string) => route.path === path
   max-width: 1400px;
   margin: 0 auto;
   padding: 1.5rem;
+}
+
+.settings-sidebar {
+  background-color: var(--bg-secondary);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  position: sticky;
+  top: 5rem;
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.settings-nav-item:hover {
+  color: var(--text-primary);
+  background-color: var(--hover-bg);
+}
+
+.settings-nav-item-active {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: rgb(16 185 129) !important;
+  border-left: 4px solid rgb(16 185 129);
+}
+
+.settings-content {
+  background-color: var(--bg-secondary);
+  border-radius: 0.75rem;
+}
+
+.settings-content-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 @media (max-width: 1024px) {
