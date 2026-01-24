@@ -3,8 +3,9 @@
 // Database tables are created by docker-entrypoint.sh using prisma/init.sql
 
 import { initializeScheduler } from '../services/monitor/scheduler'
+import { initBackgroundJobs, stopBackgroundJobs } from '../jobs'
 
-export default defineNitroPlugin(async () => {
+export default defineNitroPlugin(async (nitroApp) => {
   console.log('[App] Starting initialization...')
   
   try {
@@ -13,7 +14,18 @@ export default defineNitroPlugin(async () => {
     console.log('[Scheduler] Initializing monitor scheduler...')
     await initializeScheduler()
     console.log('[Scheduler] Monitor scheduler initialized successfully')
+
+    // Initialize background jobs (clear-old-data, reconcile-monitors, etc.)
+    console.log('[Jobs] Initializing background jobs...')
+    await initBackgroundJobs()
+    console.log('[Jobs] Background jobs initialized successfully')
   } catch (error) {
     console.error('[App] Initialization failed:', error)
   }
+
+  // Register shutdown hook to stop background jobs gracefully
+  nitroApp.hooks.hook('close', () => {
+    console.log('[App] Shutting down...')
+    stopBackgroundJobs()
+  })
 })

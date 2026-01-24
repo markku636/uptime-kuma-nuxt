@@ -135,6 +135,7 @@
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
 const showShortcutsHelp = ref(false)
+const { clear } = useUserSession()
 
 // Toggle color mode
 const toggleColorMode = () => {
@@ -186,7 +187,13 @@ const profileMenuItems = [
     {
       label: 'Logout',
       icon: 'i-heroicons-arrow-right-on-rectangle',
-      click: () => {
+      click: async () => {
+        try {
+          await $fetch('/api/auth/logout', { method: 'POST' })
+        } catch {
+          // ignore
+        }
+        await clear()
         navigateTo('/login')
       }
     }

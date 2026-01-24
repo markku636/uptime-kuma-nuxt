@@ -1,12 +1,13 @@
+
 services:
   app:
     build: .
     ports:
-      - "3003:3000"
+      - "32401:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/uptime_kuma?schema=public
       - JWT_SECRET=your-secret-key-change-this
-      - NUXT_PUBLIC_APP_URL=http://localhost:3003
+      - NUXT_PUBLIC_APP_URL=http://localhost:32401
       - NUXT_SESSION_PASSWORD=2101fb00c0c04243a397cd43049a904e
     depends_on:
       db:
@@ -16,7 +17,7 @@ services:
   db:
     image: postgres:16-alpine
     ports:
-      - "5432:5432"
+      - "32402:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

@@ -924,6 +924,180 @@ const socketHandlers = {
   },
 
   // =====================
+  // Node Events (Cluster Management)
+  // =====================
+  async getNodeList(socket: AuthenticatedSocket, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      const nodes = await prisma.node.findMany({
+        orderBy: [
+          { isPrimary: 'desc' },
+          { createdAt: 'desc' }
+        ]
+      })
+
+      callback({ ok: true, nodes })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  async addNode(socket: AuthenticatedSocket, nodeData: any, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      const { nodeId, nodeName, host, hostname, location, isPrimary } = nodeData
+
+      // Validate required fields
+      if (!nodeId || !nodeName) {
+        return callback({ ok: false, msg: 'Node ID and Node Name are required' })
+      }
+
+      // Check if nodeId already exists
+      const existingNode = await prisma.node.findUnique({
+        where: { nodeId }
+      })
+
+      if (existingNode) {
+        return callback({ ok: false, msg: 'A node with this ID already exists' })
+      }
+
+      // If this node is set as primary, unset all other primary nodes
+      if (isPrimary) {
+        await prisma.node.updateMany({
+          where: { isPrimary: true },
+          data: { isPrimary: false }
+        })
+      }
+
+      const node = await prisma.node.create({
+        data: {
+          nodeId,
+          nodeName,
+          host: host || null,
+          hostname: hostname || null,
+          location: location || null,
+          isPrimary: !!isPrimary,
+          status: 'unknown'
+        }
+      })
+
+      console.log(`[Node] Added node: ${nodeId} (${nodeName}) by user ${socket.userId}`)
+
+      // Broadcast updated node list to all connected clients
+      const nodes = await prisma.node.findMany({
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }]
+      })
+      io?.emit('nodeList', nodes)
+
+      callback({ ok: true, msg: 'Node added successfully', node })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  async updateNode(socket: AuthenticatedSocket, nodeData: any, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      const { id, nodeId, nodeName, host, hostname, location, isPrimary } = nodeData
+
+      // Validate required fields
+      if (!nodeId || !nodeName) {
+        return callback({ ok: false, msg: 'Node ID and Node Name are required' })
+      }
+
+      // Find existing node by nodeId
+      const existingNode = await prisma.node.findUnique({
+        where: { nodeId }
+      })
+
+      if (!existingNode) {
+        return callback({ ok: false, msg: 'Node not found' })
+      }
+
+      // If this node is set as primary, unset all other primary nodes
+      if (isPrimary && !existingNode.isPrimary) {
+        await prisma.node.updateMany({
+          where: { 
+            isPrimary: true,
+            nodeId: { not: nodeId }
+          },
+          data: { isPrimary: false }
+        })
+      }
+
+      const node = await prisma.node.update({
+        where: { nodeId },
+        data: {
+          nodeName,
+          host: host || null,
+          hostname: hostname || null,
+          location: location || null,
+          isPrimary: !!isPrimary
+        }
+      })
+
+      console.log(`[Node] Updated node: ${nodeId} (${nodeName}) by user ${socket.userId}`)
+
+      // Broadcast updated node list to all connected clients
+      const nodes = await prisma.node.findMany({
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }]
+      })
+      io?.emit('nodeList', nodes)
+
+      callback({ ok: true, msg: 'Node updated successfully', node })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  async deleteNode(socket: AuthenticatedSocket, nodeId: number, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      const node = await prisma.node.findUnique({
+        where: { id: nodeId }
+      })
+
+      if (!node) {
+        return callback({ ok: false, msg: 'Node not found' })
+      }
+
+      // TODO: Check if any monitors are assigned to this node
+      // const assignedMonitors = await prisma.monitor.findMany({
+      //   where: { OR: [{ assignedNode: node.nodeId }, { nodeId: node.nodeId }] }
+      // })
+      // if (assignedMonitors.length > 0) {
+      //   return callback({ ok: false, msg: `Cannot delete node. ${assignedMonitors.length} monitor(s) are assigned to this node.` })
+      // }
+
+      await prisma.node.delete({ where: { id: nodeId } })
+
+      console.log(`[Node] Deleted node: ${node.nodeId} (${node.nodeName}) by user ${socket.userId}`)
+
+      // Broadcast updated node list to all connected clients
+      const nodes = await prisma.node.findMany({
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }]
+      })
+      io?.emit('nodeList', nodes)
+
+      callback({ ok: true, msg: 'Node deleted successfully' })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  // =====================
   // Tag Events (Extended)
   // =====================
   async addTag(socket: AuthenticatedSocket, tag: any, callback: Function) {
@@ -1555,6 +1729,114 @@ const socketHandlers = {
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
     }
+  },
+
+  // =====================
+  // Chrome/Browser Testing
+  // =====================
+  async testChrome(socket: AuthenticatedSocket, executablePath: string, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      // Try to launch Chrome/Chromium with the given executable path
+      // Note: This requires playwright to be installed
+      let chromePath = executablePath
+      
+      if (!chromePath) {
+        // Try to find Chrome automatically
+        const possiblePaths = [
+          // Windows
+          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
+          // Linux
+          '/usr/bin/google-chrome',
+          '/usr/bin/chromium-browser',
+          '/usr/bin/chromium',
+          // macOS
+          '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+          '/Applications/Chromium.app/Contents/MacOS/Chromium'
+        ]
+        
+        const fs = await import('fs')
+        for (const path of possiblePaths) {
+          if (path && fs.existsSync(path)) {
+            chromePath = path
+            break
+          }
+        }
+      }
+
+      if (!chromePath) {
+        return callback({
+          ok: false,
+          msg: 'Chrome/Chromium executable not found. Please specify the path manually.'
+        })
+      }
+
+      // For now, just check if the file exists
+      const fs = await import('fs')
+      if (!fs.existsSync(chromePath)) {
+        return callback({
+          ok: false,
+          msg: `Chrome executable not found at: ${chromePath}`
+        })
+      }
+
+      // Try to get version using child_process
+      const { execSync } = await import('child_process')
+      let version = 'Unknown'
+      
+      try {
+        // Try to get Chrome version
+        if (process.platform === 'win32') {
+          const output = execSync(`"${chromePath}" --version`, { encoding: 'utf8', timeout: 5000 })
+          version = output.trim().replace(/^.*Chrome\s*/, '').trim()
+        } else {
+          const output = execSync(`"${chromePath}" --version`, { encoding: 'utf8', timeout: 5000 })
+          version = output.trim()
+        }
+      } catch (e) {
+        // If we can't get version, just confirm the file exists
+        version = 'Found (version check failed)'
+      }
+
+      callback({
+        ok: true,
+        msg: {
+          key: 'foundChromiumVersion',
+          values: [version]
+        },
+        msgi18n: true
+      })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  async testRemoteBrowser(socket: AuthenticatedSocket, remoteBrowserURL: string, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      // Validate URL format
+      const url = new URL(remoteBrowserURL)
+      if (!url.protocol.startsWith('ws')) {
+        return callback({ ok: false, msg: 'Remote browser URL must use WebSocket protocol (ws:// or wss://)' })
+      }
+
+      // For now, just validate the URL format
+      // Actual connection test would require playwright
+      callback({ 
+        ok: true, 
+        msg: 'Remote browser URL format is valid. Actual connection test requires Playwright.' 
+      })
+    } catch (error: any) {
+      callback({ ok: false, msg: `Invalid URL: ${error.message}` })
+    }
   }
 }
 
@@ -1665,6 +1947,14 @@ export function initSocketServer(httpServer: HTTPServer) {
     socket.on('testDockerHost', (dockerHost, callback) => socketHandlers.testDockerHost(socket, dockerHost, callback))
 
     // =====================
+    // Node Event Handlers (Cluster Management)
+    // =====================
+    socket.on('getNodeList', (callback) => socketHandlers.getNodeList(socket, callback))
+    socket.on('addNode', (nodeData, callback) => socketHandlers.addNode(socket, nodeData, callback))
+    socket.on('updateNode', (nodeData, callback) => socketHandlers.updateNode(socket, nodeData, callback))
+    socket.on('deleteNode', (nodeId, callback) => socketHandlers.deleteNode(socket, nodeId, callback))
+
+    // =====================
     // Database Event Handlers
     // =====================
     socket.on('shrinkDatabase', (callback) => socketHandlers.shrinkDatabase(socket, callback))
@@ -1677,6 +1967,8 @@ export function initSocketServer(httpServer: HTTPServer) {
     socket.on('initServerTimezone', (callback) => socketHandlers.initServerTimezone(socket, callback))
     socket.on('getGameList', (callback) => socketHandlers.getGameList(socket, callback))
     socket.on('getPushExample', (monitorId, callback) => socketHandlers.getPushExample(socket, monitorId, callback))
+    socket.on('testChrome', (executablePath, callback) => socketHandlers.testChrome(socket, executablePath, callback))
+    socket.on('testRemoteBrowser', (remoteBrowserURL, callback) => socketHandlers.testRemoteBrowser(socket, remoteBrowserURL, callback))
 
     // =====================
     // Subscription Event Handlers (for real-time updates)

@@ -59,6 +59,7 @@ const settingsNav = [
   { label: 'Security', to: '/settings/security', icon: 'i-heroicons-shield-check' },
   { label: 'Tags', to: '/settings/tags', icon: 'i-heroicons-tag' },
   { label: 'Monitor History', to: '/settings/monitor-history', icon: 'i-heroicons-clock' },
+  { label: 'Nodes', to: '/settings/nodes', icon: 'i-heroicons-server-stack' },
   { label: 'Proxies', to: '/settings/proxies', icon: 'i-heroicons-server' },
   { label: 'Docker Hosts', to: '/settings/docker-hosts', icon: 'i-heroicons-cube' },
   { label: 'Remote Browsers', to: '/settings/remote-browsers', icon: 'i-heroicons-globe-alt' },

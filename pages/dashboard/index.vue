@@ -533,21 +533,25 @@ onMounted(() => {
   })
 })
 
+// Auto-refresh interval reference
+let refreshInterval: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  // Auto-refresh every 30 seconds as fallback
+  refreshInterval = setInterval(() => {
+    if (!socketConnected.value) {
+      refresh()
+    }
+  }, 30000)
+})
+
 onUnmounted(() => {
   if (socket) {
     socket.emit('unsubscribe_monitors')
     $socket?.disconnect()
   }
-})
-
-// Auto-refresh every 30 seconds as fallback
-const refreshInterval = setInterval(() => {
-  if (!socketConnected.value) {
-    refresh()
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
   }
-}, 30000)
-
-onUnmounted(() => {
-  clearInterval(refreshInterval)
 })
 </script>

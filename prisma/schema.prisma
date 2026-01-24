@@ -385,3 +385,25 @@ model RemoteBrowser {
   @@index([userId])
   @@map("remote_browsers")
 }
+
+model Node {
+  id           Int       @id @default(autoincrement())
+  nodeId       String    @unique @map("node_id")
+  nodeName     String    @map("node_name")
+  host         String?
+  hostname     String?
+  location     String?
+  status       String    @default("unknown") // online, offline, unknown
+  active       Boolean   @default(true)
+  isPrimary    Boolean   @default(false) @map("is_primary")
+  lastSeen     DateTime? @map("last_seen")
+  lastError    String?   @map("last_error")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  modifiedAt   DateTime  @updatedAt @map("modified_at")
+
+  @@index([nodeId])
+  @@index([status])
+  @@index([active])
+  @@index([isPrimary])
+  @@map("nodes")
+}

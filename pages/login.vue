@@ -42,7 +42,7 @@
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="btn btn-primary w-full" :disabled="loading">
+        <button type="submit" class="btn btn-primary w-full mt-4" :disabled="loading">
           <span v-if="loading" class="spinner w-4 h-4 mr-2"></span>
           Login
         </button>
