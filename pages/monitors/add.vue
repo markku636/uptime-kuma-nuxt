@@ -6,7 +6,7 @@
         <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1" />
         Back to Dashboard
       </NuxtLink>
-      <h1 class="text-2xl font-bold text-gray-100">Add New Monitor</h1>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Add New Monitor</h1>
     </div>
 
     <!-- Form -->
@@ -62,7 +62,7 @@
             <!-- Push Token Display -->
             <div v-if="form.type === 'push'" class="form-group md:col-span-2">
               <label class="input-label">Push URL</label>
-              <div class="bg-gray-700 rounded-lg p-3 text-sm text-gray-300 font-mono">
+              <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-sm text-gray-700 dark:text-gray-300 font-mono">
                 Push URL will be generated after creation
               </div>
               <p class="text-xs text-gray-500 mt-1">Send a GET or POST request to this URL to report a heartbeat</p>
@@ -138,11 +138,11 @@
           <div class="mt-4 space-y-3">
             <label class="flex items-center gap-2">
               <input type="checkbox" v-model="form.ignoreTls" class="checkbox" />
-              <span class="text-gray-300">Ignore TLS/SSL Certificate Errors</span>
+              <span class="text-gray-700 dark:text-gray-300">Ignore TLS/SSL Certificate Errors</span>
             </label>
             <label v-if="form.type === 'keyword'" class="flex items-center gap-2">
               <input type="checkbox" v-model="form.invertKeyword" class="checkbox" />
-              <span class="text-gray-300">Invert Keyword (alert if found)</span>
+              <span class="text-gray-700 dark:text-gray-300">Invert Keyword (alert if found)</span>
             </label>
           </div>
         </div>
@@ -157,7 +157,7 @@
           <div v-show="showTlsSection" class="mt-4 space-y-4">
             <label class="flex items-center gap-2">
               <input type="checkbox" v-model="form.expiryNotification" class="checkbox" />
-              <span class="text-gray-300">Enable Certificate Expiry Notification</span>
+              <span class="text-gray-700 dark:text-gray-300">Enable Certificate Expiry Notification</span>
             </label>
 
             <div v-if="form.expiryNotification" class="form-group">
@@ -170,7 +170,7 @@
                   :class="tlsExpiryDays.includes(days) ? 'bg-emerald-600/30 border border-emerald-500' : 'bg-gray-700 hover:bg-gray-600 border border-transparent'"
                 >
                   <input type="checkbox" :value="days" v-model="tlsExpiryDays" class="hidden" />
-                  <span class="text-sm text-gray-300">{{ days }} days</span>
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ days }} days</span>
                 </label>
               </div>
               <p class="text-xs text-gray-500 mt-2">Select which days before expiry you want to be notified</p>
@@ -317,11 +317,11 @@
             <div class="space-y-3 mb-4">
               <label class="flex items-center gap-2">
                 <input type="checkbox" v-model="form.upsideDown" class="checkbox" />
-                <span class="text-gray-300">Upside Down Mode (alert when UP)</span>
+                <span class="text-gray-700 dark:text-gray-300">Upside Down Mode (alert when UP)</span>
               </label>
               <label class="flex items-center gap-2">
                 <input type="checkbox" v-model="form.active" class="checkbox" />
-                <span class="text-gray-300">Active (start monitoring immediately)</span>
+                <span class="text-gray-700 dark:text-gray-300">Active (start monitoring immediately)</span>
               </label>
             </div>
 
@@ -349,11 +349,11 @@
                   v-for="tag in availableTags" 
                   :key="tag.id" 
                   class="flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-all"
-                  :class="selectedTags.includes(tag.id) ? 'bg-gray-600' : 'bg-gray-700 hover:bg-gray-600'"
+                  :class="selectedTags.includes(tag.id) ? 'bg-gray-200 dark:bg-gray-600' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'"
                 >
                   <input type="checkbox" :value="tag.id" v-model="selectedTags" class="hidden" />
                   <span class="w-3 h-3 rounded" :style="{ backgroundColor: tag.color }"></span>
-                  <span class="text-sm text-gray-300">{{ tag.name }}</span>
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ tag.name }}</span>
                 </label>
               </div>
             </div>
@@ -365,10 +365,10 @@
                 <label 
                   v-for="notif in notifications" 
                   :key="notif.id" 
-                  class="flex items-center gap-2 p-2 rounded bg-gray-700 cursor-pointer hover:bg-gray-600"
+                  class="flex items-center gap-2 p-2 rounded bg-gray-100 dark:bg-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
                 >
                   <input type="checkbox" :value="notif.id" v-model="selectedNotifications" class="checkbox" />
-                  <span class="text-sm text-gray-300">{{ notif.name }}</span>
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ notif.name }}</span>
                   <span class="text-xs text-gray-500">({{ notif.type }})</span>
                 </label>
               </div>

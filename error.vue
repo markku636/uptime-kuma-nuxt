@@ -39,8 +39,8 @@
       
       <!-- Debug info in development -->
       <div v-if="isDev && error?.stack" class="mt-8 text-left max-w-2xl mx-auto">
-        <details class="bg-gray-800 rounded-lg p-4">
-          <summary class="text-gray-400 cursor-pointer">Stack Trace</summary>
+        <details class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+          <summary class="text-gray-600 dark:text-gray-400 cursor-pointer">Stack Trace</summary>
           <pre class="mt-4 text-xs text-red-400 overflow-auto">{{ error.stack }}</pre>
         </details>
       </div>

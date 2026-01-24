@@ -1,21 +1,133 @@
 
-services:
-  app:
-    build: .
-    ports:
-      - "32401:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/uptime_kuma?schema=public
-      - JWT_SECRET=your-secret-key-change-this
-      - NUXT_PUBLIC_APP_URL=http://localhost:32401
-      - NUXT_SESSION_PASSWORD=2101fb00c0c04243a397cd43049a904e
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
+# =============================================================================
+# Uptime Kuma Nuxt.js Cluster with OpenResty
+# =============================================================================
+# 使用 OpenResty 作為負載均衡器，支援節點切換
+#
+# Usage:
+#   docker-compose up -d --build
+#
+# Access:
+#   http://localhost:32400/dashboard
+#
+# Node Switch API:
+#   GET  /api/cluster/nodes    - 取得所有節點狀態
+#   GET  /api/cluster/current  - 取得當前節點
+#   POST /api/cluster/switch   - 切換節點 {"node": "node1|node2|node3|auto"}
+# =============================================================================
 
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  kuma-nuxt-network:
+    driver: bridge
+
+# 共用配置
+x-app-common: &app-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  networks:
+    - kuma-nuxt-network
+  environment: &app-env
+    DATABASE_URL: postgresql://postgres:postgres@db:5432/uptime_kuma?schema=public
+    JWT_SECRET: your-secret-key-change-this-in-production
+    NUXT_PUBLIC_APP_URL: http://localhost:32400
+    NUXT_SESSION_PASSWORD: 2101fb00c0c04243a397cd43049a904e
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  # ==========================================================================
+  # OpenResty Load Balancer / Reverse Proxy
+  # ==========================================================================
+  openresty:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: nuxt-kuma-openresty
+    restart: unless-stopped
+    ports:
+      - "32400:80"
+    depends_on:
+      - app1
+      - app2
+      - app3
+    networks:
+      - kuma-nuxt-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ==========================================================================
+  # Nuxt.js Application Node 1
+  # ==========================================================================
+  app1:
+    <<: *app-common
+    container_name: nuxt-kuma-app1
+    ports:
+      - "32411:3000"
+    environment:
+      <<: *app-env
+      NODE_ID: node1
+      NODE_NAME: "Node 1"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==========================================================================
+  # Nuxt.js Application Node 2
+  # ==========================================================================
+  app2:
+    <<: *app-common
+    container_name: nuxt-kuma-app2
+    ports:
+      - "32412:3000"
+    environment:
+      <<: *app-env
+      NODE_ID: node2
+      NODE_NAME: "Node 2"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==========================================================================
+  # Nuxt.js Application Node 3
+  # ==========================================================================
+  app3:
+    <<: *app-common
+    container_name: nuxt-kuma-app3
+    ports:
+      - "32413:3000"
+    environment:
+      <<: *app-env
+      NODE_ID: node3
+      NODE_NAME: "Node 3"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==========================================================================
+  # PostgreSQL Database
+  # ==========================================================================
   db:
     image: postgres:16-alpine
+    container_name: nuxt-kuma-postgres
     ports:
       - "32402:5432"
     environment:
@@ -24,12 +136,11 @@ services:
       POSTGRES_DB: uptime_kuma
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kuma-nuxt-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
-volumes:
-  postgres_data:

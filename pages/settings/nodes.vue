@@ -160,7 +160,7 @@ function formatDateTime(dateTime: string | null) {
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <h4 class="text-lg font-semibold text-white">Cluster Nodes</h4>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Cluster Nodes</h4>
       <button class="btn btn-primary" @click="openAddForm">
         <span class="i-heroicons-plus mr-1"></span>
         Add Node
@@ -168,13 +168,13 @@ function formatDateTime(dateTime: string | null) {
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="text-center py-8 text-gray-400">
+    <div v-if="loading" class="text-center py-8 text-gray-600 dark:text-gray-400">
       Loading...
     </div>
 
     <!-- Empty State -->
     <div v-else-if="nodes.length === 0" class="section-card text-center py-8">
-      <p class="text-gray-400 mb-4">No nodes configured yet.</p>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">No nodes configured yet.</p>
       <p class="text-gray-500 text-sm mb-4">
         Node management allows you to organize monitors across multiple Uptime Kuma instances.
       </p>
@@ -202,10 +202,10 @@ function formatDateTime(dateTime: string | null) {
             <!-- Node Info -->
             <div>
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-lg font-semibold text-white">
+                <span class="text-lg font-semibold text-gray-900 dark:text-white">
                   {{ node.nodeName }}
                 </span>
-                <span class="text-sm text-gray-500 font-mono bg-gray-700/50 px-2 py-0.5 rounded">
+                <span class="text-sm text-gray-500 font-mono bg-gray-200 dark:bg-gray-700/50 px-2 py-0.5 rounded">
                   {{ node.nodeId }}
                 </span>
                 <span 
@@ -222,7 +222,7 @@ function formatDateTime(dateTime: string | null) {
                 </span>
               </div>
               
-              <div class="flex items-center gap-4 text-sm text-gray-400">
+              <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                 <span class="flex items-center gap-1">
                   <span class="i-heroicons-signal text-xs"></span>
                   {{ getStatusText(node.status) }}
@@ -273,15 +273,15 @@ function formatDateTime(dateTime: string | null) {
       v-if="showForm" 
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
-      <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-xl font-bold text-white mb-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
           {{ editingNode ? 'Edit Node' : 'Add Node' }}
         </h3>
         
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Node ID -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Node ID *
             </label>
             <input
@@ -299,7 +299,7 @@ function formatDateTime(dateTime: string | null) {
           
           <!-- Node Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Node Name *
             </label>
             <input
@@ -316,7 +316,7 @@ function formatDateTime(dateTime: string | null) {
           
           <!-- Host -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Host
             </label>
             <input
@@ -332,7 +332,7 @@ function formatDateTime(dateTime: string | null) {
           
           <!-- Location -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Location
             </label>
             <input
@@ -354,7 +354,7 @@ function formatDateTime(dateTime: string | null) {
               id="isPrimary"
               class="form-checkbox rounded text-green-500"
             />
-            <label for="isPrimary" class="text-gray-300">
+            <label for="isPrimary" class="text-gray-700 dark:text-gray-300">
               Primary Node
             </label>
           </div>
@@ -384,9 +384,9 @@ function formatDateTime(dateTime: string | null) {
       v-if="showDeleteConfirm" 
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
-      <div class="bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4">
-        <h3 class="text-xl font-bold text-white mb-4">Delete Node</h3>
-        <p class="text-gray-300 mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Delete Node</h3>
+        <p class="text-gray-700 dark:text-gray-300 mb-6">
           Are you sure you want to delete this node?
         </p>
         <div class="flex justify-end gap-2">

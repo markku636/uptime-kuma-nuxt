@@ -4,6 +4,7 @@ import dns from 'dns'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import type { CheckResult } from '../checker'
+import { evaluateJsonQuery } from '../../../utils/json-query'
 
 const execAsync = promisify(exec)
 
@@ -263,6 +264,162 @@ export async function checkTailscalePing(monitor: any, startTime: number): Promi
       status: monitor.upsideDown ? 1 : 0,
       ping: Date.now() - startTime,
       msg: error.message || 'Tailscale ping failed'
+    }
+  }
+}
+
+/**
+ * Check SNMP monitor
+ * Queries an SNMP OID and evaluates the result against a JSONPath expression
+ */
+export async function checkSnmp(monitor: any, startTime: number): Promise<CheckResult> {
+  let session: any = null
+  
+  try {
+    // Dynamic import of net-snmp
+    const snmp = await import('snmp-native')
+    
+    if (!monitor.hostname) {
+      return {
+        status: 0,
+        ping: 0,
+        msg: 'SNMP hostname is required'
+      }
+    }
+    
+    if (!monitor.snmpOid) {
+      return {
+        status: 0,
+        ping: 0,
+        msg: 'SNMP OID is required'
+      }
+    }
+    
+    const port = monitor.port || 161
+    const timeout = (monitor.timeout || 48) * 1000
+    const community = monitor.radiusPassword || 'public' // radiusPassword is reused for SNMP community string
+    const snmpVersion = monitor.snmpVersion || '2c'
+    
+    return new Promise(async (resolve) => {
+      try {
+        // Create SNMP session
+        const sessionOptions: any = {
+          host: monitor.hostname,
+          port,
+          community,
+          timeouts: [timeout]
+        }
+        
+        // Map version string to SNMP version constant
+        if (snmpVersion === '1') {
+          sessionOptions.version = 0 // SNMPv1
+        } else if (snmpVersion === '2c') {
+          sessionOptions.version = 1 // SNMPv2c
+        }
+        // Note: SNMPv3 requires additional configuration (authProtocol, privProtocol, etc.)
+        
+        session = new snmp.Session(sessionOptions)
+        
+        // Set up timeout
+        const timeoutId = setTimeout(() => {
+          if (session) {
+            session.close()
+          }
+          resolve({
+            status: monitor.upsideDown ? 1 : 0,
+            ping: Date.now() - startTime,
+            msg: 'SNMP timeout'
+          })
+        }, timeout)
+        
+        // Perform SNMP GET
+        session.get({ oid: monitor.snmpOid }, (error: any, varbinds: any) => {
+          clearTimeout(timeoutId)
+          
+          if (error) {
+            if (session) {
+              session.close()
+            }
+            resolve({
+              status: monitor.upsideDown ? 1 : 0,
+              ping: Date.now() - startTime,
+              msg: `SNMP error: ${error.message || error}`
+            })
+            return
+          }
+          
+          const ping = Date.now() - startTime
+          
+          if (!varbinds || varbinds.length === 0) {
+            if (session) {
+              session.close()
+            }
+            resolve({
+              status: monitor.upsideDown ? 1 : 0,
+              ping,
+              msg: `No varbinds returned from SNMP session (OID: ${monitor.snmpOid})`
+            })
+            return
+          }
+          
+          const value = varbinds[0]?.value
+          
+          console.log(`[SNMP] Received value for OID ${monitor.snmpOid}: ${value}`)
+          
+          // Evaluate JSON query if specified
+          evaluateJsonQuery(
+            value,
+            monitor.jsonPath,
+            monitor.jsonPathOperator,
+            monitor.expectedValue
+          ).then(({ status, response }) => {
+            if (session) {
+              session.close()
+            }
+            
+            if (status) {
+              resolve({
+                status: monitor.upsideDown ? 0 : 1,
+                ping,
+                msg: `SNMP query passed (value: ${response}, expected: ${monitor.expectedValue || 'any'})`
+              })
+            } else {
+              resolve({
+                status: monitor.upsideDown ? 1 : 0,
+                ping,
+                msg: `SNMP query failed (value: ${response}, expected: ${monitor.expectedValue || 'any'})`
+              })
+            }
+          }).catch((e: any) => {
+            if (session) {
+              session.close()
+            }
+            resolve({
+              status: monitor.upsideDown ? 1 : 0,
+              ping,
+              msg: `SNMP evaluation error: ${e.message}`
+            })
+          })
+        })
+      } catch (err: any) {
+        if (session) {
+          session.close()
+        }
+        resolve({
+          status: monitor.upsideDown ? 1 : 0,
+          ping: Date.now() - startTime,
+          msg: `SNMP session error: ${err.message}`
+        })
+      }
+    })
+  } catch (error: any) {
+    if (session) {
+      session.close()
+    }
+    return {
+      status: monitor.upsideDown ? 1 : 0,
+      ping: Date.now() - startTime,
+      msg: `SNMP check failed: ${error.message}`
     }
   }
 }

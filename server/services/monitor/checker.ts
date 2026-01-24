@@ -19,7 +19,8 @@ import {
   checkPing,
   checkDns,
   checkRadius,
-  checkTailscalePing
+  checkTailscalePing,
+  checkSnmp
 } from './checkers'
 
 export interface CheckResult {
@@ -96,6 +97,9 @@ export async function checkMonitor(monitor: any): Promise<CheckResult> {
       
       case 'tailscale-ping':
         return await checkTailscalePing(monitor, startTime)
+      
+      case 'snmp':
+        return await checkSnmp(monitor, startTime)
       
       case 'group':
         // Group monitors aggregate status from children

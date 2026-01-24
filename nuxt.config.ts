@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     'nuxt-auth-utils',
     '@nuxtjs/i18n',
+    '@vueuse/nuxt',
   ],
 
   i18n: {

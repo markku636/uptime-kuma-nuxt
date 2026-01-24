@@ -5,7 +5,7 @@ import { startMonitorJob } from '../../../services/monitor/scheduler'
 
 const createMonitorSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  type: z.enum(['http', 'tcp', 'ping', 'dns', 'push', 'docker', 'keyword', 'json-query', 'grpc-keyword', 'database']),
+  type: z.string().min(1, 'Type is required'),  // Support all 24 monitor types
   url: z.string().optional().nullable(),
   hostname: z.string().optional().nullable(),
   port: z.number().optional().nullable(),

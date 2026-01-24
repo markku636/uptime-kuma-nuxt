@@ -61,8 +61,8 @@ export function useStatusPages(options: UseStatusPagesOptions = {}) {
       isLoading.value = true
       error.value = null
       
-      const data = await $fetch<StatusPage[]>('/api/v1/status-pages')
-      statusPages.value = data
+      const response = await $fetch<{ ok: boolean; data: StatusPage[] }>('/api/v1/status-pages')
+      statusPages.value = response.data || []
     } catch (e: any) {
       error.value = e.message || 'Failed to fetch status pages'
       console.error('Failed to fetch status pages:', e)

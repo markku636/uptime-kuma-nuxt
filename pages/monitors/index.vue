@@ -2,8 +2,8 @@
   <div class="page-container">
     <div class="flex justify-between items-center mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-100">Monitors</h1>
-        <p class="text-gray-400">Manage your monitors</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Monitors</h1>
+        <p class="text-gray-600 dark:text-gray-400">Manage your monitors</p>
       </div>
       <NuxtLink to="/monitors/add" class="btn btn-primary">
         <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
@@ -14,12 +14,12 @@
     <div class="card card-body">
       <div v-if="pending" class="text-center py-12">
         <div class="spinner w-8 h-8 mx-auto"></div>
-        <p class="text-gray-400 mt-2">Loading monitors...</p>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Loading monitors...</p>
       </div>
 
       <div v-else-if="monitors.length === 0" class="text-center py-12">
         <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto text-gray-500 mb-3" />
-        <p class="text-gray-400 mb-4">No monitors yet</p>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">No monitors yet</p>
         <NuxtLink to="/monitors/add" class="btn btn-primary">
           Add your first monitor
         </NuxtLink>
@@ -30,19 +30,19 @@
           v-for="monitor in monitors"
           :key="monitor.id"
           :to="`/monitors/${monitor.id}`"
-          class="block p-4 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+          class="block p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span :class="getStatusDotClass(monitor)" class="w-3 h-3 rounded-full"></span>
-              <span class="font-semibold text-gray-100">{{ monitor.name }}</span>
+              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ monitor.name }}</span>
               <span class="text-gray-500 text-sm uppercase">{{ monitor.type }}</span>
             </div>
             <span :class="getStatusBadgeClass(monitor)" class="badge">
               {{ getStatusText(monitor) }}
             </span>
           </div>
-          <div v-if="monitor.url" class="text-gray-400 text-sm mt-1 ml-6 truncate">
+          <div v-if="monitor.url" class="text-gray-600 dark:text-gray-400 text-sm mt-1 ml-6 truncate">
             {{ monitor.url }}
           </div>
         </NuxtLink>

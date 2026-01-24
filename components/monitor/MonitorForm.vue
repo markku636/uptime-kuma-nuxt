@@ -97,7 +97,7 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-300">Invert Keyword (alert if found)</span>
+          <span class="text-gray-700 dark:text-gray-300">Invert Keyword (alert if found)</span>
         </label>
 
         <label class="flex items-center gap-2 cursor-pointer">
@@ -107,8 +107,281 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-300">Ignore TLS/SSL Certificate</span>
+          <span class="text-gray-700 dark:text-gray-300">Ignore TLS/SSL Certificate</span>
         </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input 
+            v-model="form.cacheBust" 
+            type="checkbox" 
+            class="checkbox"
+            :disabled="loading"
+          />
+          <span class="text-gray-700 dark:text-gray-300">Cache Bust (add random query string)</span>
+        </label>
+      </div>
+
+      <!-- Remote Browser (for Keyword monitoring) -->
+      <div v-if="form.type === 'keyword'" class="mt-4">
+        <label class="flex items-center gap-2 cursor-pointer mb-2">
+          <input 
+            v-model="form.useRemoteBrowser" 
+            type="checkbox" 
+            class="checkbox"
+            :disabled="loading"
+          />
+          <span class="text-gray-700 dark:text-gray-300">Use Remote Browser</span>
+        </label>
+        <p class="text-xs text-gray-400 mb-2">Use a Chromium-based browser to render JavaScript content before checking for keyword</p>
+        
+        <div v-if="form.useRemoteBrowser" class="mt-2">
+          <label class="input-label">Remote Browser</label>
+          <select v-model="form.remoteBrowser" class="select-field" :disabled="loading">
+            <option :value="null">Auto Select</option>
+            <option v-for="browser in remoteBrowsers" :key="browser.id" :value="browser.id">
+              {{ browser.name }}
+            </option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">
+            <NuxtLink to="/settings/remote-browsers" class="text-green-400 hover:underline">Manage Remote Browsers</NuxtLink>
+          </p>
+        </div>
+      </div>
+
+      <!-- Proxy Selection -->
+      <div class="mt-4">
+        <label class="input-label">Proxy</label>
+        <select v-model="form.proxyId" class="select-field" :disabled="loading">
+          <option :value="null">No Proxy</option>
+          <option v-for="proxy in proxies" :key="proxy.id" :value="proxy.id">
+            {{ proxy.protocol }}://{{ proxy.host }}:{{ proxy.port }}
+            <span v-if="proxy.isDefault">(Default)</span>
+          </option>
+        </select>
+        <p class="text-xs text-gray-400 mt-1">
+          <NuxtLink to="/settings/proxies" class="text-green-400 hover:underline">Manage Proxies</NuxtLink>
+        </p>
+      </div>
+
+      <!-- Accepted Status Codes -->
+      <div class="mt-4">
+        <label class="input-label">Accepted Status Codes</label>
+        <input 
+          v-model="form.acceptedStatuscodes" 
+          type="text" 
+          class="input-field" 
+          placeholder="200-299"
+          :disabled="loading"
+        />
+        <p class="text-xs text-gray-400 mt-1">Select status codes which are considered as a successful response. Use comma to separate multiple codes (e.g., 200-299, 301, 302)</p>
+      </div>
+
+      <!-- Max Redirects -->
+      <div class="mt-4">
+        <label class="input-label">Max Redirects</label>
+        <input 
+          v-model.number="form.maxRedirects" 
+          type="number" 
+          class="input-field w-32" 
+          min="0"
+          max="100"
+          :disabled="loading"
+        />
+        <p class="text-xs text-gray-400 mt-1">Maximum number of redirects to follow. Set to 0 to disable.</p>
+      </div>
+
+      <!-- HTTP Headers -->
+      <div class="mt-4">
+        <label class="input-label">HTTP Headers</label>
+        <div class="space-y-2">
+          <div 
+            v-for="(header, index) in form.headers" 
+            :key="index" 
+            class="flex gap-2"
+          >
+            <input 
+              v-model="header.key" 
+              type="text" 
+              class="input-field flex-1" 
+              placeholder="Header Name"
+              :disabled="loading"
+            />
+            <input 
+              v-model="header.value" 
+              type="text" 
+              class="input-field flex-1" 
+              placeholder="Header Value"
+              :disabled="loading"
+            />
+            <button 
+              type="button" 
+              class="btn btn-outline text-red-400 hover:bg-red-500/20"
+              @click="removeHeader(index)"
+              :disabled="loading"
+            >
+              <UIcon name="i-heroicons-trash" class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          class="btn btn-outline text-sm mt-2"
+          @click="addHeader"
+          :disabled="loading"
+        >
+          <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-1" />
+          Add Header
+        </button>
+      </div>
+
+      <!-- Request Body (for POST/PUT/PATCH) -->
+      <div v-if="['POST', 'PUT', 'PATCH'].includes(form.method)" class="mt-4">
+        <label class="input-label">Request Body</label>
+        <textarea 
+          v-model="form.body" 
+          class="input-field" 
+          rows="4" 
+          placeholder='{"key": "value"}'
+          :disabled="loading"
+        ></textarea>
+        <p class="text-xs text-gray-400 mt-1">JSON format for the request body</p>
+      </div>
+
+      <!-- Authentication Method -->
+      <div class="mt-4">
+        <label class="input-label">Authentication Method</label>
+        <select v-model="form.authMethod" class="select-field" :disabled="loading">
+          <option value="">None</option>
+          <option value="basic">HTTP Basic Auth</option>
+          <option value="ntlm">NTLM</option>
+          <option value="mtls">mTLS (Client Certificate)</option>
+          <option value="oauth2-cc">OAuth2: Client Credentials</option>
+        </select>
+      </div>
+
+      <!-- Basic Auth / NTLM -->
+      <div v-if="form.authMethod === 'basic' || form.authMethod === 'ntlm'" class="mt-4 grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">Username</label>
+          <input 
+            v-model="form.basicAuthUser" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+        <div class="form-group">
+          <label class="input-label">Password</label>
+          <input 
+            v-model="form.basicAuthPass" 
+            type="password" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+        <div v-if="form.authMethod === 'ntlm'" class="form-group">
+          <label class="input-label">Domain</label>
+          <input 
+            v-model="form.authDomain" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+        <div v-if="form.authMethod === 'ntlm'" class="form-group">
+          <label class="input-label">Workstation</label>
+          <input 
+            v-model="form.authWorkstation" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+      </div>
+
+      <!-- OAuth2 Client Credentials -->
+      <div v-if="form.authMethod === 'oauth2-cc'" class="mt-4 grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Token URL <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.oauthTokenUrl" 
+            type="text" 
+            class="input-field" 
+            placeholder="https://auth.example.com/oauth/token"
+            :disabled="loading"
+          />
+        </div>
+        <div class="form-group">
+          <label class="input-label">Client ID <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.oauthClientId" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+        <div class="form-group">
+          <label class="input-label">Client Secret <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.oauthClientSecret" 
+            type="password" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+        <div class="form-group">
+          <label class="input-label">Scopes</label>
+          <input 
+            v-model="form.oauthScopes" 
+            type="text" 
+            class="input-field" 
+            placeholder="read write (space separated)"
+            :disabled="loading"
+          />
+        </div>
+        <div class="form-group">
+          <label class="input-label">Audience</label>
+          <input 
+            v-model="form.oauthAudience" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+      </div>
+
+      <!-- mTLS -->
+      <div v-if="form.authMethod === 'mtls'" class="mt-4 space-y-4">
+        <div class="form-group">
+          <label class="input-label">Client Certificate <span class="text-red-400">*</span></label>
+          <textarea 
+            v-model="form.tlsCert" 
+            class="input-field" 
+            rows="4" 
+            placeholder="-----BEGIN CERTIFICATE-----"
+            :disabled="loading"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label class="input-label">Client Key <span class="text-red-400">*</span></label>
+          <textarea 
+            v-model="form.tlsKey" 
+            class="input-field" 
+            rows="4" 
+            placeholder="-----BEGIN PRIVATE KEY-----"
+            :disabled="loading"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label class="input-label">CA Certificate</label>
+          <textarea 
+            v-model="form.tlsCa" 
+            class="input-field" 
+            rows="4" 
+            placeholder="-----BEGIN CERTIFICATE-----"
+            :disabled="loading"
+          ></textarea>
+        </div>
       </div>
     </div>
 
@@ -211,7 +484,7 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-300">Enable TLS</span>
+          <span class="text-gray-700 dark:text-gray-300">Enable TLS</span>
         </label>
       </div>
     </div>
@@ -386,6 +659,212 @@
       </div>
     </div>
 
+    <!-- SNMP Settings -->
+    <div v-if="form.type === 'snmp'" class="section-card">
+      <h2 class="section-title">SNMP Settings</h2>
+      
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Community String <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.snmpCommunity" 
+            type="password" 
+            class="input-field" 
+            placeholder="public"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group md:col-span-2">
+          <label class="input-label">OID <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.snmpOid" 
+            type="text" 
+            class="input-field" 
+            placeholder="1.3.6.1.4.1.9.6.1.101"
+            pattern="^([0-2])((\.0)|(\.[1-9][0-9]*))*$"
+            :disabled="loading"
+          />
+          <p class="text-xs text-gray-400 mt-1">Object Identifier (e.g., 1.3.6.1.4.1.9.6.1.101)</p>
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">SNMP Version</label>
+          <select v-model="form.snmpVersion" class="select-field" :disabled="loading">
+            <option value="1">SNMPv1</option>
+            <option value="2c">SNMPv2c</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Expected Value</label>
+          <input 
+            v-model="form.expectedValue" 
+            type="text" 
+            class="input-field" 
+            placeholder="Optional expected value"
+            :disabled="loading"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- DNS Settings -->
+    <div v-if="form.type === 'dns'" class="section-card">
+      <h2 class="section-title">DNS Settings</h2>
+      
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">DNS Server <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.dnsResolveServer" 
+            type="text" 
+            class="input-field" 
+            placeholder="1.1.1.1"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">DNS Server Port</label>
+          <input 
+            v-model.number="form.dnsPort" 
+            type="number" 
+            class="input-field" 
+            placeholder="53"
+            min="1"
+            max="65535"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Record Type</label>
+          <select v-model="form.dnsResolveType" class="select-field" :disabled="loading">
+            <option value="A">A</option>
+            <option value="AAAA">AAAA</option>
+            <option value="CAA">CAA</option>
+            <option value="CNAME">CNAME</option>
+            <option value="MX">MX</option>
+            <option value="NS">NS</option>
+            <option value="PTR">PTR</option>
+            <option value="SOA">SOA</option>
+            <option value="SRV">SRV</option>
+            <option value="TXT">TXT</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Radius Settings -->
+    <div v-if="form.type === 'radius'" class="section-card">
+      <h2 class="section-title">Radius Settings</h2>
+      
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">Username <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.radiusUsername" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Password <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.radiusPassword" 
+            type="password" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group md:col-span-2">
+          <label class="input-label">Shared Secret <span class="text-red-400">*</span></label>
+          <input 
+            v-model="form.radiusSecret" 
+            type="password" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Called Station ID</label>
+          <input 
+            v-model="form.radiusCalledStationId" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Calling Station ID</label>
+          <input 
+            v-model="form.radiusCallingStationId" 
+            type="text" 
+            class="input-field" 
+            :disabled="loading"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Ping Settings -->
+    <div v-if="form.type === 'ping'" class="section-card">
+      <h2 class="section-title">Ping Settings</h2>
+      
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">Packet Count</label>
+          <input 
+            v-model.number="form.pingCount" 
+            type="number" 
+            class="input-field" 
+            min="1"
+            max="100"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Packet Size (bytes)</label>
+          <input 
+            v-model.number="form.packetSize" 
+            type="number" 
+            class="input-field" 
+            min="1"
+            max="65500"
+            :disabled="loading"
+          />
+        </div>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input 
+            v-model="form.pingNumeric" 
+            type="checkbox" 
+            class="checkbox"
+            :disabled="loading"
+          />
+          <span class="text-gray-700 dark:text-gray-300">Use Numeric Output (no DNS lookup)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Monitor Conditions (for supported monitor types) -->
+    <div v-if="supportsConditions" class="section-card">
+      <h2 class="section-title">Monitor Conditions</h2>
+      <p class="text-sm text-gray-400 mb-4">Define custom conditions to determine monitor status based on response data</p>
+      <MonitorConditions
+        v-model="form.conditions"
+        :monitor-type="form.type"
+        :disabled="loading"
+      />
+    </div>
+
     <!-- Timing -->
     <div class="section-card">
       <h2 class="section-title">Timing</h2>
@@ -441,8 +920,156 @@
           class="checkbox"
           :disabled="loading"
         />
-        <span class="text-gray-300">Upside Down Mode (alert when UP)</span>
+        <span class="text-gray-700 dark:text-gray-300">Upside Down Mode (alert when UP)</span>
       </label>
+
+      <!-- Certificate Expiry Notification (for HTTP monitors) -->
+      <label v-if="showHttpSettings && !form.ignoreTls" class="flex items-center gap-2 cursor-pointer mt-3">
+        <input 
+          v-model="form.expiryNotification" 
+          type="checkbox" 
+          class="checkbox"
+          :disabled="loading"
+        />
+        <span class="text-gray-700 dark:text-gray-300">Certificate Expiry Notification</span>
+      </label>
+
+      <!-- Resend Notification Interval -->
+      <div class="mt-4">
+        <label class="input-label">Resend Notification if Down X times consecutively</label>
+        <input 
+          v-model.number="form.resendInterval" 
+          type="number" 
+          class="input-field w-32"
+          min="0"
+          :disabled="loading"
+        />
+        <p class="text-xs text-gray-400 mt-1">Set to 0 to resend every time</p>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="section-card">
+      <h2 class="section-title">Notifications</h2>
+      
+      <p v-if="!notifications || notifications.length === 0" class="text-gray-600 dark:text-gray-400">
+        No notifications configured. 
+        <NuxtLink to="/settings/notifications" class="text-green-400 hover:underline">Setup Notification</NuxtLink>
+      </p>
+
+      <div v-else class="space-y-3">
+        <label 
+          v-for="notification in notifications" 
+          :key="notification.id" 
+          class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50"
+        >
+          <input 
+            type="checkbox"
+            :checked="isNotificationSelected(notification.id)"
+            @change="toggleNotification(notification.id)"
+            class="checkbox"
+            :disabled="loading"
+          />
+          <span class="text-gray-300 flex-1">{{ notification.name }}</span>
+          <span v-if="notification.isDefault" class="px-2 py-0.5 text-xs bg-green-600 rounded">Default</span>
+        </label>
+      </div>
+
+      <div class="mt-4">
+        <NuxtLink 
+          to="/settings/notifications" 
+          class="btn btn-outline text-sm"
+        >
+          <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-1" />
+          Setup Notification
+        </NuxtLink>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="section-card">
+      <h2 class="section-title">Tags</h2>
+      
+      <div v-if="!tags || tags.length === 0" class="text-gray-600 dark:text-gray-400">
+        No tags available. 
+        <NuxtLink to="/settings/tags" class="text-green-400 hover:underline">Create Tags</NuxtLink>
+      </div>
+
+      <div v-else class="flex flex-wrap gap-2">
+        <label 
+          v-for="tag in tags" 
+          :key="tag.id" 
+          class="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-full border transition-colors"
+          :class="isTagSelected(tag.id) ? 'border-green-500 bg-green-500/20' : 'border-gray-600 hover:border-gray-500'"
+        >
+          <input 
+            type="checkbox"
+            :checked="isTagSelected(tag.id)"
+            @change="toggleTag(tag.id)"
+            class="sr-only"
+            :disabled="loading"
+          />
+          <span 
+            class="w-3 h-3 rounded-full" 
+            :style="{ backgroundColor: tag.color || '#6b7280' }"
+          ></span>
+          <span class="text-sm text-gray-300">{{ tag.name }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Parent Group -->
+    <div class="section-card">
+      <h2 class="section-title">Parent Group</h2>
+      
+      <select v-model="form.parent" class="select-field" :disabled="loading">
+        <option :value="null">No Parent (Root)</option>
+        <option 
+          v-for="group in availableGroups" 
+          :key="group.id" 
+          :value="group.id"
+        >
+          {{ group.name }}
+        </option>
+      </select>
+      <p class="text-xs text-gray-400 mt-1">Assign this monitor to a group</p>
+    </div>
+
+    <!-- Node Assignment (Cluster Mode) -->
+    <div v-if="clusterNodes.length > 0" class="section-card">
+      <h2 class="section-title">Node Assignment</h2>
+      
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">Primary Node</label>
+          <select v-model="form.nodeId" class="select-field" :disabled="loading">
+            <option :value="null">Auto (Current Node)</option>
+            <option 
+              v-for="node in clusterNodes" 
+              :key="node.id" 
+              :value="node.id"
+            >
+              {{ node.name || node.id }}
+            </option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">The node where this monitor will be executed</p>
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Assigned Node (Override)</label>
+          <select v-model="form.assignedNode" class="select-field" :disabled="loading">
+            <option :value="null">Use Primary Node</option>
+            <option 
+              v-for="node in clusterNodes" 
+              :key="node.id" 
+              :value="node.id"
+            >
+              {{ node.name || node.id }}
+            </option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Override for failover/load balancing</p>
+        </div>
+      </div>
     </div>
 
     <!-- Description -->
@@ -493,6 +1120,57 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['submit'])
 
+// Get composables data
+const { notifications, fetchNotifications } = useNotifications()
+const { tags, fetchTags } = useTags()
+const { proxies, fetchProxies } = useProxies()
+const { remoteBrowsers, fetchRemoteBrowsers } = useRemoteBrowsers()
+
+// Fetch data on mount
+onMounted(() => {
+  fetchNotifications()
+  fetchTags()
+  fetchProxies()
+  fetchRemoteBrowsers()
+})
+
+// Initialize notification IDs from initial data
+const initNotificationIds = (): Record<number, boolean> => {
+  const ids: Record<number, boolean> = {}
+  if (props.initialData?.notificationIDList) {
+    for (const id of Object.keys(props.initialData.notificationIDList)) {
+      ids[Number(id)] = true
+    }
+  }
+  return ids
+}
+
+// Initialize tag IDs from initial data
+const initTagIds = (): number[] => {
+  if (props.initialData?.tags) {
+    return props.initialData.tags.map((t: any) => t.tag_id || t.id)
+  }
+  return []
+}
+
+// Initialize HTTP headers from initial data
+const initHeaders = (): Array<{ key: string; value: string }> => {
+  if (props.initialData?.headers) {
+    try {
+      const headersObj = typeof props.initialData.headers === 'string' 
+        ? JSON.parse(props.initialData.headers) 
+        : props.initialData.headers
+      return Object.entries(headersObj).map(([key, value]) => ({ 
+        key, 
+        value: String(value) 
+      }))
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 const form = reactive({
   type: props.initialData?.type || 'http',
   name: props.initialData?.name || '',
@@ -509,6 +1187,20 @@ const form = reactive({
   retryInterval: props.initialData?.retryInterval || 60,
   maxretries: props.initialData?.maxretries || 0,
   description: props.initialData?.description || '',
+  // Notifications & Tags
+  notificationIDList: initNotificationIds(),
+  selectedTags: initTagIds(),
+  // Certificate expiry notification
+  expiryNotification: props.initialData?.expiryNotification || false,
+  // Resend notification interval
+  resendInterval: props.initialData?.resendInterval || 0,
+  // Parent group
+  parent: props.initialData?.parent || null,
+  // HTTP Advanced
+  proxyId: props.initialData?.proxyId || null,
+  acceptedStatuscodes: props.initialData?.acceptedStatuscodes?.join(', ') || '200-299',
+  headers: initHeaders(),
+  body: props.initialData?.body || '',
   // JSON Query
   jsonPath: props.initialData?.jsonPath || '',
   expectedValue: props.initialData?.expectedValue || '',
@@ -538,6 +1230,52 @@ const form = reactive({
   kafkaPassword: props.initialData?.kafkaPassword || '',
   // Game
   game: props.initialData?.game || '',
+  // SNMP
+  snmpCommunity: props.initialData?.snmpCommunity || props.initialData?.radiusPassword || '',
+  snmpOid: props.initialData?.snmpOid || '',
+  snmpVersion: props.initialData?.snmpVersion || '2c',
+  // DNS
+  dnsResolveServer: props.initialData?.dnsResolveServer || props.initialData?.dns_resolve_server || '1.1.1.1',
+  dnsPort: props.initialData?.dnsPort || props.initialData?.port || 53,
+  dnsResolveType: props.initialData?.dnsResolveType || props.initialData?.dns_resolve_type || 'A',
+  // Radius
+  radiusUsername: props.initialData?.radiusUsername || '',
+  radiusPassword: props.initialData?.radiusPassword || '',
+  radiusSecret: props.initialData?.radiusSecret || '',
+  radiusCalledStationId: props.initialData?.radiusCalledStationId || '',
+  radiusCallingStationId: props.initialData?.radiusCallingStationId || '',
+  // Ping
+  pingCount: props.initialData?.pingCount || props.initialData?.ping_count || 4,
+  packetSize: props.initialData?.packetSize || 56,
+  pingNumeric: props.initialData?.pingNumeric || props.initialData?.ping_numeric || false,
+  // Max Redirects
+  maxRedirects: props.initialData?.maxRedirects || props.initialData?.maxredirects || 10,
+  // Authentication
+  authMethod: props.initialData?.authMethod || '',
+  basicAuthUser: props.initialData?.basicAuthUser || props.initialData?.basic_auth_user || '',
+  basicAuthPass: props.initialData?.basicAuthPass || props.initialData?.basic_auth_pass || '',
+  authDomain: props.initialData?.authDomain || '',
+  authWorkstation: props.initialData?.authWorkstation || '',
+  // OAuth2
+  oauthTokenUrl: props.initialData?.oauthTokenUrl || props.initialData?.oauth_token_url || '',
+  oauthClientId: props.initialData?.oauthClientId || props.initialData?.oauth_client_id || '',
+  oauthClientSecret: props.initialData?.oauthClientSecret || props.initialData?.oauth_client_secret || '',
+  oauthScopes: props.initialData?.oauthScopes || props.initialData?.oauth_scopes || '',
+  oauthAudience: props.initialData?.oauthAudience || props.initialData?.oauth_audience || '',
+  // mTLS
+  tlsCert: props.initialData?.tlsCert || '',
+  tlsKey: props.initialData?.tlsKey || '',
+  tlsCa: props.initialData?.tlsCa || '',
+  // Cache Bust
+  cacheBust: props.initialData?.cacheBust || false,
+  // Remote Browser
+  useRemoteBrowser: !!props.initialData?.remote_browser,
+  remoteBrowser: props.initialData?.remote_browser || props.initialData?.remoteBrowser || null,
+  // Monitor Conditions
+  conditions: props.initialData?.conditions || [],
+  // Node Assignment (Cluster Mode)
+  nodeId: props.initialData?.node_id || props.initialData?.nodeId || null,
+  assignedNode: props.initialData?.assigned_node || props.initialData?.assignedNode || null,
 })
 
 const monitorTypes = [
@@ -549,6 +1287,7 @@ const monitorTypes = [
   { value: 'ping', label: 'Ping' },
   { value: 'dns', label: 'DNS' },
   { value: 'push', label: 'Push' },
+  { value: 'snmp', label: 'SNMP' },
   { value: 'docker', label: 'Docker Container' },
   { value: 'mongodb', label: 'MongoDB' },
   { value: 'mysql', label: 'MySQL/MariaDB' },
@@ -608,6 +1347,11 @@ const showDatabaseSettings = computed(() =>
   ['mongodb', 'mysql', 'postgres', 'sqlserver', 'redis'].includes(form.type)
 )
 
+// Monitor types that support conditions
+const supportsConditions = computed(() => 
+  ['http', 'keyword', 'json-query', 'grpc-keyword', 'tcp', 'dns', 'mqtt', 'snmp'].includes(form.type)
+)
+
 const databasePlaceholder = computed(() => {
   switch (form.type) {
     case 'mongodb': return 'mongodb://user:pass@localhost:27017/db'
@@ -617,6 +1361,57 @@ const databasePlaceholder = computed(() => {
     case 'redis': return 'redis://user:pass@localhost:6379'
     default: return ''
   }
+})
+
+// Notification selection methods
+const isNotificationSelected = (id: number) => {
+  return !!form.notificationIDList[id]
+}
+
+const toggleNotification = (id: number) => {
+  if (form.notificationIDList[id]) {
+    delete form.notificationIDList[id]
+  } else {
+    form.notificationIDList[id] = true
+  }
+}
+
+// Tag selection methods
+const isTagSelected = (id: number) => {
+  return form.selectedTags.includes(id)
+}
+
+const toggleTag = (id: number) => {
+  const index = form.selectedTags.indexOf(id)
+  if (index > -1) {
+    form.selectedTags.splice(index, 1)
+  } else {
+    form.selectedTags.push(id)
+  }
+}
+
+// HTTP Headers management
+const addHeader = () => {
+  form.headers.push({ key: '', value: '' })
+}
+
+const removeHeader = (index: number) => {
+  form.headers.splice(index, 1)
+}
+
+// Available groups for parent selection
+const availableGroups = computed(() => {
+  // This would be populated from an API or parent component
+  // For now return empty array - groups can be fetched from monitors API
+  return []
+})
+
+// Cluster nodes for node assignment
+const clusterNodes = computed(() => {
+  // In cluster mode, this should be populated from the server info
+  // For now, we'll check if there's cluster info available
+  // This can be enhanced to fetch from /api/v1/cluster/nodes
+  return [] as Array<{ id: string; name?: string }>
 })
 
 const handleSubmit = () => {
@@ -638,6 +1433,69 @@ const handleSubmit = () => {
     data.keyword = form.keyword || undefined
     data.invertKeyword = form.invertKeyword
     data.ignoreTls = form.ignoreTls
+    
+    // Proxy
+    if (form.proxyId) {
+      data.proxyId = form.proxyId
+    }
+    
+    // Accepted status codes - parse the comma-separated string
+    if (form.acceptedStatuscodes) {
+      data.acceptedStatuscodes = form.acceptedStatuscodes
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter((s: string) => s)
+    }
+    
+    // HTTP Headers - convert array to object
+    if (form.headers.length > 0) {
+      const headersObj: Record<string, string> = {}
+      form.headers.forEach((h: { key: string; value: string }) => {
+        if (h.key) {
+          headersObj[h.key] = h.value
+        }
+      })
+      if (Object.keys(headersObj).length > 0) {
+        data.headers = JSON.stringify(headersObj)
+      }
+    }
+    
+    // Request body
+    if (form.body && ['POST', 'PUT', 'PATCH'].includes(form.method)) {
+      data.body = form.body
+    }
+
+    // Authentication
+    if (form.authMethod) {
+      data.authMethod = form.authMethod
+      
+      // Basic Auth / NTLM
+      if (form.authMethod === 'basic' || form.authMethod === 'ntlm') {
+        data.basic_auth_user = form.basicAuthUser || undefined
+        data.basic_auth_pass = form.basicAuthPass || undefined
+        
+        if (form.authMethod === 'ntlm') {
+          data.authDomain = form.authDomain || undefined
+          data.authWorkstation = form.authWorkstation || undefined
+        }
+      }
+      
+      // OAuth2
+      if (form.authMethod === 'oauth2-cc') {
+        data.oauth_token_url = form.oauthTokenUrl
+        data.oauth_client_id = form.oauthClientId
+        data.oauth_client_secret = form.oauthClientSecret
+        data.oauth_scopes = form.oauthScopes || undefined
+        data.oauth_audience = form.oauthAudience || undefined
+      }
+      
+      // mTLS
+      if (form.authMethod === 'mtls') {
+        data.tlsCert = form.tlsCert
+        data.tlsKey = form.tlsKey
+        data.tlsCa = form.tlsCa || undefined
+      }
+    }
   }
 
   // JSON Query specific
@@ -700,6 +1558,85 @@ const handleSubmit = () => {
   // Game server specific
   if (form.type === 'gamedig') {
     data.game = form.game
+  }
+
+  // SNMP specific
+  if (form.type === 'snmp') {
+    data.radiusPassword = form.snmpCommunity // Community string stored in radiusPassword field
+    data.snmpOid = form.snmpOid
+    data.snmpVersion = form.snmpVersion
+    data.expectedValue = form.expectedValue || undefined
+  }
+
+  // DNS specific
+  if (form.type === 'dns') {
+    data.dns_resolve_server = form.dnsResolveServer
+    data.port = form.dnsPort
+    data.dns_resolve_type = form.dnsResolveType
+  }
+
+  // Radius specific
+  if (form.type === 'radius') {
+    data.radiusUsername = form.radiusUsername
+    data.radiusPassword = form.radiusPassword
+    data.radiusSecret = form.radiusSecret
+    data.radiusCalledStationId = form.radiusCalledStationId || undefined
+    data.radiusCallingStationId = form.radiusCallingStationId || undefined
+  }
+
+  // Ping specific
+  if (form.type === 'ping') {
+    data.ping_count = form.pingCount
+    data.packetSize = form.packetSize
+    data.ping_numeric = form.pingNumeric
+  }
+
+  // Max redirects for HTTP
+  if (showHttpSettings.value) {
+    data.maxredirects = form.maxRedirects
+    data.cacheBust = form.cacheBust
+    
+    // Remote Browser (for keyword monitoring)
+    if (form.type === 'keyword' && form.useRemoteBrowser) {
+      data.remote_browser = form.remoteBrowser
+    }
+  }
+
+  // Monitor Conditions
+  if (supportsConditions.value && form.conditions.length > 0) {
+    data.conditions = form.conditions
+  }
+
+  // Notifications - convert to object format expected by backend
+  data.notificationIDList = form.notificationIDList
+
+  // Tags - convert to format expected by backend
+  if (form.selectedTags.length > 0) {
+    data.tags = form.selectedTags.map(tagId => ({
+      tag_id: tagId,
+      value: ''  // Tag value - can be customized per monitor
+    }))
+  }
+
+  // Certificate expiry notification
+  if (showHttpSettings.value && !form.ignoreTls) {
+    data.expiryNotification = form.expiryNotification
+  }
+
+  // Resend notification interval
+  data.resendInterval = form.resendInterval || 0
+
+  // Parent group
+  if (form.parent) {
+    data.parent = form.parent
+  }
+
+  // Node assignment (Cluster Mode)
+  if (form.nodeId) {
+    data.node_id = form.nodeId
+  }
+  if (form.assignedNode) {
+    data.assigned_node = form.assignedNode
   }
 
   emit('submit', data)

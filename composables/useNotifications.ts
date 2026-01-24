@@ -53,8 +53,8 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       isLoading.value = true
       error.value = null
       
-      const data = await $fetch<Notification[]>('/api/v1/notifications')
-      notifications.value = data
+      const response = await $fetch<{ ok: boolean; data: Notification[] }>('/api/v1/notifications')
+      notifications.value = response.data || []
     } catch (e: any) {
       error.value = e.message || 'Failed to fetch notifications'
       console.error('Failed to fetch notifications:', e)

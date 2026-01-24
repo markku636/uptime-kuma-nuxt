@@ -48,7 +48,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const statusPage = await prisma.statusPage.create({
-    data: result.data
+    data: {
+      ...result.data,
+      userId: session.user.id
+    }
   })
 
   return {

@@ -1,11 +1,6 @@
 // server/api/v1/notifications/test.post.ts
-import { z } from 'zod'
 import { sendNotification } from '../../../services/notification/sender'
-
-const testSchema = z.object({
-  type: z.enum(['discord', 'slack', 'telegram', 'email', 'webhook', 'line']),
-  config: z.record(z.any()),
-})
+import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -18,18 +13,40 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const result = testSchema.safeParse(body)
   
-  if (!result.success) {
+  // Support both direct test (type + config) and by notificationId
+  let notificationType: string
+  let notificationConfig: any
+  
+  if (body.notificationId) {
+    // Test existing notification by ID
+    const notification = await prisma.notification.findFirst({
+      where: { id: body.notificationId, userId: session.user.id }
+    })
+    
+    if (!notification) {
+      throw createError({
+        statusCode: 404,
+        message: 'Notification not found'
+      })
+    }
+    
+    notificationType = notification.type
+    notificationConfig = notification.config
+  } else if (body.type && body.config) {
+    // Direct test with type and config
+    notificationType = body.type
+    notificationConfig = body.config
+  } else {
     throw createError({
       statusCode: 400,
-      message: result.error.issues[0].message
+      message: 'Either notificationId or type+config is required'
     })
   }
 
   try {
     await sendNotification(
-      { type: result.data.type, config: result.data.config },
+      { type: notificationType, config: notificationConfig },
       { name: 'Test Monitor', url: 'https://example.com' },
       { status: 1, ping: 100, msg: 'Test notification from Uptime Kuma' }
     )

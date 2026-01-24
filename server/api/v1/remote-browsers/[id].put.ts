@@ -1,8 +1,6 @@
 // server/api/v1/remote-browsers/[id].put.ts
 import { defineEventHandler, readBody, getRouterParam } from 'h3'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '~/server/utils/prisma'
 
 interface UpdateRemoteBrowserBody {
   name?: string
@@ -11,8 +9,14 @@ interface UpdateRemoteBrowserBody {
 }
 
 export default defineEventHandler(async (event) => {
-  // TODO: Get userId from auth
-  const userId = 1
+  const session = await getUserSession(event)
+  
+  if (!session?.user) {
+    throw createError({
+      statusCode: 401,
+      message: 'Unauthorized'
+    })
+  }
 
   const id = parseInt(getRouterParam(event, 'id') || '')
   
@@ -39,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   // Check ownership
   const existing = await prisma.remoteBrowser.findFirst({
-    where: { id, userId }
+    where: { id, userId: session.user.id }
   })
 
   if (!existing) {

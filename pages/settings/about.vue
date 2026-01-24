@@ -87,56 +87,56 @@ function formatUptime(seconds: number): string {
           <img src="/icon.svg" alt="Uptime Kuma" class="w-10 h-10" />
         </div>
         <div>
-          <h4 class="text-2xl font-bold text-white">Uptime Kuma</h4>
-          <span class="text-gray-400">A fancy self-hosted monitoring tool</span>
+          <h4 class="text-2xl font-bold text-gray-900 dark:text-white">Uptime Kuma</h4>
+          <span class="text-gray-600 dark:text-gray-400">A fancy self-hosted monitoring tool</span>
         </div>
       </div>
 
       <!-- Version Info -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="p-4 bg-gray-700 rounded-lg">
-          <span class="text-sm text-gray-400 block mb-1">Version</span>
-          <strong class="text-white">{{ currentVersion }}</strong>
+        <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <span class="text-sm text-gray-600 dark:text-gray-400 block mb-1">Version</span>
+          <strong class="text-gray-900 dark:text-white">{{ currentVersion }}</strong>
         </div>
-        <div class="p-4 bg-gray-700 rounded-lg">
-          <span class="text-sm text-gray-400 block mb-1">Framework</span>
-          <strong class="text-white">Nuxt 4</strong>
+        <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <span class="text-sm text-gray-600 dark:text-gray-400 block mb-1">Framework</span>
+          <strong class="text-gray-900 dark:text-white">Nuxt 4</strong>
         </div>
-        <div class="p-4 bg-gray-700 rounded-lg">
-          <span class="text-sm text-gray-400 block mb-1">Database</span>
-          <strong class="text-white">PostgreSQL</strong>
+        <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <span class="text-sm text-gray-600 dark:text-gray-400 block mb-1">Database</span>
+          <strong class="text-gray-900 dark:text-white">PostgreSQL</strong>
         </div>
-        <div class="p-4 bg-gray-700 rounded-lg">
-          <span class="text-sm text-gray-400 block mb-1">UI</span>
-          <strong class="text-white">Nuxt UI 3</strong>
+        <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <span class="text-sm text-gray-600 dark:text-gray-400 block mb-1">UI</span>
+          <strong class="text-gray-900 dark:text-white">Nuxt UI 3</strong>
         </div>
       </div>
 
       <!-- Server Info -->
       <div v-if="serverInfo" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        <div class="p-3 bg-gray-700/50 rounded-lg">
-          <span class="text-xs text-gray-400 block">Node.js</span>
-          <span class="text-white text-sm">{{ serverInfo.nodeVersion || 'N/A' }}</span>
+        <div class="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-xs text-gray-600 dark:text-gray-400 block">Node.js</span>
+          <span class="text-gray-900 dark:text-white text-sm">{{ serverInfo.nodeVersion || 'N/A' }}</span>
         </div>
-        <div class="p-3 bg-gray-700/50 rounded-lg">
-          <span class="text-xs text-gray-400 block">Platform</span>
-          <span class="text-white text-sm">{{ serverInfo.platform || 'N/A' }}</span>
+        <div class="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-xs text-gray-600 dark:text-gray-400 block">Platform</span>
+          <span class="text-gray-900 dark:text-white text-sm">{{ serverInfo.platform || 'N/A' }}</span>
         </div>
-        <div class="p-3 bg-gray-700/50 rounded-lg">
-          <span class="text-xs text-gray-400 block">Server Uptime</span>
-          <span class="text-white text-sm">{{ serverInfo.uptimeSeconds ? formatUptime(serverInfo.uptimeSeconds) : 'N/A' }}</span>
+        <div class="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-xs text-gray-600 dark:text-gray-400 block">Server Uptime</span>
+          <span class="text-gray-900 dark:text-white text-sm">{{ serverInfo.uptimeSeconds ? formatUptime(serverInfo.uptimeSeconds) : 'N/A' }}</span>
         </div>
-        <div class="p-3 bg-gray-700/50 rounded-lg">
-          <span class="text-xs text-gray-400 block">Server Timezone</span>
-          <span class="text-white text-sm">{{ serverInfo.serverTimezone || 'UTC' }}</span>
+        <div class="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-xs text-gray-600 dark:text-gray-400 block">Server Timezone</span>
+          <span class="text-gray-900 dark:text-white text-sm">{{ serverInfo.serverTimezone || 'UTC' }}</span>
         </div>
-        <div class="p-3 bg-gray-700/50 rounded-lg">
-          <span class="text-xs text-gray-400 block">Hostname</span>
-          <span class="text-white text-sm">{{ serverInfo.primaryHostname || 'N/A' }}</span>
+        <div class="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-xs text-gray-600 dark:text-gray-400 block">Hostname</span>
+          <span class="text-gray-900 dark:text-white text-sm">{{ serverInfo.primaryHostname || 'N/A' }}</span>
         </div>
-        <div class="p-3 bg-gray-700/50 rounded-lg">
-          <span class="text-xs text-gray-400 block">Latency</span>
-          <span class="text-white text-sm">{{ serverInfo.latency ? `${serverInfo.latency}ms` : 'N/A' }}</span>
+        <div class="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-xs text-gray-600 dark:text-gray-400 block">Latency</span>
+          <span class="text-gray-900 dark:text-white text-sm">{{ serverInfo.latency ? `${serverInfo.latency}ms` : 'N/A' }}</span>
         </div>
       </div>
 
@@ -162,22 +162,22 @@ function formatUptime(seconds: number): string {
 
     <!-- Update Settings -->
     <div class="section-card">
-      <h5 class="text-lg font-semibold text-white mb-4">Update Check</h5>
+      <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Update Check</h5>
       
       <div class="space-y-4">
         <label class="flex items-center gap-3 cursor-pointer">
           <input v-model="checkUpdate" type="checkbox" class="w-4 h-4 text-green-500 rounded" />
           <div>
-            <span class="text-white">Check for updates</span>
-            <p class="text-gray-400 text-sm">Show notification when a new version is available</p>
+            <span class="text-gray-900 dark:text-white">Check for updates</span>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Show notification when a new version is available</p>
           </div>
         </label>
         
         <label class="flex items-center gap-3 cursor-pointer" :class="{ 'opacity-50': !checkUpdate }">
           <input v-model="checkBeta" type="checkbox" class="w-4 h-4 text-green-500 rounded" :disabled="!checkUpdate" />
           <div>
-            <span class="text-white">Include beta releases</span>
-            <p class="text-gray-400 text-sm">Also check for beta versions (may be unstable)</p>
+            <span class="text-gray-900 dark:text-white">Include beta releases</span>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Also check for beta versions (may be unstable)</p>
           </div>
         </label>
       </div>
@@ -192,36 +192,36 @@ function formatUptime(seconds: number): string {
 
     <!-- Links -->
     <div class="section-card">
-      <h5 class="text-lg font-semibold text-white mb-4">Links</h5>
+      <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Links</h5>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <a href="https://github.com/louislam/uptime-kuma" target="_blank" 
-           class="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
-          <UIcon name="i-simple-icons-github" class="w-5 h-5 text-white" />
-          <span class="text-white">GitHub Repository</span>
+           class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <UIcon name="i-simple-icons-github" class="w-5 h-5 text-gray-900 dark:text-white" />
+          <span class="text-gray-900 dark:text-white">GitHub Repository</span>
         </a>
         <a href="https://github.com/louislam/uptime-kuma/releases" target="_blank"
-           class="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
-          <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-green-400" />
-          <span class="text-white">Release Notes</span>
+           class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-green-500 dark:text-green-400" />
+          <span class="text-gray-900 dark:text-white">Release Notes</span>
         </a>
         <a href="https://github.com/louislam/uptime-kuma/wiki" target="_blank"
-           class="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
-          <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-blue-400" />
-          <span class="text-white">Documentation</span>
+           class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-blue-500 dark:text-blue-400" />
+          <span class="text-gray-900 dark:text-white">Documentation</span>
         </a>
         <a href="https://github.com/louislam/uptime-kuma/issues" target="_blank"
-           class="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
-          <UIcon name="i-heroicons-chat-bubble-left-right" class="w-5 h-5 text-yellow-400" />
-          <span class="text-white">Report Issue</span>
+           class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <UIcon name="i-heroicons-chat-bubble-left-right" class="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
+          <span class="text-gray-900 dark:text-white">Report Issue</span>
         </a>
       </div>
     </div>
 
     <!-- Credits -->
     <div class="section-card">
-      <h5 class="text-lg font-semibold text-white mb-4">Credits</h5>
-      <p class="text-gray-400 text-sm mb-4">
-        Uptime Kuma is created by <a href="https://github.com/louislam" target="_blank" class="text-green-400 hover:underline">Louis Lam</a> 
+      <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Credits</h5>
+      <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+        Uptime Kuma is created by <a href="https://github.com/louislam" target="_blank" class="text-green-600 dark:text-green-400 hover:underline">Louis Lam</a> 
         and maintained by the open source community.
       </p>
       <p class="text-gray-500 text-xs">

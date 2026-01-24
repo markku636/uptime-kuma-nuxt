@@ -15,7 +15,7 @@
           <div class="spinner"></div>
         </div>
 
-        <template v-else-if="statusPages && statusPages.length > 0">
+        <template v-else-if="statusPages.length > 0">
           <a
             v-for="page in statusPages"
             :key="page.id"
@@ -142,7 +142,13 @@ const formData = reactive({
   published: true
 })
 
-const { data: statusPages, pending, refresh } = await useFetch<StatusPage[]>('/api/v1/status-pages')
+interface ApiResponse {
+  ok: boolean
+  data: StatusPage[]
+}
+
+const { data: response, pending, refresh } = await useFetch<ApiResponse>('/api/v1/status-pages')
+const statusPages = computed(() => response.value?.data || [])
 
 function openAddModal() {
   editingStatusPage.value = null

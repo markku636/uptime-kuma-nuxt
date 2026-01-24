@@ -12,6 +12,21 @@ const loading = ref(true)
 const showForm = ref(false)
 const editingNotification = ref<any>(null)
 
+// Error/Success message display
+const alertMessage = ref('')
+const alertType = ref<'success' | 'error'>('success')
+const showAlert = ref(false)
+
+function showAlertMessage(message: string, type: 'success' | 'error') {
+  alertMessage.value = message
+  alertType.value = type
+  showAlert.value = true
+  // Auto hide after 5 seconds
+  setTimeout(() => {
+    showAlert.value = false
+  }, 5000)
+}
+
 // TLS Certificate Expiry Notification Settings
 const tlsExpiryDays = ref<number[]>([7, 14, 21])
 const newTlsExpiryDay = ref<number | null>(null)
@@ -202,6 +217,11 @@ function openEditForm(notification: any) {
 }
 
 async function handleSubmit() {
+  if (!form.value.name.trim()) {
+    toast.add({ title: 'Validation Error', description: 'Friendly name is required', color: 'error' })
+    return
+  }
+  
   try {
     if (editingNotification.value) {
       await $fetch(`/api/v1/notifications/${editingNotification.value.id}`, { method: 'PUT', body: form.value })
@@ -213,7 +233,8 @@ async function handleSubmit() {
     showForm.value = false
     await fetchNotifications()
   } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || 'Failed to save', color: 'error' })
+    console.error('Notification save error:', error)
+    toast.add({ title: 'Error', description: error.data?.message || error.message || 'Failed to save', color: 'error' })
   }
 }
 
@@ -229,11 +250,18 @@ async function deleteNotification(id: number) {
 }
 
 async function testNotification(id: number) {
+  console.log('Testing notification:', id)
   try {
-    await $fetch('/api/v1/notifications/test', { method: 'POST', body: { notificationId: id } })
+    const result = await $fetch('/api/v1/notifications/test', { method: 'POST', body: { notificationId: id } })
+    console.log('Test result:', result)
+    showAlertMessage('Test notification sent successfully!', 'success')
     toast.add({ title: 'Success', description: 'Test notification sent!', color: 'success' })
   } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || 'Failed to send test notification', color: 'error' })
+    console.error('Test notification error:', error)
+    const errorMsg = error.data?.message || error.message || error.statusMessage || 'Failed to send test notification'
+    console.log('Error message:', errorMsg)
+    showAlertMessage(errorMsg, 'error')
+    toast.add({ title: 'Test Failed', description: errorMsg, color: 'error' })
   }
 }
 
@@ -261,10 +289,24 @@ async function saveTlsExpirySettings() {
 
 <template>
   <div class="space-y-8">
+    <!-- Alert Banner -->
+    <div v-if="showAlert" 
+         :class="[
+           'fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md',
+           alertType === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+         ]">
+      <div class="flex items-start gap-3">
+        <div class="flex-1 text-sm">{{ alertMessage }}</div>
+        <button @click="showAlert = false" class="shrink-0 w-5 h-5 flex items-center justify-center hover:bg-white/20 rounded">
+          <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+
     <!-- Notifications Section -->
     <div class="section-card">
       <div class="flex justify-between items-center mb-6">
-        <h4 class="text-lg font-semibold text-white">Notifications</h4>
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h4>
         <button class="btn btn-primary" @click="openAddForm">
           <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
           Setup Notification
@@ -273,32 +315,32 @@ async function saveTlsExpirySettings() {
 
       <div v-if="loading" class="text-center py-8">
         <div class="spinner w-8 h-8 mx-auto"></div>
-        <p class="text-gray-400 mt-2">Loading notifications...</p>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Loading notifications...</p>
       </div>
 
-      <div v-else-if="notifications.length === 0" class="text-center py-8 bg-gray-700/30 rounded-lg">
+      <div v-else-if="notifications.length === 0" class="text-center py-8 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
         <UIcon name="i-heroicons-bell-slash" class="w-12 h-12 mx-auto text-gray-500 mb-3" />
-        <p class="text-gray-400 mb-4">Not available, please setup.</p>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Not available, please setup.</p>
         <button class="btn btn-primary" @click="openAddForm">Setup Notification</button>
       </div>
 
       <div v-else class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-gray-700">
-              <th class="text-left py-3 px-4 text-gray-400 font-medium">Type</th>
-              <th class="text-left py-3 px-4 text-gray-400 font-medium">Name</th>
-              <th class="text-left py-3 px-4 text-gray-400 font-medium">Status</th>
-              <th class="text-right py-3 px-4 text-gray-400 font-medium">Actions</th>
+            <tr class="border-b border-gray-300 dark:border-gray-700">
+              <th class="text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium">Type</th>
+              <th class="text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium">Name</th>
+              <th class="text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium">Status</th>
+              <th class="text-right py-3 px-4 text-gray-600 dark:text-gray-400 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="notification in notifications" :key="notification.id" class="border-b border-gray-700/50 hover:bg-gray-700/30">
+            <tr v-for="notification in notifications" :key="notification.id" class="border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700/30">
               <td class="py-3 px-4">
-                <span class="text-gray-200">{{ allNotificationTypes.find(t => t.value === notification.type)?.label || notification.type }}</span>
+                <span class="text-gray-700 dark:text-gray-200">{{ allNotificationTypes.find(t => t.value === notification.type)?.label || notification.type }}</span>
               </td>
               <td class="py-3 px-4">
-                <span class="text-white">{{ notification.name }}</span>
+                <span class="text-gray-900 dark:text-white">{{ notification.name }}</span>
                 <span v-if="notification.isDefault" class="ml-2 px-2 py-0.5 text-xs bg-green-500/20 text-green-400 rounded">Default</span>
               </td>
               <td class="py-3 px-4">
@@ -307,9 +349,9 @@ async function saveTlsExpirySettings() {
                 </span>
               </td>
               <td class="py-3 px-4 text-right space-x-2">
-                <button class="px-2 py-1 text-sm btn btn-secondary" @click="testNotification(notification.id)">Test</button>
-                <button class="px-2 py-1 text-sm btn btn-secondary" @click="openEditForm(notification)">Edit</button>
-                <button class="px-2 py-1 text-sm btn btn-danger" @click="deleteNotification(notification.id)">Delete</button>
+                <UButton size="xs" color="neutral" variant="outline" @click="testNotification(notification.id)">Test</UButton>
+                <UButton size="xs" color="neutral" variant="outline" @click="openEditForm(notification)">Edit</UButton>
+                <UButton size="xs" color="error" variant="soft" @click="deleteNotification(notification.id)">Delete</UButton>
               </td>
             </tr>
           </tbody>
@@ -319,13 +361,13 @@ async function saveTlsExpirySettings() {
 
     <!-- TLS Certificate Expiry Section -->
     <div class="section-card">
-      <h4 class="text-lg font-semibold text-white mb-4">TLS Certificate Expiry</h4>
-      <p class="text-gray-400 text-sm mb-4">HTTPS Monitors trigger notification when TLS certificate expires in:</p>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">TLS Certificate Expiry</h4>
+      <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">HTTPS Monitors trigger notification when TLS certificate expires in:</p>
       <p class="text-gray-500 text-xs mb-4">Notifications must be assigned to a monitor to function.</p>
 
       <div class="space-y-3">
-        <div v-for="day in tlsExpiryDays" :key="day" class="flex items-center justify-between bg-gray-700/30 rounded-lg p-3">
-          <span class="text-gray-200">{{ day }} days</span>
+        <div v-for="day in tlsExpiryDays" :key="day" class="flex items-center justify-between bg-gray-100 dark:bg-gray-700/30 rounded-lg p-3">
+          <span class="text-gray-800 dark:text-gray-200">{{ day }} days</span>
           <button class="text-red-400 hover:text-red-300 p-1" @click="removeTlsExpiryDay(day)">
             <UIcon name="i-heroicons-x-circle" class="w-5 h-5" />
           </button>
@@ -356,16 +398,16 @@ async function saveTlsExpirySettings() {
         <div class="absolute inset-0 bg-black/60" @click="showForm = false"></div>
         
         <!-- Modal Content -->
-        <div class="relative bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden">
+        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden">
           <div class="p-6 overflow-y-auto max-h-[85vh]">
-            <h3 class="text-xl font-bold text-white mb-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
               {{ editingNotification ? 'Edit Notification' : 'Setup Notification' }}
             </h3>
 
             <form @submit.prevent="handleSubmit" class="space-y-4">
               <!-- Notification Type -->
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Notification Type</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notification Type</label>
                 <select v-model="form.type" class="select-field w-full">
                   <optgroup v-for="category in notificationCategories" :key="category.name" :label="category.name">
                     <option v-for="type in category.types" :key="type.value" :value="type.value">
@@ -377,12 +419,12 @@ async function saveTlsExpirySettings() {
 
               <!-- Friendly Name -->
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Friendly Name</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Friendly Name</label>
                 <input v-model="form.name" type="text" class="input-field w-full" placeholder="My Discord Notification" required />
               </div>
 
               <!-- Dynamic Provider Form based on type -->
-              <div class="border-t border-gray-700 pt-4 mt-4">
+              <div class="border-t border-gray-300 dark:border-gray-700 pt-4 mt-4">
                 <NotificationProvidersDiscord v-if="form.type === 'discord'" v-model="form.config" />
                 <NotificationProvidersSlack v-else-if="form.type === 'slack'" v-model="form.config" />
                 <NotificationProvidersTelegram v-else-if="form.type === 'telegram'" v-model="form.config" />
@@ -410,7 +452,7 @@ async function saveTlsExpirySettings() {
                 <NotificationProvidersApprise v-else-if="form.type === 'apprise'" v-model="form.config" />
                 <NotificationProvidersLunaSea v-else-if="form.type === 'lunasea'" v-model="form.config" />
                 <!-- Fallback for other types -->
-                <div v-else class="text-gray-400 text-sm">
+                <div v-else class="text-gray-600 dark:text-gray-400 text-sm">
                   <p class="mb-2">Provider-specific configuration:</p>
                   <textarea
                     v-model="form.config"
@@ -422,14 +464,14 @@ async function saveTlsExpirySettings() {
               </div>
 
               <!-- Options -->
-              <div class="flex items-center gap-6 pt-4 border-t border-gray-700">
+              <div class="flex items-center gap-6 pt-4 border-t border-gray-300 dark:border-gray-700">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input v-model="form.isDefault" type="checkbox" class="w-4 h-4 text-green-500 rounded" />
-                  <span class="text-gray-300">Default enabled</span>
+                  <span class="text-gray-700 dark:text-gray-300">Default enabled</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input v-model="form.active" type="checkbox" class="w-4 h-4 text-green-500 rounded" />
-                  <span class="text-gray-300">Enabled</span>
+                  <span class="text-gray-700 dark:text-gray-300">Enabled</span>
                 </label>
               </div>
 

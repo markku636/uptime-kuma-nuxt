@@ -3,14 +3,35 @@ import { prisma } from '../../utils/prisma'
 import { checkMonitor, type CheckResult } from './checker'
 import { emitHeartbeat } from '../socket'
 import { sendNotificationForMonitor } from '../notification/sender'
+import { isClusterMode, getCurrentNodeId } from '../../utils/cluster-config'
+import { getNodeForMonitor } from '../monitor-distributor'
 
 // Store active monitor jobs
 const jobs = new Map<number, NodeJS.Timeout>()
 
+// Current node ID (cached)
+let currentNodeId: string | null = null
+
+/**
+ * Check if this node should run a particular monitor
+ */
+async function shouldRunOnThisNode(monitorId: number): Promise<boolean> {
+  if (!isClusterMode()) {
+    return true
+  }
+
+  if (!currentNodeId) {
+    currentNodeId = getCurrentNodeId()
+  }
+
+  const assignedNode = await getNodeForMonitor(monitorId)
+  return assignedNode === currentNodeId
+}
+
 /**
  * Start monitoring job for a single monitor
  */
-export function startMonitorJob(monitor: any) {
+export async function startMonitorJob(monitor: any) {
   // Clear existing job if any
   stopMonitorJob(monitor.id)
 
@@ -24,6 +45,15 @@ export function startMonitorJob(monitor: any) {
   if (monitor.type === 'push') {
     console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}) is push type, skipping scheduler`)
     return
+  }
+
+  // In cluster mode, check if this monitor should run on this node
+  if (isClusterMode()) {
+    const shouldRun = await shouldRunOnThisNode(monitor.id)
+    if (!shouldRun) {
+      console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}) assigned to different node, skipping`)
+      return
+    }
   }
 
   const intervalMs = (monitor.interval || 60) * 1000
@@ -68,6 +98,46 @@ export function stopAllJobs() {
  * Run a single check for a monitor
  */
 async function runCheck(monitor: any) {
+  // Check if monitor is under maintenance
+  const { isMonitorUnderMaintenance } = await import('../maintenance/scheduler')
+  const underMaintenance = await isMonitorUnderMaintenance(monitor.id)
+  
+  if (underMaintenance) {
+    console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}) is under maintenance, skipping check`)
+    
+    // Still record a maintenance heartbeat
+    const previousHeartbeat = await prisma.heartbeat.findFirst({
+      where: { monitorId: monitor.id },
+      orderBy: { time: 'desc' }
+    })
+    
+    // Status 3 = MAINTENANCE
+    const heartbeat = await prisma.heartbeat.create({
+      data: {
+        monitorId: monitor.id,
+        status: 3,
+        ping: 0,
+        msg: 'Under maintenance',
+        important: previousHeartbeat?.status !== 3,
+        duration: previousHeartbeat 
+          ? Math.floor((Date.now() - new Date(previousHeartbeat.time).getTime()) / 1000)
+          : 0,
+      }
+    })
+    
+    emitHeartbeat(monitor.id, {
+      id: heartbeat.id.toString(),
+      status: heartbeat.status,
+      time: heartbeat.time.toISOString(),
+      msg: heartbeat.msg,
+      ping: heartbeat.ping,
+      important: heartbeat.important,
+      duration: heartbeat.duration,
+    })
+    
+    return
+  }
+
   let retryCount = 0
   const maxRetries = monitor.maxretries || 0
   let result: CheckResult
@@ -126,6 +196,15 @@ async function runCheck(monitor: any) {
     await sendNotificationForMonitor(monitor, result, previousHeartbeat.status)
   }
 
+  // Check certificate expiry notifications for HTTPS monitors
+  if (monitor.expiryNotification && !monitor.ignoreTls) {
+    const resultWithTls = result as any
+    if (resultWithTls.tlsInfo) {
+      const { checkCertExpiryNotifications } = await import('./cert-expiry-notification')
+      await checkCertExpiryNotifications(monitor, resultWithTls.tlsInfo)
+    }
+  }
+
   console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}): ${result.status === 1 ? 'UP' : 'DOWN'} - ${result.msg} (${result.ping}ms)`)
 }
 
@@ -135,6 +214,11 @@ async function runCheck(monitor: any) {
 export async function initializeScheduler() {
   console.log('[Scheduler] Initializing...')
 
+  if (isClusterMode()) {
+    currentNodeId = getCurrentNodeId()
+    console.log(`[Scheduler] Running in cluster mode as node: ${currentNodeId}`)
+  }
+
   const monitors = await prisma.monitor.findMany({
     where: { active: true }
   })
@@ -142,7 +226,7 @@ export async function initializeScheduler() {
   console.log(`[Scheduler] Found ${monitors.length} active monitors`)
 
   for (const monitor of monitors) {
-    startMonitorJob(monitor)
+    await startMonitorJob(monitor)
   }
 
   console.log('[Scheduler] Initialization complete')

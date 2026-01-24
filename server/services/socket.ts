@@ -4,6 +4,7 @@ import { Server as HTTPServer } from 'http'
 import { Server as SocketServer, Socket } from 'socket.io'
 import { PrismaClient, Prisma } from '@prisma/client'
 import crypto from 'crypto'
+import { getMonitorTypeListForClient } from './monitor/types'
 
 const prisma = new PrismaClient()
 
@@ -76,6 +77,16 @@ const socketHandlers = {
     }
   },
 
+  // Get monitor type list with condition support info
+  async getMonitorTypeList(socket: AuthenticatedSocket, callback: Function) {
+    try {
+      const monitorTypeList = getMonitorTypeListForClient()
+      callback({ ok: true, monitorTypeList })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
   async getMonitorBeats(socket: AuthenticatedSocket, monitorId: number, period: number, callback: Function) {
     if (!socket.userId) {
       return callback({ ok: false, msg: 'Not authenticated' })
@@ -101,6 +112,118 @@ const socketHandlers = {
         orderBy: { time: 'desc' }
       })
 
+      callback({ ok: true, data: heartbeats })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  // Important Heartbeat events (status change history)
+  async getImportantHeartbeatListCount(socket: AuthenticatedSocket, monitorId: number | null, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      let count: number
+      
+      if (monitorId === null) {
+        // Get count for all monitors belonging to user
+        const monitors = await prisma.monitor.findMany({
+          where: { userId: socket.userId },
+          select: { id: true }
+        })
+        const monitorIds = monitors.map(m => m.id)
+        
+        count = await prisma.heartbeat.count({
+          where: {
+            monitorId: { in: monitorIds },
+            important: true
+          }
+        })
+      } else {
+        // Verify ownership
+        const monitor = await prisma.monitor.findFirst({
+          where: { id: monitorId, userId: socket.userId }
+        })
+        
+        if (!monitor) {
+          return callback({ ok: false, msg: 'Monitor not found' })
+        }
+        
+        count = await prisma.heartbeat.count({
+          where: {
+            monitorId,
+            important: true
+          }
+        })
+      }
+      
+      callback({ ok: true, count })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  async getImportantHeartbeatListPaged(socket: AuthenticatedSocket, monitorId: number | null, offset: number, count: number, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      let heartbeats: any[]
+      
+      if (monitorId === null) {
+        // Get important heartbeats for all monitors belonging to user
+        const monitors = await prisma.monitor.findMany({
+          where: { userId: socket.userId },
+          select: { id: true, name: true }
+        })
+        const monitorIds = monitors.map(m => m.id)
+        const monitorMap = new Map(monitors.map(m => [m.id, m.name]))
+        
+        heartbeats = await prisma.heartbeat.findMany({
+          where: {
+            monitorId: { in: monitorIds },
+            important: true
+          },
+          orderBy: { time: 'desc' },
+          take: count,
+          skip: offset
+        })
+        
+        // Add monitor name to each heartbeat
+        heartbeats = heartbeats.map(hb => ({
+          ...hb,
+          monitorName: monitorMap.get(hb.monitorId) || 'Unknown'
+        }))
+      } else {
+        // Verify ownership
+        const monitor = await prisma.monitor.findFirst({
+          where: { id: monitorId, userId: socket.userId }
+        })
+        
+        if (!monitor) {
+          return callback({ ok: false, msg: 'Monitor not found' })
+        }
+        
+        heartbeats = await prisma.heartbeat.findMany({
+          where: {
+            monitorId,
+            important: true
+          },
+          orderBy: { time: 'desc' },
+          take: count,
+          skip: offset
+        })
+        
+        // Add monitor name
+        heartbeats = heartbeats.map(hb => ({
+          ...hb,
+          monitorName: monitor.name
+        }))
+      }
+      
       callback({ ok: true, data: heartbeats })
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
@@ -251,10 +374,15 @@ const socketHandlers = {
         })
       }
 
-      callback({ ok: true, maintenance: newMaintenance })
+      // Start the maintenance scheduler job
+      const { startMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
+      await startMaintenanceJob(newMaintenance)
+
+      const maintenanceWithStatus = await maintenanceToPublicJSON(newMaintenance)
+      callback({ ok: true, maintenance: maintenanceWithStatus })
 
       // Broadcast to user's sockets
-      broadcastMaintenanceAdded(socket.userId, newMaintenance)
+      broadcastMaintenanceAdded(socket.userId, maintenanceWithStatus)
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
     }
@@ -316,10 +444,15 @@ const socketHandlers = {
         })
       }
 
-      callback({ ok: true, maintenance: updated })
+      // Restart the maintenance scheduler job with updated settings
+      const { startMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
+      await startMaintenanceJob(updated)
+
+      const maintenanceWithStatus = await maintenanceToPublicJSON(updated)
+      callback({ ok: true, maintenance: maintenanceWithStatus })
 
       // Broadcast update
-      broadcastMaintenanceUpdated(socket.userId, updated)
+      broadcastMaintenanceUpdated(socket.userId, maintenanceWithStatus)
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
     }
@@ -339,6 +472,10 @@ const socketHandlers = {
       if (!existing) {
         return callback({ ok: false, msg: 'Maintenance not found' })
       }
+
+      // Stop the maintenance scheduler job
+      const { stopMaintenanceJob } = await import('./maintenance/scheduler')
+      stopMaintenanceJob(maintenanceId)
 
       // Delete associations first
       await prisma.maintenanceMonitor.deleteMany({ where: { maintenanceId } })
@@ -375,8 +512,13 @@ const socketHandlers = {
         data: { active: false }
       })
 
-      callback({ ok: true, maintenance: updated })
-      broadcastMaintenanceUpdated(socket.userId, updated)
+      // Stop the maintenance scheduler job
+      const { stopMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
+      stopMaintenanceJob(maintenanceId)
+
+      const maintenanceWithStatus = await maintenanceToPublicJSON(updated)
+      callback({ ok: true, maintenance: maintenanceWithStatus })
+      broadcastMaintenanceUpdated(socket.userId, maintenanceWithStatus)
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
     }
@@ -401,8 +543,13 @@ const socketHandlers = {
         data: { active: true }
       })
 
-      callback({ ok: true, maintenance: updated })
-      broadcastMaintenanceUpdated(socket.userId, updated)
+      // Restart the maintenance scheduler job
+      const { startMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
+      await startMaintenanceJob(updated)
+
+      const maintenanceWithStatus = await maintenanceToPublicJSON(updated)
+      callback({ ok: true, maintenance: maintenanceWithStatus })
+      broadcastMaintenanceUpdated(socket.userId, maintenanceWithStatus)
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
     }
@@ -693,6 +840,74 @@ const socketHandlers = {
     }
   },
 
+  async enableAPIKey(socket: AuthenticatedSocket, keyId: number, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      const existing = await prisma.apiKey.findFirst({
+        where: { id: keyId, userId: socket.userId }
+      })
+
+      if (!existing) {
+        return callback({ ok: false, msg: 'API Key not found' })
+      }
+
+      const updated = await prisma.apiKey.update({
+        where: { id: keyId },
+        data: { active: true }
+      })
+
+      callback({ 
+        ok: true, 
+        apiKey: {
+          id: updated.id,
+          name: updated.name,
+          active: updated.active,
+          expires: updated.expires,
+          createdAt: updated.createdAt
+        }
+      })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  async disableAPIKey(socket: AuthenticatedSocket, keyId: number, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      const existing = await prisma.apiKey.findFirst({
+        where: { id: keyId, userId: socket.userId }
+      })
+
+      if (!existing) {
+        return callback({ ok: false, msg: 'API Key not found' })
+      }
+
+      const updated = await prisma.apiKey.update({
+        where: { id: keyId },
+        data: { active: false }
+      })
+
+      callback({ 
+        ok: true, 
+        apiKey: {
+          id: updated.id,
+          name: updated.name,
+          active: updated.active,
+          expires: updated.expires,
+          createdAt: updated.createdAt
+        }
+      })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
   // =====================
   // Proxy Events
   // =====================
@@ -910,14 +1125,38 @@ const socketHandlers = {
   },
 
   async testDockerHost(socket: AuthenticatedSocket, dockerHost: any, callback: Function) {
-    // Placeholder - actual Docker connectivity test would require Docker SDK
     try {
-      // For now, just verify the host parameters are valid
-      if (!dockerHost.dockerDaemon) {
-        return callback({ ok: false, msg: 'Docker daemon path is required' })
+      if (!dockerHost.dockerDaemon && !dockerHost.connectionUrl) {
+        return callback({ ok: false, msg: 'Docker daemon path or connection URL is required' })
       }
 
-      callback({ ok: true, msg: 'Docker host configuration looks valid' })
+      // Dynamic import of dockerode
+      const Docker = (await import('dockerode')).default
+      let docker
+
+      if (dockerHost.dockerType === 'socket') {
+        // Unix socket connection (e.g., /var/run/docker.sock)
+        docker = new Docker({ socketPath: dockerHost.dockerDaemon })
+      } else {
+        // TCP connection
+        const tcpUrl = dockerHost.dockerDaemon || dockerHost.connectionUrl
+        // Replace tcp:// with http:// for axios compatibility
+        const urlStr = tcpUrl.replace(/^tcp:\/\//, 'http://')
+        const url = new URL(urlStr)
+        docker = new Docker({
+          host: url.hostname,
+          port: parseInt(url.port) || 2375,
+          protocol: (url.protocol.replace(':', '') as 'http' | 'https')
+        })
+      }
+
+      // Test connection by listing containers
+      const containers = await docker.listContainers({ all: true })
+
+      callback({ 
+        ok: true, 
+        msg: `Connected successfully. Found ${containers.length} containers.`
+      })
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
     }
@@ -1551,10 +1790,235 @@ const socketHandlers = {
   },
 
   async testNotification(socket: AuthenticatedSocket, notification: any, callback: Function) {
-    // Import notification service
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
     try {
-      // TODO: Implement actual notification test
-      callback({ ok: true, msg: 'Test notification sent successfully (placeholder)' })
+      // Import notification sender
+      const { sendNotification } = await import('./notification/sender')
+      
+      // Create a mock monitor and result for testing
+      const mockMonitor = {
+        id: 0,
+        name: 'Test Monitor',
+        url: 'https://example.com',
+        userId: socket.userId
+      }
+      
+      const mockResult = {
+        status: 1, // UP status for test
+        ping: 100,
+        msg: 'This is a test notification from Uptime Kuma'
+      }
+      
+      // Parse notification config if it's a string
+      let config = notification.config
+      if (typeof config === 'string') {
+        try {
+          config = JSON.parse(config)
+        } catch {
+          // Keep as-is if not valid JSON
+        }
+      }
+      
+      // Send the test notification
+      await sendNotification(
+        { type: notification.type, config },
+        mockMonitor,
+        mockResult
+      )
+      
+      callback({ ok: true, msg: 'Test notification sent successfully!' })
+    } catch (error: any) {
+      console.error('[Socket] testNotification error:', error)
+      callback({ ok: false, msg: `Failed to send test notification: ${error.message}` })
+    }
+  },
+
+  // =====================
+  // Settings Events
+  // =====================
+  async getSettings(socket: AuthenticatedSocket, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      // Get all settings
+      const settings = await prisma.setting.findMany()
+      
+      // Convert to key-value object
+      const data: Record<string, any> = {}
+      for (const setting of settings) {
+        try {
+          // Try to parse JSON values
+          if (setting.type === 'json' && setting.value) {
+            data[setting.key] = JSON.parse(setting.value)
+          } else if (setting.type === 'boolean') {
+            data[setting.key] = setting.value === 'true'
+          } else if (setting.type === 'number' && setting.value) {
+            data[setting.key] = parseFloat(setting.value)
+          } else {
+            data[setting.key] = setting.value
+          }
+        } catch {
+          data[setting.key] = setting.value
+        }
+      }
+      
+      // Add server timezone if not set
+      if (!data.serverTimezone) {
+        data.serverTimezone = process.env.TZ || 'UTC'
+      }
+      
+      callback({ ok: true, data })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  async setSettings(socket: AuthenticatedSocket, data: Record<string, any>, currentPassword: string | null, callback: Function) {
+    if (!socket.userId) {
+      return callback({ ok: false, msg: 'Not authenticated' })
+    }
+
+    try {
+      // Check password if disabling auth
+      const currentDisabledAuth = await prisma.setting.findFirst({
+        where: { key: 'disableAuth' }
+      })
+      
+      if (currentDisabledAuth?.value !== 'true' && data.disableAuth === true) {
+        // Need to verify password when disabling auth
+        if (!currentPassword) {
+          return callback({ ok: false, msg: 'Password is required to disable authentication' })
+        }
+        
+        // Verify password (simplified - should use proper verification)
+        const user = await prisma.user.findUnique({
+          where: { id: socket.userId }
+        })
+        
+        if (!user) {
+          return callback({ ok: false, msg: 'User not found' })
+        }
+        
+        const bcrypt = await import('bcryptjs')
+        const valid = await bcrypt.compare(currentPassword, user.password)
+        
+        if (!valid) {
+          return callback({ ok: false, msg: 'Invalid password' })
+        }
+      }
+      
+      // Save each setting
+      for (const [key, value] of Object.entries(data)) {
+        let valueStr: string
+        let type = 'string'
+        
+        if (typeof value === 'boolean') {
+          valueStr = value ? 'true' : 'false'
+          type = 'boolean'
+        } else if (typeof value === 'number') {
+          valueStr = value.toString()
+          type = 'number'
+        } else if (typeof value === 'object' && value !== null) {
+          valueStr = JSON.stringify(value)
+          type = 'json'
+        } else {
+          valueStr = value?.toString() ?? ''
+        }
+        
+        await prisma.setting.upsert({
+          where: { key },
+          update: { value: valueStr, type },
+          create: { key, value: valueStr, type }
+        })
+      }
+      
+      // Broadcast settings change to all user's sockets
+      broadcastSettingsUpdated(socket.userId, data)
+      
+      callback({ ok: true, msg: 'Settings saved successfully' })
+    } catch (error: any) {
+      callback({ ok: false, msg: error.message })
+    }
+  },
+
+  // =====================
+  // Info Event
+  // =====================
+  async getInfo(socket: AuthenticatedSocket, callback: Function) {
+    try {
+      const dayjs = (await import('dayjs')).default
+      const utc = (await import('dayjs/plugin/utc')).default
+      const timezone = (await import('dayjs/plugin/timezone')).default
+      dayjs.extend(utc)
+      dayjs.extend(timezone)
+      
+      // Get version from package.json using runtime config
+      const version = process.env.npm_package_version || '2.0.0-beta'
+      
+      // Check if running in container
+      const isContainer = process.env.UPTIME_KUMA_IS_CONTAINER === '1' || 
+                          process.env.DOCKER === '1' ||
+                          Boolean(process.env.KUBERNETES_SERVICE_HOST)
+      
+      // Get server timezone
+      const serverTimezone = dayjs.tz.guess() || 'UTC'
+      const serverTimezoneOffset = new Date().getTimezoneOffset() * -1 // In minutes, positive for east
+      
+      // Get current node info for cluster mode
+      const currentNodeId = process.env.UPTIME_KUMA_NODE_ID || process.env.NODE_ID || null
+      let currentNode = null
+      if (currentNodeId) {
+        currentNode = await prisma.node.findFirst({
+          where: { nodeId: currentNodeId }
+        })
+      }
+      
+      // Get primary base URL setting
+      const primaryBaseURLSetting = await prisma.setting.findUnique({
+        where: { key: 'primaryBaseURL' }
+      })
+      const primaryBaseURL = primaryBaseURLSetting?.value || null
+      
+      // Latest version (would normally come from version check service)
+      // For now, set same as current version or check GitHub releases
+      let latestVersion = version
+      try {
+        // Check if we have a cached latest version
+        const latestVersionSetting = await prisma.setting.findUnique({
+          where: { key: 'latestVersion' }
+        })
+        if (latestVersionSetting?.value) {
+          latestVersion = latestVersionSetting.value
+        }
+      } catch {
+        // Use current version as latest
+      }
+      
+      const info = {
+        version,
+        latestVersion,
+        isContainer,
+        dbType: 'postgresql', // Nuxt version uses PostgreSQL
+        currentNodeId,
+        currentNode: currentNode ? {
+          id: currentNode.id,
+          nodeId: currentNode.nodeId,
+          name: currentNode.nodeName,
+          url: currentNode.host,
+          isPrimary: currentNode.isPrimary,
+          isOnline: currentNode.status === 'online'
+        } : null,
+        primaryBaseURL,
+        serverTimezone,
+        serverTimezoneOffset
+      }
+      
+      callback({ ok: true, info })
     } catch (error: any) {
       callback({ ok: false, msg: error.message })
     }
@@ -1837,6 +2301,42 @@ const socketHandlers = {
     } catch (error: any) {
       callback({ ok: false, msg: `Invalid URL: ${error.message}` })
     }
+  },
+
+  /**
+   * Disconnect all other socket clients of the current user
+   * This is useful when user wants to log out from all other devices
+   */
+  async disconnectOtherSocketClients(socket: AuthenticatedSocket) {
+    if (!socket.userId) {
+      console.log('[Socket.io] Cannot disconnect other clients - user not authenticated')
+      return
+    }
+
+    try {
+      if (!io) {
+        console.log('[Socket.io] Socket.io not initialized')
+        return
+      }
+
+      // Get all sockets in the user's room
+      const userRoom = `user_${socket.userId}`
+      const sockets = await io.in(userRoom).fetchSockets()
+
+      // Disconnect all sockets except the current one
+      let disconnectedCount = 0
+      for (const s of sockets) {
+        if (s.id !== socket.id) {
+          s.emit('refresh')
+          s.disconnect(true)
+          disconnectedCount++
+        }
+      }
+
+      console.log(`[Socket.io] Disconnected ${disconnectedCount} other socket clients for user ${socket.userId}`)
+    } catch (error: any) {
+      console.error('[Socket.io] Error disconnecting other socket clients:', error.message)
+    }
   }
 }
 
@@ -1865,6 +2365,18 @@ export function initSocketServer(httpServer: HTTPServer) {
         // For now, just mark as authenticated with a mock user
         socket.userId = 1
         socket.username = 'admin'
+        
+        // Send initial data after login
+        const monitorTypeList = getMonitorTypeListForClient()
+        socket.emit('monitorTypeList', monitorTypeList)
+        
+        // Send server info
+        socketHandlers.getInfo(socket, (result: any) => {
+          if (result.ok) {
+            socket.emit('info', result.info)
+          }
+        })
+        
         callback({ ok: true })
       } catch (error: any) {
         callback({ ok: false, msg: error.message })
@@ -1876,7 +2388,10 @@ export function initSocketServer(httpServer: HTTPServer) {
     // =====================
     socket.on('getMonitorList', (callback) => socketHandlers.getMonitorList(socket, callback))
     socket.on('getMonitor', (monitorId, callback) => socketHandlers.getMonitor(socket, monitorId, callback))
+    socket.on('getMonitorTypeList', (callback) => socketHandlers.getMonitorTypeList(socket, callback))
     socket.on('getMonitorBeats', (monitorId, period, callback) => socketHandlers.getMonitorBeats(socket, monitorId, period, callback))
+    socket.on('monitorImportantHeartbeatListCount', (monitorId, callback) => socketHandlers.getImportantHeartbeatListCount(socket, monitorId, callback))
+    socket.on('monitorImportantHeartbeatListPaged', (monitorId, offset, count, callback) => socketHandlers.getImportantHeartbeatListPaged(socket, monitorId, offset, count, callback))
     socket.on('addMonitor', (monitor, callback) => socketHandlers.addMonitor(socket, monitor, callback))
     socket.on('editMonitor', (monitor, callback) => socketHandlers.editMonitor(socket, monitor, callback))
     socket.on('deleteMonitor', (monitorId, callback) => socketHandlers.deleteMonitor(socket, monitorId, callback))
@@ -1892,6 +2407,13 @@ export function initSocketServer(httpServer: HTTPServer) {
     socket.on('editNotification', (notification, callback) => socketHandlers.editNotification(socket, notification, callback))
     socket.on('deleteNotification', (notificationId, callback) => socketHandlers.deleteNotification(socket, notificationId, callback))
     socket.on('testNotification', (notification, callback) => socketHandlers.testNotification(socket, notification, callback))
+
+    // =====================
+    // Settings Event Handlers
+    // =====================
+    socket.on('getSettings', (callback) => socketHandlers.getSettings(socket, callback))
+    socket.on('setSettings', (data, currentPassword, callback) => socketHandlers.setSettings(socket, data, currentPassword, callback))
+    socket.on('getInfo', (callback) => socketHandlers.getInfo(socket, callback))
 
     // =====================
     // Tag Event Handlers
@@ -1928,6 +2450,8 @@ export function initSocketServer(httpServer: HTTPServer) {
     socket.on('getAPIKeyList', (callback) => socketHandlers.getAPIKeyList(socket, callback))
     socket.on('addAPIKey', (data, callback) => socketHandlers.addAPIKey(socket, data, callback))
     socket.on('deleteAPIKey', (keyId, callback) => socketHandlers.deleteAPIKey(socket, keyId, callback))
+    socket.on('enableAPIKey', (keyId, callback) => socketHandlers.enableAPIKey(socket, keyId, callback))
+    socket.on('disableAPIKey', (keyId, callback) => socketHandlers.disableAPIKey(socket, keyId, callback))
 
     // =====================
     // Proxy Event Handlers
@@ -1969,6 +2493,7 @@ export function initSocketServer(httpServer: HTTPServer) {
     socket.on('getPushExample', (monitorId, callback) => socketHandlers.getPushExample(socket, monitorId, callback))
     socket.on('testChrome', (executablePath, callback) => socketHandlers.testChrome(socket, executablePath, callback))
     socket.on('testRemoteBrowser', (remoteBrowserURL, callback) => socketHandlers.testRemoteBrowser(socket, remoteBrowserURL, callback))
+    socket.on('disconnectOtherSocketClients', () => socketHandlers.disconnectOtherSocketClients(socket))
 
     // =====================
     // Subscription Event Handlers (for real-time updates)
@@ -2079,6 +2604,35 @@ export function broadcastMaintenanceDeleted(userId: number, maintenanceId: numbe
   })
 }
 
+/**
+ * Broadcast full maintenance list to a user (used when maintenance status changes)
+ */
+export async function broadcastMaintenanceList(userId: number) {
+  if (!io) return
+  
+  try {
+    const maintenances = await prisma.maintenance.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    // Import dynamically to avoid circular dependency
+    const { maintenanceToPublicJSON } = await import('./maintenance/scheduler')
+    
+    const maintenanceList = await Promise.all(
+      maintenances.map(m => maintenanceToPublicJSON(m))
+    )
+    
+    io.sockets.sockets.forEach((socket: AuthenticatedSocket) => {
+      if (socket.userId === userId) {
+        socket.emit('maintenanceList', maintenanceList)
+      }
+    })
+  } catch (error) {
+    console.error('[Socket] Error broadcasting maintenance list:', error)
+  }
+}
+
 // Status page broadcast functions
 export function broadcastStatusPageAdded(userId: number, statusPage: any) {
   if (!io) return
@@ -2106,6 +2660,17 @@ export function broadcastStatusPageDeleted(userId: number, statusPageId: number)
   io.sockets.sockets.forEach((socket: AuthenticatedSocket) => {
     if (socket.userId === userId) {
       socket.emit('statusPageDeleted', statusPageId)
+    }
+  })
+}
+
+// Settings broadcast functions
+export function broadcastSettingsUpdated(userId: number, settings: any) {
+  if (!io) return
+  
+  io.sockets.sockets.forEach((socket: AuthenticatedSocket) => {
+    if (socket.userId === userId) {
+      socket.emit('settingsUpdated', settings)
     }
   })
 }

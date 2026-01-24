@@ -22,8 +22,11 @@
     "amqplib": "^0.10.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
+    "croner": "^8.0.0",
     "dayjs": "^1.11.19",
+    "dockerode": "^4.0.9",
     "gamedig": "^5.0.0",
+    "httpntlm": "^1.8.13",
     "jsonpath-plus": "^10.0.0",
     "kafkajs": "^2.2.0",
     "mongodb": "^6.8.0",
@@ -48,11 +51,14 @@
     "tcp-ping": "^0.1.1",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4",
-    "zod": "^4.3.4"
+    "zod": "^4.3.4",
+    "@vueuse/core": "^13.0.0",
+    "@vueuse/nuxt": "^13.0.0"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.0",
     "@types/bcryptjs": "^3.0.0",
+    "@types/dockerode": "^4.0.1",
     "@types/mssql": "^9.0.0",
     "@types/node": "^25.0.3",
     "@types/nodemailer": "^6.4.0",

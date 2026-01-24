@@ -71,8 +71,8 @@ function clearImportFile() {
   <div class="space-y-6">
     <!-- Export Section -->
     <div class="section-card">
-      <h5 class="text-lg font-semibold text-white mb-4">Export Backup</h5>
-      <p class="text-gray-400 mb-4">Export all your monitors, notifications, status pages, and settings to a JSON file.</p>
+      <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Export Backup</h5>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">Export all your monitors, notifications, status pages, and settings to a JSON file.</p>
       <div class="alert alert-info mb-4">
         The backup file will include: Monitors, Notifications, Status Pages, Maintenances, Proxies, Docker Hosts
       </div>
@@ -83,39 +83,39 @@ function clearImportFile() {
 
     <!-- Import Section -->
     <div class="section-card">
-      <h5 class="text-lg font-semibold text-white mb-4">Import Backup</h5>
-      <p class="text-gray-400 mb-4">Restore your data from a previously exported backup file.</p>
+      <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Import Backup</h5>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">Restore your data from a previously exported backup file.</p>
       
       <input ref="fileInput" type="file" accept=".json" class="hidden" @change="handleFileSelect" />
       
-      <div v-if="!importFile" class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-500 transition-colors" @click="selectFile">
-        <p class="text-gray-400">Click to select a backup file (.json)</p>
+      <div v-if="!importFile" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors" @click="selectFile">
+        <p class="text-gray-600 dark:text-gray-400">Click to select a backup file (.json)</p>
       </div>
       
-      <div v-else class="p-4 bg-gray-700 rounded-lg mb-4">
+      <div v-else class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
         <div class="flex justify-between items-center">
-          <span class="text-white">{{ importFile.name }}</span>
+          <span class="text-gray-900 dark:text-white">{{ importFile.name }}</span>
           <button class="text-red-400 hover:text-red-300" @click="clearImportFile">Remove</button>
         </div>
       </div>
 
       <div v-if="importFile" class="space-y-3 mb-4">
-        <h6 class="text-white font-medium">Import Options</h6>
+        <h6 class="text-gray-900 dark:text-white font-medium">Import Options</h6>
         <label class="flex items-center gap-2 cursor-pointer">
           <input v-model="importOptions.overwrite" type="checkbox" />
-          <span class="text-gray-300">Overwrite existing data</span>
+          <span class="text-gray-700 dark:text-gray-300">Overwrite existing data</span>
         </label>
         <label class="flex items-center gap-2 cursor-pointer">
           <input v-model="importOptions.importMonitors" type="checkbox" />
-          <span class="text-gray-300">Import Monitors</span>
+          <span class="text-gray-700 dark:text-gray-300">Import Monitors</span>
         </label>
         <label class="flex items-center gap-2 cursor-pointer">
           <input v-model="importOptions.importNotifications" type="checkbox" />
-          <span class="text-gray-300">Import Notifications</span>
+          <span class="text-gray-700 dark:text-gray-300">Import Notifications</span>
         </label>
         <label class="flex items-center gap-2 cursor-pointer">
           <input v-model="importOptions.importStatusPages" type="checkbox" />
-          <span class="text-gray-300">Import Status Pages</span>
+          <span class="text-gray-700 dark:text-gray-300">Import Status Pages</span>
         </label>
       </div>
 

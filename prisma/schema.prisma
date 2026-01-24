@@ -127,6 +127,10 @@ model Monitor {
   tlsExpiryDays     Json?   @map("tls_expiry_days") // JSON array of days before expiry to notify
   tlsInfo           Json?   @map("tls_info") // Cached TLS certificate info
 
+  // Cluster node assignment
+  nodeId            String?   @map("node_id") // Default node for this monitor
+  assignedNode      String?   @map("assigned_node") // Override node (set when redistributing)
+
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   proxy                Proxy?                @relation(fields: [proxyId], references: [id])
   heartbeats           Heartbeat[]
@@ -136,6 +140,8 @@ model Monitor {
 
   @@index([userId])
   @@index([active])
+  @@index([nodeId])
+  @@index([assignedNode])
   @@map("monitors")
 }
 

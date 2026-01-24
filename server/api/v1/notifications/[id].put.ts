@@ -1,14 +1,5 @@
 // server/api/v1/notifications/[id].put.ts
-import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
-
-const updateNotificationSchema = z.object({
-  name: z.string().min(1).optional(),
-  type: z.enum(['discord', 'slack', 'telegram', 'email', 'webhook', 'line']).optional(),
-  config: z.record(z.any()).optional(),
-  isDefault: z.boolean().optional(),
-  active: z.boolean().optional(),
-})
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -42,18 +33,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const result = updateNotificationSchema.safeParse(body)
   
-  if (!result.success) {
-    throw createError({
-      statusCode: 400,
-      message: result.error.issues[0].message
-    })
-  }
+  // Build update data
+  const updateData: any = {}
+  if (body.name !== undefined) updateData.name = body.name
+  if (body.type !== undefined) updateData.type = body.type
+  if (body.config !== undefined) updateData.config = body.config
+  if (body.isDefault !== undefined) updateData.isDefault = body.isDefault
+  if (body.active !== undefined) updateData.active = body.active
 
   const notification = await prisma.notification.update({
     where: { id },
-    data: result.data
+    data: updateData
   })
 
   return {

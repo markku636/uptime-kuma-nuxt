@@ -2,8 +2,12 @@
 import type { NotificationMessage } from '../sender'
 
 export const telegramProvider = {
-  async send(config: { botToken: string; chatId: string }, message: NotificationMessage) {
-    if (!config.botToken || !config.chatId) {
+  async send(config: { telegramBotToken?: string; telegramChatID?: string; botToken?: string; chatId?: string }, message: NotificationMessage) {
+    // Support both naming conventions
+    const botToken = config.telegramBotToken || config.botToken
+    const chatId = config.telegramChatID || config.chatId
+    
+    if (!botToken || !chatId) {
       throw new Error('Telegram bot token and chat ID are required')
     }
 
@@ -16,15 +20,17 @@ export const telegramProvider = {
 <b>Response Time:</b> ${message.ping}ms
 ${message.monitorUrl ? `<b>URL:</b> ${escapeHtml(message.monitorUrl)}` : ''}`
 
-    await $fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+    const response = await $fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       body: {
-        chat_id: config.chatId,
+        chat_id: chatId,
         text,
         parse_mode: 'HTML',
         disable_web_page_preview: true
       }
     })
+    
+    return response
   }
 }
 

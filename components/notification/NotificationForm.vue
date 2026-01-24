@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'submit', data: any): void
   (e: 'cancel'): void
+  (e: 'test'): void
 }>()
 
 // Get the current provider component
@@ -636,6 +637,9 @@ function handleSubmit() {
     <div class="flex justify-end gap-3 pt-4">
       <UButton variant="ghost" @click="emit('cancel')">
         Cancel
+      </UButton>
+      <UButton color="warning" variant="soft" @click="emit('test')">
+        Test
       </UButton>
       <UButton type="submit" :loading="loading">
         {{ notification ? 'Update' : 'Create' }}

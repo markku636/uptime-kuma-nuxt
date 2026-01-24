@@ -5,6 +5,7 @@ export * from './heartbeat'
 export * from './notification'
 export * from './status-page'
 export * from './socket'
+export * from './cluster'
 
 export interface User {
   id: number

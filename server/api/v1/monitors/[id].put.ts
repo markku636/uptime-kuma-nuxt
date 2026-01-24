@@ -4,7 +4,7 @@ import { startMonitorJob, stopMonitorJob } from '../../../services/monitor/sched
 
 const updateMonitorSchema = z.object({
   name: z.string().min(1).optional(),
-  type: z.enum(['http', 'tcp', 'ping', 'dns', 'push', 'docker']).optional(),
+  type: z.string().optional(),  // Support all 24 monitor types
   url: z.string().optional(),
   hostname: z.string().optional(),
   port: z.number().optional(),

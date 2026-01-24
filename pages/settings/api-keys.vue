@@ -56,7 +56,7 @@ function copyToClipboard(text: string) {
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <h4 class="text-lg font-semibold text-white">API Keys</h4>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">API Keys</h4>
       <button class="btn btn-primary" @click="showForm = true">Generate Key</button>
     </div>
 
@@ -64,19 +64,19 @@ function copyToClipboard(text: string) {
       API keys allow external applications to access the Uptime Kuma API. Keep your keys secure.
     </div>
 
-    <div v-if="loading" class="text-center py-8 text-gray-400">Loading...</div>
+    <div v-if="loading" class="text-center py-8 text-gray-600 dark:text-gray-400">Loading...</div>
 
     <div v-else-if="apiKeys.length === 0" class="section-card text-center py-8">
-      <p class="text-gray-400 mb-4">No API keys generated yet.</p>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">No API keys generated yet.</p>
       <button class="btn btn-primary" @click="showForm = true">Generate Your First Key</button>
     </div>
 
     <div v-else class="section-card">
       <div class="space-y-3">
-        <div v-for="key in apiKeys" :key="key.id" class="flex justify-between items-center p-4 bg-gray-700 rounded-lg">
+        <div v-for="key in apiKeys" :key="key.id" class="flex justify-between items-center p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
           <div>
-            <span class="font-medium text-white">{{ key.name }}</span>
-            <span class="text-sm text-gray-400 ml-2">Created: {{ new Date(key.createdAt).toLocaleDateString() }}</span>
+            <span class="font-medium text-gray-900 dark:text-white">{{ key.name }}</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">Created: {{ new Date(key.createdAt).toLocaleDateString() }}</span>
           </div>
           <button class="btn btn-danger" @click="deleteKey(key.id)">Delete</button>
         </div>
@@ -84,8 +84,8 @@ function copyToClipboard(text: string) {
     </div>
 
     <div v-if="showForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-xl font-bold text-white mb-4">Generate API Key</h3>
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Generate API Key</h3>
         <div v-if="newKeyValue">
           <div class="alert alert-warning mb-4">This key will only be shown once!</div>
           <div class="flex gap-2 mb-4">
@@ -96,7 +96,7 @@ function copyToClipboard(text: string) {
         </div>
         <form v-else @submit.prevent="generateKey" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Key Name</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Key Name</label>
             <input v-model="newKeyName" type="text" class="input-field" placeholder="e.g., CI/CD Pipeline" />
           </div>
           <div class="flex gap-3 pt-4">

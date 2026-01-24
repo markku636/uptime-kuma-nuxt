@@ -2,10 +2,10 @@
   <UModal v-model="isOpen" :ui="{ width: 'max-w-4xl' }">
     <div class="p-4">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-100">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Browser Screenshot
         </h3>
-        <button @click="isOpen = false" class="text-gray-400 hover:text-gray-200">
+        <button @click="isOpen = false" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
           <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </div>
@@ -16,7 +16,7 @@
 
       <div v-else-if="error" class="text-center py-20">
         <UIcon name="i-heroicons-exclamation-triangle" class="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <p class="text-gray-400">{{ error }}</p>
+        <p class="text-gray-600 dark:text-gray-400">{{ error }}</p>
         <button @click="loadScreenshot" class="btn btn-primary mt-4">Retry</button>
       </div>
 

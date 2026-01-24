@@ -6,6 +6,6 @@ export { checkMongoDB, checkMySQL, checkPostgres, checkSqlServer, checkRedis } f
 export { checkDocker } from './docker-checker'
 export { checkMqtt, checkKafka, checkRabbitMQ } from './message-queue-checker'
 export { checkSteam, checkGamedig } from './game-checker'
-export { checkTcp, checkPing, checkDns, checkRadius, checkTailscalePing } from './network-checker'
+export { checkTcp, checkPing, checkDns, checkRadius, checkTailscalePing, checkSnmp } from './network-checker'
 export { checkTLS, getTLSInfo, type TLSInfo } from './tls-checker'
 export { checkRealBrowser, closeBrowser } from './real-browser-checker'

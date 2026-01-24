@@ -17,7 +17,7 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div class="flex items-center gap-3">
-              <h1 class="text-2xl font-bold text-gray-100">{{ monitor.name }}</h1>
+              <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ monitor.name }}</h1>
               <span class="text-gray-500 text-sm">#{{ monitor.id }}</span>
               <span 
                 :class="[statusBadgeClass, latestStatus === 1 ? 'status-up' : latestStatus === 0 ? 'status-down' : '']" 
@@ -26,9 +26,9 @@
                 {{ statusText }}
               </span>
             </div>
-            <p v-if="monitor.description" class="text-gray-400 mt-1">{{ monitor.description }}</p>
-            <div class="flex items-center gap-2 mt-2 text-sm text-gray-400">
-              <span class="uppercase font-medium text-gray-300">{{ monitor.type }}</span>
+            <p v-if="monitor.description" class="text-gray-600 dark:text-gray-400 mt-1">{{ monitor.description }}</p>
+            <div class="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <span class="uppercase font-medium text-gray-700 dark:text-gray-300">{{ monitor.type }}</span>
               <span>|</span>
               <a v-if="monitor.url" :href="monitor.url" target="_blank" class="link truncate max-w-md">
                 {{ monitor.url }}
@@ -91,7 +91,7 @@
       <div class="card card-body mb-6 card-interactive">
         <div class="flex flex-col lg:flex-row lg:items-center gap-6">
           <div class="flex-1">
-            <h3 class="text-sm font-medium text-gray-400 mb-2">Heartbeat History</h3>
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Heartbeat History</h3>
             <div class="flex items-center gap-0.5">
               <div
                 v-for="(beat, i) in displayHeartbeats"
@@ -111,7 +111,7 @@
             >
               {{ statusText }}
             </div>
-            <p v-if="lastHeartbeat" class="text-sm text-gray-400 mt-1">
+            <p v-if="lastHeartbeat" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Last check: {{ formatDateTime(lastHeartbeat.time) }}
             </p>
           </div>
@@ -121,28 +121,28 @@
       <!-- Statistics Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-400 mb-1">Response Time</div>
+          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Response Time</div>
           <div class="stat-value text-2xl font-bold text-emerald-400" :key="lastPing">
             <span class="tabular-nums">{{ animatedPing }}</span><span class="text-lg">ms</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">Current</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-400 mb-1">Avg Response</div>
+          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Response</div>
           <div class="stat-value text-2xl font-bold text-blue-400">
             <span class="tabular-nums">{{ avgPing }}</span><span class="text-lg">ms</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">24-hour</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-400 mb-1">Uptime</div>
+          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime24hColor">
             <span class="tabular-nums">{{ uptime24h }}</span><span class="text-lg">%</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">24-hour</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-400 mb-1">Uptime</div>
+          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime30dColor">
             <span class="tabular-nums">{{ uptime30d }}</span><span class="text-lg">%</span>
           </div>
@@ -152,7 +152,7 @@
 
       <!-- Response Time Chart -->
       <div class="card card-body mb-6">
-        <h3 class="text-lg font-semibold text-gray-100 mb-4">Response Time (Last 24 Hours)</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Response Time (Last 24 Hours)</h3>
         <div class="h-48 relative pl-14">
           <div class="absolute inset-0 pl-14 flex items-end gap-0.5">
             <div
@@ -179,7 +179,7 @@
       <!-- TLS Certificate Info (for HTTPS monitors) -->
       <div v-if="showTlsInfo" class="card card-body mb-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-100">TLS/SSL Certificate</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">TLS/SSL Certificate</h3>
           <button @click="refreshCertInfo" class="btn btn-secondary btn-sm" :disabled="loadingCert">
             <UIcon name="i-heroicons-arrow-path" class="w-4 h-4" :class="{ 'animate-spin': loadingCert }" />
           </button>
@@ -196,7 +196,7 @@
               <UIcon :name="certStatusIcon" class="w-8 h-8" />
             </div>
             <div>
-              <div class="font-medium text-gray-100">
+              <div class="font-medium text-gray-900 dark:text-gray-100">
                 {{ certInfo.certificate.valid ? 'Valid Certificate' : 'Invalid Certificate' }}
               </div>
               <div class="text-sm" :class="certDaysClass">
@@ -209,19 +209,19 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-700">
             <div>
               <div class="text-xs text-gray-500 uppercase mb-1">Subject</div>
-              <div class="text-sm text-gray-300 font-mono break-all">{{ certInfo.certificate.subject }}</div>
+              <div class="text-sm text-gray-700 dark:text-gray-300 font-mono break-all">{{ certInfo.certificate.subject }}</div>
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase mb-1">Issuer</div>
-              <div class="text-sm text-gray-300 font-mono break-all">{{ certInfo.certificate.issuer }}</div>
+              <div class="text-sm text-gray-700 dark:text-gray-300 font-mono break-all">{{ certInfo.certificate.issuer }}</div>
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase mb-1">Valid From</div>
-              <div class="text-sm text-gray-300">{{ formatDate(certInfo.certificate.validFrom) }}</div>
+              <div class="text-sm text-gray-700 dark:text-gray-300">{{ formatDate(certInfo.certificate.validFrom) }}</div>
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase mb-1">Valid To</div>
-              <div class="text-sm text-gray-300">{{ formatDate(certInfo.certificate.validTo) }}</div>
+              <div class="text-sm text-gray-700 dark:text-gray-300">{{ formatDate(certInfo.certificate.validTo) }}</div>
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase mb-1">Days Remaining</div>
@@ -229,7 +229,7 @@
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase mb-1">Fingerprint</div>
-              <div class="text-sm text-gray-300 font-mono truncate">{{ certInfo.certificate.fingerprint }}</div>
+              <div class="text-sm text-gray-700 dark:text-gray-300 font-mono truncate">{{ certInfo.certificate.fingerprint }}</div>
             </div>
           </div>
 
@@ -240,7 +240,7 @@
               <span 
                 v-for="(san, idx) in certInfo.certificate.subjectAltName" 
                 :key="idx"
-                class="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300 font-mono"
+                class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-700 dark:text-gray-300 font-mono"
               >
                 {{ san }}
               </span>
@@ -257,7 +257,7 @@
       <!-- Important Events Table -->
       <div class="card mb-6">
         <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-100">Important Events</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Important Events</h3>
           <span class="text-sm text-gray-400">{{ importantHeartbeats.length }} events</span>
         </div>
         <div class="overflow-x-auto">
@@ -271,15 +271,15 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(beat, index) in paginatedHeartbeats" :key="index" class="hover:bg-gray-700/50">
+              <tr v-for="(beat, index) in paginatedHeartbeats" :key="index" class="hover:bg-gray-100 dark:hover:bg-gray-700/50">
                 <td>
                   <span :class="getStatusBadgeClass(beat.status)" class="badge">
                     {{ getStatusText(beat.status) }}
                   </span>
                 </td>
-                <td class="text-gray-400">{{ formatDateTime(beat.time) }}</td>
-                <td class="text-gray-400">{{ beat.ping ? `${beat.ping}ms` : '-' }}</td>
-                <td class="text-gray-400 max-w-xs truncate">{{ beat.msg || '-' }}</td>
+                <td class="text-gray-600 dark:text-gray-400">{{ formatDateTime(beat.time) }}</td>
+                <td class="text-gray-600 dark:text-gray-400">{{ beat.ping ? `${beat.ping}ms` : '-' }}</td>
+                <td class="text-gray-600 dark:text-gray-400 max-w-xs truncate">{{ beat.msg || '-' }}</td>
               </tr>
               <tr v-if="importantHeartbeats.length === 0">
                 <td colspan="4" class="text-center text-gray-500 py-8">
@@ -318,7 +318,7 @@
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showDeleteConfirm = false">
       <Transition name="scale">
       <div class="card card-body max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-100 mb-4">Delete Monitor</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Delete Monitor</h3>
         <p class="text-gray-400 mb-6">Are you sure you want to delete "{{ monitor?.name }}"? This action cannot be undone.</p>
         <div class="flex justify-end gap-3">
           <button @click="showDeleteConfirm = false" class="btn btn-secondary">Cancel</button>

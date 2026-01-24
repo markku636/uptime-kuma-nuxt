@@ -72,8 +72,8 @@ export function useMaintenances(options: UseMaintenancesOptions = {}) {
       isLoading.value = true
       error.value = null
       
-      const data = await $fetch<Maintenance[]>('/api/v1/maintenance')
-      maintenances.value = data
+      const response = await $fetch<{ ok: boolean; data: Maintenance[] }>('/api/v1/maintenance')
+      maintenances.value = response.data || []
     } catch (e: any) {
       error.value = e.message || 'Failed to fetch maintenances'
       console.error('Failed to fetch maintenances:', e)

@@ -95,7 +95,7 @@ const initials = computed(() => {
   <div class="space-y-6">
     <!-- Profile Card -->
     <div class="section-card">
-      <h4 class="text-lg font-semibold text-white mb-6">Profile</h4>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Profile</h4>
 
       <form @submit.prevent="saveProfile" class="space-y-6">
         <!-- Avatar Section -->
@@ -142,11 +142,11 @@ const initials = computed(() => {
 
         <!-- Username (Read-only) -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
           <input 
             v-model="form.username" 
             type="text" 
-            class="input-field bg-gray-700/50" 
+            class="input-field bg-gray-100 dark:bg-gray-700/50" 
             disabled 
           />
           <p class="text-sm text-gray-500 mt-1">Username cannot be changed</p>
@@ -154,7 +154,7 @@ const initials = computed(() => {
 
         <!-- Display Name -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Display Name</label>
           <input 
             v-model="form.displayName" 
             type="text" 
@@ -166,7 +166,7 @@ const initials = computed(() => {
 
         <!-- Email -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
           <input 
             v-model="form.email" 
             type="email" 
@@ -191,66 +191,66 @@ const initials = computed(() => {
 
     <!-- Account Info -->
     <div class="section-card">
-      <h4 class="text-lg font-semibold text-white mb-4">Account Information</h4>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account Information</h4>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="p-4 bg-gray-700/50 rounded-lg">
-          <span class="text-sm text-gray-400 block mb-1">Account Type</span>
-          <span class="text-white font-medium">Administrator</span>
+        <div class="p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-sm text-gray-600 dark:text-gray-400 block mb-1">Account Type</span>
+          <span class="text-gray-900 dark:text-white font-medium">Administrator</span>
         </div>
-        <div class="p-4 bg-gray-700/50 rounded-lg">
-          <span class="text-sm text-gray-400 block mb-1">Member Since</span>
-          <span class="text-white font-medium">{{ new Date().toLocaleDateString() }}</span>
+        <div class="p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-sm text-gray-600 dark:text-gray-400 block mb-1">Member Since</span>
+          <span class="text-gray-900 dark:text-white font-medium">{{ new Date().toLocaleDateString() }}</span>
         </div>
       </div>
     </div>
 
     <!-- Quick Links -->
     <div class="section-card">
-      <h4 class="text-lg font-semibold text-white mb-4">Quick Links</h4>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Links</h4>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <NuxtLink 
           to="/settings/security" 
-          class="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+          class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
-          <UIcon name="i-heroicons-shield-check" class="w-5 h-5 text-green-400" />
+          <UIcon name="i-heroicons-shield-check" class="w-5 h-5 text-green-500 dark:text-green-400" />
           <div>
-            <span class="text-white block">Security Settings</span>
-            <span class="text-gray-400 text-sm">Change password, 2FA</span>
+            <span class="text-gray-900 dark:text-white block">Security Settings</span>
+            <span class="text-gray-600 dark:text-gray-400 text-sm">Change password, 2FA</span>
           </div>
         </NuxtLink>
         
         <NuxtLink 
           to="/settings/appearance" 
-          class="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+          class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
-          <UIcon name="i-heroicons-paint-brush" class="w-5 h-5 text-purple-400" />
+          <UIcon name="i-heroicons-paint-brush" class="w-5 h-5 text-purple-500 dark:text-purple-400" />
           <div>
-            <span class="text-white block">Appearance</span>
-            <span class="text-gray-400 text-sm">Theme, language</span>
+            <span class="text-gray-900 dark:text-white block">Appearance</span>
+            <span class="text-gray-600 dark:text-gray-400 text-sm">Theme, language</span>
           </div>
         </NuxtLink>
         
         <NuxtLink 
           to="/settings/notifications" 
-          class="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+          class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
-          <UIcon name="i-heroicons-bell" class="w-5 h-5 text-yellow-400" />
+          <UIcon name="i-heroicons-bell" class="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
           <div>
-            <span class="text-white block">Notifications</span>
-            <span class="text-gray-400 text-sm">Setup notification channels</span>
+            <span class="text-gray-900 dark:text-white block">Notifications</span>
+            <span class="text-gray-600 dark:text-gray-400 text-sm">Setup notification channels</span>
           </div>
         </NuxtLink>
         
         <NuxtLink 
           to="/settings/api-keys" 
-          class="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+          class="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
-          <UIcon name="i-heroicons-key" class="w-5 h-5 text-blue-400" />
+          <UIcon name="i-heroicons-key" class="w-5 h-5 text-blue-500 dark:text-blue-400" />
           <div>
-            <span class="text-white block">API Keys</span>
-            <span class="text-gray-400 text-sm">Manage API access</span>
+            <span class="text-gray-900 dark:text-white block">API Keys</span>
+            <span class="text-gray-600 dark:text-gray-400 text-sm">Manage API access</span>
           </div>
         </NuxtLink>
       </div>

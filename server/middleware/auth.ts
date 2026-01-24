@@ -8,6 +8,9 @@ export default defineEventHandler(async (event) => {
     '/api/status/',
     '/api/push/',
     '/api/badge/',
+    '/api/health',
+    '/api/cluster/',      // 叢集節點 API (需要公開給前端)
+    '/api/node-info',
   ]
 
   const path = event.path || ''

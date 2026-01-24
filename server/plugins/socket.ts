@@ -1,5 +1,6 @@
 // server/plugins/socket.ts
 import { initSocketServer } from '../services/socket'
+import { initializeMaintenanceScheduler } from '../services/maintenance/scheduler'
 
 export default defineNitroPlugin((nitroApp) => {
   // Socket.io initialization will be handled when the server starts
@@ -14,6 +15,9 @@ export default defineNitroPlugin((nitroApp) => {
       initSocketServer(server)
       server._socketInitialized = true
       console.log('[Socket.io] Server initialized')
+      
+      // Initialize maintenance scheduler after socket server is ready
+      await initializeMaintenanceScheduler()
     }
   })
 })

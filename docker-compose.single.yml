@@ -1,0 +1,50 @@
+# =============================================================================
+# Uptime Kuma Nuxt.js - Single Node (Development)
+# =============================================================================
+# 單節點開發配置，不含 OpenResty
+#
+# Usage:
+#   docker-compose -f docker-compose.single.yml up -d --build
+#
+# Access:
+#   http://localhost:32401/dashboard
+# =============================================================================
+
+services:
+  app:
+    build: .
+    container_name: nuxt-kuma-dev
+    ports:
+      - "32401:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/uptime_kuma?schema=public
+      - JWT_SECRET=your-secret-key-change-this
+      - NUXT_PUBLIC_APP_URL=http://localhost:32401
+      - NUXT_SESSION_PASSWORD=2101fb00c0c04243a397cd43049a904e
+      - NODE_ID=dev
+      - NODE_NAME=Development
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: nuxt-kuma-postgres-dev
+    ports:
+      - "32402:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: uptime_kuma
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data_dev:

@@ -27,7 +27,7 @@
           class="flex-1"
           @blur="emitUpdate"
         />
-        <span class="text-gray-400">:</span>
+        <span class="text-gray-600 dark:text-gray-400">:</span>
         <UInput 
           v-model="header.value"
           placeholder="Header value"

@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="section-card bg-gray-50 dark:bg-gray-800">
+  <div class="section-card">
     <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Appearance</h4>
 
     <form @submit.prevent="saveAppearance" class="space-y-6">

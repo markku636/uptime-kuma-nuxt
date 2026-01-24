@@ -1,11 +1,5 @@
 // server/api/v1/tags/index.post.ts
-import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
-
-const createTagSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'),
-})
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -18,17 +12,28 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const result = createTagSchema.safeParse(body)
   
-  if (!result.success) {
+  // Basic validation
+  if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
     throw createError({
       statusCode: 400,
-      message: result.error.issues[0].message
+      message: 'Name is required'
+    })
+  }
+  
+  if (!body.color || typeof body.color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(body.color)) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid color format (must be #RRGGBB)'
     })
   }
 
   const tag = await prisma.tag.create({
-    data: result.data
+    data: {
+      name: body.name.trim(),
+      color: body.color,
+      userId: session.user.id
+    }
   })
 
   return {

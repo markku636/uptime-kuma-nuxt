@@ -33,10 +33,20 @@
             >
               Settings
             </NuxtLink>
+            <NuxtLink
+              to="/status-pages"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              Status Pages
+            </NuxtLink>
           </nav>
 
           <!-- Right side -->
           <div class="flex items-center gap-4">
+            <!-- Node Selector (Cluster Mode) -->
+            <CommonNodeSelector />
+            
             <!-- Dark mode toggle -->
             <button
               @click="toggleColorMode"
@@ -116,6 +126,14 @@
             >
               Settings
             </NuxtLink>
+            <NuxtLink
+              to="/status-pages"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              Status Pages
+            </NuxtLink>
           </nav>
         </div>
       </div>
@@ -187,14 +205,14 @@ const profileMenuItems = [
     {
       label: 'Logout',
       icon: 'i-heroicons-arrow-right-on-rectangle',
-      click: async () => {
+      onSelect: async () => {
         try {
           await $fetch('/api/auth/logout', { method: 'POST' })
         } catch {
           // ignore
         }
         await clear()
-        navigateTo('/login')
+        window.location.href = '/login'
       }
     }
   ]

@@ -27,8 +27,8 @@ export function useTags(options: UseTagsOptions = {}) {
       isLoading.value = true
       error.value = null
       
-      const data = await $fetch<Tag[]>('/api/v1/tags')
-      tags.value = data
+      const response = await $fetch<{ ok: boolean; data: Tag[] }>('/api/v1/tags')
+      tags.value = response.data || []
     } catch (e: any) {
       error.value = e.message || 'Failed to fetch tags'
       console.error('Failed to fetch tags:', e)

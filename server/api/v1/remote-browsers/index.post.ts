@@ -1,8 +1,6 @@
 // server/api/v1/remote-browsers/index.post.ts
 import { defineEventHandler, readBody } from 'h3'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '~/server/utils/prisma'
 
 interface CreateRemoteBrowserBody {
   name: string
@@ -11,8 +9,14 @@ interface CreateRemoteBrowserBody {
 }
 
 export default defineEventHandler(async (event) => {
-  // TODO: Get userId from auth
-  const userId = 1
+  const session = await getUserSession(event)
+  
+  if (!session?.user) {
+    throw createError({
+      statusCode: 401,
+      message: 'Unauthorized'
+    })
+  }
 
   const body = await readBody<CreateRemoteBrowserBody>(event)
 
@@ -39,7 +43,7 @@ export default defineEventHandler(async (event) => {
       name: body.name,
       url: body.url,
       active: body.active ?? true,
-      userId
+      userId: session.user.id
     }
   })
 

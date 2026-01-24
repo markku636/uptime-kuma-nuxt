@@ -14,6 +14,9 @@
 
         <!-- Right side -->
         <div class="flex items-center space-x-4">
+          <!-- Node Selector (Cluster Mode) -->
+          <CommonNodeSelector />
+          
           <!-- Color mode toggle -->
           <UButton
             :icon="isDark ? 'i-heroicons-sun' : 'i-heroicons-moon'"

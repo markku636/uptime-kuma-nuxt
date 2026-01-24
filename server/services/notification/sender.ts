@@ -59,8 +59,7 @@ export async function sendNotification(
   const provider = providers[notification.type]
   
   if (!provider) {
-    console.error(`[Notification] Unknown provider type: ${notification.type}`)
-    return
+    throw new Error(`Unknown notification provider type: ${notification.type}`)
   }
 
   const message = formatMessage(monitor, result)
@@ -70,6 +69,7 @@ export async function sendNotification(
     console.log(`[Notification] Sent ${notification.type} notification for ${monitor.name}`)
   } catch (error: any) {
     console.error(`[Notification] Failed to send ${notification.type} notification:`, error.message)
+    throw error  // Re-throw to propagate the error
   }
 }
 
