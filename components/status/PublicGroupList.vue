@@ -3,7 +3,7 @@
     <!-- Draggable wrapper for edit mode -->
     <Draggable
       v-if="editMode"
-      :list="groups"
+      v-model="localGroups"
       item-key="id"
       :animation="100"
       handle=".group-drag-handle"
@@ -11,26 +11,57 @@
     >
       <template #item="{ element: group, index }">
         <div class="group-section mb-8">
-          <GroupHeader
-            :group="group"
-            :index="index"
-            :edit-mode="editMode"
-            :show-drag="groups.length >= 2"
-            @remove="emit('removeGroup', index)"
-            @rename="(name) => emit('renameGroup', group, name)"
-          />
+          <!-- Group Header -->
+          <div class="group-title">
+            <UIcon
+              v-if="localGroups.length >= 2"
+              name="i-heroicons-bars-3"
+              class="group-drag-handle text-gray-400 cursor-grab mr-3"
+            />
+            <UButton
+              icon="i-heroicons-x-mark"
+              size="xs"
+              color="red"
+              variant="ghost"
+              class="mr-3"
+              @click="emit('removeGroup', index)"
+            />
+            <input
+              :value="group.name"
+              class="group-name-input"
+              @input="(e) => group.name = (e.target as HTMLInputElement).value"
+              @blur="emit('renameGroup', group, group.name)"
+              @keydown.enter="emit('renameGroup', group, group.name)"
+            />
+          </div>
           
           <div class="monitor-list-container shadow-box">
-            <MonitorListContent
-              :group="group"
-              :index="index"
-              :edit-mode="editMode"
-              :show-tags="showTags"
-              :show-certificate-expiry="showCertificateExpiry"
-              @removeMonitor="(monitorIndex) => emit('removeMonitor', index, monitorIndex)"
-              @monitorSettings="(monitor) => emit('monitorSettings', group, monitor)"
-              @reorder="() => emit('reorderMonitors', group)"
-            />
+            <!-- Empty state for this group -->
+            <div v-if="!group.monitorList?.length" class="empty-state text-center py-4 text-gray-500">
+              No Monitors
+            </div>
+            
+            <!-- Monitor List with Draggable -->
+            <Draggable
+              v-else
+              :list="group.monitorList"
+              item-key="id"
+              :animation="100"
+              group="monitors"
+              @change="emit('reorderMonitors', group)"
+            >
+              <template #item="{ element: monitor, index: monitorIndex }">
+                <StatusMonitorCard
+                  :key="monitor.id"
+                  :monitor="monitor"
+                  :edit-mode="true"
+                  :show-tags="showTags"
+                  :show-certificate-expiry="showCertificateExpiry"
+                  @remove="emit('removeMonitor', index, monitorIndex)"
+                  @settings="emit('monitorSettings', group, monitor)"
+                />
+              </template>
+            </Draggable>
           </div>
         </div>
       </template>
@@ -39,7 +70,7 @@
     <!-- Static list for view mode -->
     <template v-else>
       <div
-        v-for="(group, index) in filteredGroups"
+        v-for="(group, gIndex) in filteredGroups"
         :key="group.id"
         class="group-section mb-8"
       >
@@ -59,7 +90,7 @@
             v-for="monitor in getMonitorsForGroup(group)"
             :key="monitor.id"
             :monitor="monitor"
-            :edit-mode="editMode"
+            :edit-mode="false"
             :show-tags="showTags"
             :show-certificate-expiry="showCertificateExpiry"
           />
@@ -144,6 +175,12 @@ const showGroupTitle = computed(() => {
   return false
 })
 
+// Local groups with v-model pattern for Draggable
+const localGroups = computed({
+  get: () => props.groups,
+  set: (value) => emit('update:groups', value)
+})
+
 // Filter groups based on active tab
 const filteredGroups = computed(() => {
   if (props.editMode) {
@@ -186,105 +223,6 @@ function onGroupDragChange(event: any) {
     emit('update:groups', newGroups)
   }
 }
-</script>
-
-<script lang="ts">
-// Re-define types for sub-components (TypeScript needs this in separate script block)
-interface Group {
-  id: number
-  name: string
-  weight?: number
-  monitorList: any[]
-}
-
-// Sub-components
-const GroupHeader = defineComponent({
-  props: {
-    group: { type: Object as PropType<Group>, required: true },
-    index: { type: Number, required: true },
-    editMode: { type: Boolean, default: false },
-    showDrag: { type: Boolean, default: false }
-  },
-  emits: ['remove', 'rename'],
-  setup(props, { emit }) {
-    const nameInput = ref(props.group.name)
-
-    watch(() => props.group.name, (val) => { nameInput.value = val })
-
-    const commitName = () => {
-      if (nameInput.value !== props.group.name) {
-        emit('rename', nameInput.value.trim() || 'New Group')
-      }
-    }
-
-    return () => h('div', { class: 'group-title' }, [
-      props.editMode && props.showDrag && h(resolveComponent('UIcon'), {
-        name: 'i-heroicons-bars-3',
-        class: 'group-drag-handle text-gray-400 cursor-grab mr-3'
-      }),
-      props.editMode && h(resolveComponent('UButton'), {
-        icon: 'i-heroicons-x-mark',
-        size: 'xs',
-        color: 'red',
-        variant: 'ghost',
-        class: 'mr-3',
-        onClick: () => emit('remove')
-      }),
-      props.editMode
-        ? h('input', {
-            class: 'group-name-input',
-            value: nameInput.value,
-            onInput: (e: any) => { nameInput.value = e.target.value },
-            onBlur: commitName,
-            onKeydown: (e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                commitName()
-              }
-            }
-          })
-        : h('span', props.group.name)
-    ])
-  }
-})
-
-const MonitorListContent = defineComponent({
-  props: {
-    group: { type: Object as PropType<Group>, required: true },
-    index: { type: Number, required: true },
-    editMode: { type: Boolean, default: false },
-    showTags: { type: Boolean, default: false },
-    showCertificateExpiry: { type: Boolean, default: false }
-  },
-  emits: ['removeMonitor', 'monitorSettings', 'reorder'],
-  setup(props, { emit }) {
-    return () => {
-      if (!props.group.monitorList?.length) {
-        return h('div', { class: 'empty-state text-center py-4 text-gray-500' }, 'No Monitors')
-      }
-      
-      return h(resolveComponent('Draggable'), {
-        list: props.group.monitorList,
-        itemKey: 'id',
-        animation: 100,
-        disabled: !props.editMode,
-        group: 'monitors',
-        onChange: () => emit('reorder')
-      }, {
-        item: ({ element: monitor, index: monitorIndex }: any) => 
-          h(resolveComponent('StatusMonitorCard'), {
-            key: monitor.id,
-            monitor,
-            editMode: props.editMode,
-            showTags: props.showTags,
-            showCertificateExpiry: props.showCertificateExpiry,
-            onRemove: () => emit('removeMonitor', monitorIndex),
-            onSettings: () => emit('monitorSettings', monitor)
-          })
-      })
-    }
-  }
-})
 </script>
 
 <style scoped>

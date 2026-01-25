@@ -73,6 +73,26 @@
         </div>
       </div>
 
+      <!-- Items Per Page -->
+      <div class="form-group">
+        <label for="items-per-page" class="form-label">Items Per Page</label>
+        <select
+          id="items-per-page"
+          v-model.number="localConfig.perPage"
+          class="form-select"
+        >
+          <option :value="5">5</option>
+          <option :value="10">10</option>
+          <option :value="15">15</option>
+          <option :value="20">20</option>
+          <option :value="25">25</option>
+          <option :value="50">50</option>
+        </select>
+        <div class="form-text">
+          Number of monitors displayed per page
+        </div>
+      </div>
+
       <!-- Theme -->
       <div class="form-group">
         <label for="theme" class="form-label">Theme</label>
@@ -177,47 +197,67 @@
         ></textarea>
       </div>
 
-      <!-- Monitors Section -->
-      <div class="monitors-section">
-        <h4 class="section-title">
-          Monitors
+      <!-- Groups Management Section -->
+      <div class="groups-section">
+        <h4 class="section-header">
+          <span>Groups & Monitors</span>
           <button
             type="button"
             class="btn-icon-add"
-            @click="showMonitorSelector = true"
-            title="Add monitors"
+            @click="emit('addGroup')"
+            title="Add new group"
           >
             <UIcon name="i-heroicons-plus-circle" />
           </button>
         </h4>
         
-        <div v-if="selectedMonitors.length === 0" class="empty-monitors">
-          <p class="text-sm text-gray-500">No monitors added yet.</p>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline mt-2"
-            @click="showMonitorSelector = true"
-          >
-            <UIcon name="i-heroicons-plus" class="me-1" />
-            Add Monitors
-          </button>
+        <div v-if="!groups || groups.length === 0" class="empty-groups">
+          No groups yet. Click + to add one.
         </div>
         
-        <div v-else class="monitor-list">
+        <div v-else class="groups-list">
           <div
-            v-for="monitor in selectedMonitors"
-            :key="monitor.id"
-            class="monitor-item"
+            v-for="(group, groupIndex) in groups"
+            :key="group.id"
+            class="group-card"
           >
-            <span class="monitor-name">{{ monitor.name }}</span>
-            <button
-              type="button"
-              class="btn-icon-remove"
-              @click="removeMonitor(monitor.id)"
-              title="Remove monitor"
-            >
-              <UIcon name="i-heroicons-x-mark" />
-            </button>
+            <div class="group-header">
+              <input
+                :value="group.name"
+                class="group-name-input"
+                @input="handleGroupNameChange(group.id, ($event.target as HTMLInputElement).value)"
+                @blur="emit('renameGroup', group.id, group.name)"
+              />
+              <button
+                type="button"
+                class="btn-icon-remove-small"
+                @click="emit('removeGroup', groupIndex)"
+                title="Remove group"
+              >
+                <UIcon name="i-heroicons-x-mark" />
+              </button>
+            </div>
+            
+            <div class="monitors-in-group">
+              <div v-if="!group.monitorList || group.monitorList.length === 0" class="empty-monitors-small">
+                No monitors
+              </div>
+              <div
+                v-for="(monitor, monitorIndex) in group.monitorList"
+                :key="monitor.id"
+                class="monitor-chip"
+              >
+                <span class="monitor-chip-name">{{ monitor.name }}</span>
+                <button
+                  type="button"
+                  class="monitor-chip-remove"
+                  @click="emit('removeMonitor', groupIndex, monitorIndex)"
+                  title="Remove monitor"
+                >
+                  <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -256,52 +296,6 @@
         Discard
       </button>
     </div>
-
-    <!-- Monitor Selector Modal -->
-    <UModal 
-      v-model:open="showMonitorSelector"
-      title="Select Monitors"
-      :ui="{ footer: 'justify-end' }"
-    >
-      <template #body>
-        <div v-if="loadingMonitors" class="text-center py-4">
-          <div class="loading-spinner"></div>
-          <p class="text-sm text-gray-500 mt-2">Loading monitors...</p>
-        </div>
-        
-        <div v-else-if="availableMonitors.length === 0" class="text-center py-4">
-          <p class="text-gray-500">No monitors available.</p>
-        </div>
-        
-        <div v-else class="monitor-selector-list">
-          <label
-            v-for="monitor in availableMonitors"
-            :key="monitor.id"
-            class="monitor-selector-item"
-          >
-            <input
-              type="checkbox"
-              :value="monitor.id"
-              v-model="selectedMonitorIds"
-              class="monitor-checkbox"
-            />
-            <span class="monitor-info">
-              <span class="monitor-name">{{ monitor.name }}</span>
-              <span class="monitor-type">{{ monitor.type }}</span>
-            </span>
-          </label>
-        </div>
-      </template>
-      
-      <template #footer="{ close }">
-        <UButton variant="ghost" @click="close">
-          Cancel
-        </UButton>
-        <UButton color="primary" @click="confirmMonitorSelection">
-          Add Selected
-        </UButton>
-      </template>
-    </UModal>
   </div>
 </template>
 
@@ -324,15 +318,17 @@ interface StatusPageConfig {
   publicGroupList?: any[]
 }
 
-interface Monitor {
+interface PublicGroup {
   id: number
   name: string
-  type: string
+  weight?: number
+  monitorList: { id: number; name: string }[]
 }
 
 const props = defineProps<{
   modelValue: boolean
   config: StatusPageConfig | null
+  groups?: PublicGroup[]
   saving?: boolean
 }>()
 
@@ -341,33 +337,11 @@ const emit = defineEmits<{
   'save': [config: StatusPageConfig]
   'discard': []
   'delete': []
-  'addMonitors': [monitorIds: number[]]
-  'removeMonitor': [monitorId: number]
+  'addGroup': []
+  'removeGroup': [groupIndex: number]
+  'renameGroup': [groupId: number, name: string]
+  'removeMonitor': [groupIndex: number, monitorIndex: number]
 }>()
-
-// Monitor selector state
-const showMonitorSelector = ref(false)
-const loadingMonitors = ref(false)
-const availableMonitors = ref<Monitor[]>([])
-const selectedMonitorIds = ref<number[]>([])
-
-// Selected monitors derived from config
-const selectedMonitors = computed(() => {
-  const groups = localConfig.value.publicGroupList || []
-  const monitors: Monitor[] = []
-  for (const group of groups) {
-    if (group.monitorList) {
-      for (const m of group.monitorList) {
-        monitors.push({
-          id: m.id || m.monitor_id,
-          name: m.name || `Monitor ${m.id || m.monitor_id}`,
-          type: m.type || 'http'
-        })
-      }
-    }
-  }
-  return monitors
-})
 
 // Local config copy for editing
 const localConfig = ref<StatusPageConfig>({
@@ -399,83 +373,6 @@ watch(() => props.config, (newConfig) => {
   }
 }, { immediate: true, deep: true })
 
-// Load available monitors when selector opens
-watch(showMonitorSelector, async (isOpen) => {
-  if (isOpen) {
-    await loadAvailableMonitors()
-  }
-})
-
-// Load monitors from API
-async function loadAvailableMonitors() {
-  loadingMonitors.value = true
-  try {
-    const response = await $fetch('/api/v1/monitors')
-    const data = response as any
-    availableMonitors.value = (data.data || data || []).map((m: any) => ({
-      id: m.id,
-      name: m.name,
-      type: m.type
-    }))
-    // Pre-select already added monitors
-    selectedMonitorIds.value = selectedMonitors.value.map(m => m.id)
-  } catch (error) {
-    console.error('Failed to load monitors:', error)
-    availableMonitors.value = []
-  } finally {
-    loadingMonitors.value = false
-  }
-}
-
-// Confirm monitor selection
-function confirmMonitorSelection() {
-  // Get newly selected monitors (not already in the list)
-  const existingIds = selectedMonitors.value.map(m => m.id)
-  const newIds = selectedMonitorIds.value.filter(id => !existingIds.includes(id))
-  
-  if (newIds.length > 0) {
-    // Add to default group or create one
-    if (!localConfig.value.publicGroupList || localConfig.value.publicGroupList.length === 0) {
-      localConfig.value.publicGroupList = [{
-        id: 1,
-        name: 'Services',
-        weight: 1,
-        monitorList: []
-      }]
-    }
-    
-    // Add monitors to the first group
-    const group = localConfig.value.publicGroupList[0]
-    for (const id of newIds) {
-      const monitor = availableMonitors.value.find(m => m.id === id)
-      if (monitor) {
-        group.monitorList = group.monitorList || []
-        group.monitorList.push({
-          id: monitor.id,
-          name: monitor.name,
-          type: monitor.type
-        })
-      }
-    }
-    
-    emit('addMonitors', newIds)
-  }
-  
-  showMonitorSelector.value = false
-}
-
-// Remove a monitor
-function removeMonitor(monitorId: number) {
-  if (localConfig.value.publicGroupList) {
-    for (const group of localConfig.value.publicGroupList) {
-      if (group.monitorList) {
-        group.monitorList = group.monitorList.filter((m: any) => (m.id || m.monitor_id) !== monitorId)
-      }
-    }
-  }
-  emit('removeMonitor', monitorId)
-}
-
 // Domain management
 function addDomain() {
   if (!localConfig.value.domainNameList) {
@@ -486,6 +383,12 @@ function addDomain() {
 
 function removeDomain(index: number) {
   localConfig.value.domainNameList?.splice(index, 1)
+}
+
+// Group name change handler
+function handleGroupNameChange(groupId: number, name: string) {
+  // Emit immediately for real-time updates
+  emit('renameGroup', groupId, name)
 }
 
 // Actions
@@ -980,5 +883,163 @@ function handleDiscard() {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Groups Section Styles */
+.groups-section {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #d6deea;
+}
+
+.dark .groups-section {
+  border-top-color: #374151;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #1e293b;
+}
+
+.dark .section-header {
+  color: #e5e7eb;
+}
+
+.empty-groups {
+  text-align: center;
+  padding: 16px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.dark .empty-groups {
+  background: #374151;
+  color: #9ca3af;
+}
+
+.groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.dark .group-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.group-name-input {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.dark .group-name-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.group-name-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #10b981);
+}
+
+.btn-icon-remove-small {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.btn-icon-remove-small:hover {
+  color: #ef4444;
+}
+
+.monitors-in-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.empty-monitors-small {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.monitor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #e0f2fe;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #0369a1;
+}
+
+.dark .monitor-chip {
+  background: #1e3a5f;
+  color: #7dd3fc;
+}
+
+.monitor-chip-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monitor-chip-remove {
+  background: none;
+  border: none;
+  color: #0369a1;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.monitor-chip-remove:hover {
+  color: #ef4444;
+}
+
+.dark .monitor-chip-remove {
+  color: #7dd3fc;
+}
+
+.dark .monitor-chip-remove:hover {
+  color: #ef4444;
 }
 </style>

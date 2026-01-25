@@ -31,10 +31,13 @@ const {
   // State
   config: statusPage,
   groups: publicGroupList,
+  groupTabs,
   incident,
   maintenanceList,
   lastUpdateTime: lastUpdated,
   updateCountdownText: countdown,
+  pagination,
+  page,
   
   // UI State
   loading,
@@ -48,6 +51,7 @@ const {
   init,
   loadData,
   loadHeartbeat,
+  changePage,
   
   // Edit Mode State
   editMode,
@@ -76,16 +80,23 @@ const {
 const showEditSidebar = ref(false)
 const showDeleteConfirm = ref(false)
 
-// Active group tab
-const activeGroupIndex = ref(0)
+// Active group tab - use group ID instead of index for proper API calls
+const activeGroupId = ref<number | null>(null)
 
 // Source of groups (draft when editing, public when viewing)
 const groupSource = computed(() => editMode.value ? draftGroups.value : publicGroupList.value)
 
+// Active group index (derived from activeGroupId for UI purposes)
+const activeGroupIndex = computed(() => {
+  if (!activeGroupId.value || publicGroupList.value.length === 0) return 0
+  const index = publicGroupList.value.findIndex(g => g.id === activeGroupId.value)
+  return index >= 0 ? index : 0
+})
+
 // Monitor selection state for edit mode
 const allMonitors = ref<any[]>([])
 const selectedGroupForMonitor = ref<number | null>(null)
-const selectedMonitorToAdd = ref<number | ''>('')
+const selectedMonitorToAdd = ref<{ label: string; value: number; tags?: any[] } | null>(null)
 
 // Check if user has edit permission
 // useUserSession must be called at setup top-level (not in onMounted)
@@ -123,6 +134,15 @@ const availableMonitors = computed(() => {
   return allMonitors.value.filter(m => !usedMonitorIds.has(m.id))
 })
 
+// Available monitor options for USelectMenu (with label/value format)
+const availableMonitorOptions = computed(() => {
+  return availableMonitors.value.map(m => ({
+    label: m.pathName || m.name,
+    value: m.id,
+    tags: m.tags || []
+  }))
+})
+
 // Page head management
 useHead({
   title: computed(() => statusPage.value?.title ? `${statusPage.value.title} - Status` : 'Status'),
@@ -131,6 +151,10 @@ useHead({
 // Initialize on mount
 onMounted(async () => {
   await init()
+  // Set initial active group after loading (use groupTabs which always has all groups)
+  if (groupTabs.value.length > 0 && !activeGroupId.value) {
+    activeGroupId.value = groupTabs.value[0].id
+  }
   // Apply custom CSS if present
   applyCustomCss()
 })
@@ -204,24 +228,77 @@ const overallStatusConfig = computed(() => {
   }
 })
 
-// Active group (for tab navigation)
+// Active group (for tab navigation) - uses activeGroupId
 const activeGroup = computed(() => {
   if (groupSource.value.length === 0) return null
-  return groupSource.value[activeGroupIndex.value] || groupSource.value[0]
+  if (!activeGroupId.value) return groupSource.value[0]
+  return groupSource.value.find(g => g.id === activeGroupId.value) || groupSource.value[0]
 })
 
 // Show all groups or just active group based on layout
 const showAllGroups = computed(() => {
   // In edit mode always show all groups to match legacy UX
   if (editMode.value) return true
-  // Show all if only one group or no tabs
-  return publicGroupList.value.length <= 1 || !statusPage.value?.showTabs
+  // Show all if only one group, otherwise use tabs
+  return groupTabs.value.length <= 1
 })
 
-// Displayed groups
+// Displayed groups - when tabs are used, API returns only the active group
 const displayedGroups = computed(() => {
   if (showAllGroups.value) return groupSource.value
-  return activeGroup.value ? [activeGroup.value] : []
+  // With pagination, API returns only the active group in groups
+  // So we can just return groupSource.value directly (which is already filtered by API)
+  return groupSource.value
+})
+
+// Visible page numbers for pagination (shows current page and nearby pages)
+const visiblePageNumbers = computed(() => {
+  if (!pagination.value) return []
+  
+  const totalPages = pagination.value.totalPages
+  const currentPage = pagination.value.currentPage
+  const maxVisible = 5 // Maximum number of page buttons to show
+  
+  if (totalPages <= maxVisible) {
+    // Show all pages if total is small
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
+  
+  const pages: (number | string)[] = []
+  const halfVisible = Math.floor(maxVisible / 2)
+  
+  let startPage = Math.max(1, currentPage - halfVisible)
+  let endPage = Math.min(totalPages, currentPage + halfVisible)
+  
+  // Adjust if we're near the start or end
+  if (currentPage <= halfVisible) {
+    endPage = maxVisible
+  } else if (currentPage > totalPages - halfVisible) {
+    startPage = totalPages - maxVisible + 1
+  }
+  
+  // Add first page and ellipsis if needed
+  if (startPage > 1) {
+    pages.push(1)
+    if (startPage > 2) {
+      pages.push('...')
+    }
+  }
+  
+  // Add visible pages
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
+  
+  // Add ellipsis and last page if needed
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      pages.push('...')
+    }
+    pages.push(totalPages)
+  }
+  
+  return pages
 })
 
 // Edit mode handlers
@@ -232,10 +309,7 @@ async function toggleEditMode() {
 
     enableEditMode()
 
-    // Ensure there is at least one group to receive monitors (parity with legacy page)
-    if (draftGroups.value.length === 0) {
-      addGroup()
-    }
+    // Don't auto-create group - user should click "Add Group" button
     showEditSidebar.value = true
 
     // Ensure monitor options are ready and a default group is selected
@@ -257,6 +331,8 @@ function exitEditMode() {
     if (confirm('You have unsaved changes. Discard them?')) {
       disableEditMode()
       showEditSidebar.value = false
+      // Reload data with pagination
+      loadData()
     }
   } else {
     disableEditMode()
@@ -275,8 +351,19 @@ async function saveStatusPage(config?: any) {
   const result = await saveStatusPageApi()
   if (result.success) {
     console.log('Status page saved successfully')
+    // Exit edit mode and close sidebar after successful save
+    disableEditMode()
+    showEditSidebar.value = false
+    // Reload data with pagination (show first group)
+    activeGroupId.value = null
+    await loadData()
+    // Set activeGroupId to first group after reload
+    if (groupTabs.value.length > 0) {
+      activeGroupId.value = groupTabs.value[0].id
+    }
   } else {
     console.error('Failed to save status page:', result.error)
+    alert('Failed to save: ' + (result.error || 'Unknown error'))
   }
 }
 
@@ -325,35 +412,56 @@ function handleAddGroup() {
 function handleAddMonitorToGroup() {
   if (!selectedGroupForMonitor.value || !selectedMonitorToAdd.value) return
 
-  // Normalize IDs to handle numeric/string values from API
+  // Handle USelectMenu value - it returns the full item object when value-key is set
   const groupId = Number(selectedGroupForMonitor.value)
-  const monitorId = Number(selectedMonitorToAdd.value)
-  if (Number.isNaN(groupId) || Number.isNaN(monitorId)) return
+  let monitorId: number
+  
+  // USelectMenu with value-key returns the item, extract the value
+  if (typeof selectedMonitorToAdd.value === 'object' && selectedMonitorToAdd.value !== null) {
+    monitorId = Number((selectedMonitorToAdd.value as any).value)
+  } else {
+    monitorId = Number(selectedMonitorToAdd.value)
+  }
+  
+  console.log('Adding monitor:', { groupId, monitorId, selectedValue: selectedMonitorToAdd.value })
+  
+  if (Number.isNaN(groupId) || Number.isNaN(monitorId)) {
+    console.error('Invalid IDs:', { groupId, monitorId })
+    return
+  }
   
   const monitor = allMonitors.value.find(m => Number(m.id) === monitorId)
+  console.log('Found monitor:', monitor)
+  
   if (monitor) {
     addMonitorToGroup(groupId, monitor)
-    selectedMonitorToAdd.value = ''
+    selectedMonitorToAdd.value = null as any
   }
 }
 
 // Remove group handler
 function handleRemoveGroup(groupIndex: number) {
-  const group = displayedGroups.value[groupIndex]
+  // Can receive groupIndex from both main content and sidebar
+  const group = draftGroups.value[groupIndex]
   if (group) {
     removeGroup(group.id)
   }
 }
 
-// Rename group handler
-function handleRenameGroup(group: any, name: string) {
-  if (!group || !name) return
-  updateGroupName(group.id, name)
+// Rename group handler - supports both (group, name) and (groupId, name) signatures
+function handleRenameGroup(groupOrId: any, name: string) {
+  if (!name) return
+  
+  // Check if first argument is a group object or a groupId
+  const groupId = typeof groupOrId === 'object' ? groupOrId.id : groupOrId
+  if (!groupId) return
+  
+  updateGroupName(groupId, name)
 }
 
 // Remove monitor from group handler
 function handleRemoveMonitor(groupIndex: number, monitorIndex: number) {
-  const group = displayedGroups.value[groupIndex]
+  const group = draftGroups.value[groupIndex]
   if (group) {
     const monitor = group.monitorList[monitorIndex]
     if (monitor) {
@@ -366,6 +474,55 @@ function handleRemoveMonitor(groupIndex: number, monitorIndex: number) {
 function handleReorderMonitors(group: any) {
   if (!group) return
   unsavedChanges.value = true
+}
+
+// Page change handler for pagination
+async function handlePageChange(newPage: number) {
+  if (editMode.value) return
+  
+  changePage(newPage)
+  await loadDataForGroup(activeGroupId.value)
+  
+  // Load heartbeat for the new page's monitors
+  const monitorIds = publicGroupList.value.flatMap(g => g.monitorList.map(m => m.id))
+  if (monitorIds.length) {
+    await loadHeartbeat(monitorIds)
+  }
+}
+
+// Group tab click handler
+async function handleGroupTabClick(groupId: number) {
+  if (editMode.value) return
+  
+  // Set active group ID and reset to page 1
+  activeGroupId.value = groupId
+  changePage(1)
+  
+  // Load data for the selected group with pagination
+  await loadDataForGroup(groupId)
+  
+  // Load heartbeat for this group's monitors
+  const group = publicGroupList.value.find(g => g.id === groupId)
+  if (group?.monitorList?.length) {
+    await loadHeartbeat(group.monitorList.map(m => m.id))
+  }
+}
+
+// Load data for a specific group with pagination
+async function loadDataForGroup(groupId: number | null) {
+  await loadData({ groupId: groupId ?? undefined })
+}
+
+// Logo upload handler
+async function handleLogoUpload(dataUrl: string) {
+  if (editMode.value) {
+    // In edit mode, just update the draft - save will upload
+    currentLogoUrl.value = dataUrl
+    unsavedChanges.value = true
+  } else {
+    // Direct upload (shouldn't happen, but fallback)
+    await uploadLogo(dataUrl)
+  }
 }
 
 // Load all monitors for the selector
@@ -390,14 +547,6 @@ watch(editMode, async (newValue) => {
     selectedGroupForMonitor.value = displayedGroups.value[0].id
   }
 })
-
-// Logo upload handler
-async function handleLogoUpload(logoDataUrl: string) {
-  const result = await uploadLogo(logoDataUrl)
-  if (!result.success) {
-    console.error('Failed to upload logo:', result.error)
-  }
-}
 
 // Format helpers
 function formatLastUpdated(date: Date | null) {
@@ -466,8 +615,14 @@ function formatLastUpdated(date: Date | null) {
         </button>
       </div>
 
-      <!-- Container -->
-      <div class="max-w-4xl mx-auto px-4 py-12">
+      <!-- Container - shifts right when sidebar is open -->
+      <div 
+        class="mx-auto px-4 py-12 transition-all duration-300"
+        :class="{
+          'max-w-4xl': !showEditSidebar,
+          'ml-[340px] max-w-[calc(100%-360px)]': showEditSidebar && editMode
+        }"
+      >
         <!-- Header -->
         <header class="text-center mb-12 status-page-header">
           <!-- Logo with upload support in edit mode -->
@@ -500,22 +655,19 @@ function formatLastUpdated(date: Date | null) {
             <span v-if="lastUpdated">
               Updated: {{ formatLastUpdated(lastUpdated) }}
             </span>
-            <span v-if="countdown" class="text-gray-500 dark:text-gray-400">
-              ({{ countdown }})
-            </span>
           </div>
         </header>
 
         <!-- Overall Status Banner -->
         <div
           :class="[
-            'rounded-xl p-6 mb-8 text-center shadow-lg',
+            'rounded-xl px-4 py-3 mb-6 text-center shadow-md',
             overallStatusConfig.bgClass,
             overallStatusConfig.textClass
           ]"
         >
-          <div class="flex items-center justify-center gap-3 text-2xl font-semibold">
-            <span class="text-3xl">{{ overallStatusConfig.icon }}</span>
+          <div class="flex items-center justify-center gap-2 text-lg font-semibold">
+            <span class="text-xl">{{ overallStatusConfig.icon }}</span>
             <span>{{ overallStatusConfig.text }}</span>
           </div>
         </div>
@@ -555,53 +707,68 @@ function formatLastUpdated(date: Date | null) {
         <!-- Edit Mode Controls -->
         <div v-if="editMode" class="mb-8 edit-mode-controls">
           <div class="flex flex-wrap items-center gap-4">
-            <!-- Add Group Button -->
+            <!-- Add Group Button - Primary action button -->
             <button
               type="button"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+              class="btn-add-group"
               @click="handleAddGroup"
             >
-              <UIcon name="i-heroicons-plus" class="w-5 h-5" />
-              Add Group
+              <UIcon name="i-heroicons-plus-circle" class="w-5 h-5" />
+              <span>Add Group</span>
             </button>
+          </div>
 
-            <!-- Add Monitor Selector -->
-            <div class="flex-1 min-w-[250px]">
-              <label class="block text-sm font-medium mb-1 edit-mode-label">
-                Add a monitor to group:
-              </label>
-              <div class="flex gap-2">
-                <select
-                  v-model="selectedGroupForMonitor"
-                  class="form-select flex-shrink-0 w-40"
-                >
-                  <option v-for="group in displayedGroups" :key="group.id" :value="group.id">
-                    {{ group.name }}
-                  </option>
-                </select>
-                <select
-                  v-model="selectedMonitorToAdd"
-                  class="form-select flex-1"
-                  :disabled="!selectedGroupForMonitor"
-                >
-                  <option value="">-- Select a monitor --</option>
-                  <option 
-                    v-for="monitor in availableMonitors" 
-                    :key="monitor.id" 
-                    :value="monitor.id"
-                  >
-                    {{ monitor.name }}
-                  </option>
-                </select>
-                <button
-                  type="button"
-                  class="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                  :disabled="!selectedMonitorToAdd"
-                  @click="handleAddMonitorToGroup"
-                >
-                  <UIcon name="i-heroicons-plus" class="w-5 h-5" />
-                </button>
-              </div>
+          <!-- Add Monitor Selector - Full Width Below -->
+          <div v-if="allMonitors.length > 0" class="add-monitor-section mt-4">
+            <label class="block text-sm font-medium mb-2 edit-mode-label">
+              Add a monitor:
+            </label>
+            <USelectMenu
+              v-model="selectedMonitorToAdd"
+              :items="availableMonitorOptions"
+              placeholder="Search and select a monitor..."
+              searchable
+              class="monitor-select"
+              value-key="value"
+              :ui="{ base: 'w-full' }"
+            >
+              <template #item="{ item }">
+                <div class="flex items-center gap-2 py-1">
+                  <span>{{ item.label }}</span>
+                  <template v-if="item.tags?.length">
+                    <span 
+                      v-for="tag in item.tags" 
+                      :key="tag.name"
+                      class="inline-block px-1.5 py-0.5 text-xs rounded"
+                      :style="{ backgroundColor: tag.color || '#6b7280', color: '#fff' }"
+                    >
+                      {{ tag.name }}
+                    </span>
+                  </template>
+                </div>
+              </template>
+            </USelectMenu>
+
+            <!-- Add to Group Button Row -->
+            <div v-if="selectedMonitorToAdd" class="flex items-center gap-2 mt-2">
+              <span class="text-sm edit-mode-label">Add to:</span>
+              <select
+                v-model="selectedGroupForMonitor"
+                class="form-select flex-shrink-0"
+              >
+                <option v-for="group in displayedGroups" :key="group.id" :value="group.id">
+                  {{ group.name }}
+                </option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                :disabled="!selectedGroupForMonitor"
+                @click="handleAddMonitorToGroup"
+              >
+                <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-1" />
+                Add
+              </button>
             </div>
           </div>
 
@@ -612,26 +779,26 @@ function formatLastUpdated(date: Date | null) {
           </div>
         </div>
 
-        <!-- Group Tabs (if multiple groups with tabs enabled) -->
+        <!-- Group Tabs (if multiple groups) -->
         <div 
-          v-if="!editMode && publicGroupList.length > 1 && statusPage?.showTabs" 
+          v-if="!editMode && groupTabs.length > 1" 
           class="mb-6"
         >
           <div class="flex gap-2 overflow-x-auto pb-2 border-b border-gray-200 dark:border-gray-700">
             <button
-              v-for="(group, index) in publicGroupList"
-              :key="group.id"
-              @click="activeGroupIndex = index"
+              v-for="tab in groupTabs"
+              :key="tab.id"
+              @click="handleGroupTabClick(tab.id)"
               :class="[
                 'px-4 py-2 rounded-t-lg text-sm font-medium transition-colors whitespace-nowrap',
-                activeGroupIndex === index
+                activeGroupId === tab.id
                   ? 'bg-white dark:bg-gray-800 text-primary-600 border-b-2 border-primary-500'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               ]"
             >
-              {{ group.name }}
+              {{ tab.name }}
               <span class="ml-2 text-xs text-gray-400">
-                ({{ group.monitorList?.length || 0 }})
+                ({{ tab.count || 0 }})
               </span>
             </button>
           </div>
@@ -639,7 +806,7 @@ function formatLastUpdated(date: Date | null) {
 
         <!-- Monitor Groups -->
         <StatusPublicGroupList
-          :groups="displayedGroups"
+          :groups="editMode ? draftGroups : displayedGroups"
           :edit-mode="editMode"
           :show-certificate-expiry="statusPage?.showCertificateExpiry"
           @update:groups="handleGroupUpdate"
@@ -649,9 +816,85 @@ function formatLastUpdated(date: Date | null) {
           @reorderMonitors="handleReorderMonitors"
         />
 
-        <!-- Empty State -->
+        <!-- Pagination (only in view mode when viewing a single group with many monitors) -->
         <div 
-          v-if="publicGroupList.length === 0 && hasLoaded"
+          v-if="!editMode && pagination && pagination.totalPages > 1" 
+          class="mt-8 flex flex-col items-center gap-3"
+        >
+          <div class="inline-flex items-center gap-1">
+            <!-- First page button -->
+            <button
+              class="pagination-btn"
+              :class="{ 'pagination-btn-disabled': !pagination.hasPrevPage }"
+              :disabled="!pagination.hasPrevPage"
+              @click="handlePageChange(1)"
+              title="First page"
+            >
+              «
+            </button>
+            
+            <!-- Previous page button -->
+            <button
+              class="pagination-btn"
+              :class="{ 'pagination-btn-disabled': !pagination.hasPrevPage }"
+              :disabled="!pagination.hasPrevPage"
+              @click="handlePageChange(page - 1)"
+              title="Previous page"
+            >
+              ‹
+            </button>
+            
+            <!-- Page number buttons -->
+            <template v-for="pageNum in visiblePageNumbers" :key="pageNum">
+              <span v-if="pageNum === '...'" class="px-2 py-2 text-sm text-gray-400 dark:text-gray-500">...</span>
+              <button
+                v-else
+                class="pagination-btn pagination-btn-number"
+                :class="{ 'pagination-btn-active': pageNum === pagination.currentPage }"
+                @click="handlePageChange(pageNum as number)"
+              >
+                {{ pageNum }}
+              </button>
+            </template>
+            
+            <!-- Next page button -->
+            <button
+              class="pagination-btn"
+              :class="{ 'pagination-btn-disabled': !pagination.hasNextPage }"
+              :disabled="!pagination.hasNextPage"
+              @click="handlePageChange(page + 1)"
+              title="Next page"
+            >
+              ›
+            </button>
+            
+            <!-- Last page button -->
+            <button
+              class="pagination-btn"
+              :class="{ 'pagination-btn-disabled': !pagination.hasNextPage }"
+              :disabled="!pagination.hasNextPage"
+              @click="handlePageChange(pagination.totalPages)"
+              title="Last page"
+            >
+              »
+            </button>
+          </div>
+        </div>
+
+        <!-- Countdown timer (always show in view mode) -->
+        <div 
+          v-if="!editMode && countdown" 
+          class="mt-6 flex justify-center"
+        >
+          <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span>Auto refresh in {{ countdown }}</span>
+          </div>
+        </div>
+
+        <!-- Empty State (only show in non-edit mode when no monitors) -->
+        <div 
+          v-if="!editMode && publicGroupList.length === 0 && hasLoaded"
           class="empty-state-card"
         >
           <div class="text-6xl mb-4">📊</div>
@@ -693,10 +936,15 @@ function formatLastUpdated(date: Date | null) {
     <StatusPageEditSidebar
       v-model="showEditSidebar"
       :config="draftConfig"
+      :groups="draftGroups"
       :saving="saving"
       @save="saveStatusPage"
       @discard="exitEditMode"
       @delete="showDeleteConfirm = true"
+      @addGroup="handleAddGroup"
+      @removeGroup="handleRemoveGroup"
+      @renameGroup="handleRenameGroup"
+      @removeMonitor="handleRemoveMonitor"
     />
 
     <!-- Delete Confirmation Dialog -->
@@ -721,14 +969,7 @@ function formatLastUpdated(date: Date | null) {
       </template>
     </UModal>
 
-    <!-- Sidebar Overlay -->
-    <Transition name="fade">
-      <div
-        v-if="editMode && showEditSidebar"
-        class="fixed inset-0 bg-black/30 z-30"
-        @click="showEditSidebar = false"
-      ></div>
-    </Transition>
+    <!-- No overlay - sidebar and main content are both visible -->
 
     <!-- Google Analytics -->
     <ClientOnly>
@@ -888,5 +1129,187 @@ function formatLastUpdated(date: Date | null) {
 
 .dark .empty-state-text {
   color: #9ca3af;
+}
+
+/* Add monitor section styling */
+.add-monitor-section {
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .add-monitor-section {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.monitor-select :deep(.select-button) {
+  min-height: 42px;
+}
+
+/* Button styling */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.btn-primary {
+  background-color: #22c55e;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #16a34a;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Add Group Button - prominent action button */
+.btn-add-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-add-group:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-add-group:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+}
+
+/* Form select styling */
+.form-select {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  appearance: none;
+}
+
+.dark .form-select {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+.form-select:focus {
+  border-color: #22c55e;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+}
+
+/* Pagination - Uptime Kuma style */
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.pagination-btn-number {
+  min-width: 40px;
+}
+
+/* Active page - Uptime Kuma green (#5cdd8b) */
+.pagination-btn-active {
+  color: #ffffff;
+  background-color: #5cdd8b;
+  border-color: #5cdd8b;
+}
+
+.pagination-btn-active:hover:not(:disabled) {
+  background-color: #7ce8a4;
+  border-color: #7ce8a4;
+}
+
+/* Disabled state */
+.pagination-btn-disabled {
+  color: #9ca3af;
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+/* Dark mode */
+.dark .pagination-btn {
+  color: #d1d5db;
+  background-color: #0d1117;
+  border-color: #1d2634;
+}
+
+.dark .pagination-btn:hover:not(:disabled) {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+.dark .pagination-btn-active {
+  color: #020b05;
+  background-color: #5cdd8b;
+  border-color: #5cdd8b;
+}
+
+.dark .pagination-btn-active:hover:not(:disabled) {
+  background-color: #7ce8a4;
+  border-color: #7ce8a4;
+}
+
+.dark .pagination-btn-disabled {
+  color: #484f58;
+  background-color: #0d1117;
+  border-color: #1d2634;
 }
 </style>

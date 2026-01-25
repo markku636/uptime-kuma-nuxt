@@ -1,0 +1,63 @@
+# =============================================================================
+# Nuxt.js Cluster API 測試
+# =============================================================================
+# 使用 VS Code REST Client 擴充功能執行這些請求
+# =============================================================================
+
+@baseUrl = http://localhost:32400
+
+### 健康檢查
+GET {{baseUrl}}/health
+
+### 取得所有節點狀態
+GET {{baseUrl}}/api/cluster/nodes
+
+### 取得當前選擇的節點
+GET {{baseUrl}}/api/cluster/current
+
+### 取得叢集統計資訊
+GET {{baseUrl}}/api/cluster/stats
+
+### 切換到 Node 1
+POST {{baseUrl}}/api/cluster/switch
+Content-Type: application/json
+
+{
+    "node": "node1"
+}
+
+### 切換到 Node 2
+POST {{baseUrl}}/api/cluster/switch
+Content-Type: application/json
+
+{
+    "node": "node2"
+}
+
+### 切換到 Node 3
+POST {{baseUrl}}/api/cluster/switch
+Content-Type: application/json
+
+{
+    "node": "node3"
+}
+
+### 切換回自動模式
+POST {{baseUrl}}/api/cluster/switch
+Content-Type: application/json
+
+{
+    "node": "auto"
+}
+
+### 測試 API 路由 - 檢查 X-Served-By 標頭
+GET {{baseUrl}}/api/health
+
+### 直接存取 Node 1
+GET http://localhost:32411/api/health
+
+### 直接存取 Node 2
+GET http://localhost:32412/api/health
+
+### 直接存取 Node 3
+GET http://localhost:32413/api/health

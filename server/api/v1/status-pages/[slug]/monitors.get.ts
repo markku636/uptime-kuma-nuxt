@@ -4,6 +4,11 @@ import { prisma } from '~/server/utils/prisma'
 /**
  * Get monitors for a public status page with pagination support
  * This endpoint is public (no auth required)
+ * 
+ * Optimized for performance:
+ * - Uses database-level pagination (skip/take) instead of loading all data
+ * - Only loads necessary relations
+ * - Separate count query for pagination metadata
  */
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
@@ -16,34 +21,16 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Parse query parameters
+  // Parse query parameters (limit will be overridden by status page perPage setting)
   const groupFilter = query.group ? Number(query.group) : null
   const page = Math.max(1, Number(query.page) || 1)
-  const limit = Math.min(50, Math.max(1, Number(query.limit) || 10))
+  const queryLimit = query.limit ? Math.min(50, Math.max(1, Number(query.limit))) : null
   const noPagination = query.no_pagination === 'true' || query.no_pagination === '1'
 
-  // Find status page
+  // First, get the status page basic info and check access
   const statusPage = await prisma.statusPage.findUnique({
     where: { slug },
     include: {
-      groups: {
-        orderBy: { weight: 'asc' },
-        include: {
-          monitors: {
-            include: {
-              monitor: {
-                include: {
-                  tags: {
-                    include: {
-                      tag: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
       incidents: {
         where: { pin: true },
         orderBy: { createdAt: 'desc' },
@@ -58,6 +45,9 @@ export default defineEventHandler(async (event) => {
       message: 'Status page not found'
     })
   }
+  
+  // Use status page perPage setting, or query limit, or default to 5
+  const limit = queryLimit || statusPage.perPage || 5
 
   // Check if published (or authenticated for unpublished)
   if (!statusPage.published) {
@@ -70,16 +60,48 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Build group tabs with monitor counts
-  const groupTabs = statusPage.groups.map(group => ({
+  // Get all groups with monitor counts (lightweight query for tabs)
+  const groupsWithCounts = await prisma.statusPageGroup.findMany({
+    where: { statusPageId: statusPage.id },
+    orderBy: { weight: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      weight: true,
+      _count: {
+        select: { monitors: true }
+      }
+    }
+  })
+
+  // Build group tabs
+  const groupTabs = groupsWithCounts.map(group => ({
     id: group.id,
     name: group.name,
-    count: group.monitors.length
+    count: group._count.monitors
   }))
 
-  // If no pagination, return all data
+  // If no pagination, load all data (for edit mode)
   if (noPagination) {
-    const publicGroupList = statusPage.groups.map(group => ({
+    const allGroups = await prisma.statusPageGroup.findMany({
+      where: { statusPageId: statusPage.id },
+      orderBy: { weight: 'asc' },
+      include: {
+        monitors: {
+          include: {
+            monitor: {
+              include: {
+                tags: {
+                  include: { tag: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    const publicGroupList = allGroups.map(group => ({
       id: group.id,
       name: group.name,
       weight: group.weight,
@@ -98,11 +120,31 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Handle pagination
-  let targetGroup = groupFilter
-    ? statusPage.groups.find(g => g.id === groupFilter)
-    : statusPage.groups[0]
+  // Determine target group for pagination
+  const targetGroupId = groupFilter || groupsWithCounts[0]?.id
 
+  if (!targetGroupId) {
+    return {
+      ok: true,
+      data: {
+        config: formatConfig(statusPage),
+        incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        publicGroupList: [],
+        groupTabs,
+        pagination: {
+          total: 0,
+          currentPage: page,
+          totalPages: 0,
+          perPage: limit,
+          hasNextPage: false,
+          hasPrevPage: false
+        }
+      }
+    }
+  }
+
+  // Get target group info
+  const targetGroup = groupsWithCounts.find(g => g.id === targetGroupId)
   if (!targetGroup) {
     return {
       ok: true,
@@ -123,12 +165,25 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Paginate monitors within the group
-  const allMonitors = targetGroup.monitors
-  const totalMonitors = allMonitors.length
-  const totalPages = Math.ceil(totalMonitors / limit)
+  // Database-level pagination - only fetch the monitors we need
   const offset = (page - 1) * limit
-  const paginatedMonitors = allMonitors.slice(offset, offset + limit)
+  const paginatedMonitors = await prisma.statusPageMonitor.findMany({
+    where: { groupId: targetGroupId },
+    skip: offset,
+    take: limit,
+    include: {
+      monitor: {
+        include: {
+          tags: {
+            include: { tag: true }
+          }
+        }
+      }
+    }
+  })
+
+  const totalMonitors = targetGroup._count.monitors
+  const totalPages = Math.ceil(totalMonitors / limit)
 
   const publicGroupList = [{
     id: targetGroup.id,
@@ -167,6 +222,9 @@ function formatConfig(statusPage: any) {
     published: statusPage.published,
     showTags: statusPage.showTags,
     showPoweredBy: statusPage.showPoweredBy,
+    showCertificateExpiry: statusPage.showCertificateExpiry,
+    perPage: statusPage.perPage || 5,
+    autoRefreshInterval: statusPage.autoRefreshInterval || 300,
     customCSS: statusPage.customCss,
     footerText: statusPage.footerText,
     googleAnalyticsId: statusPage.googleAnalyticsId

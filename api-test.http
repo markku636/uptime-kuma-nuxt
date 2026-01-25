@@ -1,0 +1,781 @@
+### Nuxt.js Kuma API 測試範例
+### 注意：此版本使用 Session-based 認證，需要先登入取得 Cookie
+
+# 基礎 URL 變數
+@baseUrl = http://localhost:3000
+
+### ===============================================
+### 認證 API | Authentication APIs
+### ===============================================
+
+### 登入 (取得 Session Cookie)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### 登入 (含 2FA Token)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123",
+  "token": "123456"
+}
+
+### 取得目前 Session
+GET {{baseUrl}}/api/auth/session
+
+### 取得使用者資料
+GET {{baseUrl}}/api/auth/profile
+
+### 登出
+POST {{baseUrl}}/api/auth/logout
+
+### ===============================================
+### Monitor API - 監控器 CRUD
+### ===============================================
+
+### 取得所有 Monitors
+GET {{baseUrl}}/api/v1/monitors
+
+### 取得指定 Monitor (ID = 1)
+GET {{baseUrl}}/api/v1/monitors/1
+
+### 建立 HTTP 監控器
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "範例 HTTP 監控",
+  "type": "http",
+  "url": "https://httpbin.org/status/200",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "method": "GET",
+  "description": "API 測試用監控器",
+  "headers": {
+    "User-Agent": "Kuma-Monitor"
+  }
+}
+
+### 建立 HTTP 監控器 (帶關鍵字檢查)
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "帶關鍵字檢查的 HTTP 監控",
+  "type": "http",
+  "url": "https://example.com",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "method": "GET",
+  "keyword": "Example Domain",
+  "invertKeyword": false,
+  "description": "檢查頁面是否包含特定關鍵字"
+}
+
+### 建立 HTTP 監控器 (JSON Path 檢查)
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "JSON Path 監控",
+  "type": "http",
+  "url": "https://httpbin.org/json",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "method": "GET",
+  "jsonPath": "$.slideshow.title",
+  "expectedValue": "Sample Slideshow",
+  "description": "使用 JSON Path 檢查 API 回應"
+}
+
+### 建立 HTTP 監控器 (POST 請求)
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "HTTP POST 監控",
+  "type": "http",
+  "url": "https://httpbin.org/post",
+  "interval": 120,
+  "active": true,
+  "retryInterval": 60,
+  "timeout": 30,
+  "method": "POST",
+  "body": "{\"key\": \"value\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "description": "測試 POST 請求"
+}
+
+### 建立 HTTP 監控器 (Basic Auth)
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "Basic Auth HTTP 監控",
+  "type": "http",
+  "url": "https://httpbin.org/basic-auth/user/pass",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "method": "GET",
+  "authMethod": "basic",
+  "basicAuthUser": "user",
+  "basicAuthPass": "pass",
+  "description": "使用 Basic Auth 認證"
+}
+
+### 建立 TCP 監控器
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "範例 TCP 監控",
+  "type": "tcp",
+  "hostname": "google.com",
+  "port": 443,
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "description": "TCP 連接測試"
+}
+
+### 建立 Ping 監控器
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "範例 Ping 監控",
+  "type": "ping",
+  "hostname": "8.8.8.8",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "description": "Ping 測試"
+}
+
+### 建立 DNS 監控器
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "範例 DNS 監控",
+  "type": "dns",
+  "hostname": "google.com",
+  "dnsRecordType": "A",
+  "dnsResolver": "8.8.8.8",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "description": "DNS 解析測試"
+}
+
+### 建立 Push 監控器
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "範例 Push 監控",
+  "type": "push",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 60,
+  "description": "Push 監控 (被動接收心跳)"
+}
+
+### 建立監控器 (帶 Tags 和 Notifications)
+POST {{baseUrl}}/api/v1/monitors
+Content-Type: application/json
+
+{
+  "name": "完整設定監控器",
+  "type": "http",
+  "url": "https://api.example.com/health",
+  "interval": 60,
+  "active": true,
+  "retryInterval": 30,
+  "timeout": 10,
+  "method": "GET",
+  "maxretries": 3,
+  "maxRedirects": 5,
+  "ignoreTls": false,
+  "upsideDown": false,
+  "expiryNotification": true,
+  "tlsExpiryDays": [7, 14, 30],
+  "description": "帶完整設定的監控器",
+  "tags": [1, 2],
+  "notifications": [1]
+}
+
+### 更新 Monitor (ID = 1)
+PUT {{baseUrl}}/api/v1/monitors/1
+Content-Type: application/json
+
+{
+  "name": "更新後的名稱",
+  "interval": 120,
+  "description": "更新後的描述"
+}
+
+### 更新 Monitor Headers
+PUT {{baseUrl}}/api/v1/monitors/1
+Content-Type: application/json
+
+{
+  "headers": {
+    "Authorization": "Bearer token123",
+    "X-Custom-Header": "value"
+  }
+}
+
+### 暫停 Monitor (ID = 1)
+POST {{baseUrl}}/api/v1/monitors/1/pause
+
+### 恢復 Monitor (ID = 1)
+POST {{baseUrl}}/api/v1/monitors/1/resume
+
+### 複製 Monitor (ID = 1)
+POST {{baseUrl}}/api/v1/monitors/1/clone
+
+### 取得 Monitor 心跳資料 (ID = 1)
+GET {{baseUrl}}/api/v1/monitors/1/heartbeats
+
+### 取得 Monitor Uptime (ID = 1)
+GET {{baseUrl}}/api/v1/monitors/1/uptime
+
+### 取得 Monitor 憑證資訊 (ID = 1)
+GET {{baseUrl}}/api/v1/monitors/1/certificate
+
+### 刪除 Monitor (ID = 1)
+DELETE {{baseUrl}}/api/v1/monitors/1
+
+### ===============================================
+### 狀態頁面 API | Status Page APIs
+### ===============================================
+
+### 取得所有狀態頁面
+GET {{baseUrl}}/api/v1/status-pages
+
+### 取得指定狀態頁面
+GET {{baseUrl}}/api/v1/status-pages/my-status-page
+
+### 建立狀態頁面
+POST {{baseUrl}}/api/v1/status-pages
+Content-Type: application/json
+
+{
+  "title": "我的服務狀態",
+  "slug": "my-service-status",
+  "description": "服務狀態監控頁面",
+  "published": true
+}
+
+### 更新狀態頁面
+PUT {{baseUrl}}/api/v1/status-pages/my-service-status
+Content-Type: application/json
+
+{
+  "title": "更新後的標題",
+  "description": "更新後的描述"
+}
+
+### 刪除狀態頁面
+DELETE {{baseUrl}}/api/v1/status-pages/my-service-status
+
+### 取得狀態頁面的 Monitors
+GET {{baseUrl}}/api/v1/status-pages/my-service-status/monitors
+
+### 取得狀態頁面的心跳資料
+GET {{baseUrl}}/api/v1/status-pages/my-service-status/heartbeat
+
+### ===============================================
+### 通知 API | Notification APIs
+### ===============================================
+
+### 取得所有通知
+GET {{baseUrl}}/api/v1/notifications
+
+### 建立通知
+POST {{baseUrl}}/api/v1/notifications
+Content-Type: application/json
+
+{
+  "name": "Slack 通知",
+  "type": "slack",
+  "config": {
+    "webhookUrl": "https://hooks.slack.com/services/xxx/yyy/zzz"
+  },
+  "isDefault": true,
+  "applyExisting": false
+}
+
+### 更新通知 (ID = 1)
+PUT {{baseUrl}}/api/v1/notifications/1
+Content-Type: application/json
+
+{
+  "name": "更新後的通知名稱"
+}
+
+### 測試通知
+POST {{baseUrl}}/api/v1/notifications/test
+Content-Type: application/json
+
+{
+  "type": "slack",
+  "config": {
+    "webhookUrl": "https://hooks.slack.com/services/xxx/yyy/zzz"
+  }
+}
+
+### 刪除通知 (ID = 1)
+DELETE {{baseUrl}}/api/v1/notifications/1
+
+### ===============================================
+### Tags API | 標籤 APIs
+### ===============================================
+
+### 取得所有標籤
+GET {{baseUrl}}/api/v1/tags
+
+### 建立標籤
+POST {{baseUrl}}/api/v1/tags
+Content-Type: application/json
+
+{
+  "name": "Production",
+  "color": "#4CAF50"
+}
+
+### 刪除標籤 (ID = 1)
+DELETE {{baseUrl}}/api/v1/tags/1
+
+### ===============================================
+### 維護排程 API | Maintenance APIs
+### ===============================================
+
+### 取得所有維護排程
+GET {{baseUrl}}/api/v1/maintenances
+
+### 取得指定維護排程 (ID = 1)
+GET {{baseUrl}}/api/v1/maintenances/1
+
+### 建立維護排程
+POST {{baseUrl}}/api/v1/maintenances
+Content-Type: application/json
+
+{
+  "title": "系統維護",
+  "description": "定期系統維護",
+  "strategy": "manual",
+  "active": true,
+  "monitors": [1, 2]
+}
+
+### 更新維護排程 (ID = 1)
+PUT {{baseUrl}}/api/v1/maintenances/1
+Content-Type: application/json
+
+{
+  "title": "更新後的維護標題"
+}
+
+### 暫停維護排程 (ID = 1)
+POST {{baseUrl}}/api/v1/maintenances/1/pause
+
+### 恢復維護排程 (ID = 1)
+POST {{baseUrl}}/api/v1/maintenances/1/resume
+
+### 刪除維護排程 (ID = 1)
+DELETE {{baseUrl}}/api/v1/maintenances/1
+
+### ===============================================
+### API Keys API | API 金鑰管理
+### ===============================================
+
+### 取得所有 API Keys
+GET {{baseUrl}}/api/v1/api-keys
+
+### 建立 API Key
+POST {{baseUrl}}/api/v1/api-keys
+Content-Type: application/json
+
+{
+  "name": "External API Access",
+  "expires": "2025-12-31T23:59:59Z"
+}
+
+### 更新 API Key (ID = 1)
+PUT {{baseUrl}}/api/v1/api-keys/1
+Content-Type: application/json
+
+{
+  "name": "Updated API Key Name"
+}
+
+### 刪除 API Key (ID = 1)
+DELETE {{baseUrl}}/api/v1/api-keys/1
+
+### ===============================================
+### Proxy API | 代理伺服器 APIs
+### ===============================================
+
+### 取得所有 Proxies
+GET {{baseUrl}}/api/v1/proxies
+
+### 建立 Proxy
+POST {{baseUrl}}/api/v1/proxies
+Content-Type: application/json
+
+{
+  "protocol": "http",
+  "host": "proxy.example.com",
+  "port": 8080,
+  "auth": false,
+  "active": true
+}
+
+### 更新 Proxy (ID = 1)
+PUT {{baseUrl}}/api/v1/proxies/1
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### 刪除 Proxy (ID = 1)
+DELETE {{baseUrl}}/api/v1/proxies/1
+
+### ===============================================
+### Docker Host API | Docker 主機 APIs
+### ===============================================
+
+### 取得所有 Docker Hosts
+GET {{baseUrl}}/api/v1/docker-hosts
+
+### 建立 Docker Host
+POST {{baseUrl}}/api/v1/docker-hosts
+Content-Type: application/json
+
+{
+  "name": "Local Docker",
+  "dockerType": "socket",
+  "dockerDaemon": "/var/run/docker.sock"
+}
+
+### 測試 Docker 連接
+POST {{baseUrl}}/api/v1/docker-hosts/test
+Content-Type: application/json
+
+{
+  "dockerType": "socket",
+  "dockerDaemon": "/var/run/docker.sock"
+}
+
+### 更新 Docker Host (ID = 1)
+PUT {{baseUrl}}/api/v1/docker-hosts/1
+Content-Type: application/json
+
+{
+  "name": "Updated Docker Host"
+}
+
+### 刪除 Docker Host (ID = 1)
+DELETE {{baseUrl}}/api/v1/docker-hosts/1
+
+### ===============================================
+### Node API (叢集節點) | Cluster Node APIs
+### ===============================================
+
+### 取得所有節點
+GET {{baseUrl}}/api/v1/nodes
+
+### 取得指定節點 (ID = 1)
+GET {{baseUrl}}/api/v1/nodes/1
+
+### 建立節點
+POST {{baseUrl}}/api/v1/nodes
+Content-Type: application/json
+
+{
+  "name": "node1",
+  "url": "http://localhost:8001",
+  "active": true
+}
+
+### 更新節點 (ID = 1)
+PUT {{baseUrl}}/api/v1/nodes/1
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### 刪除節點 (ID = 1)
+DELETE {{baseUrl}}/api/v1/nodes/1
+
+### ===============================================
+### 設定 API | Settings APIs
+### ===============================================
+
+### 取得外觀設定
+GET {{baseUrl}}/api/settings/appearance
+
+### 更新外觀設定
+POST {{baseUrl}}/api/settings/appearance
+Content-Type: application/json
+
+{
+  "primaryColor": "#5CDD8B",
+  "theme": "auto"
+}
+
+### 取得一般設定
+GET {{baseUrl}}/api/settings/general
+
+### 更新一般設定
+POST {{baseUrl}}/api/settings/general
+Content-Type: application/json
+
+{
+  "checkUpdate": true,
+  "checkBeta": false
+}
+
+### TLS 到期設定
+GET {{baseUrl}}/api/v1/settings/tls-expiry
+
+### 更新 TLS 到期設定
+PUT {{baseUrl}}/api/v1/settings/tls-expiry
+Content-Type: application/json
+
+{
+  "tlsExpiryNotifyDays": [7, 14, 30]
+}
+
+### 取得資料庫資訊
+GET {{baseUrl}}/api/v1/settings/database-info
+
+### 匯出設定
+GET {{baseUrl}}/api/v1/settings/export
+
+### 匯入設定
+POST {{baseUrl}}/api/v1/settings/import
+Content-Type: application/json
+
+{
+  "data": {}
+}
+
+### ===============================================
+### 維護操作 API | Maintenance Operations
+### ===============================================
+
+### 清除所有心跳資料
+POST {{baseUrl}}/api/v1/maintenance/clear-heartbeats
+
+### 清除統計資料
+POST {{baseUrl}}/api/v1/maintenance/clear-statistics
+
+### 壓縮資料庫
+POST {{baseUrl}}/api/v1/maintenance/shrink-database
+
+### ===============================================
+### 備份/還原 API | Backup/Restore APIs
+### ===============================================
+
+### 匯出備份
+GET {{baseUrl}}/api/v1/backup/export
+
+### 匯入備份
+POST {{baseUrl}}/api/v1/backup/import
+Content-Type: application/json
+
+{
+  "data": {}
+}
+
+### ===============================================
+### 叢集 API | Cluster APIs
+### ===============================================
+
+### 取得叢集節點列表
+GET {{baseUrl}}/api/cluster/nodes
+
+### 取得目前節點
+GET {{baseUrl}}/api/cluster/current
+
+### 切換節點
+POST {{baseUrl}}/api/cluster/switch
+Content-Type: application/json
+
+{
+  "nodeId": "node1"
+}
+
+### ===============================================
+### 其他 API | Other APIs
+### ===============================================
+
+### 健康檢查
+GET {{baseUrl}}/api/health
+
+### 取得節點資訊
+GET {{baseUrl}}/api/node-info
+
+### 取得 Metrics
+GET {{baseUrl}}/api/metrics
+
+### 取得 V1 Health
+GET {{baseUrl}}/api/v1/health
+
+### 取得 V1 Metrics
+GET {{baseUrl}}/api/v1/metrics
+
+### ===============================================
+### Badge API | 徽章 APIs
+### ===============================================
+
+### 取得 Monitor 狀態徽章
+GET {{baseUrl}}/api/badge/1/status
+
+### 取得 Monitor Uptime 徽章
+GET {{baseUrl}}/api/badge/1/uptime
+
+### 取得 Monitor Uptime 徽章 (指定時間)
+GET {{baseUrl}}/api/badge/1/uptime/24
+
+### 取得 Monitor 平均回應時間徽章
+GET {{baseUrl}}/api/badge/1/avg-response/24
+
+### 取得 Monitor Ping 徽章
+GET {{baseUrl}}/api/badge/1/ping
+
+### 取得 Monitor 憑證到期徽章
+GET {{baseUrl}}/api/badge/1/cert-exp
+
+### ===============================================
+### 2FA API | 兩步驗證 APIs
+### ===============================================
+
+### 取得 2FA 狀態
+GET {{baseUrl}}/api/auth/2fa/status
+
+### 設定 2FA
+POST {{baseUrl}}/api/auth/2fa/setup
+
+### 驗證 2FA
+POST {{baseUrl}}/api/auth/2fa/verify
+Content-Type: application/json
+
+{
+  "token": "123456"
+}
+
+### 停用 2FA
+POST {{baseUrl}}/api/auth/2fa/disable
+Content-Type: application/json
+
+{
+  "password": "your-password"
+}
+
+### ===============================================
+### Push Token API | 推送監控 APIs
+### ===============================================
+
+### 發送 Push 心跳 (使用監控器的 push token)
+GET {{baseUrl}}/api/push/YOUR_PUSH_TOKEN
+
+### 發送 Push 心跳 (帶狀態和訊息)
+GET {{baseUrl}}/api/push/YOUR_PUSH_TOKEN?status=up&msg=OK&ping=100
+
+### ===============================================
+### Remote Browser API | 遠端瀏覽器 APIs
+### ===============================================
+
+### 取得所有遠端瀏覽器
+GET {{baseUrl}}/api/v1/remote-browsers
+
+### 建立遠端瀏覽器
+POST {{baseUrl}}/api/v1/remote-browsers
+Content-Type: application/json
+
+{
+  "name": "Chrome Browser",
+  "url": "ws://localhost:3000"
+}
+
+### 測試遠端瀏覽器連接
+POST {{baseUrl}}/api/v1/remote-browsers/test
+Content-Type: application/json
+
+{
+  "url": "ws://localhost:3000"
+}
+
+### 更新遠端瀏覽器 (ID = 1)
+PUT {{baseUrl}}/api/v1/remote-browsers/1
+Content-Type: application/json
+
+{
+  "name": "Updated Browser Name"
+}
+
+### 刪除遠端瀏覽器 (ID = 1)
+DELETE {{baseUrl}}/api/v1/remote-browsers/1
+
+### ===============================================
+### Entry Page API | 入口頁面 APIs
+### ===============================================
+
+### 取得入口頁面設定
+GET {{baseUrl}}/api/entry-page
+
+### 取得入口頁面設定 (V1)
+GET {{baseUrl}}/api/v1/settings/entry-page
+
+### 設定入口頁面
+POST {{baseUrl}}/api/v1/settings/entry-page
+Content-Type: application/json
+
+{
+  "entryPage": "dashboard"
+}
+
+### ===============================================
+### Cloudflared API | Cloudflare Tunnel APIs
+### ===============================================
+
+### 取得 Cloudflared 狀態
+GET {{baseUrl}}/api/cloudflared/status
+
+### 啟動 Cloudflared
+POST {{baseUrl}}/api/cloudflared/start
+Content-Type: application/json
+
+{
+  "token": "your-cloudflare-tunnel-token"
+}
+
+### 停止 Cloudflared
+POST {{baseUrl}}/api/cloudflared/stop

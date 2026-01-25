@@ -1,6 +1,6 @@
 # Uptime Kuma Nuxt.js 遷移狀態與計劃
 
-> 最後更新：2026-01-24  
+> 最後更新：2026-01-25  
 > 參考文件：[實作 Uptime Kuma Cluster Vibe Coding](https://blog.markkulab.net/implement-uptime-kuma-cluster-vibe-coding/)
 
 ## 📊 總覽
@@ -10,11 +10,11 @@
 | **整體完成度 (核心)** | 100% | ~99.5% | ✅ 幾乎完成 |
 | **整體完成度 (含叢集)** | 100% | ~75% | 🟡 進行中 |
 | **後端框架** | Express.js | Nitro (H3) | ✅ 已遷移 |
-| **資料庫** | SQLite/MariaDB (RedBeanNode) | PostgreSQL (Prisma) | ✅ 已遷移 |
+| **資料庫** | SQLite/MariaDB (Knex) | PostgreSQL (Prisma) | ✅ 已遷移 |
 | **前端框架** | Vue 3 + Vite | Nuxt 3 | ✅ 已遷移 |
-| **狀態管理** | Vuex | Pinia | ✅ 已遷移 |
+| **狀態管理** | Pinia (舊: Vuex) | Pinia | ✅ 已遷移 |
 | **UI 框架** | Bootstrap 5 | Nuxt UI 3 + Tailwind | ✅ 已遷移 |
-| **負載平衡** | OpenResty (Lua) | 🔴 待整合 | 🔴 待遷移 |
+| **負載平衡** | OpenResty (Lua) | OpenResty (需整合) | 🟡 部分完成 |
 | **K8s 支援** | StatefulSet + HPA | 🔴 待整合 | 🔴 待遷移 |
 
 ---

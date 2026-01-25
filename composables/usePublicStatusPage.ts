@@ -10,6 +10,7 @@ interface StatusPageConfig {
   icon: string
   theme: 'auto' | 'light' | 'dark'
   autoRefreshInterval: number
+  perPage: number
   published: boolean
   showTags: boolean
   showPoweredBy: boolean
@@ -110,7 +111,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
   const error = ref<string | null>(null)
   const activeTab = ref<number | null>(null)
   const page = ref(1)
-  const perPage = ref(10)
+  const perPage = ref(5)
   const lastUpdateTime = ref<Date | null>(null)
   const updateCountdownText = ref('')
   
@@ -167,7 +168,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
   })
 
   // Methods
-  async function loadData(options: { noPagination?: boolean } = {}) {
+  async function loadData(options: { noPagination?: boolean; groupId?: number } = {}) {
     try {
       loading.value = true
       error.value = null
@@ -177,8 +178,11 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
       if (options.noPagination) {
         params.append('no_pagination', 'true')
       } else {
-        if (activeTab.value) {
-          params.append('group', String(activeTab.value))
+        // Use explicit groupId if provided, otherwise fall back to activeTab
+        const groupIdToUse = options.groupId ?? activeTab.value
+        if (groupIdToUse) {
+          params.append('group', String(groupIdToUse))
+          activeTab.value = groupIdToUse
         }
         params.append('page', String(page.value))
         params.append('limit', String(perPage.value))
@@ -193,6 +197,11 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
         groups.value = response.data.publicGroupList || []
         groupTabs.value = response.data.groupTabs || []
         pagination.value = response.data.pagination
+        
+        // Sync perPage from config (default to 5)
+        if (config.value?.perPage) {
+          perPage.value = config.value.perPage
+        }
         
         // Auto-select first tab if not set
         if (!activeTab.value && groupTabs.value.length > 0) {
@@ -309,7 +318,9 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
 
   // Initialization
   async function init() {
-    await loadData()
+    // First, load with noPagination just to get groupTabs info
+    // Then load with pagination for the first group
+    await loadData({ noPagination: false })
     
     // Load heartbeat for initial monitors
     const monitorIds = groups.value.flatMap(g => g.monitorList.map(m => m.id))
@@ -372,17 +383,21 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     try {
       saving.value = true
       
+      const bodyData = {
+        ...draftConfig.value,
+        publicGroupList: draftGroups.value.map((g, index) => ({
+          id: g.id,
+          name: g.name,
+          weight: g.weight ?? index + 1,
+          monitorList: g.monitorList.map(m => ({ id: m.id }))
+        }))
+      }
+      
+      console.log('Saving status page with data:', bodyData)
+      
       const response = await $fetch<any>(`/api/v1/status-pages/${slugRef.value}`, {
         method: 'PUT',
-        body: {
-          ...draftConfig.value,
-          publicGroupList: draftGroups.value.map(g => ({
-            id: g.id,
-            name: g.name,
-            weight: g.weight,
-            monitorList: g.monitorList.map(m => ({ id: m.id }))
-          }))
-        }
+        body: bodyData
       })
 
       if (response.ok) {
@@ -511,11 +526,36 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
 
   // Add monitor to group
   function addMonitorToGroup(groupId: number, monitor: PublicMonitor) {
-    const group = draftGroups.value.find(g => g.id === groupId)
-    if (group && !group.monitorList.some(m => m.id === monitor.id)) {
-      group.monitorList.push(monitor)
-      unsavedChanges.value = true
+    console.log('addMonitorToGroup called:', { groupId, monitor, draftGroups: draftGroups.value })
+    
+    // Ensure ID comparison is consistent (both as numbers)
+    const groupIndex = draftGroups.value.findIndex(g => Number(g.id) === Number(groupId))
+    
+    if (groupIndex === -1) {
+      console.error('Group not found:', groupId, 'Available groups:', draftGroups.value.map(g => g.id))
+      return
     }
+    
+    const group = draftGroups.value[groupIndex]
+    
+    if (group.monitorList.some(m => Number(m.id) === Number(monitor.id))) {
+      console.log('Monitor already in group:', monitor.id)
+      return
+    }
+    
+    // Create a new array to trigger Vue reactivity
+    const newMonitorList = [...group.monitorList, monitor]
+    const newGroup = { ...group, monitorList: newMonitorList }
+    
+    // Replace the entire draftGroups array to ensure reactivity
+    draftGroups.value = [
+      ...draftGroups.value.slice(0, groupIndex),
+      newGroup,
+      ...draftGroups.value.slice(groupIndex + 1)
+    ]
+    
+    unsavedChanges.value = true
+    console.log('Monitor added, updated draftGroups:', draftGroups.value)
   }
 
   // Remove monitor from group
