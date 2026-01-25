@@ -140,11 +140,11 @@ const showLink = computed(() => {
   return linkableTypes.includes(props.monitor.type || '')
 })
 
-// Last heartbeat status
+// Last heartbeat status (heartbeats are in chronological order, last one is most recent)
 const lastHeartbeatStatus = computed(() => {
   const heartbeats = props.monitor.heartbeats
   if (!heartbeats?.length) return -1
-  return heartbeats[0].status
+  return heartbeats[heartbeats.length - 1].status
 })
 
 // Certificate expiry color and text
@@ -171,12 +171,14 @@ const certExpiryText = computed(() => {
 <style scoped>
 .status-monitor-card {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--color-gray-200);
+  border-bottom: 1px solid #e2e8f0;
   transition: background-color 0.15s;
+  color: #0f172a;
 }
 
 .dark .status-monitor-card {
-  border-bottom-color: var(--color-gray-700);
+  border-bottom-color: #374151;
+  color: #e5e7eb;
 }
 
 .status-monitor-card:last-child {
@@ -184,15 +186,15 @@ const certExpiryText = computed(() => {
 }
 
 .status-monitor-card:hover {
-  background-color: var(--color-gray-50);
+  background-color: #f1f5f9;
 }
 
 .dark .status-monitor-card:hover {
-  background-color: var(--color-gray-800);
+  background-color: #1f2937;
 }
 
 .status-monitor-card.edit-mode:hover {
-  background-color: var(--color-blue-50);
+  background-color: #eff6ff;
 }
 
 .dark .status-monitor-card.edit-mode:hover {
@@ -233,15 +235,19 @@ const certExpiryText = computed(() => {
 
 .monitor-name {
   font-weight: 500;
-  color: inherit;
+  color: #1e293b;
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.dark .monitor-name {
+  color: #e2e8f0;
+}
+
 a.monitor-name:hover {
-  color: #5cdd8b;
+  color: #12b06a;
 }
 
 .monitor-details {

@@ -226,33 +226,41 @@ async function saveSettings() {
     </div>
 
     <!-- Stop Confirmation Modal -->
-    <UModal v-model:open="showStopConfirm">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-primary mb-4">Stop Cloudflared?</h3>
-          <p class="text-secondary mb-4">
+    <UModal 
+      :open="showStopConfirm"
+      @update:open="showStopConfirm = $event"
+      title="Stop Cloudflared?"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #default>
+        <span class="hidden"></span>
+      </template>
+      
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-secondary">
             The current connection may be lost if you are currently connecting via Cloudflare Tunnel. 
             Are you sure you want to stop it?
           </p>
-          <p class="text-amber-500 text-sm mb-4">
+          <p class="text-amber-500 text-sm">
             If authentication is disabled, cloudflared cannot be stopped for security reasons.
           </p>
           
-          <UFormField label="Current Password" class="mb-4">
+          <UFormField label="Current Password">
             <UInput
               v-model="currentPassword"
               type="password"
               placeholder="Enter your password to confirm"
             />
           </UFormField>
-
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" @click="showStopConfirm = false">Cancel</UButton>
-            <UButton color="error" @click="stopCloudflared" :loading="loading">
-              Stop cloudflared
-            </UButton>
-          </div>
         </div>
+      </template>
+
+      <template #footer="{ close }">
+        <UButton variant="ghost" @click="close">Cancel</UButton>
+        <UButton color="error" @click="stopCloudflared" :loading="loading">
+          Stop cloudflared
+        </UButton>
       </template>
     </UModal>
   </div>

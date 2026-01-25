@@ -5,7 +5,8 @@ import { prisma } from '~/server/utils/prisma'
 const createIncidentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(1, 'Content is required'),
-  style: z.enum(['info', 'warning', 'danger', 'success']).default('warning'),
+  // Align with frontend options (primary/light/dark) while keeping existing values
+  style: z.enum(['info', 'warning', 'danger', 'success', 'primary', 'light', 'dark']).default('warning'),
   pin: z.boolean().default(true),
 })
 
@@ -58,6 +59,10 @@ export default defineEventHandler(async (event) => {
 
   return {
     ok: true,
-    data: incident
+    data: {
+      ...incident,
+      createdDate: incident.createdAt,
+      lastUpdatedDate: incident.updatedAt,
+    }
   }
 })

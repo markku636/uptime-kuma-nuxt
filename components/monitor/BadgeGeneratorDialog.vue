@@ -1,5 +1,14 @@
 <template>
-  <UModal v-model:open="isOpen" :title="$t('Status Badge')">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    :title="$t('Status Badge')"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
+    
     <template #body>
       <div class="space-y-4">
         <!-- Monitor Selection -->
@@ -89,12 +98,10 @@
       </div>
     </template>
 
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <UButton variant="ghost" @click="isOpen = false">
-          {{ $t('Close') }}
-        </UButton>
-      </div>
+    <template #footer="{ close }">
+      <UButton variant="ghost" @click="close">
+        {{ $t('Close') }}
+      </UButton>
     </template>
   </UModal>
 </template>

@@ -164,11 +164,9 @@ function formatConfig(statusPage: any) {
     description: statusPage.description,
     icon: statusPage.icon || '/icon.svg',
     theme: statusPage.theme,
-    autoRefreshInterval: 300, // TODO: Add to schema if needed
     published: statusPage.published,
     showTags: statusPage.showTags,
     showPoweredBy: statusPage.showPoweredBy,
-    showCertificateExpiry: false, // TODO: Add to schema if needed
     customCSS: statusPage.customCss,
     footerText: statusPage.footerText,
     googleAnalyticsId: statusPage.googleAnalyticsId

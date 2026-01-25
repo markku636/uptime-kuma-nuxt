@@ -91,11 +91,13 @@ const isActive = (path: string) => route.path === path
 }
 
 .settings-sidebar {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-tertiary);
   border-radius: 0.75rem;
   padding: 1rem;
   position: sticky;
   top: 5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 24px -12px var(--shadow-color);
 }
 
 .settings-nav-item {
@@ -106,6 +108,7 @@ const isActive = (path: string) => route.path === path
   border-radius: 0.5rem;
   color: var(--text-secondary);
   transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
 .settings-nav-item:hover {
@@ -114,14 +117,16 @@ const isActive = (path: string) => route.path === path
 }
 
 .settings-nav-item-active {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: rgb(16 185 129) !important;
-  border-left: 4px solid rgb(16 185 129);
+  background-color: rgba(18, 176, 106, 0.14);
+  color: var(--uk-primary) !important;
+  border-color: rgba(18, 176, 106, 0.35);
 }
 
 .settings-content {
   background-color: var(--bg-secondary);
   border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 24px -12px var(--shadow-color);
 }
 
 .settings-content-header {

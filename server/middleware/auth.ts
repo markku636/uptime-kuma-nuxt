@@ -14,11 +14,18 @@ export default defineEventHandler(async (event) => {
   ]
 
   const path = event.path || ''
+  const method = event.method || 'GET'
   
   // Check if current route is public
   const isPublicRoute = publicRoutes.some(route => path.startsWith(route))
   
   if (isPublicRoute) {
+    return
+  }
+
+  // Public status page routes (GET only for viewing)
+  // Pattern: /api/v1/status-pages/{slug}/monitors or /api/v1/status-pages/{slug}/heartbeat
+  if (method === 'GET' && path.match(/^\/api\/v1\/status-pages\/[^\/]+\/(monitors|heartbeat)/)) {
     return
   }
 

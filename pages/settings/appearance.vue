@@ -100,51 +100,45 @@
 
 <script setup lang="ts">
 const toast = useToast()
-const colorMode = useColorMode()
+const { appearanceSettings, loadAppearanceSettings, saveAppearanceSettings, applyAppearance } = useAppearanceSettings()
+const { locale } = useI18n()
 
-const theme = ref('dark')
+// Local form state so users can edit without immediately persisting
+const theme = ref<'light' | 'dark' | 'system' | 'auto'>('system')
 const primaryColor = ref('green')
 const language = ref('en')
-const uptimeDisplayStyle = ref('percentage')
-const heartbeatBarStyle = ref('normal')
-const elapsedTimeStyle = ref('no-line')
+const uptimeDisplayStyle = ref<'percentage' | 'nines'>('percentage')
+const heartbeatBarStyle = ref<'normal' | 'bottom' | 'none'>('normal')
+const elapsedTimeStyle = ref<'no-line' | 'with-line' | 'none'>('no-line')
 const showCertificateExpiry = ref(true)
 const loading = ref(false)
 
-// Set theme and apply immediately
-const setTheme = (newTheme: string) => {
-  theme.value = newTheme
-  // Apply theme immediately
-  if (newTheme === 'system') {
-    colorMode.preference = 'system'
-  } else {
-    colorMode.preference = newTheme
-  }
+// Keep the language field aligned with the current i18n locale
+watch(locale, (newLocale) => {
+  language.value = newLocale as string
+}, { immediate: true })
+
+const syncFromStore = () => {
+  theme.value = appearanceSettings.value.theme || 'system'
+  primaryColor.value = appearanceSettings.value.primaryColor || 'green'
+  language.value = appearanceSettings.value.language || 'en'
+  uptimeDisplayStyle.value = appearanceSettings.value.uptimeDisplayStyle || 'percentage'
+  heartbeatBarStyle.value = appearanceSettings.value.heartbeatBarStyle || 'normal'
+  elapsedTimeStyle.value = appearanceSettings.value.elapsedTimeStyle || 'no-line'
+  showCertificateExpiry.value = appearanceSettings.value.showCertificateExpiry ?? true
 }
 
 // Load settings on mount
 onMounted(async () => {
-  try {
-    const settings = await $fetch('/api/settings/appearance') as any
-    if (settings) {
-      theme.value = settings.theme || 'dark'
-      primaryColor.value = settings.primaryColor || 'green'
-      uptimeDisplayStyle.value = settings.uptimeDisplayStyle || 'percentage'
-      heartbeatBarStyle.value = settings.heartbeatBarStyle || 'normal'
-      elapsedTimeStyle.value = settings.elapsedTimeStyle || 'no-line'
-      showCertificateExpiry.value = settings.showCertificateExpiry ?? true
-      
-      // Apply theme
-      if (theme.value === 'system') {
-        colorMode.preference = 'system'
-      } else {
-        colorMode.preference = theme.value
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load appearance settings:', error)
-  }
+  await loadAppearanceSettings()
+  syncFromStore()
 })
+
+// Set theme and apply immediately
+const setTheme = (newTheme: 'light' | 'dark' | 'system' | 'auto') => {
+  theme.value = newTheme
+  applyAppearance({ ...appearanceSettings.value, theme: newTheme })
+}
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: '☀️' },
@@ -184,18 +178,21 @@ const languageOptions = [
 const saveAppearance = async () => {
   loading.value = true
   try {
-    await $fetch('/api/settings/appearance', {
-      method: 'POST',
-      body: { 
-        theme: theme.value, 
-        primaryColor: primaryColor.value, 
-        uptimeDisplayStyle: uptimeDisplayStyle.value, 
-        heartbeatBarStyle: heartbeatBarStyle.value,
-        elapsedTimeStyle: elapsedTimeStyle.value,
-        showCertificateExpiry: showCertificateExpiry.value 
-      }
+    const result = await saveAppearanceSettings({
+      theme: theme.value,
+      primaryColor: primaryColor.value,
+      uptimeDisplayStyle: uptimeDisplayStyle.value,
+      heartbeatBarStyle: heartbeatBarStyle.value,
+      elapsedTimeStyle: elapsedTimeStyle.value,
+      showCertificateExpiry: showCertificateExpiry.value,
+      language: language.value,
     })
-    toast.add({ title: 'Success', description: 'Appearance saved', color: 'success' })
+
+    if (result.success) {
+      toast.add({ title: 'Success', description: 'Appearance saved', color: 'success' })
+    } else {
+      toast.add({ title: 'Error', description: result.error || 'Failed to save', color: 'error' })
+    }
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to save', color: 'error' })
   } finally {

@@ -1,5 +1,13 @@
 <template>
-  <UModal v-model:open="isOpen" :title="isEdit ? 'Edit Notification' : 'Add Notification'" size="2xl">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    :title="isEdit ? 'Edit Notification' : 'Add Notification'" 
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
     <template #body>
       <NotificationForm
         v-model="formData"

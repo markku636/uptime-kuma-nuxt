@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   // Convert to key-value object with defaults
   const settingsMap: Record<string, string | boolean> = {
-    theme: 'auto',
+    theme: 'system',
     primaryColor: 'green',
     uptimeDisplayStyle: 'percentage',
     heartbeatBarStyle: 'normal',

@@ -1,5 +1,14 @@
 <template>
-  <UModal v-model:open="isOpen" title="Screenshot" size="xl">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    title="Screenshot" 
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
+    
     <template #body>
       <div class="space-y-4">
         <!-- Loading state -->
@@ -49,12 +58,10 @@
       </div>
     </template>
     
-    <template #footer>
-      <div class="flex justify-end">
-        <UButton variant="ghost" @click="close">
-          Close
-        </UButton>
-      </div>
+    <template #footer="{ close }">
+      <UButton variant="ghost" @click="close">
+        Close
+      </UButton>
     </template>
   </UModal>
 </template>

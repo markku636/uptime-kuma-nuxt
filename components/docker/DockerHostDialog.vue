@@ -1,5 +1,13 @@
 <template>
-  <UModal v-model:open="isOpen" :title="isEditing ? $t('Edit Docker Host') : $t('Add Docker Host')">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    :title="isEditing ? $t('Edit Docker Host') : $t('Add Docker Host')"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
     <template #body>
       <UForm :state="form" :schema="schema" @submit="handleSubmit" class="space-y-4">
         <!-- Name -->

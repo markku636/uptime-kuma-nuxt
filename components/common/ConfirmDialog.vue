@@ -69,42 +69,32 @@ function handleCancel() {
 </script>
 
 <template>
-  <UModal v-model:open="open">
-    <div class="p-6">
-      <div class="flex items-start gap-4">
-        <!-- Icon -->
-        <div :class="['p-3 rounded-full', iconConfig.bgColor]">
-          <UIcon :name="iconConfig.name" :class="['w-6 h-6', iconConfig.iconColor]" />
-        </div>
+  <UModal 
+    :open="open"
+    @update:open="open = $event"
+    :title="title"
+    :description="message"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
 
-        <!-- Content -->
-        <div class="flex-1">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ title }}
-          </h3>
-          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {{ message }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="mt-6 flex justify-end gap-3">
-        <UButton
-          variant="ghost"
-          :disabled="loading"
-          @click="handleCancel"
-        >
-          {{ cancelText }}
-        </UButton>
-        <UButton
-          :color="confirmButtonColor"
-          :loading="loading"
-          @click="handleConfirm"
-        >
-          {{ confirmText }}
-        </UButton>
-      </div>
-    </div>
+    <template #footer="{ close }">
+      <UButton
+        variant="ghost"
+        :disabled="loading"
+        @click="handleCancel"
+      >
+        {{ cancelText }}
+      </UButton>
+      <UButton
+        :color="confirmButtonColor"
+        :loading="loading"
+        @click="handleConfirm"
+      >
+        {{ confirmText }}
+      </UButton>
+    </template>
   </UModal>
 </template>

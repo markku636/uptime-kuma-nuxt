@@ -1,16 +1,23 @@
 <template>
-  <UModal v-model="isOpen" :ui="{ width: 'max-w-md' }">
-    <div class="p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-gray-100 flex items-center gap-2">
-          Setup 2FA
-          <span v-if="twoFAStatus === true" class="badge badge-success text-xs">Active</span>
-          <span v-if="twoFAStatus === false" class="badge bg-gray-600 text-xs">Inactive</span>
-        </h3>
-        <button @click="isOpen = false" :disabled="processing" class="text-gray-400 hover:text-gray-200">
-          <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
-        </button>
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    title="Setup 2FA"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
+    
+    <template #header>
+      <div class="flex items-center gap-2">
+        <span>Setup 2FA</span>
+        <span v-if="twoFAStatus === true" class="badge badge-success text-xs">Active</span>
+        <span v-if="twoFAStatus === false" class="badge bg-gray-600 text-xs">Inactive</span>
       </div>
+    </template>
+
+    <template #body>
 
       <div class="space-y-4">
         <!-- QR Code for setup -->
@@ -44,26 +51,28 @@
         </div>
 
         <!-- Enable 2FA button -->
-        <button 
+        <UButton 
           v-if="!uri && !twoFAStatus" 
           @click="prepare2FA" 
-          :disabled="processing || !currentPassword"
-          class="btn btn-primary w-full"
+          :disabled="!currentPassword"
+          :loading="processing"
+          color="primary"
+          class="w-full"
         >
-          <span v-if="processing" class="spinner w-4 h-4 mr-2"></span>
           Enable 2FA
-        </button>
+        </UButton>
 
         <!-- Disable 2FA button -->
-        <button 
+        <UButton 
           v-if="twoFAStatus" 
           @click="confirmDisable2FA" 
-          :disabled="processing || !currentPassword"
-          class="btn btn-danger w-full"
+          :disabled="!currentPassword"
+          :loading="processing"
+          color="error"
+          class="w-full"
         >
-          <span v-if="processing" class="spinner w-4 h-4 mr-2"></span>
           Disable 2FA
-        </button>
+        </UButton>
 
         <!-- Token verification -->
         <div v-if="uri && !twoFAStatus" class="mt-6">
@@ -78,9 +87,9 @@
               placeholder="000000"
               autocomplete="one-time-code"
             />
-            <button @click="verifyToken" :disabled="!token || token.length !== 6" class="btn btn-secondary">
+            <UButton @click="verifyToken" :disabled="!token || token.length !== 6" variant="outline">
               Verify
-            </button>
+            </UButton>
           </div>
           <p v-if="tokenValid" class="text-sm text-emerald-400 mt-2">
             <UIcon name="i-heroicons-check-circle" class="w-4 h-4 inline" />
@@ -89,38 +98,38 @@
         </div>
 
         <!-- Save button (after token verification) -->
-        <button 
+        <UButton 
           v-if="uri && !twoFAStatus && tokenValid" 
           @click="save2FA" 
-          :disabled="processing"
-          class="btn btn-primary w-full"
+          :loading="processing"
+          color="primary"
+          class="w-full"
         >
-          <span v-if="processing" class="spinner w-4 h-4 mr-2"></span>
           Save & Enable 2FA
-        </button>
+        </UButton>
       </div>
+    </template>
 
-      <div class="flex justify-end mt-6">
-        <button @click="isOpen = false" :disabled="processing" class="btn btn-secondary">
-          Close
-        </button>
-      </div>
-    </div>
+    <template #footer="{ close }">
+      <UButton variant="ghost" @click="close" :disabled="processing">
+        Close
+      </UButton>
+    </template>
   </UModal>
 
   <!-- Confirm Disable Modal -->
-  <UModal v-model="showDisableConfirm" :ui="{ width: 'max-w-sm' }">
-    <div class="p-6">
-      <h3 class="text-lg font-semibold text-gray-100 mb-4">Disable 2FA</h3>
-      <p class="text-gray-400 mb-6">Are you sure you want to disable two-factor authentication? This will make your account less secure.</p>
-      <div class="flex justify-end gap-3">
-        <button @click="showDisableConfirm = false" class="btn btn-secondary">Cancel</button>
-        <button @click="disable2FA" :disabled="processing" class="btn btn-danger">
-          <span v-if="processing" class="spinner w-4 h-4 mr-2"></span>
-          Disable 2FA
-        </button>
-      </div>
-    </div>
+  <UModal 
+    v-model:open="showDisableConfirm" 
+    title="Disable 2FA"
+    description="Are you sure you want to disable two-factor authentication? This will make your account less secure."
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #footer="{ close }">
+      <UButton variant="ghost" @click="close">Cancel</UButton>
+      <UButton color="error" @click="disable2FA" :loading="processing">
+        Disable 2FA
+      </UButton>
+    </template>
   </UModal>
 </template>
 

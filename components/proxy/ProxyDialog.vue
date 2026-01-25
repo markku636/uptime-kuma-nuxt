@@ -1,7 +1,20 @@
 <template>
-  <UModal v-model:open="isOpen" :title="isEditing ? $t('Edit Proxy') : $t('Add Proxy')">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    :title="isEditing ? $t('Edit Proxy') : $t('Add Proxy')"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
     <template #body>
-      <UForm :state="form" :schema="schema" @submit="handleSubmit" class="space-y-4">
+        <UForm 
+          :state="form" 
+          :schema="schema" 
+          @submit="handleSubmit" 
+          class="space-y-4"
+        >
         <!-- Active -->
         <UFormField name="active" :label="$t('Active')">
           <USwitch v-model="form.active" />
@@ -71,7 +84,7 @@
       </UForm>
     </template>
 
-    <template #footer>
+      <template #footer="{ close }">
       <div class="flex justify-between">
         <UButton
           v-if="isEditing"

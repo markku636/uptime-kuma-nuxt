@@ -1,5 +1,14 @@
 <template>
-  <UModal v-model:open="isOpen" :title="isEdit ? 'Edit Tag' : 'Add Tag'" size="md">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    :title="isEdit ? 'Edit Tag' : 'Add Tag'" 
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
+    
     <template #body>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <UFormField label="Tag Name" required>
@@ -29,16 +38,16 @@
           <span class="text-sm text-gray-500">Preview:</span>
           <Tag :tag="{ ...formData, id: 0 }" />
         </div>
-
-        <div class="flex justify-end gap-2 pt-4">
-          <UButton variant="ghost" @click="close">
-            Cancel
-          </UButton>
-          <UButton type="submit" color="primary" :loading="loading">
-            {{ isEdit ? 'Save' : 'Create' }}
-          </UButton>
-        </div>
       </form>
+    </template>
+    
+    <template #footer="{ close }">
+      <UButton variant="ghost" @click="close">
+        Cancel
+      </UButton>
+      <UButton @click="handleSubmit" color="primary" :loading="loading">
+        {{ isEdit ? 'Save' : 'Create' }}
+      </UButton>
     </template>
   </UModal>
 </template>

@@ -14,44 +14,114 @@
  * - Theme switching (auto/light/dark)
  */
 
+// Explicit import for useUserSession to ensure it's available
+import { useUserSession } from '#imports'
+
 // Public status page - no auth required for viewing
 definePageMeta({
   layout: false
 })
 
 const route = useRoute()
+const router = useRouter()
 const slug = computed(() => route.params.slug as string)
 
-// Use the status page composable
+// Use the composable for all status page functionality
 const {
+  // State
   config: statusPage,
   groups: publicGroupList,
   incident,
   maintenanceList,
-  loading,
-  error,
   lastUpdateTime: lastUpdated,
   updateCountdownText: countdown,
+  
+  // UI State
+  loading,
+  error,
+  
+  // Computed
+  overallStatus,
+  overallStatusType,
+  
+  // Methods
   init,
-  stopAutoRefresh: cleanup
+  loadData,
+  loadHeartbeat,
+  
+  // Edit Mode State
+  editMode,
+  saving,
+  unsavedChanges,
+  draftConfig,
+  draftGroups,
+  
+  // Edit Mode Methods
+  enableEditMode,
+  disableEditMode,
+  updateDraftConfig,
+  saveStatusPage: saveStatusPageApi,
+  deleteStatusPage,
+  postIncident,
+  unpinIncident,
+  addGroup,
+  removeGroup,
+  updateGroupName,
+  addMonitorToGroup,
+  removeMonitorFromGroup,
+  uploadLogo
 } = usePublicStatusPage(slug)
 
-// Computed for backwards compatibility
-const incidents = computed(() => incident.value ? [incident.value] : [])
-const connected = ref(true)
-const isFirstLoaded = computed(() => !loading.value)
-
-// Edit mode state (requires auth)
-const editMode = ref(false)
+// Other state
 const showEditSidebar = ref(false)
-const saving = ref(false)
+const showDeleteConfirm = ref(false)
 
 // Active group tab
 const activeGroupIndex = ref(0)
 
+// Source of groups (draft when editing, public when viewing)
+const groupSource = computed(() => editMode.value ? draftGroups.value : publicGroupList.value)
+
+// Monitor selection state for edit mode
+const allMonitors = ref<any[]>([])
+const selectedGroupForMonitor = ref<number | null>(null)
+const selectedMonitorToAdd = ref<number | ''>('')
+
 // Check if user has edit permission
-const { data: session } = useAuth()
-const canEdit = computed(() => !!session.value?.user)
+// useUserSession must be called at setup top-level (not in onMounted)
+const { loggedIn } = useUserSession()
+const canEdit = computed(() => loggedIn.value)
+
+// Computed for backwards compatibility
+const incidents = computed(() => incident.value ? [incident.value] : [])
+const connected = ref(true)
+const hasLoaded = computed(() => !loading.value)
+
+// Markdown rendering for description and footer
+const { renderMarkdown } = useMarkdown()
+const descriptionHtml = computed(() => renderMarkdown(statusPage.value?.description))
+const footerHtml = computed(() => renderMarkdown(statusPage.value?.footerText))
+
+// Logo URL - use draft in edit mode, otherwise use original
+const currentLogoUrl = computed({
+  get: () => editMode.value ? (draftConfig.value?.icon ?? statusPage.value?.icon) : statusPage.value?.icon,
+  set: (val: string | undefined) => {
+    if (editMode.value && draftConfig.value) {
+      draftConfig.value.icon = val
+    }
+  }
+})
+
+// Available monitors (not already in any group)
+const availableMonitors = computed(() => {
+  const usedMonitorIds = new Set<number>()
+  for (const group of displayedGroups.value) {
+    for (const monitor of group.monitorList || []) {
+      usedMonitorIds.add(monitor.id)
+    }
+  }
+  return allMonitors.value.filter(m => !usedMonitorIds.has(m.id))
+})
 
 // Page head management
 useHead({
@@ -61,7 +131,6 @@ useHead({
 // Initialize on mount
 onMounted(async () => {
   await init()
-  
   // Apply custom CSS if present
   applyCustomCss()
 })
@@ -69,7 +138,6 @@ onMounted(async () => {
 // Cleanup on unmount
 onUnmounted(() => {
   removeCustomCss()
-  cleanup()
 })
 
 // Watch for custom CSS changes
@@ -96,33 +164,8 @@ function removeCustomCss() {
 }
 
 // Calculate overall status from all monitors
-const overallStatus = computed(() => {
-  const allMonitors = publicGroupList.value.flatMap(g => g.monitorList || [])
-  if (allMonitors.length === 0) return 'unknown'
-  
-  // Check for maintenance
-  if (maintenanceList.value.length > 0) {
-    return 'maintenance'
-  }
-  
-  const downMonitors = allMonitors.filter(m => {
-    const lastHeartbeat = m.heartbeats?.[0]
-    return lastHeartbeat && lastHeartbeat.status === 0 // DOWN
-  })
-  
-  const pendingMonitors = allMonitors.filter(m => {
-    const lastHeartbeat = m.heartbeats?.[0]
-    return lastHeartbeat && lastHeartbeat.status === 2 // PENDING
-  })
-  
-  if (downMonitors.length === 0 && pendingMonitors.length === 0) return 'operational'
-  if (downMonitors.length === allMonitors.length) return 'major-outage'
-  if (downMonitors.length > 0) return 'partial-outage'
-  return 'degraded'
-})
-
 const overallStatusConfig = computed(() => {
-  switch (overallStatus.value) {
+  switch (overallStatusType.value) {
     case 'operational':
       return { 
         text: 'All Systems Operational', 
@@ -151,13 +194,6 @@ const overallStatusConfig = computed(() => {
         bgClass: 'bg-blue-500',
         textClass: 'text-white'
       }
-    case 'degraded':
-      return { 
-        text: 'Degraded Performance', 
-        icon: '~',
-        bgClass: 'bg-orange-500',
-        textClass: 'text-white'
-      }
     default:
       return { 
         text: 'Status Unknown', 
@@ -170,57 +206,197 @@ const overallStatusConfig = computed(() => {
 
 // Active group (for tab navigation)
 const activeGroup = computed(() => {
-  if (publicGroupList.value.length === 0) return null
-  return publicGroupList.value[activeGroupIndex.value] || publicGroupList.value[0]
+  if (groupSource.value.length === 0) return null
+  return groupSource.value[activeGroupIndex.value] || groupSource.value[0]
 })
 
 // Show all groups or just active group based on layout
 const showAllGroups = computed(() => {
+  // In edit mode always show all groups to match legacy UX
+  if (editMode.value) return true
   // Show all if only one group or no tabs
   return publicGroupList.value.length <= 1 || !statusPage.value?.showTabs
 })
 
 // Displayed groups
 const displayedGroups = computed(() => {
-  if (showAllGroups.value) return publicGroupList.value
+  if (showAllGroups.value) return groupSource.value
   return activeGroup.value ? [activeGroup.value] : []
 })
 
 // Edit mode handlers
-function toggleEditMode() {
-  editMode.value = !editMode.value
-  showEditSidebar.value = editMode.value
+async function toggleEditMode() {
+  if (!editMode.value) {
+    // Load full, unpaginated data before entering edit mode so all groups/monitors are available
+    await loadData({ noPagination: true })
+
+    enableEditMode()
+
+    // Ensure there is at least one group to receive monitors (parity with legacy page)
+    if (draftGroups.value.length === 0) {
+      addGroup()
+    }
+    showEditSidebar.value = true
+
+    // Ensure monitor options are ready and a default group is selected
+    if (allMonitors.value.length === 0) {
+      await loadAllMonitors()
+    }
+    if (draftGroups.value.length > 0) {
+      selectedGroupForMonitor.value = draftGroups.value[0].id
+    }
+  } else {
+    // Just hide sidebar when switching to view mode, keep edit mode active
+    showEditSidebar.value = !showEditSidebar.value
+  }
 }
 
-async function saveStatusPage() {
+function exitEditMode() {
+  if (unsavedChanges.value) {
+    // Prompt to save or discard
+    if (confirm('You have unsaved changes. Discard them?')) {
+      disableEditMode()
+      showEditSidebar.value = false
+    }
+  } else {
+    disableEditMode()
+    showEditSidebar.value = false
+  }
+}
+
+async function saveStatusPage(config?: any) {
   if (!canEdit.value) return
   
-  saving.value = true
-  try {
-    // TODO: Implement save via WebSocket or API
-    console.log('Saving status page...', statusPage.value)
-  } catch (e) {
-    console.error('Failed to save status page:', e)
-  } finally {
-    saving.value = false
+  // If config is passed from sidebar, update draft first
+  if (config) {
+    updateDraftConfig(config)
+  }
+  
+  const result = await saveStatusPageApi()
+  if (result.success) {
+    console.log('Status page saved successfully')
+  } else {
+    console.error('Failed to save status page:', result.error)
+  }
+}
+
+async function handleDelete() {
+  const result = await deleteStatusPage()
+  if (result.success) {
+    router.push('/status-pages')
+  } else {
+    console.error('Failed to delete status page:', result.error)
   }
 }
 
 // Incident handlers
-function handleIncidentEdit(incident: any) {
-  // TODO: Open incident edit modal
-  console.log('Edit incident:', incident)
+async function handleIncidentPost(incidentData: any) {
+  const result = await postIncident(incidentData)
+  if (!result.success) {
+    console.error('Failed to post incident:', result.error)
+  }
 }
 
-function handleUnpinIncident(incidentId: number) {
-  // TODO: Implement unpin via WebSocket
-  console.log('Unpin incident:', incidentId)
+async function handleUnpinIncident() {
+  const result = await unpinIncident()
+  if (!result.success) {
+    console.error('Failed to unpin incident:', result.error)
+  }
 }
 
 // Group handlers
 function handleGroupUpdate(groups: any[]) {
-  // Update group order
-  publicGroupList.value = groups
+  // Update group order in draft
+  if (editMode.value) {
+    reorderGroups(groups)
+  }
+}
+
+// Add group handler
+function handleAddGroup() {
+  addGroup()
+  // Auto-select the new group
+  if (draftGroups.value.length > 0) {
+    selectedGroupForMonitor.value = draftGroups.value[draftGroups.value.length - 1].id
+  }
+}
+
+// Add monitor to group handler
+function handleAddMonitorToGroup() {
+  if (!selectedGroupForMonitor.value || !selectedMonitorToAdd.value) return
+
+  // Normalize IDs to handle numeric/string values from API
+  const groupId = Number(selectedGroupForMonitor.value)
+  const monitorId = Number(selectedMonitorToAdd.value)
+  if (Number.isNaN(groupId) || Number.isNaN(monitorId)) return
+  
+  const monitor = allMonitors.value.find(m => Number(m.id) === monitorId)
+  if (monitor) {
+    addMonitorToGroup(groupId, monitor)
+    selectedMonitorToAdd.value = ''
+  }
+}
+
+// Remove group handler
+function handleRemoveGroup(groupIndex: number) {
+  const group = displayedGroups.value[groupIndex]
+  if (group) {
+    removeGroup(group.id)
+  }
+}
+
+// Rename group handler
+function handleRenameGroup(group: any, name: string) {
+  if (!group || !name) return
+  updateGroupName(group.id, name)
+}
+
+// Remove monitor from group handler
+function handleRemoveMonitor(groupIndex: number, monitorIndex: number) {
+  const group = displayedGroups.value[groupIndex]
+  if (group) {
+    const monitor = group.monitorList[monitorIndex]
+    if (monitor) {
+      removeMonitorFromGroup(group.id, monitor.id)
+    }
+  }
+}
+
+// Monitor reorder handler (drag-drop)
+function handleReorderMonitors(group: any) {
+  if (!group) return
+  unsavedChanges.value = true
+}
+
+// Load all monitors for the selector
+async function loadAllMonitors() {
+  try {
+    const response = await $fetch<any>('/api/v1/monitors')
+    if (response.ok && response.data) {
+      allMonitors.value = response.data
+    }
+  } catch (e) {
+    console.error('Failed to load monitors:', e)
+  }
+}
+
+// Watch edit mode to load monitors when entering edit mode
+watch(editMode, async (newValue) => {
+  if (newValue && allMonitors.value.length === 0) {
+    await loadAllMonitors()
+  }
+  // Auto-select first group
+  if (newValue && displayedGroups.value.length > 0) {
+    selectedGroupForMonitor.value = displayedGroups.value[0].id
+  }
+})
+
+// Logo upload handler
+async function handleLogoUpload(logoDataUrl: string) {
+  const result = await uploadLogo(logoDataUrl)
+  if (!result.success) {
+    console.error('Failed to upload logo:', result.error)
+  }
 }
 
 // Format helpers
@@ -232,57 +408,60 @@ function formatLastUpdated(date: Date | null) {
     second: '2-digit'
   })
 }
-
-function formatCountdown(seconds: number) {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
 </script>
 
 <template>
-  <div 
-    class="min-h-screen status-page"
-    :class="[
-      statusPage?.theme === 'dark' ? 'bg-gray-900 text-white' : 
-      statusPage?.theme === 'light' ? 'bg-gray-50 text-gray-900' : 
-      'bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white'
-    ]"
-  >
-    <!-- Loading State -->
-    <div v-if="loading && !isFirstLoaded" class="flex items-center justify-center min-h-screen">
-      <div class="text-center">
-        <div class="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p class="text-gray-500 dark:text-gray-400">Loading status page...</p>
+  <UApp>
+    <div 
+      class="min-h-screen status-page"
+      :class="[
+        statusPage?.theme === 'dark' ? 'status-page-dark' : 
+        statusPage?.theme === 'light' ? 'status-page-light' : 
+        'status-page-auto'
+      ]"
+    >
+      <!-- Loading State -->
+      <div v-if="loading" class="flex items-center justify-center min-h-screen">
+        <div class="text-center">
+          <div class="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-gray-500 dark:text-gray-400">Loading status page...</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Error State -->
-    <div v-else-if="error && !isFirstLoaded" class="flex items-center justify-center min-h-screen">
-      <div class="text-center px-4">
-        <h1 class="text-6xl font-bold text-gray-300 dark:text-gray-700 mb-4">404</h1>
-        <p class="text-xl text-gray-500 dark:text-gray-400 mb-8">{{ error }}</p>
-        <NuxtLink 
-          to="/" 
-          class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-        >
-          Go Home
-        </NuxtLink>
+      <!-- Error State -->
+      <div v-else-if="error" class="flex items-center justify-center min-h-screen">
+        <div class="text-center px-4">
+          <h1 class="text-6xl font-bold text-gray-300 dark:text-gray-700 mb-4">404</h1>
+          <p class="text-xl text-gray-500 dark:text-gray-400 mb-8">{{ error }}</p>
+          <NuxtLink 
+            to="/" 
+            class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Go Home
+          </NuxtLink>
+        </div>
       </div>
-    </div>
 
-    <!-- Main Status Page Content -->
-    <div v-else class="status-page-content">
+      <!-- Main Status Page Content -->
+      <div v-else class="status-page-content">
       <!-- Edit Mode Toggle (for authenticated users) -->
       <div 
         v-if="canEdit" 
-        class="fixed top-4 right-4 z-50"
+        class="fixed top-4 right-4 z-50 flex gap-2"
       >
+        <button
+          v-if="editMode"
+          @click="exitEditMode"
+          class="px-4 py-2 bg-gray-500 text-white rounded-lg shadow-lg hover:bg-gray-600 transition-colors flex items-center gap-2"
+        >
+          <span>✕ Exit Edit</span>
+        </button>
         <button
           @click="toggleEditMode"
           class="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
         >
-          <span v-if="editMode">👁️ View Mode</span>
+          <span v-if="editMode && showEditSidebar">👁️ Hide Sidebar</span>
+          <span v-else-if="editMode">⚙️ Show Sidebar</span>
           <span v-else>✏️ Edit Mode</span>
         </button>
       </div>
@@ -291,21 +470,22 @@ function formatCountdown(seconds: number) {
       <div class="max-w-4xl mx-auto px-4 py-12">
         <!-- Header -->
         <header class="text-center mb-12 status-page-header">
-          <img
-            v-if="statusPage?.icon"
-            :src="statusPage.icon"
-            :alt="statusPage.title"
-            class="w-20 h-20 mx-auto mb-4 rounded-xl shadow-lg status-page-logo"
+          <!-- Logo with upload support in edit mode -->
+          <StatusPageLogoUploader
+            v-model="currentLogoUrl"
+            :edit-mode="editMode"
+            class="mx-auto mb-4"
+            @crop-success="handleLogoUpload"
           />
           <h1 class="text-4xl font-bold mb-3 status-page-title">
             {{ statusPage?.title || 'Status' }}
           </h1>
-          <p 
+          <!-- Description with Markdown support -->
+          <div 
             v-if="statusPage?.description" 
-            class="text-lg text-gray-600 dark:text-gray-400 status-page-description max-w-2xl mx-auto"
-          >
-            {{ statusPage.description }}
-          </p>
+            class="text-lg text-gray-600 dark:text-gray-400 status-page-description max-w-2xl mx-auto prose dark:prose-invert"
+            v-html="descriptionHtml"
+          />
           
           <!-- Real-time indicator -->
           <div class="mt-6 flex items-center justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -320,8 +500,8 @@ function formatCountdown(seconds: number) {
             <span v-if="lastUpdated">
               Updated: {{ formatLastUpdated(lastUpdated) }}
             </span>
-            <span v-if="countdown > 0" class="text-gray-500 dark:text-gray-400">
-              ({{ formatCountdown(countdown) }})
+            <span v-if="countdown" class="text-gray-500 dark:text-gray-400">
+              ({{ countdown }})
             </span>
           </div>
         </header>
@@ -363,20 +543,78 @@ function formatCountdown(seconds: number) {
         </div>
 
         <!-- Pinned Incidents -->
-        <div v-if="incidents.length > 0" class="mb-8 space-y-4">
-          <StatusIncidentBanner
-            v-for="incident in incidents"
-            :key="incident.id"
+        <div v-if="editMode || incidents.length > 0" class="mb-8">
+          <StatusPageIncidentEditor
             :incident="incident"
             :edit-mode="editMode"
-            @edit="handleIncidentEdit"
+            @post="handleIncidentPost"
             @unpin="handleUnpinIncident"
           />
         </div>
 
+        <!-- Edit Mode Controls -->
+        <div v-if="editMode" class="mb-8 edit-mode-controls">
+          <div class="flex flex-wrap items-center gap-4">
+            <!-- Add Group Button -->
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+              @click="handleAddGroup"
+            >
+              <UIcon name="i-heroicons-plus" class="w-5 h-5" />
+              Add Group
+            </button>
+
+            <!-- Add Monitor Selector -->
+            <div class="flex-1 min-w-[250px]">
+              <label class="block text-sm font-medium mb-1 edit-mode-label">
+                Add a monitor to group:
+              </label>
+              <div class="flex gap-2">
+                <select
+                  v-model="selectedGroupForMonitor"
+                  class="form-select flex-shrink-0 w-40"
+                >
+                  <option v-for="group in displayedGroups" :key="group.id" :value="group.id">
+                    {{ group.name }}
+                  </option>
+                </select>
+                <select
+                  v-model="selectedMonitorToAdd"
+                  class="form-select flex-1"
+                  :disabled="!selectedGroupForMonitor"
+                >
+                  <option value="">-- Select a monitor --</option>
+                  <option 
+                    v-for="monitor in availableMonitors" 
+                    :key="monitor.id" 
+                    :value="monitor.id"
+                  >
+                    {{ monitor.name }}
+                  </option>
+                </select>
+                <button
+                  type="button"
+                  class="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                  :disabled="!selectedMonitorToAdd"
+                  @click="handleAddMonitorToGroup"
+                >
+                  <UIcon name="i-heroicons-plus" class="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- No monitors available message -->
+          <div v-if="allMonitors.length === 0" class="mt-4 text-center text-gray-500 dark:text-gray-400">
+            No monitors available. 
+            <NuxtLink to="/monitors/add" class="text-primary-500 hover:underline">Add one</NuxtLink>
+          </div>
+        </div>
+
         <!-- Group Tabs (if multiple groups with tabs enabled) -->
         <div 
-          v-if="publicGroupList.length > 1 && statusPage?.showTabs" 
+          v-if="!editMode && publicGroupList.length > 1 && statusPage?.showTabs" 
           class="mb-6"
         >
           <div class="flex gap-2 overflow-x-auto pb-2 border-b border-gray-200 dark:border-gray-700">
@@ -405,27 +643,34 @@ function formatCountdown(seconds: number) {
           :edit-mode="editMode"
           :show-certificate-expiry="statusPage?.showCertificateExpiry"
           @update:groups="handleGroupUpdate"
+          @removeGroup="handleRemoveGroup"
+          @removeMonitor="handleRemoveMonitor"
+          @renameGroup="handleRenameGroup"
+          @reorderMonitors="handleReorderMonitors"
         />
 
         <!-- Empty State -->
         <div 
-          v-if="publicGroupList.length === 0 && isFirstLoaded"
-          class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center"
+          v-if="publicGroupList.length === 0 && hasLoaded"
+          class="empty-state-card"
         >
           <div class="text-6xl mb-4">📊</div>
-          <h3 class="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <h3 class="text-xl font-medium mb-2 empty-state-title">
             No monitors configured
           </h3>
-          <p class="text-gray-500 dark:text-gray-400">
+          <p class="empty-state-text">
             This status page doesn't have any monitors yet.
           </p>
         </div>
 
         <!-- Footer -->
         <footer class="text-center mt-16 text-sm text-gray-500 dark:text-gray-400 status-page-footer">
-          <p v-if="statusPage?.footerText" class="mb-3 text-gray-600 dark:text-gray-300">
-            {{ statusPage.footerText }}
-          </p>
+          <!-- Footer with Markdown support -->
+          <div 
+            v-if="statusPage?.footerText" 
+            class="mb-3 text-gray-600 dark:text-gray-300 prose dark:prose-invert prose-sm mx-auto"
+            v-html="footerHtml"
+          />
           <p v-if="statusPage?.showPoweredBy !== false" class="flex items-center justify-center gap-1">
             Powered by
             <a 
@@ -444,119 +689,37 @@ function formatCountdown(seconds: number) {
       </div>
     </div>
 
-    <!-- Edit Sidebar (slides in from right) -->
-    <Transition name="slide-right">
-      <div 
-        v-if="editMode && showEditSidebar"
-        class="fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-800 shadow-2xl z-40 overflow-y-auto"
-      >
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold">Edit Status Page</h2>
-            <button
-              @click="showEditSidebar = false"
-              class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              ✕
-            </button>
-          </div>
+    <!-- Edit Sidebar (slides in from left) -->
+    <StatusPageEditSidebar
+      v-model="showEditSidebar"
+      :config="draftConfig"
+      :saving="saving"
+      @save="saveStatusPage"
+      @discard="exitEditMode"
+      @delete="showDeleteConfirm = true"
+    />
 
-          <!-- Status Page Settings -->
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium mb-1">Title</label>
-              <input
-                v-model="statusPage.title"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium mb-1">Description</label>
-              <textarea
-                v-model="statusPage.description"
-                rows="3"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium mb-1">Theme</label>
-              <select
-                v-model="statusPage.theme"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-              >
-                <option value="auto">Auto</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <input
-                v-model="statusPage.showPoweredBy"
-                type="checkbox"
-                id="showPoweredBy"
-                class="rounded"
-              />
-              <label for="showPoweredBy" class="text-sm">Show "Powered by Uptime Kuma"</label>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <input
-                v-model="statusPage.showCertificateExpiry"
-                type="checkbox"
-                id="showCertificateExpiry"
-                class="rounded"
-              />
-              <label for="showCertificateExpiry" class="text-sm">Show Certificate Expiry</label>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <input
-                v-model="statusPage.showTabs"
-                type="checkbox"
-                id="showTabs"
-                class="rounded"
-              />
-              <label for="showTabs" class="text-sm">Show Group Tabs</label>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium mb-1">Footer Text</label>
-              <input
-                v-model="statusPage.footerText"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium mb-1">Custom CSS</label>
-              <textarea
-                v-model="statusPage.customCss"
-                rows="6"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 font-mono text-sm"
-                placeholder=".status-page { }"
-              ></textarea>
-            </div>
-          </div>
-
-          <!-- Save Button -->
-          <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button
-              @click="saveStatusPage"
-              :disabled="saving"
-              class="w-full px-4 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
-            >
-              <span v-if="saving" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <span>{{ saving ? 'Saving...' : 'Save Changes' }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <!-- Delete Confirmation Dialog -->
+    <UModal 
+      :open="showDeleteConfirm"
+      @update:open="showDeleteConfirm = $event"
+      title="Delete Status Page"
+      description="Are you sure you want to delete this status page? This action cannot be undone."
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #default>
+        <span class="hidden"></span>
+      </template>
+      
+      <template #footer="{ close }">
+        <UButton variant="ghost" @click="close">
+          Cancel
+        </UButton>
+        <UButton color="error" @click="handleDelete">
+          Delete
+        </UButton>
+      </template>
+    </UModal>
 
     <!-- Sidebar Overlay -->
     <Transition name="fade">
@@ -576,21 +739,11 @@ function formatCountdown(seconds: number) {
         :src="`https://www.googletagmanager.com/gtag/js?id=${statusPage.googleAnalyticsId}`"
       />
     </ClientOnly>
-  </div>
+    </div>
+  </UApp>
 </template>
 
 <style scoped>
-/* Slide animation for sidebar */
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: transform 0.3s ease;
-}
-
-.slide-right-enter-from,
-.slide-right-leave-to {
-  transform: translateX(100%);
-}
-
 /* Fade animation for overlay */
 .fade-enter-active,
 .fade-leave-active {
@@ -600,6 +753,70 @@ function formatCountdown(seconds: number) {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Status page theme variants */
+.status-page-light {
+  background-color: #f7f9fc;
+  color: #0f172a;
+}
+
+.status-page-dark {
+  background-color: #0d1117;
+  color: #e5e7eb;
+}
+
+.status-page-auto {
+  background-color: #f7f9fc;
+  color: #0f172a;
+}
+
+.dark .status-page-auto {
+  background-color: #0d1117;
+  color: #e5e7eb;
+}
+
+/* Light mode text overrides for status page */
+.status-page-light .text-gray-600,
+.status-page-auto .text-gray-600 {
+  color: #475569 !important;
+}
+
+.status-page-light .text-gray-500,
+.status-page-auto .text-gray-500 {
+  color: #64748b !important;
+}
+
+.status-page-light .text-gray-400,
+.status-page-auto .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+/* Edit mode controls light styling */
+.status-page-light .bg-white,
+.status-page-auto .bg-white {
+  background-color: #ffffff !important;
+  border: 1px solid #d6deea;
+}
+
+.status-page-light .border-gray-200,
+.status-page-auto .border-gray-200 {
+  border-color: #d6deea !important;
+}
+
+/* Form select styling for light mode */
+.status-page-light .form-select,
+.status-page-auto .form-select {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+.status-page-light .form-select:focus,
+.status-page-auto .form-select:focus {
+  border-color: #12b06a;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(18, 176, 106, 0.25);
 }
 
 /* Custom scrollbar for sidebar */
@@ -618,5 +835,58 @@ function formatCountdown(seconds: number) {
 
 .dark .overflow-y-auto::-webkit-scrollbar-thumb {
   background: #475569;
+}
+
+/* Edit mode controls styling */
+.edit-mode-controls {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  border: 1px solid #d6deea;
+  box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
+}
+
+.dark .edit-mode-controls {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.edit-mode-label {
+  color: #1f2937;
+}
+
+.dark .edit-mode-label {
+  color: #d1d5db;
+}
+
+/* Empty state card */
+.empty-state-card {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  padding: 3rem;
+  text-align: center;
+  border: 1px solid #d6deea;
+  box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
+}
+
+.dark .empty-state-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.empty-state-title {
+  color: #334155;
+}
+
+.dark .empty-state-title {
+  color: #d1d5db;
+}
+
+.empty-state-text {
+  color: #64748b;
+}
+
+.dark .empty-state-text {
+  color: #9ca3af;
 }
 </style>

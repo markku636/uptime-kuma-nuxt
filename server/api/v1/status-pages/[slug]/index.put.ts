@@ -2,6 +2,17 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 
+const groupMonitorSchema = z.object({
+  id: z.number()
+})
+
+const groupSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  weight: z.number(),
+  monitorList: z.array(groupMonitorSchema)
+})
+
 const updateStatusPageSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
@@ -10,8 +21,12 @@ const updateStatusPageSchema = z.object({
   published: z.boolean().optional(),
   showTags: z.boolean().optional(),
   showPoweredBy: z.boolean().optional(),
+  showCertificateExpiry: z.boolean().optional(),
   customCss: z.string().optional(),
   footerText: z.string().optional(),
+  domainNameList: z.array(z.string()).optional(),
+  googleAnalyticsId: z.string().optional(),
+  publicGroupList: z.array(groupSchema).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -44,6 +59,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Verify ownership
+  if (existing.userId !== session.user.id) {
+    throw createError({
+      statusCode: 403,
+      message: 'Not authorized to modify this status page'
+    })
+  }
+
   const body = await readBody(event)
   const result = updateStatusPageSchema.safeParse(body)
   
@@ -54,10 +77,65 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const { publicGroupList, domainNameList, ...statusPageData } = result.data
+
+  // Update status page basic info
   const statusPage = await prisma.statusPage.update({
     where: { slug },
-    data: result.data
+    data: {
+      ...statusPageData,
+      domainNameList: domainNameList ? JSON.stringify(domainNameList) : undefined
+    }
   })
+
+  // Update groups if provided
+  if (publicGroupList) {
+    // Use transaction to update groups
+    await prisma.$transaction(async (tx) => {
+      // Delete existing group-monitor associations
+      await tx.statusPageGroup.deleteMany({
+        where: { statusPageId: statusPage.id }
+      })
+
+      // Create new groups with monitor associations
+      for (const group of publicGroupList) {
+        // Check if group exists (positive ID) or create new
+        if (group.id > 0) {
+          // Update existing group
+          await tx.statusPageGroup.upsert({
+            where: { id: group.id },
+            create: {
+              statusPageId: statusPage.id,
+              name: group.name,
+              weight: group.weight,
+              monitors: {
+                connect: group.monitorList.map(m => ({ id: m.id }))
+              }
+            },
+            update: {
+              name: group.name,
+              weight: group.weight,
+              monitors: {
+                set: group.monitorList.map(m => ({ id: m.id }))
+              }
+            }
+          })
+        } else {
+          // Create new group
+          await tx.statusPageGroup.create({
+            data: {
+              statusPageId: statusPage.id,
+              name: group.name,
+              weight: group.weight,
+              monitors: {
+                connect: group.monitorList.map(m => ({ id: m.id }))
+              }
+            }
+          })
+        }
+      }
+    })
+  }
 
   return {
     ok: true,

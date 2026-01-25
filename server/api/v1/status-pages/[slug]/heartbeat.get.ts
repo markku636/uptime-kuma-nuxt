@@ -21,7 +21,6 @@ export default defineEventHandler(async (event) => {
     where: { slug },
     include: {
       groups: {
-        where: { weight: { gte: 0 } }, // Only public groups (positive weight)
         include: {
           monitors: {
             include: {

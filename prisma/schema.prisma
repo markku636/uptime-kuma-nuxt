@@ -189,20 +189,20 @@ model MonitorNotification {
 }
 
 model StatusPage {
-  id                Int      @id @default(autoincrement())
-  slug              String   @unique
-  title             String
-  description       String?
-  icon              String?
-  theme             String   @default("auto")
-  published         Boolean  @default(true)
-  showTags          Boolean  @default(false) @map("show_tags")
-  showPoweredBy     Boolean  @default(true) @map("show_powered_by")
-  customCss         String?  @map("custom_css")
-  footerText        String?  @map("footer_text")
-  googleAnalyticsId String?  @map("google_analytics_id")
-  userId            Int      @map("user_id")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id                    Int       @id @default(autoincrement())
+  slug                  String    @unique
+  title                 String
+  description           String?
+  icon                  String?
+  theme                 String    @default("auto")
+  published             Boolean   @default(true)
+  showTags              Boolean   @default(false) @map("show_tags")
+  showPoweredBy         Boolean   @default(true) @map("show_powered_by")
+  customCss             String?   @map("custom_css")
+  footerText            String?   @map("footer_text")
+  googleAnalyticsId     String?   @map("google_analytics_id")
+  userId                Int       @map("user_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
 
   groups    StatusPageGroup[]
   incidents Incident[]
@@ -240,7 +240,7 @@ model Incident {
   statusPageId Int       @map("status_page_id")
   title        String
   content      String
-  style        String    @default("warning") // info, warning, danger, success
+  style        String    @default("warning") // info, warning, danger, primary, light, dark
   pin          Boolean   @default(true)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime? @map("updated_at")

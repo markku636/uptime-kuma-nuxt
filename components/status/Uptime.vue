@@ -18,14 +18,23 @@ interface Props {
   pill?: boolean
   /** Status for coloring (0=down, 1=up, 2=pending, 3=maintenance) */
   status?: number
+  /** Display style: percentage (default) or nines */
+  displayStyle?: 'percentage' | 'nines'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   type: '24',
-  pill: false
+  pill: false,
+  displayStyle: 'percentage'
 })
 
 const { t } = useI18n()
+const { appearanceSettings, loadAppearanceSettings } = useAppearanceSettings()
+
+// Ensure appearance settings are loaded so display style follows preference
+onMounted(() => {
+  loadAppearanceSettings()
+})
 
 // Calculate uptime value
 const uptimeValue = computed(() => {
@@ -43,9 +52,20 @@ const formattedUptime = computed(() => {
   if (uptimeValue.value === null || uptimeValue.value === undefined) {
     return t('N/A')
   }
-  
-  // Format with 2 decimal places
+
   const value = Math.min(100, Math.round(uptimeValue.value * 100) / 100)
+  const style = props.displayStyle || appearanceSettings.value.uptimeDisplayStyle || 'percentage'
+
+  if (style === 'nines') {
+    // Calculate number of nines based on downtime fraction
+    const downtime = 100 - value
+    if (downtime <= 0) {
+      return `${t('Nines', 'Nines')}: ∞`
+    }
+    const nines = Math.max(0, Math.floor(-Math.log10(downtime / 100)))
+    return `${nines} ${t('nines', 'nines')}`
+  }
+
   return `${value.toFixed(2)}%`
 })
 

@@ -2,40 +2,40 @@
 
 /* ========== Color Palette ========== */
 :root {
-  /* Brand Colors - matching old project vars.scss */
-  --uk-primary: #5cdd8b;
-  --uk-danger: #dc3545;
-  --uk-warning: #f8a306;
-  --uk-info: #3B82F6;
+  /* Brand Colors */
+  --uk-primary: #12b06a;
+  --uk-danger: #e11d48;
+  --uk-warning: #f59f0b;
+  --uk-info: #2563eb;
   --uk-maintenance: #1747f5;
   --uk-highlight: #7ce8a4;
   --uk-highlight-white: #e7faec;
 
   /* Light Mode - Gray Scale */
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
-  --color-gray-950: #030712;
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+  --color-gray-950: #020617;
 
-  /* Light mode semantic colors - matching old project app.scss */
-  --bg-primary: #ffffff;
-  --bg-secondary: var(--color-gray-100);
-  --bg-tertiary: var(--color-gray-200);
+  /* Light mode semantic colors */
+  --bg-primary: #f7f9fc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eef2f8;
   --bg-card: #ffffff;
-  --text-primary: #111;              /* old project: $link-color */
-  --text-secondary: #374151;         /* old project: form-label color */
-  --text-tertiary: #6b7280;          /* old project: form-text color */
-  --text-muted: #aaa;                /* old project: $secondary-text */
-  --border-color: var(--color-gray-300);
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --hover-bg: rgba(0, 0, 0, 0.05);
+  --text-primary: #0f172a;
+  --text-secondary: #1f2937;
+  --text-tertiary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #d6deea;
+  --shadow-color: rgba(15, 23, 42, 0.08);
+  --hover-bg: rgba(15, 23, 42, 0.04);
 }
 
 /* Dark mode colors - matching old project vars.scss */
@@ -69,6 +69,11 @@ body {
   background-color: var(--bg-primary) !important;
   color: var(--text-primary) !important;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html:not(.dark) body {
+  background-image: radial-gradient(120% 120% at 0% 0%, rgba(18, 176, 106, 0.06), transparent);
+  background-attachment: fixed;
 }
 
 /* ========== Light Mode Global Fixes ========== */
@@ -250,8 +255,30 @@ html:not(.dark) .bg-gray-700 {
 
 .select-field:focus {
   outline: none !important;
-  border-color: rgb(16 185 129) !important;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+  border-color: var(--uk-primary) !important;
+  box-shadow: 0 0 0 2px rgba(18, 176, 106, 0.3) !important;
+}
+
+/* Form select (used in status pages) */
+.form-select {
+  padding: 0.5rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  color: #0f172a;
+  font-size: 0.875rem;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--uk-primary);
+  box-shadow: 0 0 0 2px rgba(18, 176, 106, 0.25);
+}
+
+.dark .form-select {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
 }
 
 /* Button styles */
@@ -273,55 +300,56 @@ html:not(.dark) .bg-gray-700 {
 }
 
 .btn-primary {
-  background-color: rgb(16 185 129);
+  background-color: var(--uk-primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: rgb(5 150 105);
+  background-color: #0f9c5d;
 }
 
 .btn-secondary {
-  background-color: rgb(75 85 99);
+  background-color: #334155;
   color: white;
 }
 
 .btn-secondary:hover {
-  background-color: rgb(55 65 81);
+  background-color: #1e293b;
 }
 
 .btn-danger {
-  background-color: rgb(239 68 68);
+  background-color: var(--uk-danger);
   color: white;
 }
 
 .btn-danger:hover {
-  background-color: rgb(220 38 38);
+  background-color: #be123c;
 }
 
 .btn-warning {
-  background-color: rgb(245 158 11);
+  background-color: var(--uk-warning);
   color: white;
 }
 
 .btn-warning:hover {
-  background-color: rgb(217 119 6);
+  background-color: #d97706;
 }
 
 .btn-outline {
-  border: 1px solid rgb(107 114 128);
-  color: rgb(209 213 219);
+  border: 1px solid #94a3b8;
+  color: #1f2937;
 }
 
 .btn-outline:hover {
-  background-color: rgb(55 65 81);
+  background-color: #e2e8f0;
 }
 
 /* Card styles */
 .card {
   background-color: var(--bg-secondary);
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 24px -12px var(--shadow-color);
 }
 
 .card-body {
@@ -342,27 +370,27 @@ html:not(.dark) .bg-gray-700 {
 }
 
 .alert-danger {
-  background-color: rgb(127 29 29 / 0.3);
-  color: rgb(248 113 113);
-  border: 1px solid rgb(127 29 29);
+  background-color: #ffe8ed;
+  color: #c11244;
+  border: 1px solid #f7c6d5;
 }
 
 .alert-success {
-  background-color: rgb(6 78 59 / 0.3);
-  color: rgb(52 211 153);
-  border: 1px solid rgb(6 78 59);
+  background-color: #e8f8f1;
+  color: #0f9c5d;
+  border: 1px solid #b6e6ce;
 }
 
 .alert-warning {
-  background-color: rgb(120 53 15 / 0.3);
-  color: rgb(251 191 36);
-  border: 1px solid rgb(120 53 15);
+  background-color: #fff4e5;
+  color: #b76b00;
+  border: 1px solid #fcd9a5;
 }
 
 .alert-info {
-  background-color: rgb(30 58 138 / 0.3);
-  color: rgb(96 165 250);
-  border: 1px solid rgb(30 58 138);
+  background-color: #e8f0ff;
+  color: #2346c2;
+  border: 1px solid #c6d4ff;
 }
 
 /* Table styles */
@@ -373,7 +401,7 @@ html:not(.dark) .bg-gray-700 {
 
 .table th {
   padding: 0.75rem 1rem;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-tertiary);
   font-weight: 600;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -388,6 +416,10 @@ html:not(.dark) .bg-gray-700 {
   background-color: var(--bg-tertiary);
 }
 
+.table tbody tr:nth-child(even) td {
+  background-color: rgba(15, 23, 42, 0.03);
+}
+
 /* Badge styles */
 .badge {
   display: inline-flex;
@@ -399,41 +431,43 @@ html:not(.dark) .bg-gray-700 {
 }
 
 .badge-success {
-  background-color: rgb(6 78 59 / 0.5);
-  color: rgb(52 211 153);
+  background-color: #dff5eb;
+  color: #0f9c5d;
 }
 
 .badge-danger {
-  background-color: rgb(127 29 29 / 0.5);
-  color: rgb(248 113 113);
+  background-color: #ffe3eb;
+  color: #c11244;
 }
 
 .badge-warning {
-  background-color: rgb(120 53 15 / 0.5);
-  color: rgb(251 191 36);
+  background-color: #fff0d6;
+  color: #b76b00;
 }
 
 .badge-info {
-  background-color: rgb(30 58 138 / 0.5);
-  color: rgb(96 165 250);
+  background-color: #dfe7ff;
+  color: #2346c2;
 }
 
 .badge-secondary {
-  background-color: rgb(55 65 81 / 0.5);
-  color: rgb(156 163 175);
+  background-color: #e2e8f0;
+  color: #475569;
 }
 
 .badge-primary {
-  background-color: rgb(6 78 59 / 0.5);
-  color: rgb(52 211 153);
+  background-color: #dff5eb;
+  color: #0f9c5d;
 }
 
 /* Section styles */
 .section-card {
   background-color: var(--bg-secondary);
   border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 12px 24px -12px var(--shadow-color);
 }
 
 /* Page container */
@@ -449,6 +483,8 @@ html:not(.dark) .bg-gray-700 {
   border-radius: 0.5rem;
   padding: 1rem;
   text-align: center;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 18px -12px var(--shadow-color);
 }
 
 /* ========== Animations & Transitions ========== */

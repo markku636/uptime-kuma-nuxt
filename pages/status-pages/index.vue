@@ -20,6 +20,8 @@
             v-for="page in statusPages"
             :key="page.id"
             :href="`/status/${page.slug}`"
+            target="_blank"
+            rel="noopener noreferrer"
             class="item"
           >
             <img src="/icon.svg" alt="" class="logo" />

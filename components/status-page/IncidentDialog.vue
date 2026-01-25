@@ -1,7 +1,16 @@
 <template>
-  <UModal v-model:open="isOpen" :title="isEdit ? 'Edit Incident' : 'Post Incident'" size="lg">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    :title="isEdit ? 'Edit Incident' : 'Post Incident'" 
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
+    
     <template #body>
-      <form @submit.prevent="handleSubmit" class="space-y-4">
+      <form id="incident-form" @submit.prevent="handleSubmit" class="space-y-4">
         <UFormField label="Title" required>
           <UInput 
             v-model="formData.title" 
@@ -51,16 +60,16 @@
             Pinned incidents appear at the top of the status page
           </template>
         </UFormField>
-
-        <div class="flex justify-end gap-2 pt-4">
-          <UButton variant="ghost" @click="close">
-            Cancel
-          </UButton>
-          <UButton type="submit" color="primary" :loading="loading">
-            {{ isEdit ? 'Update' : 'Post' }} Incident
-          </UButton>
-        </div>
       </form>
+    </template>
+    
+    <template #footer="{ close }">
+      <UButton variant="ghost" @click="close">
+        Cancel
+      </UButton>
+      <UButton type="submit" form="incident-form" color="primary" :loading="loading">
+        {{ isEdit ? 'Update' : 'Post' }} Incident
+      </UButton>
     </template>
   </UModal>
 </template>

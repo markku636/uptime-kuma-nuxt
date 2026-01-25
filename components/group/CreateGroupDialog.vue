@@ -1,5 +1,14 @@
 <template>
-  <UModal v-model:open="isOpen" title="Create Group" size="md">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    title="Create Group"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
+    
     <template #body>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <UFormField label="Group Name" required>

@@ -17,6 +17,7 @@
             :edit-mode="editMode"
             :show-drag="groups.length >= 2"
             @remove="emit('removeGroup', index)"
+            @rename="(name) => emit('renameGroup', group, name)"
           />
           
           <div class="monitor-list-container shadow-box">
@@ -28,6 +29,7 @@
               :show-certificate-expiry="showCertificateExpiry"
               @removeMonitor="(monitorIndex) => emit('removeMonitor', index, monitorIndex)"
               @monitorSettings="(monitor) => emit('monitorSettings', group, monitor)"
+              @reorder="() => emit('reorderMonitors', group)"
             />
           </div>
         </div>
@@ -126,6 +128,8 @@ const emit = defineEmits<{
   (e: 'removeMonitor', groupIndex: number, monitorIndex: number): void
   (e: 'monitorSettings', group: Group, monitor: Monitor): void
   (e: 'update:groups', groups: Group[]): void
+  (e: 'renameGroup', group: Group, name: string): void
+  (e: 'reorderMonitors', group: Group): void
 }>()
 
 // Show group title logic
@@ -201,9 +205,19 @@ const GroupHeader = defineComponent({
     editMode: { type: Boolean, default: false },
     showDrag: { type: Boolean, default: false }
   },
-  emits: ['remove'],
+  emits: ['remove', 'rename'],
   setup(props, { emit }) {
-    return () => h('h2', { class: 'group-title' }, [
+    const nameInput = ref(props.group.name)
+
+    watch(() => props.group.name, (val) => { nameInput.value = val })
+
+    const commitName = () => {
+      if (nameInput.value !== props.group.name) {
+        emit('rename', nameInput.value.trim() || 'New Group')
+      }
+    }
+
+    return () => h('div', { class: 'group-title' }, [
       props.editMode && props.showDrag && h(resolveComponent('UIcon'), {
         name: 'i-heroicons-bars-3',
         class: 'group-drag-handle text-gray-400 cursor-grab mr-3'
@@ -216,7 +230,20 @@ const GroupHeader = defineComponent({
         class: 'mr-3',
         onClick: () => emit('remove')
       }),
-      h('span', props.group.name)
+      props.editMode
+        ? h('input', {
+            class: 'group-name-input',
+            value: nameInput.value,
+            onInput: (e: any) => { nameInput.value = e.target.value },
+            onBlur: commitName,
+            onKeydown: (e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                commitName()
+              }
+            }
+          })
+        : h('span', props.group.name)
     ])
   }
 })
@@ -229,7 +256,7 @@ const MonitorListContent = defineComponent({
     showTags: { type: Boolean, default: false },
     showCertificateExpiry: { type: Boolean, default: false }
   },
-  emits: ['removeMonitor', 'monitorSettings'],
+  emits: ['removeMonitor', 'monitorSettings', 'reorder'],
   setup(props, { emit }) {
     return () => {
       if (!props.group.monitorList?.length) {
@@ -241,7 +268,8 @@ const MonitorListContent = defineComponent({
         itemKey: 'id',
         animation: 100,
         disabled: !props.editMode,
-        group: 'monitors'
+        group: 'monitors',
+        onChange: () => emit('reorder')
       }, {
         item: ({ element: monitor, index: monitorIndex }: any) => 
           h(resolveComponent('StatusMonitorCard'), {
@@ -274,17 +302,24 @@ const MonitorListContent = defineComponent({
   margin-bottom: 16px;
   display: flex;
   align-items: center;
+  color: #0f172a;
+}
+
+.dark .group-title {
+  color: #f1f5f9;
 }
 
 .monitor-list-container {
-  background: white;
+  background: #ffffff;
   border-radius: 8px;
   overflow: hidden;
   min-height: 46px;
+  border: 1px solid #d6deea;
 }
 
 .dark .monitor-list-container {
   background: #161b22;
+  border-color: #1d2634;
 }
 
 .shadow-box {
@@ -298,7 +333,11 @@ const MonitorListContent = defineComponent({
 .empty-state {
   text-align: center;
   padding: 20px;
-  color: #6c757d;
+  color: #64748b;
+}
+
+.dark .empty-state {
+  color: #9ca3af;
 }
 
 .group-drag-handle {
@@ -307,5 +346,19 @@ const MonitorListContent = defineComponent({
 
 .group-drag-handle:active {
   cursor: grabbing;
+}
+
+.group-name-input {
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-width: 160px;
+  background: transparent;
+  color: inherit;
+}
+
+.group-name-input:focus {
+  outline: 2px solid #22c55e;
+  border-color: transparent;
 }
 </style>

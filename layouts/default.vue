@@ -40,6 +40,13 @@
             >
               Status Pages
             </NuxtLink>
+            <NuxtLink
+              to="/api-docs"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              API Docs
+            </NuxtLink>
           </nav>
 
           <!-- Right side -->
@@ -134,6 +141,14 @@
             >
               Status Pages
             </NuxtLink>
+            <NuxtLink
+              to="/api-docs"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              API Docs
+            </NuxtLink>
           </nav>
         </div>
       </div>
@@ -145,14 +160,13 @@
     </main>
 
     <!-- Keyboard shortcuts help modal -->
-    <KeyboardShortcutsHelp v-model="showShortcutsHelp" />
+    <CommonKeyboardShortcutsHelp v-model="showShortcutsHelp" />
   </div>
 </template>
 
 <script setup lang="ts">
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
-const showShortcutsHelp = ref(false)
 const { clear } = useUserSession()
 
 // Toggle color mode
@@ -160,33 +174,9 @@ const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
 
-// Initialize keyboard shortcuts
-const { toggleHelp } = useKeyboardShortcuts()
-
-// Override the help toggle to control our modal
-watch(() => toggleHelp, () => {
-  showShortcutsHelp.value = !showShortcutsHelp.value
-})
-
-// Listen for keyboard shortcut to show help
-onMounted(() => {
-  const handleKeydown = (e: KeyboardEvent) => {
-    // Show help on Ctrl+/ or ?
-    if ((e.ctrlKey && e.key === '/') || (e.key === '?' && !e.ctrlKey && !e.altKey)) {
-      const target = e.target as HTMLElement
-      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
-        e.preventDefault()
-        showShortcutsHelp.value = !showShortcutsHelp.value
-      }
-    }
-  }
-  
-  window.addEventListener('keydown', handleKeydown)
-  
-  onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown)
-  })
-})
+// Use shared keyboard shortcuts state
+const { showHelp } = useKeyboardShortcuts()
+const showShortcutsHelp = showHelp
 
 const profileMenuItems = [
   [
@@ -205,18 +195,22 @@ const profileMenuItems = [
     {
       label: 'Logout',
       icon: 'i-heroicons-arrow-right-on-rectangle',
-      onSelect: async () => {
-        try {
-          await $fetch('/api/auth/logout', { method: 'POST' })
-        } catch {
-          // ignore
-        }
-        await clear()
-        window.location.href = '/login'
-      }
+      onSelect: handleLogout
     }
   ]
 ]
+
+// Logout handler
+async function handleLogout() {
+  try {
+    await $fetch('/api/auth/logout', { method: 'POST' })
+  } catch {
+    // ignore
+  }
+  await clear()
+  // Force a full page reload to clear all state
+  window.location.replace('/login')
+}
 </script>
 
 <style scoped>
@@ -241,14 +235,18 @@ const profileMenuItems = [
 .nav-link {
   color: var(--text-secondary);
   transition: color 0.2s ease;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.5rem;
 }
 
 .nav-link:hover {
   color: var(--text-primary);
+  background-color: var(--hover-bg);
 }
 
 .nav-link-active {
-  color: rgb(16 185 129) !important;
+  color: var(--uk-primary) !important;
+  background-color: rgba(18, 176, 106, 0.12);
 }
 
 /* Header icon button */
@@ -281,7 +279,7 @@ const profileMenuItems = [
 }
 
 .mobile-nav-link-active {
-  color: rgb(16 185 129) !important;
-  background-color: var(--bg-tertiary);
+  color: var(--uk-primary) !important;
+  background-color: rgba(18, 176, 106, 0.12);
 }
 </style>

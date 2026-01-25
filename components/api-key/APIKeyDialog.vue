@@ -1,5 +1,13 @@
 <template>
-  <UModal v-model:open="isOpen" title="Create API Key" size="lg">
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    title="Create API Key"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #default>
+      <span class="hidden"></span>
+    </template>
     <template #body>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <UFormField label="Name" required>

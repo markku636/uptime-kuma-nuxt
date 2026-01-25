@@ -1,14 +1,16 @@
 <template>
-  <UModal v-model="isOpen" :ui="{ width: 'max-w-xl' }">
-    <div class="p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-gray-100">
-          Badge Generator - {{ monitorName }}
-        </h3>
-        <button @click="isOpen = false" class="text-gray-400 hover:text-gray-200">
-          <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
-        </button>
-      </div>
+  <UModal 
+    :open="isOpen"
+    @update:open="isOpen = $event"
+    :title="`Badge Generator - ${monitorName}`"
+    :ui="{ content: 'max-w-xl', footer: 'justify-end' }"
+  >
+    <!-- Empty trigger slot - controlled programmatically -->
+    <template #default>
+      <span class="hidden"></span>
+    </template>
+    
+    <template #body>
 
       <!-- Badge Type -->
       <div class="space-y-4">
@@ -117,11 +119,11 @@
           </div>
         </div>
       </div>
+    </template>
 
-      <div class="flex justify-end mt-6">
-        <button @click="isOpen = false" class="btn btn-secondary">Close</button>
-      </div>
-    </div>
+    <template #footer="{ close }">
+      <UButton @click="close" variant="ghost">Close</UButton>
+    </template>
   </UModal>
 </template>
 

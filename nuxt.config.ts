@@ -97,7 +97,7 @@ export default defineNuxtConfig({
 
   // Color mode configuration
   colorMode: {
-    preference: 'dark', // default value
+    preference: 'system', // default value - will be overridden by cookie if exists
     fallback: 'dark',
     classSuffix: '',
     storageKey: 'nuxt-color-mode',
@@ -106,12 +106,14 @@ export default defineNuxtConfig({
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET || 'default-secret-change-in-production',
     databaseUrl: process.env.DATABASE_URL,
+    backendUrl: process.env.BACKEND_URL || 'http://localhost:3001',
     session: {
       // Used by nuxt-auth-utils for signing cookies
       password: process.env.NUXT_SESSION_PASSWORD || 'change-this-session-password-at-least-32-chars-long',
     },
     public: {
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
     }
   },
 
