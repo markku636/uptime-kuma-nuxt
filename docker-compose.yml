@@ -47,8 +47,8 @@ services:
   # ==========================================================================
   openresty:
     build:
-      context: .
-      dockerfile: nginx/Dockerfile
+      context: ./openresty
+      dockerfile: Dockerfile.basic
     container_name: nuxt-kuma-openresty
     restart: unless-stopped
     ports:

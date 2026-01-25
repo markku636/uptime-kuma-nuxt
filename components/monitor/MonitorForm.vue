@@ -1126,12 +1126,27 @@ const { tags, fetchTags } = useTags()
 const { proxies, fetchProxies } = useProxies()
 const { remoteBrowsers, fetchRemoteBrowsers } = useRemoteBrowsers()
 
+// Cluster nodes state
+const nodesData = ref<Array<{ id: string; name?: string; healthy?: boolean }>>([])
+
+// Fetch cluster nodes
+async function fetchClusterNodes() {
+  try {
+    const response = await $fetch<Array<{ id: string; name?: string; healthy?: boolean }>>('/api/cluster/nodes')
+    nodesData.value = response || []
+  } catch (error) {
+    console.warn('Failed to fetch cluster nodes, cluster mode may not be enabled:', error)
+    nodesData.value = []
+  }
+}
+
 // Fetch data on mount
 onMounted(() => {
   fetchNotifications()
   fetchTags()
   fetchProxies()
   fetchRemoteBrowsers()
+  fetchClusterNodes()
 })
 
 // Initialize notification IDs from initial data
@@ -1408,10 +1423,8 @@ const availableGroups = computed(() => {
 
 // Cluster nodes for node assignment
 const clusterNodes = computed(() => {
-  // In cluster mode, this should be populated from the server info
-  // For now, we'll check if there's cluster info available
-  // This can be enhanced to fetch from /api/v1/cluster/nodes
-  return [] as Array<{ id: string; name?: string }>
+  // Return nodes fetched from /api/cluster/nodes
+  return nodesData.value
 })
 
 const handleSubmit = () => {

@@ -4,6 +4,7 @@
 import { Cron } from "croner";
 import { clearOldData } from "./clear-old-data";
 import { reconcileMonitors } from "./reconcile-monitors";
+import { nodeCleanup, sendNodeHeartbeat } from "./node-cleanup";
 import { prisma } from "../utils/prisma";
 
 interface BackgroundJob {
@@ -23,6 +24,16 @@ const jobs: BackgroundJob[] = [
         name: "reconcile-monitors",
         interval: "*/1 * * * *", // Every 1 minute
         handler: reconcileMonitors
+    },
+    {
+        name: "node-heartbeat",
+        interval: "*/30 * * * * *", // Every 30 seconds
+        handler: sendNodeHeartbeat
+    },
+    {
+        name: "node-cleanup",
+        interval: "*/1 * * * *", // Every 1 minute (only primary runs actual cleanup)
+        handler: nodeCleanup
     }
 ];
 

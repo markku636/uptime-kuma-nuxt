@@ -521,3 +521,49 @@ DO $$ BEGIN
         ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
     END IF;
 END $$;
+
+-- CreateTable for nodes (cluster support)
+CREATE TABLE IF NOT EXISTS "nodes" (
+    "id" SERIAL NOT NULL,
+    "node_id" TEXT NOT NULL,
+    "node_name" TEXT NOT NULL,
+    "host" TEXT,
+    "hostname" TEXT,
+    "location" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'unknown',
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "is_primary" BOOLEAN NOT NULL DEFAULT false,
+    "last_seen" TIMESTAMP(3),
+    "last_error" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "modified_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "nodes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex for nodes
+CREATE UNIQUE INDEX IF NOT EXISTS "nodes_node_id_key" ON "nodes"("node_id");
+CREATE INDEX IF NOT EXISTS "nodes_status_idx" ON "nodes"("status");
+CREATE INDEX IF NOT EXISTS "nodes_active_idx" ON "nodes"("active");
+CREATE INDEX IF NOT EXISTS "nodes_is_primary_idx" ON "nodes"("is_primary");
+
+-- Add missing columns to monitors table (for database monitoring)
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'monitors' AND column_name = 'database_type') THEN
+        ALTER TABLE "monitors" ADD COLUMN "database_type" TEXT;
+    END IF;
+END $$;
+
+-- Add node_id column to monitors for cluster support
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'monitors' AND column_name = 'node_id') THEN
+        ALTER TABLE "monitors" ADD COLUMN "node_id" TEXT;
+    END IF;
+END $$;
+
+-- Add assigned_node column to monitors for cluster support
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'monitors' AND column_name = 'assigned_node') THEN
+        ALTER TABLE "monitors" ADD COLUMN "assigned_node" TEXT;
+    END IF;
+END $$;

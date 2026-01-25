@@ -1,7 +1,10 @@
 // 叢集節點列表 API
-// 開發模式下模擬節點狀態，生產環境由 OpenResty 代理
+// 從資料庫查詢節點狀態
 
-interface ClusterNode {
+import { prisma } from '../../utils/prisma'
+import { isClusterMode, getCurrentNodeId, clusterConfig } from '../../utils/cluster-config'
+
+interface ClusterNodeResponse {
   id: string
   name: string
   host: string
@@ -9,30 +12,16 @@ interface ClusterNode {
   healthy: boolean
   lastCheck: number
   error: string
+  isPrimary: boolean
+  monitorCount: number
 }
 
-// 節點配置 - 與 docker-compose.yml 對應
-const nodes: ClusterNode[] = [
-  { id: 'node1', name: 'Node 1', host: 'app1', port: 3000, healthy: false, lastCheck: 0, error: '' },
-  { id: 'node2', name: 'Node 2', host: 'app2', port: 3000, healthy: false, lastCheck: 0, error: '' },
-  { id: 'node3', name: 'Node 3', host: 'app3', port: 3000, healthy: false, lastCheck: 0, error: '' },
-]
-
-// 健康檢查快取
+// 健康檢查快取 (用於即時健康狀態)
 const healthCache = new Map<string, { healthy: boolean; lastCheck: number; error: string }>()
 
-async function checkNodeHealth(node: ClusterNode): Promise<{ healthy: boolean; error: string }> {
-  // 開發模式下，只有當前節點是健康的
-  const currentNodeId = process.env.NODE_ID || 'dev'
-  
-  if (process.env.NODE_ENV === 'development' || currentNodeId === 'dev') {
-    // 開發模式：模擬當前節點健康
-    return { healthy: node.id === 'node1', error: node.id === 'node1' ? '' : 'Development mode - simulated' }
-  }
-  
-  // 生產模式：嘗試連接節點
+async function checkNodeHealthRealtime(host: string, port: number): Promise<{ healthy: boolean; error: string }> {
   try {
-    const url = `http://${node.host}:${node.port}/api/health`
+    const url = `http://${host}:${port}/api/health`
     const response = await fetch(url, { 
       method: 'GET',
       signal: AbortSignal.timeout(5000)
@@ -48,35 +37,78 @@ async function checkNodeHealth(node: ClusterNode): Promise<{ healthy: boolean; e
 }
 
 export default defineEventHandler(async (event) => {
-  const result: ClusterNode[] = []
   const now = Date.now()
-  
-  for (const node of nodes) {
-    const cached = healthCache.get(node.id)
-    
-    // 快取 10 秒
-    if (cached && now - cached.lastCheck < 10000) {
-      result.push({
-        ...node,
-        healthy: cached.healthy,
-        lastCheck: cached.lastCheck,
-        error: cached.error
-      })
-    } else {
-      // 執行健康檢查
-      const health = await checkNodeHealth(node)
-      const nodeStatus = {
-        healthy: health.healthy,
+  const result: ClusterNodeResponse[] = []
+
+  // 查詢所有節點
+  const dbNodes = await prisma.node.findMany({
+    orderBy: [
+      { isPrimary: 'desc' },
+      { nodeId: 'asc' }
+    ]
+  })
+
+  // 如果資料庫沒有節點，返回當前節點作為預設
+  if (dbNodes.length === 0) {
+    const currentNodeId = getCurrentNodeId()
+    return [{
+      id: currentNodeId,
+      name: currentNodeId,
+      host: 'localhost',
+      port: clusterConfig.defaultPort,
+      healthy: true,
+      lastCheck: now,
+      error: '',
+      isPrimary: true,
+      monitorCount: 0
+    }]
+  }
+
+  // 計算每個節點的監控器數量
+  const monitorCounts = await prisma.monitor.groupBy({
+    by: ['nodeId'],
+    _count: { id: true }
+  })
+  const monitorCountMap = new Map(
+    monitorCounts.map(m => [m.nodeId, m._count.id])
+  )
+
+  for (const node of dbNodes) {
+    const nodeHost = node.host || node.hostname || 'localhost'
+    const nodePort = clusterConfig.defaultPort
+    const cacheKey = node.nodeId
+
+    // 使用資料庫中的狀態作為主要來源
+    const isOnline = node.status === 'online'
+    const lastHeartbeat = node.lastHeartbeat?.getTime() || 0
+
+    // 檢查快取或執行即時健康檢查 (僅在需要時)
+    let healthStatus = { healthy: isOnline, error: '' }
+    const cached = healthCache.get(cacheKey)
+
+    // 如果節點狀態為 offline 超過 30 秒，嘗試即時檢查
+    if (!isOnline && (!cached || now - cached.lastCheck > 30000)) {
+      healthStatus = await checkNodeHealthRealtime(nodeHost, nodePort)
+      healthCache.set(cacheKey, {
+        healthy: healthStatus.healthy,
         lastCheck: now,
-        error: health.error
-      }
-      healthCache.set(node.id, nodeStatus)
-      
-      result.push({
-        ...node,
-        ...nodeStatus
+        error: healthStatus.error
       })
+    } else if (cached) {
+      healthStatus = { healthy: cached.healthy, error: cached.error }
     }
+
+    result.push({
+      id: node.nodeId,
+      name: node.nodeName,
+      host: nodeHost,
+      port: nodePort,
+      healthy: healthStatus.healthy,
+      lastCheck: lastHeartbeat || now,
+      error: healthStatus.error,
+      isPrimary: node.isPrimary,
+      monitorCount: monitorCountMap.get(node.nodeId) || 0
+    })
   }
   
   return result

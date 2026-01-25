@@ -1,0 +1,38 @@
+# =============================================================================
+# Nuxt.js Cluster OpenResty Dockerfile
+# =============================================================================
+# 用於建立支援動態路由和負載均衡的 OpenResty 映像
+# =============================================================================
+
+FROM openresty/openresty:alpine-fat
+
+# 安裝必要套件
+RUN apk add --no-cache curl
+
+# 安裝必要的 Lua 模組
+RUN opm install ledgetech/lua-resty-http
+
+# 建立必要的目錄
+RUN mkdir -p /usr/local/openresty/nginx/conf/conf.d \
+    && mkdir -p /usr/local/openresty/nginx/conf/ssl \
+    && mkdir -p /usr/local/openresty/nginx/logs \
+    && mkdir -p /usr/local/openresty/lualib
+
+# 複製 Nginx 配置
+COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
+
+# 複製額外的配置檔案
+COPY conf.d/ /usr/local/openresty/nginx/conf/conf.d/
+
+# 複製 Lua 模組
+COPY lua/ /usr/local/openresty/lualib/
+
+# 暴露埠
+EXPOSE 80
+
+# 健康檢查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/health || exit 1
+
+# 啟動 OpenResty
+CMD ["/usr/local/openresty/bin/openresty", "-g", "daemon off;"]

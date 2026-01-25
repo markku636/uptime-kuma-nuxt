@@ -29,8 +29,8 @@ WORKDIR /workspace
 
 ENV NODE_ENV=production
 
-# Install PostgreSQL client for database initialization
-RUN apk add --no-cache postgresql-client
+# Install PostgreSQL client for database initialization and curl for health checks
+RUN apk add --no-cache postgresql-client curl
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nuxtjs

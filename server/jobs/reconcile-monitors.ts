@@ -6,6 +6,7 @@
 
 import { prisma } from '../utils/prisma'
 import { startMonitorJob, stopMonitorJob, getJobStatus } from '../services/monitor/scheduler'
+import { isClusterMode, getCurrentNodeId } from '../utils/cluster-config'
 
 /**
  * Reconcile running monitors with DB state.
@@ -14,27 +15,27 @@ import { startMonitorJob, stopMonitorJob, getJobStatus } from '../services/monit
  * 2. Deactivated/deleted monitors are stopped
  * 3. Monitor configuration changes are applied
  * 
- * Note: For cluster mode, you would need to add assignedNode/nodeId fields
- * to the Monitor model and filter by current node.
+ * In cluster mode, only monitors assigned to the current node are started.
  */
 export async function reconcileMonitors(): Promise<void> {
-  const currentNodeId = process.env.UPTIME_KUMA_NODE_ID || process.env.NODE_ID || null
+  const currentNodeId = getCurrentNodeId()
+  const inClusterMode = isClusterMode()
   
   try {
-    // Get all monitors that should be running
+    // Build where clause based on cluster mode
     let whereClause: any = { active: true }
     
-    // If running in cluster mode with node assignment
-    // Uncomment and modify when assignedNode field is added to Monitor model
-    // if (currentNodeId) {
-    //   whereClause = {
-    //     active: true,
-    //     OR: [
-    //       { assignedNode: currentNodeId },
-    //       { assignedNode: null, nodeId: currentNodeId }
-    //     ]
-    //   }
-    // }
+    // In cluster mode, filter monitors by node assignment
+    if (inClusterMode && currentNodeId) {
+      whereClause = {
+        active: true,
+        OR: [
+          { assignedNode: currentNodeId },
+          { assignedNode: null, nodeId: currentNodeId }
+        ]
+      }
+      console.log(`[Reconcile] Cluster mode: filtering monitors for node ${currentNodeId}`)
+    }
 
     const desiredMonitors = await prisma.monitor.findMany({
       where: whereClause
