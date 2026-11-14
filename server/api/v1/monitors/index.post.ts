@@ -1,55 +1,13 @@
+import {databaseNow,initialMonitorSchedule} from '../../../utils/monitor-mutation'
 // server/api/v1/monitors/index.post.ts
-import { z } from 'zod'
+import { monitorEditorDTO, reserveMonitorId, monitorDbInput } from '../../../utils/monitor-secrets'
 import { nanoid } from 'nanoid'
 import { startMonitorJob } from '../../../services/monitor/scheduler'
 
-const createMonitorSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  type: z.string().min(1, 'Type is required'),  // Support all 24 monitor types
-  url: z.string().optional().nullable(),
-  hostname: z.string().optional().nullable(),
-  port: z.number().optional().nullable(),
-  interval: z.number().default(60),
-  timeout: z.number().default(48),
-  retryInterval: z.number().default(60),
-  maxretries: z.number().default(0),
-  method: z.string().default('GET'),
-  body: z.string().optional().nullable(),
-  headers: z.record(z.string()).optional().nullable(),
-  keyword: z.string().optional().nullable(),
-  jsonPath: z.string().optional().nullable(),
-  expectedValue: z.string().optional().nullable(),
-  invertKeyword: z.boolean().default(false),
-  ignoreTls: z.boolean().default(false),
-  upsideDown: z.boolean().default(false),
-  authMethod: z.string().optional().nullable(),
-  basicAuthUser: z.string().optional().nullable(),
-  basicAuthPass: z.string().optional().nullable(),
-  description: z.string().optional().nullable(),
-  maxRedirects: z.number().default(10).nullable(),
-  active: z.boolean().default(true),
-  // TLS Certificate settings
-  expiryNotification: z.boolean().default(false),
-  tlsExpiryDays: z.array(z.number()).optional().nullable(),
-  // DNS settings
-  dnsRecordType: z.string().optional().nullable(),
-  dnsResolver: z.string().optional().nullable(),
-  // Docker settings
-  dockerHost: z.number().optional().nullable(),
-  dockerContainer: z.string().optional().nullable(),
-  // Database settings
-  databaseType: z.string().optional().nullable(),
-  databaseConnectionString: z.string().optional().nullable(),
-  databaseQuery: z.string().optional().nullable(),
-  // Proxy
-  proxyId: z.number().optional().nullable(),
-  // Tags and notifications
-  tags: z.array(z.number()).optional().nullable(),
-  notifications: z.array(z.number()).optional().nullable(),
-})
+import { createMonitorSchema } from '../../../utils/monitor-input'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -72,7 +30,7 @@ export default defineEventHandler(async (event) => {
   const data = result.data
 
   // Validate based on monitor type
-  if (data.type === 'http' && !data.url) {
+  if (['http','keyword','json-query'].includes(data.type) && !data.url) {
     throw createError({
       statusCode: 400,
       message: 'URL is required for HTTP monitors'
@@ -90,50 +48,22 @@ export default defineEventHandler(async (event) => {
   const pushToken = data.type === 'push' ? nanoid(32) : undefined
 
   // Extract tags and notifications for separate handling
-  const { tags, notifications, tlsExpiryDays, ...monitorData } = data
+  const { tags, notifications, clearSecrets, ...monitorData } = data
 
-  const monitor = await prisma.monitor.create({
-    data: {
-      ...monitorData,
-      userId: session.user.id,
-      pushToken,
-      headers: monitorData.headers ? monitorData.headers : undefined,
-      tlsExpiryDays: tlsExpiryDays ? tlsExpiryDays : undefined,
-    },
-    include: {
-      tags: { include: { tag: true } }
-    }
-  })
-
-  // Add tags if provided
-  if (tags && tags.length > 0) {
-    await prisma.monitorTag.createMany({
-      data: tags.map((tagId: number) => ({
-        monitorId: monitor.id,
-        tagId,
-      })),
-      skipDuplicates: true,
-    })
-  }
-
-  // Add notifications if provided
-  if (notifications && notifications.length > 0) {
-    await prisma.monitorNotification.createMany({
-      data: notifications.map((notificationId: number) => ({
-        monitorId: monitor.id,
-        notificationId,
-      })),
-      skipDuplicates: true,
-    })
-  }
-
-  // Fetch the updated monitor with all relations
-  const updatedMonitor = await prisma.monitor.findUnique({
-    where: { id: monitor.id },
-    include: {
-      tags: { include: { tag: true } },
-      monitorNotifications: { include: { notification: true } }
-    }
+  const updatedMonitor = await prisma.$transaction(async tx => {
+    const tagIds = await assertWorkspaceIds(tx, 'tag', tags || [], session.workspaceId)
+    const notificationIds = await assertWorkspaceIds(tx, 'notification', notifications || [], session.workspaceId)
+    if (monitorData.proxyId) { await assertWorkspaceIds(tx, 'proxy', [monitorData.proxyId], session.workspaceId); throw createError({statusCode:400,message:'HTTP proxy transport is not supported'}) }
+    if (monitorData.remoteBrowserId) await assertWorkspaceIds(tx, 'remoteBrowser', [monitorData.remoteBrowserId], session.workspaceId)
+    if (monitorData.dockerHost && /^\d+$/.test(monitorData.dockerHost)) await assertWorkspaceIds(tx, 'dockerHost', [Number(monitorData.dockerHost)], session.workspaceId)
+    if (monitorData.parent) await assertWorkspaceIds(tx, 'monitor', [monitorData.parent], session.workspaceId)
+    const id=await reserveMonitorId(tx)
+    const input:any={...monitorData,...initialMonitorSchedule(id,monitorData.interval,await databaseNow(tx)),id,workspaceId:session.workspaceId,environmentId:session.environmentId,userId:session.user.id,pushToken}
+    for(const key of ['assertions','acceptedStatuscodes','tlsExpiryDays']) if(input[key]===null)delete input[key]
+    const monitor = await tx.monitor.create({data:monitorDbInput(input)})
+    if (tagIds.length) await tx.monitorTag.createMany({ data: tagIds.map(tagId => ({ monitorId: monitor.id, tagId })) })
+    if (notificationIds.length) await tx.monitorNotification.createMany({ data: notificationIds.map(notificationId => ({ monitorId: monitor.id, notificationId })) })
+    return tx.monitor.findUniqueOrThrow({ where: { id: monitor.id }, include: { tags: { include: { tag: true } }, monitorNotifications: true } })
   })
 
   // Start the monitor job if active
@@ -143,6 +73,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     ok: true,
-    data: updatedMonitor
+    data: monitorEditorDTO(updatedMonitor),
+    ...(pushToken ? { provisioning: { pushToken } } : {})
   }
 })

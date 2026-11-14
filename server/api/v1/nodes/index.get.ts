@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
     // Require authentication
-    await requireUserSession(event);
+    await requireRequestSession(event);
 
     const nodes = await prisma.node.findMany({
         orderBy: [

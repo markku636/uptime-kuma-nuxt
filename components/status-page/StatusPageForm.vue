@@ -35,7 +35,7 @@ const themeOptions = [
 ]
 
 // Fetch available monitors
-const { data: monitors } = await useFetch<any[]>('/api/v1/monitors')
+
 
 // Form data
 const form = ref<StatusPage>({
@@ -81,13 +81,6 @@ function handleSubmit() {
   emit('submit', { ...form.value })
 }
 
-// Monitor selection
-const monitorOptions = computed(() => {
-  return (monitors.value || []).map((m: any) => ({
-    value: m.id,
-    label: m.name
-  }))
-})
 </script>
 
 <template>
@@ -135,25 +128,7 @@ const monitorOptions = computed(() => {
         Select Monitors to Display
       </h3>
       
-      <div v-if="!monitors?.length" class="text-sm text-gray-500">
-        No monitors available. Create monitors first.
-      </div>
-      
-      <div v-else class="space-y-2 max-h-48 overflow-y-auto">
-        <UCheckbox
-          v-for="monitor in monitors"
-          :key="monitor.id"
-          :model-value="form.monitorIds?.includes(monitor.id)"
-          :label="monitor.name"
-          @update:model-value="(checked: boolean) => {
-            if (checked) {
-              form.monitorIds = [...(form.monitorIds || []), monitor.id]
-            } else {
-              form.monitorIds = form.monitorIds?.filter(id => id !== monitor.id)
-            }
-          }"
-        />
-      </div>
+      <StatusPageMonitorSelector :model-value="form.monitorIds||[]" @update:model-value="form.monitorIds=$event" />
     </div>
 
     <!-- Appearance -->

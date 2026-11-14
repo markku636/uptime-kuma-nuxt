@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const session = await requireWorkspace(event, 'owner')
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -14,10 +14,7 @@ export default defineEventHandler(async (event) => {
 
   // Verify ownership
   const apiKey = await prisma.apiKey.findFirst({
-    where: {
-      id: Number(id),
-      userId: session.user.id
-    }
+    where: { id: Number(id), workspaceId: session.workspaceId }
   })
 
   if (!apiKey) {
@@ -28,7 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await prisma.apiKey.delete({
-    where: { id: Number(id) }
+    where: { id: Number(id), workspaceId: session.workspaceId }
   })
 
   return { success: true }

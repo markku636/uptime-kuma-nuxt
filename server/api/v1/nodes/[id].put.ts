@@ -13,7 +13,7 @@ const nodeUpdateSchema = z.object({
 
 export default defineEventHandler(async (event) => {
     // Require authentication
-    await requireUserSession(event);
+    await requireRequestSession(event);
 
     const id = getRouterParam(event, "id");
 

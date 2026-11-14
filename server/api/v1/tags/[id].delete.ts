@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -20,8 +20,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  if (!await prisma.tag.findFirst({ where: { id, workspaceId: session.workspaceId } })) throw createError({ statusCode: 404, message: 'Tag not found' })
   await prisma.tag.delete({
-    where: { id }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   return {

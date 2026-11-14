@@ -1,121 +1,33 @@
-// server/middleware/rate-limit.ts
-// Simple in-memory rate limiter for Nitro/H3
-
-interface RateLimitEntry {
-  count: number
-  resetTime: number
+interface Entry { count: number; resetAt: number }
+const entries = new Map<string,Entry>()
+const cleanup = setInterval(() => { const now = Date.now(); for (const [key,value] of entries) if (value.resetAt <= now) entries.delete(key) },60_000)
+cleanup.unref()
+const limit = (name: string, fallback: number) => {
+  const value = Number(process.env[name]); return Number.isSafeInteger(value) && value > 0 ? value : fallback
 }
-
-// In-memory store for rate limiting
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
-// Configuration
-const RATE_LIMIT_CONFIG = {
-    // API rate limiting
-    api: {
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        maxRequests: parseInt(process.env.API_RATE_LIMIT || "100"),
-    },
-    // Login rate limiting (more strict)
-    login: {
-        windowMs: 60 * 1000, // 1 minute
-        maxRequests: 20,
-    },
-    // 2FA rate limiting
-    twofa: {
-        windowMs: 60 * 1000, // 1 minute
-        maxRequests: 30,
-    },
-};
-
-/**
- * @param event
- */
-function getClientIP(event: any): string {
-    // Try to get real IP from various headers
-    const forwarded = getHeader(event, "x-forwarded-for");
-    if (forwarded) {
-        return forwarded.split(",")[0].trim();
-    }
-
-    const realIP = getHeader(event, "x-real-ip");
-    if (realIP) {
-        return realIP;
-    }
-
-    // Fallback to socket address
-    return event.node?.req?.socket?.remoteAddress || "unknown";
-}
-
-/**
- *
- */
-function cleanupExpiredEntries() {
-    const now = Date.now();
-    for (const [ key, entry ] of rateLimitStore.entries()) {
-        if (now > entry.resetTime) {
-            rateLimitStore.delete(key);
-        }
-    }
-}
-
-// Cleanup expired entries every 5 minutes
-setInterval(cleanupExpiredEntries, 5 * 60 * 1000);
-
-export default defineEventHandler(async (event) => {
-    const path = getRequestURL(event).pathname;
-
-    // Only apply rate limiting to API routes
-    if (!path.startsWith("/api/")) {
-        return;
-    }
-
-    // Determine which rate limit config to use
-    let config = RATE_LIMIT_CONFIG.api;
-    let prefix = "api";
-
-    if (path.includes("/login") || path.includes("/auth")) {
-        config = RATE_LIMIT_CONFIG.login;
-        prefix = "login";
-    } else if (path.includes("/2fa") || path.includes("/twofa")) {
-        config = RATE_LIMIT_CONFIG.twofa;
-        prefix = "twofa";
-    }
-
-    const clientIP = getClientIP(event);
-    const key = `${prefix}:${clientIP}`;
-    const now = Date.now();
-
-    let entry = rateLimitStore.get(key);
-
-    if (!entry || now > entry.resetTime) {
-    // Create new entry or reset expired one
-        entry = {
-            count: 1,
-            resetTime: now + config.windowMs,
-        };
-        rateLimitStore.set(key, entry);
-    } else {
-    // Increment count
-        entry.count++;
-    }
-
-    // Set rate limit headers
-    const remaining = Math.max(0, config.maxRequests - entry.count);
-    const resetSeconds = Math.ceil((entry.resetTime - now) / 1000);
-
-    setHeader(event, "X-RateLimit-Limit", config.maxRequests.toString());
-    setHeader(event, "X-RateLimit-Remaining", remaining.toString());
-    setHeader(event, "X-RateLimit-Reset", resetSeconds.toString());
-
-    // Check if rate limit exceeded
-    if (entry.count > config.maxRequests) {
-        setHeader(event, "Retry-After", resetSeconds);
-
-        throw createError({
-            statusCode: 429,
-            statusMessage: "Too Many Requests",
-            message: "Too many requests from this IP, please try again later.",
-        });
-    }
-});
+export default defineEventHandler(event => {
+  const path = getRequestURL(event).pathname
+  if (!path.startsWith('/api/') || ['/api/health','/api/v1/health','/api/health/live','/api/health/ready'].includes(path)) return
+  const login = ['/api/auth/login','/api/auth/setup'].includes(path)
+  const twofa = path.startsWith('/api/auth/2fa/')
+  const maximum = login ? limit('LOGIN_RATE_LIMIT',20) : twofa ? limit('TWOFA_RATE_LIMIT',30) : limit('API_RATE_LIMIT',600)
+  // Forwarded headers are trusted only when the deployment explicitly trusts its ingress.
+  const ip = process.env.TRUST_PROXY_HEADERS === 'true'
+    ? getHeader(event,'x-forwarded-for')?.split(',')[0]?.trim() || event.node.req.socket.remoteAddress
+    : event.node.req.socket.remoteAddress
+  const userId = event.context.requestSession?.user?.id
+  const subject = !login && !twofa && userId ? `user:${userId}` : `ip:${ip || 'unknown'}`
+  const key = `${login?'login':twofa?'2fa':'api'}:${subject}`, now = Date.now()
+  let entry = entries.get(key)
+  if (!entry || entry.resetAt <= now) {
+    if (entries.size >= 10000) entries.delete(entries.keys().next().value!)
+    entry = {count:0,resetAt:now+60_000}; entries.set(key,entry)
+  }
+  entry.count++
+  setResponseHeader(event,'X-RateLimit-Limit',maximum)
+  setResponseHeader(event,'X-RateLimit-Remaining',Math.max(0,maximum-entry.count))
+  if (entry.count > maximum) {
+    setResponseHeader(event,'Retry-After',Math.ceil((entry.resetAt-now)/1000))
+    throw createError({ statusCode:429, message:'Too many requests; try again shortly' })
+  }
+})

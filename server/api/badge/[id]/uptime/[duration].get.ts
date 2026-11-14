@@ -5,6 +5,7 @@ import { calculateUptime } from '../../../../services/uptime/calculator'
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '0')
   const durationParam = getRouterParam(event, 'duration') || '24'
+  await assertPublishedMonitor(id)
   const query = getQuery(event)
   
   if (!id) {

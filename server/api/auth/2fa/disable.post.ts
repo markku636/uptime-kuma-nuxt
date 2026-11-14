@@ -8,7 +8,7 @@ const disableSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   // Get current user session
-  const session = await getUserSession(event)
+  const session = await getRequestSession(event)
   
   if (!session?.user?.id) {
     throw createError({

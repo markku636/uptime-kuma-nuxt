@@ -8,7 +8,7 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const session = await requireRequestSession(event)
   const body = await readValidatedBody(event, schema.parse)
 
   // Get user with password
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
   // Update password
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { password: hashedPassword }
+    data: { password: hashedPassword, sessionVersion: { increment: 1 } }
   })
 
   return { success: true }

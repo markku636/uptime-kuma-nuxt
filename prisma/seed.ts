@@ -7,23 +7,16 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Seeding database...')
 
-  // Check if admin user exists
-  const existingUser = await prisma.user.findFirst({
-    where: { username: 'admin' }
-  })
-
-  if (!existingUser) {
-    // Create default admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10)
-    
-    await prisma.user.create({
-      data: {
-        username: 'admin',
-        password: hashedPassword
-      }
+  const username=process.env.SEED_ADMIN_USERNAME||'admin'
+  const existingUser=await prisma.user.findUnique({where:{username}})
+  if(!existingUser){
+    const password=process.env.SEED_ADMIN_PASSWORD
+    if(!password||password.length<12)throw new Error('Set SEED_ADMIN_PASSWORD to at least 12 characters for initial seeding')
+    await prisma.$transaction(async tx=>{
+      const user=await tx.user.create({data:{username,password:await bcrypt.hash(password,12),platformAdmin:true}})
+      await tx.workspace.create({data:{name:`${username}'s workspace`,members:{create:{userId:user.id,role:'owner'}},environments:{create:{name:'default'}}}})
     })
-    
-    console.log('Created default admin user (admin / admin123)')
+    console.log('Created initial administrator and workspace')
   }
 
   // Create default settings
@@ -48,29 +41,6 @@ async function main() {
   }
 
   console.log('Created default settings')
-
-  // Create sample notification (Discord webhook placeholder)
-  const existingNotification = await prisma.notification.findFirst({
-    where: { name: 'Sample Discord' }
-  })
-
-  if (!existingNotification) {
-    await prisma.notification.create({
-      data: {
-        name: 'Sample Discord',
-        type: 'discord',
-        config: JSON.stringify({
-          webhookUrl: 'https://discord.com/api/webhooks/YOUR_WEBHOOK_URL',
-          username: 'Uptime Kuma'
-        }),
-        isDefault: false,
-        active: false,
-        userId: (await prisma.user.findFirst())?.id || 1
-      }
-    })
-    
-    console.log('Created sample notification')
-  }
 
   console.log('Seeding completed!')
 }

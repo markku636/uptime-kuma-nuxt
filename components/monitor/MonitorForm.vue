@@ -1,5 +1,10 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-6">
+  <form @submit.prevent="handleSubmit()" class="space-y-6">
+    <p v-if="currentWorkspace?.role === 'viewer'" role="status" class="text-muted">This workspace is read-only.</p>
+    <div v-if="initialData?.id" class="section-card space-y-2">
+      <p>Request values are write-only. Leave blank fields to keep their current values; enter a complete replacement to update them.</p>
+      <label v-for="key in configuredFields" :key="key" class="block text-sm"><input v-model="clearSecrets" type="checkbox" :value="key" class="mr-2"> Clear configured {{ key }}</label>
+    </div>
     <!-- Basic Info -->
     <div class="section-card">
       <h2 class="section-title">Basic Information</h2>
@@ -12,6 +17,7 @@
               {{ type.label }}
             </option>
           </select>
+          <p v-if="!['http','keyword','json-query','push'].includes(form.type)" role="status" class="text-sm mt-2">This checker is stored for compatibility but is not scheduled by the bounded PostgreSQL worker yet. HTTP, keyword and JSON query checks are supported.</p>
         </div>
 
         <div class="form-group md:col-span-2">
@@ -152,15 +158,10 @@
       <div class="mt-4">
         <label class="input-label">Proxy</label>
         <select v-model="form.proxyId" class="select-field" :disabled="loading">
-          <option :value="null">No Proxy</option>
-          <option v-for="proxy in proxies" :key="proxy.id" :value="proxy.id">
-            {{ proxy.protocol }}://{{ proxy.host }}:{{ proxy.port }}
-            <span v-if="proxy.isDefault">(Default)</span>
-          </option>
+          <option :value="null">Direct connection</option>
+          <option v-if="form.proxyId" :value="form.proxyId" disabled>Previously configured proxy (unsupported)</option>
         </select>
-        <p class="text-xs text-gray-400 mt-1">
-          <NuxtLink to="/settings/proxies" class="text-green-400 hover:underline">Manage Proxies</NuxtLink>
-        </p>
+        <p class="text-xs text-gray-400 mt-1">HTTP proxy transport is unavailable in this checker. Clear any previous proxy before saving.</p>
       </div>
 
       <!-- Accepted Status Codes -->
@@ -253,8 +254,7 @@
         <select v-model="form.authMethod" class="select-field" :disabled="loading">
           <option value="">None</option>
           <option value="basic">HTTP Basic Auth</option>
-          <option value="ntlm">NTLM</option>
-          <option value="mtls">mTLS (Client Certificate)</option>
+          <option v-if="['ntlm','mtls'].includes(form.authMethod)" :value="form.authMethod" disabled>Previously configured authentication (unsupported)</option>
           <option value="oauth2-cc">OAuth2: Client Credentials</option>
         </select>
       </div>
@@ -854,6 +854,12 @@
       </div>
     </div>
 
+    <div v-if="showHttpSettings" class="section-card space-y-4">
+      <MonitorAssertionEditor v-model="assertions" :disabled="loading || !canEdit" @validity="assertionsValid=$event" />
+      <button type="button" class="btn btn-outline" :disabled="trialLoading || loading || !canEdit || !assertionsValid" @click="handleSubmit(true)">{{ trialLoading ? 'Checking…' : 'Test request and assertions' }}</button>
+      <p v-if="trialError" role="alert" class="text-red-400">{{ trialError }}</p>
+      <div v-if="trialResult"><p>{{ trialResult.status===1?'Check passed':'Check failed' }} · {{ trialResult.code }} · {{ Math.round(trialResult.ping) }} ms</p><MonitorAssertionResults :result="trialResult.assertionResults" /></div>
+    </div>
     <!-- Monitor Conditions (for supported monitor types) -->
     <div v-if="supportsConditions" class="section-card">
       <h2 class="section-title">Monitor Conditions</h2>
@@ -1097,7 +1103,7 @@
       <button 
         type="submit" 
         class="btn btn-primary"
-        :disabled="loading"
+        :disabled="loading || !canEdit || !assertionsValid"
       >
         <UIcon v-if="loading" name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin mr-2" />
         {{ submitLabel }}
@@ -1107,6 +1113,8 @@
 </template>
 
 <script setup lang="ts">
+import type { AssertionSet } from '../../shared/types/assertions'
+const { canEdit, current: currentWorkspace } = useWorkspace()
 interface Props {
   initialData?: any
   loading?: boolean
@@ -1119,6 +1127,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits(['submit'])
+const assertions=ref<AssertionSet|null>(props.initialData?.assertions||null)
+const assertionsValid=ref(true),clearSecrets=ref<string[]>([]),trialLoading=ref(false),trialError=ref(''),trialResult=ref<any>(null)
+const configuredFields=computed(()=>Object.keys(props.initialData?.configuredSecrets||{}).filter(key=>props.initialData.configuredSecrets[key]))
+const secretFieldNames=['url','body','headers','basicAuthUser','basicAuthPass','authConfig','grpcUrl','grpcBody','grpcMetadata','databaseConnectionString','databaseQuery','mqttUsername','mqttPassword','kafkaBrokers','kafkaUsername','kafkaPassword','rabbitmqNodes','rabbitmqUsername','rabbitmqPassword','redisConnectionString','radiusSecret','dockerDaemon','dockerHost','queryParams']
+
 
 // Get composables data
 const { notifications, fetchNotifications } = useNotifications()
@@ -1157,13 +1170,14 @@ const initNotificationIds = (): Record<number, boolean> => {
       ids[Number(id)] = true
     }
   }
+  for(const id of props.initialData?.notifications||[])ids[id]=true
   return ids
 }
 
 // Initialize tag IDs from initial data
 const initTagIds = (): number[] => {
   if (props.initialData?.tags) {
-    return props.initialData.tags.map((t: any) => t.tag_id || t.id)
+    return props.initialData.tags.map((t: any) => t.tagId || t.tag?.id || t.tag_id || t.id)
   }
   return []
 }
@@ -1213,7 +1227,7 @@ const form = reactive({
   parent: props.initialData?.parent || null,
   // HTTP Advanced
   proxyId: props.initialData?.proxyId || null,
-  acceptedStatuscodes: props.initialData?.acceptedStatuscodes?.join(', ') || '200-299',
+  acceptedStatuscodes: props.initialData?.acceptedStatuscodes?.join(', ') ?? '200-399',
   headers: initHeaders(),
   body: props.initialData?.body || '',
   // JSON Query
@@ -1231,8 +1245,8 @@ const form = reactive({
   databaseQuery: props.initialData?.databaseQuery || '',
   // Docker
   dockerContainer: props.initialData?.dockerContainer || '',
-  dockerHost: props.initialData?.dockerHost || '/var/run/docker.sock',
-  dockerDaemon: props.initialData?.dockerDaemon || 'socket',
+  dockerHost: props.initialData?.dockerHost || (props.initialData?.id ? '' : '/var/run/docker.sock'),
+  dockerDaemon: props.initialData?.dockerDaemon || (props.initialData?.id ? '' : 'socket'),
   // MQTT
   mqttTopic: props.initialData?.mqttTopic || '',
   mqttUsername: props.initialData?.mqttUsername || '',
@@ -1264,7 +1278,7 @@ const form = reactive({
   packetSize: props.initialData?.packetSize || 56,
   pingNumeric: props.initialData?.pingNumeric || props.initialData?.ping_numeric || false,
   // Max Redirects
-  maxRedirects: props.initialData?.maxRedirects || props.initialData?.maxredirects || 10,
+  maxRedirects: props.initialData?.maxRedirects ?? props.initialData?.maxredirects ?? 10,
   // Authentication
   authMethod: props.initialData?.authMethod || '',
   basicAuthUser: props.initialData?.basicAuthUser || props.initialData?.basic_auth_user || '',
@@ -1364,7 +1378,7 @@ const showDatabaseSettings = computed(() =>
 
 // Monitor types that support conditions
 const supportsConditions = computed(() => 
-  ['http', 'keyword', 'json-query', 'grpc-keyword', 'tcp', 'dns', 'mqtt', 'snmp'].includes(form.type)
+  ['grpc-keyword', 'tcp', 'dns', 'mqtt', 'snmp'].includes(form.type)
 )
 
 const databasePlaceholder = computed(() => {
@@ -1427,7 +1441,8 @@ const clusterNodes = computed(() => {
   return nodesData.value
 })
 
-const handleSubmit = () => {
+const handleSubmit = async (trial=false) => {
+  if (!canEdit.value || !assertionsValid.value) return
   const data: any = {
     type: form.type,
     name: form.name,
@@ -1435,7 +1450,7 @@ const handleSubmit = () => {
     timeout: form.timeout,
     retryInterval: form.retryInterval,
     maxretries: form.maxretries,
-    description: form.description || undefined,
+    description: form.description || null,
     upsideDown: form.upsideDown,
   }
 
@@ -1443,17 +1458,15 @@ const handleSubmit = () => {
   if (showUrlField.value) {
     data.url = form.url
     data.method = form.method
-    data.keyword = form.keyword || undefined
+    data.keyword = form.keyword || null
     data.invertKeyword = form.invertKeyword
     data.ignoreTls = form.ignoreTls
     
     // Proxy
-    if (form.proxyId) {
-      data.proxyId = form.proxyId
-    }
+    data.proxyId = form.proxyId
     
     // Accepted status codes - parse the comma-separated string
-    if (form.acceptedStatuscodes) {
+    {
       data.acceptedStatuscodes = form.acceptedStatuscodes
         .split(',')
         .map((s: string) => s.trim())
@@ -1469,7 +1482,7 @@ const handleSubmit = () => {
         }
       })
       if (Object.keys(headersObj).length > 0) {
-        data.headers = JSON.stringify(headersObj)
+        data.headers = headersObj
       }
     }
     
@@ -1478,14 +1491,15 @@ const handleSubmit = () => {
       data.body = form.body
     }
 
-    // Authentication
+    // An explicit None selection must disable existing credentials.
+    data.authMethod=form.authMethod||'none'
     if (form.authMethod) {
       data.authMethod = form.authMethod
       
       // Basic Auth / NTLM
       if (form.authMethod === 'basic' || form.authMethod === 'ntlm') {
-        data.basic_auth_user = form.basicAuthUser || undefined
-        data.basic_auth_pass = form.basicAuthPass || undefined
+        data.basicAuthUser = form.basicAuthUser || undefined
+        data.basicAuthPass = form.basicAuthPass || undefined
         
         if (form.authMethod === 'ntlm') {
           data.authDomain = form.authDomain || undefined
@@ -1495,11 +1509,7 @@ const handleSubmit = () => {
       
       // OAuth2
       if (form.authMethod === 'oauth2-cc') {
-        data.oauth_token_url = form.oauthTokenUrl
-        data.oauth_client_id = form.oauthClientId
-        data.oauth_client_secret = form.oauthClientSecret
-        data.oauth_scopes = form.oauthScopes || undefined
-        data.oauth_audience = form.oauthAudience || undefined
+        if(form.oauthTokenUrl || form.oauthClientId || form.oauthClientSecret) data.authConfig={tokenUrl:form.oauthTokenUrl,clientId:form.oauthClientId,clientSecret:form.oauthClientSecret,scopes:form.oauthScopes||undefined,audience:form.oauthAudience||undefined}
       }
       
       // mTLS
@@ -1514,7 +1524,7 @@ const handleSubmit = () => {
   // JSON Query specific
   if (form.type === 'json-query') {
     data.jsonPath = form.jsonPath
-    data.expectedValue = form.expectedValue || undefined
+    data.expectedValue = form.expectedValue
   }
 
   // gRPC specific
@@ -1525,7 +1535,7 @@ const handleSubmit = () => {
     data.grpcProtoContent = form.grpcProtoContent || undefined
     data.grpcBody = form.grpcBody || undefined
     data.grpcEnableTls = form.grpcEnableTls
-    data.keyword = form.keyword || undefined
+    data.keyword = form.keyword || null
     data.invertKeyword = form.invertKeyword
   }
 
@@ -1578,14 +1588,14 @@ const handleSubmit = () => {
     data.radiusPassword = form.snmpCommunity // Community string stored in radiusPassword field
     data.snmpOid = form.snmpOid
     data.snmpVersion = form.snmpVersion
-    data.expectedValue = form.expectedValue || undefined
+    data.expectedValue = form.expectedValue
   }
 
   // DNS specific
   if (form.type === 'dns') {
-    data.dns_resolve_server = form.dnsResolveServer
+    data.dnsResolver = form.dnsResolveServer
     data.port = form.dnsPort
-    data.dns_resolve_type = form.dnsResolveType
+    data.dnsRecordType = form.dnsResolveType
   }
 
   // Radius specific
@@ -1606,7 +1616,7 @@ const handleSubmit = () => {
 
   // Max redirects for HTTP
   if (showHttpSettings.value) {
-    data.maxredirects = form.maxRedirects
+    data.maxRedirects = form.maxRedirects
     data.cacheBust = form.cacheBust
     
     // Remote Browser (for keyword monitoring)
@@ -1620,16 +1630,8 @@ const handleSubmit = () => {
     data.conditions = form.conditions
   }
 
-  // Notifications - convert to object format expected by backend
-  data.notificationIDList = form.notificationIDList
-
-  // Tags - convert to format expected by backend
-  if (form.selectedTags.length > 0) {
-    data.tags = form.selectedTags.map(tagId => ({
-      tag_id: tagId,
-      value: ''  // Tag value - can be customized per monitor
-    }))
-  }
+  data.notifications=Object.keys(form.notificationIDList).filter(id=>form.notificationIDList[Number(id)]).map(Number)
+  data.tags=[...form.selectedTags]
 
   // Certificate expiry notification
   if (showHttpSettings.value && !form.ignoreTls) {
@@ -1652,6 +1654,18 @@ const handleSubmit = () => {
     data.assigned_node = form.assignedNode
   }
 
+  if(showHttpSettings.value)data.assertions=assertions.value
+  if(props.initialData?.id){
+    data.clearSecrets=[...clearSecrets.value]
+    for(const key of secretFieldNames)if(data[key]===''||data[key]===undefined)delete data[key]
+  }
+  if(trial){
+    trialLoading.value=true;trialError.value='';trialResult.value=null
+    try{const response=await $fetch<any>(props.initialData?.id?`/api/v1/monitors/${props.initialData.id}/test`:'/api/v1/monitors/test',{method:'POST',body:data});trialResult.value=response.data}
+    catch(error:any){trialError.value=error.data?.message||'Trial failed'}
+    finally{trialLoading.value=false}
+    return
+  }
   emit('submit', data)
 }
 </script>
@@ -1661,7 +1675,7 @@ const handleSubmit = () => {
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: rgb(243 244 246);
+  color: var(--text-primary);
 }
 
 .form-group {
@@ -1672,7 +1686,7 @@ const handleSubmit = () => {
   display: block;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  color: rgb(209 213 219);
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 

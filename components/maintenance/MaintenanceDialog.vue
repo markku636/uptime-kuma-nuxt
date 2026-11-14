@@ -196,19 +196,7 @@
 
         <!-- Affected Monitors -->
         <UFormField label="Affected Monitors">
-          <div class="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
-            <div 
-              v-for="monitor in monitors"
-              :key="monitor.id"
-              class="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
-            >
-              <UCheckbox 
-                :model-value="formData.monitors.includes(monitor.id)"
-                @update:model-value="toggleMonitor(monitor.id)"
-              />
-              <span>{{ monitor.name }}</span>
-            </div>
-          </div>
+          <StatusPageMonitorSelector v-model="formData.monitors" />
         </UFormField>
 
         <!-- Status -->

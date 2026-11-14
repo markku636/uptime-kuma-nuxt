@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await getRequestSession(event)
   
   if (!session?.user?.id) {
     throw createError({

@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const session = await requireRequestSession(event)
 
   const setting = await prisma.setting.findUnique({
     where: { key: 'tlsExpiryDays' }

@@ -1,7 +1,7 @@
 // server/api/auth/session.get.ts
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await getRequestSession(event)
 
   if (!session?.user) {
     return {

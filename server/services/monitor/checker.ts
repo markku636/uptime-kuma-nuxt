@@ -1,4 +1,5 @@
 // server/services/monitor/checker.ts
+import { hydrateMonitor } from '../../utils/monitor-secrets'
 import {
   checkHttp,
   checkKeyword,
@@ -27,21 +28,24 @@ export interface CheckResult {
   status: number // 0: DOWN, 1: UP, 2: PENDING, 3: MAINTENANCE
   ping: number
   msg: string
+  code?: string
+  assertionResults?: import('../../../shared/types/assertions').AssertionEvaluation
 }
 
-export async function checkMonitor(monitor: any): Promise<CheckResult> {
+export async function checkMonitor(monitor: any, signal?: AbortSignal): Promise<CheckResult> {
   const startTime = Date.now()
 
   try {
+    monitor=hydrateMonitor(monitor)
     switch (monitor.type) {
       case 'http':
-        return await checkHttp(monitor, startTime)
+        return await checkHttp(monitor, startTime, signal)
       
       case 'keyword':
-        return await checkKeyword(monitor, startTime)
+        return await checkKeyword(monitor, startTime, signal)
       
       case 'json-query':
-        return await checkJsonQuery(monitor, startTime)
+        return await checkJsonQuery(monitor, startTime, signal)
       
       case 'grpc-keyword':
         return await checkGrpcKeyword(monitor, startTime)
@@ -115,7 +119,7 @@ export async function checkMonitor(monitor: any): Promise<CheckResult> {
     return {
       status: 0,
       ping: Date.now() - startTime,
-      msg: error.message || 'Check failed'
+      msg: 'Check failed', code: 'CHECK_ERROR'
     }
   }
 }

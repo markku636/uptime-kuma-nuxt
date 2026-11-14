@@ -16,7 +16,7 @@ const createStatusPageSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -36,8 +36,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // Check if slug already exists
-  const existing = await prisma.statusPage.findUnique({
-    where: { slug: result.data.slug }
+  const existing = await prisma.statusPage.findFirst({
+    where: { slug: result.data.slug, workspaceId: session.workspaceId }
   })
 
   if (existing) {
@@ -48,10 +48,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const statusPage = await prisma.statusPage.create({
-    data: {
-      ...result.data,
-      userId: session.user.id
-    }
+    data: { ...result.data, workspaceId: session.workspaceId, userId: session.user.id }
   })
 
   return {

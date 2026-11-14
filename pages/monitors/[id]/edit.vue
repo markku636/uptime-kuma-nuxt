@@ -16,8 +16,8 @@ const saving = ref(false)
 // Fetch monitor data
 onMounted(async () => {
   try {
-    const data = await $fetch(`/api/v1/monitors/${monitorId.value}`)
-    monitor.value = data
+    const data = await $fetch<any>(`/api/v1/monitors/${monitorId.value}`)
+    monitor.value = data.data
   } catch (error: any) {
     toast.add({
       title: 'Error',
@@ -33,12 +33,12 @@ onMounted(async () => {
 async function handleSubmit(formData: any) {
   saving.value = true
   try {
-    const updated = await $fetch(`/api/v1/monitors/${monitorId.value}`, {
+    const updated = await $fetch<any>(`/api/v1/monitors/${monitorId.value}`, {
       method: 'PUT',
       body: formData
     })
     
-    monitorStore.updateMonitor(updated)
+    monitorStore.updateMonitor(updated.data)
     
     toast.add({
       title: 'Success',
@@ -83,6 +83,7 @@ async function handleSubmit(formData: any) {
       v-else-if="monitor"
       :initial-data="monitor"
       :loading="saving"
+      submit-label="Save Monitor"
       @submit="handleSubmit"
     />
   </div>

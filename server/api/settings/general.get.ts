@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const session = await requireRequestSession(event)
 
   // Get general settings from database
   const settings = await prisma.setting.findMany({

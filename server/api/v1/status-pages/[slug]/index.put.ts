@@ -33,7 +33,7 @@ const updateStatusPageSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -51,8 +51,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const existing = await prisma.statusPage.findUnique({
-    where: { slug }
+  const existing = await prisma.statusPage.findFirst({
+    where: { slug, workspaceId: session.workspaceId }
   })
 
   if (!existing) {
@@ -63,17 +63,9 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify ownership
-  if (existing.userId !== session.user.id) {
-    throw createError({
-      statusCode: 403,
-      message: 'Not authorized to modify this status page'
-    })
-  }
 
   const body = await readBody(event)
   
-  console.log('PUT /api/v1/status-pages - Received body:', JSON.stringify(body, null, 2))
-  console.log('PUT /api/v1/status-pages - publicGroupList count:', body.publicGroupList?.length)
   
   const result = updateStatusPageSchema.safeParse(body)
   
@@ -86,102 +78,33 @@ export default defineEventHandler(async (event) => {
 
   const { publicGroupList, domainNameList, customCSS, ...statusPageData } = result.data
 
-  // Build update data, filtering out null/undefined values
-  const updateData: Record<string, any> = {}
-  
-  for (const [key, value] of Object.entries(statusPageData)) {
-    if (value !== undefined && value !== null) {
-      updateData[key] = value
+  if (domainNameList?.length) throw createError({ statusCode: 400, message: 'Custom domains are not supported by this deployment' })
+  const updateData = Object.fromEntries(Object.entries(statusPageData).filter(([, value]) => value !== undefined && value !== null))
+  if (customCSS !== undefined && customCSS !== null) updateData.customCss = customCSS
+  const statusPage = await prisma.$transaction(async tx => {
+    const current = await tx.statusPage.findFirst({ where: { slug, workspaceId: session.workspaceId } })
+    if (!current) throw createError({ statusCode: 404, message: 'Status page not found' })
+    if (publicGroupList) {
+      if (publicGroupList.length > 100) throw createError({ statusCode: 400, message: 'Too many groups' })
+      const groups = await tx.statusPageGroup.findMany({ where: { statusPageId: current.id }, select: { id: true } })
+      const existingIds = new Set(groups.map(group => group.id))
+      const requestedIds = publicGroupList.filter(group => group.id > 0).map(group => group.id)
+      if (requestedIds.some(id => !existingIds.has(id)) || new Set(requestedIds).size !== requestedIds.length) {
+        throw createError({ statusCode: 404, message: 'Group not found' })
+      }
+      await assertWorkspaceIds(tx, 'monitor', publicGroupList.flatMap(group => group.monitorList.map(monitor => monitor.id)), session.workspaceId)
+      await tx.statusPageGroup.deleteMany({ where: { statusPageId: current.id, id: { notIn: requestedIds } } })
+      for (const [index, group] of publicGroupList.entries()) {
+        const data = { name: group.name, weight: group.weight ?? index + 1 }
+        const saved = group.id > 0
+          ? await tx.statusPageGroup.update({ where: { id: group.id, statusPageId: current.id }, data })
+          : await tx.statusPageGroup.create({ data: { ...data, statusPageId: current.id } })
+        await tx.statusPageMonitor.deleteMany({ where: { groupId: saved.id } })
+        const ids = [...new Set(group.monitorList.map(monitor => monitor.id))]
+        if (ids.length) await tx.statusPageMonitor.createMany({ data: ids.map(monitorId => ({ groupId: saved.id, monitorId, sendUrl: false })) })
+      }
     }
-  }
-  
-  // Handle customCSS (frontend uses customCSS, db uses customCss)
-  if (customCSS !== undefined && customCSS !== null) {
-    updateData.customCss = customCSS
-  }
-  
-  if (domainNameList && domainNameList.length > 0) {
-    updateData.domainNameList = JSON.stringify(domainNameList)
-  }
-
-  // Update status page basic info
-  const statusPage = await prisma.statusPage.update({
-    where: { slug },
-    data: updateData
+    return tx.statusPage.update({ where: { id: current.id, workspaceId: session.workspaceId }, data: updateData })
   })
-
-  // Update groups if provided
-  if (publicGroupList) {
-    console.log('Processing publicGroupList with', publicGroupList.length, 'groups')
-    
-    // Use transaction to update groups
-    await prisma.$transaction(async (tx) => {
-      // Get existing groups
-      const existingGroups = await tx.statusPageGroup.findMany({
-        where: { statusPageId: statusPage.id }
-      })
-      const existingGroupIds = existingGroups.map(g => g.id)
-      
-      // IDs in the request (only positive IDs, negative means new)
-      const requestGroupIds = publicGroupList.filter(g => g.id > 0).map(g => g.id)
-      
-      // Delete groups that are no longer in the list (cascade will delete monitors)
-      const groupsToDelete = existingGroupIds.filter(id => !requestGroupIds.includes(id))
-      if (groupsToDelete.length > 0) {
-        await tx.statusPageGroup.deleteMany({
-          where: { id: { in: groupsToDelete } }
-        })
-      }
-
-      // Create or update groups
-      for (let i = 0; i < publicGroupList.length; i++) {
-        const group = publicGroupList[i]
-        const weight = group.weight ?? i + 1
-        
-        let groupId: number
-        
-        if (group.id > 0 && existingGroupIds.includes(group.id)) {
-          // Update existing group
-          await tx.statusPageGroup.update({
-            where: { id: group.id },
-            data: {
-              name: group.name,
-              weight: weight
-            }
-          })
-          groupId = group.id
-          
-          // Delete existing monitor associations for this group
-          await tx.statusPageMonitor.deleteMany({
-            where: { groupId: groupId }
-          })
-        } else {
-          // Create new group
-          const newGroup = await tx.statusPageGroup.create({
-            data: {
-              statusPageId: statusPage.id,
-              name: group.name,
-              weight: weight
-            }
-          })
-          groupId = newGroup.id
-        }
-        
-        // Create monitor associations
-        if (group.monitorList && group.monitorList.length > 0) {
-          await tx.statusPageMonitor.createMany({
-            data: group.monitorList.map(m => ({
-              groupId: groupId,
-              monitorId: m.id
-            }))
-          })
-        }
-      }
-    })
-  }
-
-  return {
-    ok: true,
-    data: statusPage
-  }
+  return { ok: true, data: statusPage }
 })

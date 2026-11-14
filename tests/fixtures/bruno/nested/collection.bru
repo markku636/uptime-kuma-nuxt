@@ -1,0 +1,11 @@
+meta {
+  name: Local fixture collection
+}
+vars:pre-request {
+  target: collection
+  fallback: collection-fallback
+}
+headers {
+  X-Collection: enabled
+  ~X-Disabled: ignored
+}

@@ -41,6 +41,7 @@ async function getCertificateInfo(hostname: string, port: number = 443): Promise
 
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '')
+  await assertPublishedMonitor(id)
 
   if (isNaN(id)) {
     throw createError({

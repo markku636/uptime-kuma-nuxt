@@ -1,0 +1,36 @@
+meta {
+  name: Health
+  type: http
+  seq: 1
+}
+post {
+  url: {{origin}}/health
+  body: json
+  auth: basic
+}
+auth:basic {
+  username: fixture
+  password: {{token}}
+}
+vars:pre-request {
+  target: request
+}
+headers {
+  X-Scope: {{target}}
+  X-Fallback: {{fallback}}
+}
+params:query {
+  token: {{token}}
+  ~disabled: ignored
+}
+body:json {
+  {
+    "scope": "{{target}}"
+  }
+}
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.headers['x-fixture']: eq "ready"
+  ~res.body.disabled: eq false
+}

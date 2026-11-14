@@ -1,12 +1,16 @@
 ﻿<script setup lang="ts">
 const toast = useToast()
+const { canManage, current, environment, load } = useWorkspace()
+const newKeyScope = ref<'read' | 'write'>('read')
+const pinEnvironment = ref(true)
+const newKeyExpiry = ref('')
 const apiKeys = ref<any[]>([])
 const loading = ref(true)
 const showForm = ref(false)
 const newKeyName = ref('')
 const newKeyValue = ref('')
 
-onMounted(async () => { await fetchKeys() })
+onMounted(async () => { await load(); if (canManage.value) await fetchKeys(); else loading.value = false })
 
 async function fetchKeys() {
   loading.value = true
@@ -27,7 +31,7 @@ async function generateKey() {
     return
   }
   try {
-    const result = await $fetch('/api/v1/api-keys', { method: 'POST', body: { name: newKeyName.value } }) as any
+    const result = await $fetch('/api/v1/api-keys', { method: 'POST', body: { name: newKeyName.value, scope: newKeyScope.value, ...(pinEnvironment.value ? { environmentId: environment.value?.id } : {}), ...(newKeyExpiry.value ? { expires: new Date(newKeyExpiry.value).toISOString() } : {}) } }) as any
     newKeyValue.value = result.key
     toast.add({ title: 'Success', description: 'API key generated', color: 'success' })
     await fetchKeys()
@@ -57,18 +61,19 @@ function copyToClipboard(text: string) {
   <div>
     <div class="flex justify-between items-center mb-6">
       <h4 class="text-lg font-semibold text-gray-900 dark:text-white">API Keys</h4>
-      <button class="btn btn-primary" @click="showForm = true">Generate Key</button>
+      <button v-if="canManage" class="btn btn-primary" @click="showForm = true">Generate Key</button>
     </div>
 
     <div class="alert alert-info mb-6">
       API keys allow external applications to access the Uptime Kuma API. Keep your keys secure.
     </div>
 
+    <p v-if="!canManage" class="text-muted mb-4">Workspace owners manage API keys.</p>
     <div v-if="loading" class="text-center py-8 text-gray-600 dark:text-gray-400">Loading...</div>
 
     <div v-else-if="apiKeys.length === 0" class="section-card text-center py-8">
       <p class="text-gray-600 dark:text-gray-400 mb-4">No API keys generated yet.</p>
-      <button class="btn btn-primary" @click="showForm = true">Generate Your First Key</button>
+      <button v-if="canManage" class="btn btn-primary" @click="showForm = true">Generate Your First Key</button>
     </div>
 
     <div v-else class="section-card">
@@ -76,9 +81,10 @@ function copyToClipboard(text: string) {
         <div v-for="key in apiKeys" :key="key.id" class="flex justify-between items-center p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
           <div>
             <span class="font-medium text-gray-900 dark:text-white">{{ key.name }}</span>
+            <span class="text-sm ml-2">{{ key.scope }} · {{ key.environmentId ? current?.environments.find(e => e.id === key.environmentId)?.name : 'All environments' }}</span>
             <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">Created: {{ new Date(key.createdAt).toLocaleDateString() }}</span>
           </div>
-          <button class="btn btn-danger" @click="deleteKey(key.id)">Delete</button>
+          <button v-if="canManage" class="btn btn-danger" @click="deleteKey(key.id)">Delete</button>
         </div>
       </div>
     </div>
@@ -99,6 +105,9 @@ function copyToClipboard(text: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Key Name</label>
             <input v-model="newKeyName" type="text" class="input-field" placeholder="e.g., CI/CD Pipeline" />
           </div>
+          <label class="block">Permission<select v-model="newKeyScope" class="input-field mt-2" aria-label="API key permission"><option value="read">Read only</option><option value="write">Read and write monitors</option></select></label>
+          <label class="flex items-center gap-2"><input v-model="pinEnvironment" type="checkbox">Limit to {{ environment?.name || 'current environment' }}</label>
+          <label class="block">Expiration (optional)<input v-model="newKeyExpiry" type="datetime-local" class="input-field mt-2"></label>
           <div class="flex gap-3 pt-4">
             <button type="button" class="btn btn-secondary flex-1" @click="showForm = false">Cancel</button>
             <button type="submit" class="btn btn-primary flex-1">Generate</button>

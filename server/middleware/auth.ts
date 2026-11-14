@@ -1,49 +1,18 @@
-// server/middleware/auth.ts
+import { requireRequestSession, requirePlatformAdmin } from '../utils/request-session'
+
 export default defineEventHandler(async (event) => {
-  // Skip auth for public routes
-  const publicRoutes = [
-    '/api/auth/login',
-    '/api/auth/setup',
-    '/api/entry-page',
-    '/api/status/',
-    '/api/push/',
-    '/api/badge/',
-    '/api/health',
-    '/api/cluster/',      // 叢集節點 API (需要公開給前端)
-    '/api/node-info',
-  ]
-
-  const path = event.path || ''
-  const method = event.method || 'GET'
-  
-  // Check if current route is public
-  const isPublicRoute = publicRoutes.some(route => path.startsWith(route))
-  
-  if (isPublicRoute) {
-    return
-  }
-
-  // Public status page routes (GET only for viewing)
-  // Pattern: /api/v1/status-pages/{slug}/monitors or /api/v1/status-pages/{slug}/heartbeat
-  if (method === 'GET' && path.match(/^\/api\/v1\/status-pages\/[^\/]+\/(monitors|heartbeat)/)) {
-    return
-  }
-
-  // Check if route requires authentication
-  if (path.startsWith('/api/')) {
-    try {
-      const session = await getUserSession(event)
-      if (!session?.user) {
-        throw createError({
-          statusCode: 401,
-          message: 'Unauthorized'
-        })
-      }
-    } catch (error) {
-      throw createError({
-        statusCode: 401,
-        message: 'Unauthorized'
-      })
-    }
+  const path = getRequestURL(event).pathname
+  const method = event.method
+  if (!path.startsWith('/api/')) return
+  if (method === 'POST' && ['/api/auth/login', '/api/auth/setup'].includes(path)) return
+  if (method === 'GET' && ['/api/health', '/api/v1/health', '/api/health/live', '/api/health/ready', '/api/entry-page'].includes(path)) return
+  if (method === 'GET' && (/^\/api\/(status\/|badge\/|status-page\/)/.test(path)
+    || /^\/api\/v1\/status-pages?\/[^/]+(?:\/(monitors|heartbeat))?$/.test(path))) return
+  if (['GET', 'POST'].includes(method) && /^\/api\/push\/[^/]+$/.test(path)) return
+  const session = await requireRequestSession(event)
+  if (/^\/api\/(cluster(?:\/|$)|node-info$|cloudflared\/|settings\/)/.test(path)
+    || /^\/api\/v1\/(users(?:\/|$)|nodes(?:\/|$)|settings\/|maintenance\/shrink-database)/.test(path)
+    || ['/api/metrics', '/api/v1/metrics'].includes(path)) {
+    await requirePlatformAdmin(event)
   }
 })

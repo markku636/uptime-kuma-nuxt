@@ -1,3 +1,4 @@
+import { visibleStatusPage } from '../../../../utils/public-status'
 // server/api/v1/status-pages/[slug]/monitors.get.ts
 import { prisma } from '~/server/utils/prisma'
 
@@ -27,37 +28,12 @@ export default defineEventHandler(async (event) => {
   const queryLimit = query.limit ? Math.min(50, Math.max(1, Number(query.limit))) : null
   const noPagination = query.no_pagination === 'true' || query.no_pagination === '1'
 
-  // First, get the status page basic info and check access
-  const statusPage = await prisma.statusPage.findUnique({
-    where: { slug },
-    include: {
-      incidents: {
-        where: { pin: true },
-        orderBy: { createdAt: 'desc' },
-        take: 1
-      }
-    }
-  })
-
-  if (!statusPage) {
-    throw createError({
-      statusCode: 404,
-      message: 'Status page not found'
-    })
-  }
-  
-  // Use status page perPage setting, or query limit, or default to 5
+  const basicPage = await visibleStatusPage(event)
+  const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 1 }) }
   const limit = queryLimit || statusPage.perPage || 5
-
-  // Check if published (or authenticated for unpublished)
-  if (!statusPage.published) {
-    const session = await getUserSession(event)
-    if (!session?.user) {
-      throw createError({
-        statusCode: 404,
-        message: 'Status page not found'
-      })
-    }
+  if (noPagination) {
+    const scope = await requireWorkspace(event, 'editor')
+    if (scope.workspaceId !== statusPage.workspaceId) throw createError({ statusCode: 404, message: 'Status page not found' })
   }
 
   // Get all groups with monitor counts (lightweight query for tabs)
@@ -85,9 +61,12 @@ export default defineEventHandler(async (event) => {
   if (noPagination) {
     const allGroups = await prisma.statusPageGroup.findMany({
       where: { statusPageId: statusPage.id },
+      take: 100,
       orderBy: { weight: 'asc' },
       include: {
         monitors: {
+          where: { monitor: { workspaceId: statusPage.workspaceId } },
+          take: 4000,
           include: {
             monitor: {
               include: {
@@ -168,7 +147,7 @@ export default defineEventHandler(async (event) => {
   // Database-level pagination - only fetch the monitors we need
   const offset = (page - 1) * limit
   const paginatedMonitors = await prisma.statusPageMonitor.findMany({
-    where: { groupId: targetGroupId },
+    where: { groupId: targetGroupId, monitor: { workspaceId: statusPage.workspaceId } },
     skip: offset,
     take: limit,
     include: {
@@ -249,7 +228,7 @@ function formatMonitor(spm: any, showTags: boolean) {
     id: monitor.id,
     name: monitor.name,
     sendUrl: spm.sendUrl,
-    url: monitor.url,
+
     type: monitor.type,
     tags: showTags && monitor.tags ? monitor.tags.map((mt: any) => ({
       id: mt.tag.id,

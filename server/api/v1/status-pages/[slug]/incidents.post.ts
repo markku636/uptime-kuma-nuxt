@@ -11,7 +11,7 @@ const createIncidentSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -29,8 +29,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const statusPage = await prisma.statusPage.findUnique({
-    where: { slug }
+  const statusPage = await prisma.statusPage.findFirst({
+    where: { slug, workspaceId: session.workspaceId }
   })
 
   if (!statusPage) {

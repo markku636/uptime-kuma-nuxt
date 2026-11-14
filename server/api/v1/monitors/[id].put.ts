@@ -1,34 +1,14 @@
+import {fenceMonitorData} from '../../../utils/monitor-mutation'
 // server/api/v1/monitors/[id].put.ts
-import { z } from 'zod'
+import { Prisma } from '@prisma/client'
+import { monitorEditorDTO, monitorSecretUpdate } from '../../../utils/monitor-secrets'
 import { startMonitorJob, stopMonitorJob } from '../../../services/monitor/scheduler'
 
-const updateMonitorSchema = z.object({
-  name: z.string().min(1).optional(),
-  type: z.string().optional(),  // Support all 24 monitor types
-  url: z.string().optional(),
-  hostname: z.string().optional(),
-  port: z.number().optional(),
-  interval: z.number().optional(),
-  timeout: z.number().optional(),
-  retryInterval: z.number().optional(),
-  maxretries: z.number().optional(),
-  method: z.string().optional(),
-  body: z.string().optional(),
-  headers: z.record(z.string()).optional(),
-  keyword: z.string().optional(),
-  invertKeyword: z.boolean().optional(),
-  ignoreTls: z.boolean().optional(),
-  upsideDown: z.boolean().optional(),
-  authMethod: z.string().optional(),
-  basicAuthUser: z.string().optional(),
-  basicAuthPass: z.string().optional(),
-  description: z.string().optional(),
-  active: z.boolean().optional(),
-  weight: z.number().optional(),
-})
+import { createMonitorSchema } from '../../../utils/monitor-input'
+const updateMonitorSchema = createMonitorSchema.partial()
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -48,10 +28,7 @@ export default defineEventHandler(async (event) => {
 
   // Check if monitor exists and belongs to user
   const existingMonitor = await prisma.monitor.findFirst({
-    where: { 
-      id,
-      userId: session.user.id 
-    }
+    where: { id, workspaceId: session.workspaceId, environmentId: session.environmentId }
   })
 
   if (!existingMonitor) {
@@ -72,17 +49,31 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const data = result.data
+  // Zod 4 applies defaults even inside partial(); only apply fields explicitly sent.
+  const data = Object.fromEntries(Object.entries(result.data).filter(([key]) => Object.hasOwn(body, key))) as typeof result.data
 
-  const monitor = await prisma.monitor.update({
-    where: { id },
-    data: {
-      ...data,
-      headers: data.headers ? data.headers : undefined,
-    },
-    include: {
-      tags: { include: { tag: true } }
+  const { tags, notifications, ...monitorData } = data
+  const monitor = await prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM monitors WHERE id=${id} FOR UPDATE`
+    const current=await tx.monitor.findFirstOrThrow({where:{id,workspaceId:session.workspaceId,environmentId:session.environmentId}})
+    if (monitorData.proxyId) { await assertWorkspaceIds(tx, 'proxy', [monitorData.proxyId], session.workspaceId); throw createError({statusCode:400,message:'HTTP proxy transport is not supported'}) }
+    if (monitorData.dockerHost && /^\d+$/.test(monitorData.dockerHost)) await assertWorkspaceIds(tx, 'dockerHost', [Number(monitorData.dockerHost)], session.workspaceId)
+    if (monitorData.remoteBrowserId) await assertWorkspaceIds(tx, 'remoteBrowser', [monitorData.remoteBrowserId], session.workspaceId)
+    if (monitorData.parent) await assertWorkspaceIds(tx, 'monitor', [monitorData.parent], session.workspaceId)
+    if (tags) {
+      const ids = await assertWorkspaceIds(tx, 'tag', tags, session.workspaceId)
+      await tx.monitorTag.deleteMany({ where: { monitorId: id } })
+      if (ids.length) await tx.monitorTag.createMany({ data: ids.map(tagId => ({ monitorId: id, tagId })) })
     }
+    if (notifications) {
+      const ids = await assertWorkspaceIds(tx, 'notification', notifications, session.workspaceId)
+      await tx.monitorNotification.deleteMany({ where: { monitorId: id } })
+      if (ids.length) await tx.monitorNotification.createMany({ data: ids.map(notificationId => ({ monitorId: id, notificationId })) })
+    }
+    // Read again inside the transaction so concurrent partial edits preserve current values.
+    const updated:any=await fenceMonitorData(tx,current,monitorSecretUpdate(current,monitorData))
+    for(const key of ['assertions','acceptedStatuscodes','tlsExpiryDays']) if(updated[key]===null)updated[key]=Prisma.DbNull
+    return tx.monitor.update({ where:{id},data:updated,include:{tags:{include:{tag:true}},monitorNotifications:true} })
   })
 
   // Restart the monitor job with new settings
@@ -94,6 +85,6 @@ export default defineEventHandler(async (event) => {
 
   return {
     ok: true,
-    data: monitor
+    data: monitorEditorDTO(monitor)
   }
 })

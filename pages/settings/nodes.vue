@@ -19,9 +19,11 @@ const form = ref({
 
 // TODO: Get current node ID from server info
 const currentNodeId = ref<string | null>(null)
+const platformAdmin=ref(false),permissionReady=ref(false)
 
 onMounted(async () => {
-  await fetchNodes()
+  try{platformAdmin.value=!!(await $fetch<{data?:{platformAdmin?:boolean}}>('/api/auth/session')).data?.platformAdmin;if(platformAdmin.value)await fetchNodes()}
+  finally{permissionReady.value=true}
 })
 
 async function fetchNodes() {
@@ -30,10 +32,10 @@ async function fetchNodes() {
     const response = await $fetch('/api/v1/nodes') as any
     nodes.value = response || []
   } catch (error: any) {
-    toast.add({ 
-      title: 'Error', 
-      description: error.data?.message || 'Failed to load nodes', 
-      color: 'error' 
+    toast.add({
+      title: 'Error',
+      description: error.data?.message || 'Failed to load nodes',
+      color: 'error'
     })
   } finally {
     loading.value = false
@@ -67,33 +69,33 @@ function openEditForm(node: any) {
 async function handleSubmit() {
   try {
     if (editingNode.value) {
-      await $fetch(`/api/v1/nodes/${editingNode.value.id}`, { 
-        method: 'PUT', 
-        body: form.value 
+      await $fetch(`/api/v1/nodes/${Number(editingNode.value.id)}`, {
+        method: 'PUT',
+        body: form.value
       })
-      toast.add({ 
-        title: 'Success', 
-        description: 'Node updated successfully', 
-        color: 'success' 
+      toast.add({
+        title: 'Success',
+        description: 'Node updated successfully',
+        color: 'success'
       })
     } else {
-      await $fetch('/api/v1/nodes', { 
-        method: 'POST', 
-        body: form.value 
+      await $fetch('/api/v1/nodes', {
+        method: 'POST',
+        body: form.value
       })
-      toast.add({ 
-        title: 'Success', 
-        description: 'Node created successfully', 
-        color: 'success' 
+      toast.add({
+        title: 'Success',
+        description: 'Node created successfully',
+        color: 'success'
       })
     }
     showForm.value = false
     await fetchNodes()
   } catch (error: any) {
-    toast.add({ 
-      title: 'Error', 
-      description: error.data?.message || 'Failed to save node', 
-      color: 'error' 
+    toast.add({
+      title: 'Error',
+      description: error.data?.message || 'Failed to save node',
+      color: 'error'
     })
   }
 }
@@ -105,22 +107,22 @@ function confirmDelete(node: any) {
 
 async function deleteNode() {
   if (!confirmDeleteNode.value) return
-  
+
   try {
-    await $fetch(`/api/v1/nodes/${confirmDeleteNode.value.id}`, { method: 'DELETE' })
-    toast.add({ 
-      title: 'Success', 
-      description: 'Node deleted successfully', 
-      color: 'success' 
+    await $fetch(`/api/v1/nodes/${Number(confirmDeleteNode.value.id)}`, { method: 'DELETE' })
+    toast.add({
+      title: 'Success',
+      description: 'Node deleted successfully',
+      color: 'success'
     })
     showDeleteConfirm.value = false
     confirmDeleteNode.value = null
     await fetchNodes()
   } catch (error: any) {
-    toast.add({ 
-      title: 'Error', 
-      description: error.data?.message || 'Failed to delete node', 
-      color: 'error' 
+    toast.add({
+      title: 'Error',
+      description: error.data?.message || 'Failed to delete node',
+      color: 'error'
     })
   }
 }
@@ -158,7 +160,11 @@ function formatDateTime(dateTime: string | null) {
 </script>
 
 <template>
-  <div>
+  <p v-if="!permissionReady">Loading permissions…</p>
+  <p v-else-if="!platformAdmin" role="status">Platform administrator permission required.</p>
+  <div v-else>
+    <SettingsWorkerRuntime />
+    <p class="text-sm mb-5">Legacy node metadata below does not control PostgreSQL worker leases.</p>
     <div class="flex justify-between items-center mb-6">
       <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Cluster Nodes</h4>
       <button class="btn btn-primary" @click="openAddForm">
@@ -185,8 +191,8 @@ function formatDateTime(dateTime: string | null) {
 
     <!-- Node List -->
     <div v-else class="space-y-4">
-      <div 
-        v-for="node in nodes" 
+      <div
+        v-for="node in nodes"
         :key="node.id"
         class="section-card"
       >
@@ -194,11 +200,11 @@ function formatDateTime(dateTime: string | null) {
           <!-- Left: Status + Info -->
           <div class="flex items-center gap-4">
             <!-- Status Circle -->
-            <div 
-              class="w-6 h-6 rounded-full flex-shrink-0" 
+            <div
+              class="w-6 h-6 rounded-full flex-shrink-0"
               :class="getStatusClass(node.status)"
             ></div>
-            
+
             <!-- Node Info -->
             <div>
               <div class="flex items-center gap-2 mb-1">
@@ -208,20 +214,20 @@ function formatDateTime(dateTime: string | null) {
                 <span class="text-sm text-gray-500 font-mono bg-gray-200 dark:bg-gray-700/50 px-2 py-0.5 rounded">
                   {{ node.nodeId }}
                 </span>
-                <span 
-                  v-if="node.isPrimary" 
+                <span
+                  v-if="node.isPrimary"
                   class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full"
                 >
                   Primary
                 </span>
-                <span 
-                  v-if="isCurrentNode(node.nodeId)" 
+                <span
+                  v-if="isCurrentNode(node.nodeId)"
                   class="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full"
                 >
                   Current
                 </span>
               </div>
-              
+
               <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                 <span class="flex items-center gap-1">
                   <span class="i-heroicons-signal text-xs"></span>
@@ -242,16 +248,16 @@ function formatDateTime(dateTime: string | null) {
               </div>
             </div>
           </div>
-          
+
           <!-- Right: Actions -->
           <div class="flex items-center gap-2">
-            <button 
+            <button
               class="btn btn-secondary"
               @click="openEditForm(node)"
             >
               Edit
             </button>
-            <button 
+            <button
               class="btn btn-danger"
               :disabled="isCurrentNode(node.nodeId)"
               @click="confirmDelete(node)"
@@ -269,15 +275,15 @@ function formatDateTime(dateTime: string | null) {
     </div>
 
     <!-- Add/Edit Form Modal -->
-    <div 
-      v-if="showForm" 
+    <div
+      v-if="showForm"
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
           {{ editingNode ? 'Edit Node' : 'Add Node' }}
         </h3>
-        
+
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Node ID -->
           <div>
@@ -296,7 +302,7 @@ function formatDateTime(dateTime: string | null) {
               Unique identifier for this node (cannot be changed after creation)
             </p>
           </div>
-          
+
           <!-- Node Name -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -313,7 +319,7 @@ function formatDateTime(dateTime: string | null) {
               Friendly name for this node
             </p>
           </div>
-          
+
           <!-- Host -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -329,7 +335,7 @@ function formatDateTime(dateTime: string | null) {
               Optional host address (IP or hostname)
             </p>
           </div>
-          
+
           <!-- Location -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -345,7 +351,7 @@ function formatDateTime(dateTime: string | null) {
               Optional location description
             </p>
           </div>
-          
+
           <!-- Is Primary -->
           <div class="flex items-center gap-2">
             <input
@@ -361,12 +367,12 @@ function formatDateTime(dateTime: string | null) {
           <p class="text-sm text-gray-500">
             Only one node can be set as primary. Setting this will make other nodes secondary.
           </p>
-          
+
           <!-- Buttons -->
           <div class="flex justify-end gap-2 pt-4">
-            <button 
-              type="button" 
-              class="btn btn-secondary" 
+            <button
+              type="button"
+              class="btn btn-secondary"
               @click="showForm = false"
             >
               Cancel
@@ -380,8 +386,8 @@ function formatDateTime(dateTime: string | null) {
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div 
-      v-if="showDeleteConfirm" 
+    <div
+      v-if="showDeleteConfirm"
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4">
@@ -390,14 +396,14 @@ function formatDateTime(dateTime: string | null) {
           Are you sure you want to delete this node?
         </p>
         <div class="flex justify-end gap-2">
-          <button 
-            class="btn btn-secondary" 
+          <button
+            class="btn btn-secondary"
             @click="showDeleteConfirm = false"
           >
             Cancel
           </button>
-          <button 
-            class="btn btn-danger" 
+          <button
+            class="btn btn-danger"
             @click="deleteNode"
           >
             Delete

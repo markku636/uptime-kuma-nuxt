@@ -5,12 +5,15 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Monitors</h1>
         <p class="text-gray-600 dark:text-gray-400">Manage your monitors</p>
       </div>
-      <NuxtLink to="/monitors/add" class="btn btn-primary">
+      <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
         <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
         Add Monitor
       </NuxtLink>
     </div>
 
+    <div class="flex gap-3 mb-4"><input v-model="search" class="input-field" placeholder="Search monitors..."/><select v-model="status" class="select-field"><option value="all">All statuses</option><option value="up">Up</option><option value="down">Down</option><option value="pending">Pending</option><option value="paused">Paused</option><option value="stale">Stale</option></select><input v-model="type" class="input-field" placeholder="Type (all, http, push...)" /></div>
+    <p v-if="error" role="alert">Unable to load monitors.</p>
+    <MonitorMonitorPagination :count="monitors.length" :total="summary.total" :can-back="canBack" :has-more="!!page?.hasMore" :loading="pending" @back="back" @next="next" />
     <div class="card card-body">
       <div v-if="pending" class="text-center py-12">
         <div class="spinner w-8 h-8 mx-auto"></div>
@@ -20,7 +23,7 @@
       <div v-else-if="monitors.length === 0" class="text-center py-12">
         <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto text-gray-500 mb-3" />
         <p class="text-gray-600 dark:text-gray-400 mb-4">No monitors yet</p>
-        <NuxtLink to="/monitors/add" class="btn btn-primary">
+        <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
           Add your first monitor
         </NuxtLink>
       </div>
@@ -56,18 +59,15 @@ definePageMeta({
   middleware: ['auth']
 })
 
-const { data, pending } = await useFetch('/api/v1/monitors', {
-  headers: useRequestHeaders(['cookie'])
-})
-
-const monitors = computed(() => data.value?.data || [])
-
+const {search,status,type,monitors,pending,error,page,summary,next,back,canBack}=useMonitorPage()
+const {canEdit}=useWorkspace()
 function getLatestStatus(monitor: any) {
   return monitor.heartbeats?.[0]?.status ?? -1
 }
 
 function getStatusText(monitor: any) {
   if (!monitor.active) return 'PAUSED'
+  if(monitor.viewStatus==='stale')return 'STALE'
   const status = getLatestStatus(monitor)
   switch (status) {
     case 1: return 'UP'

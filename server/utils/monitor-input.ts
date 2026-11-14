@@ -1,0 +1,64 @@
+import { sensitiveMonitorFields } from './monitor-secrets'
+import { z } from 'zod'
+import { assertionsSchema, parseSelector } from './assertions'
+export const createMonitorSchema = z.object({
+  clearSecrets: z.array(z.enum(sensitiveMonitorFields)).max(sensitiveMonitorFields.length).optional(),
+  name: z.string().min(1, 'Name is required').max(200),
+  type: z.string().min(1, 'Type is required').max(50),  // Support all 24 monitor types
+  url: z.string().max(8192).optional().nullable(),
+  hostname: z.string().max(255).optional().nullable(),
+  port: z.number().int().min(1).max(65535).optional().nullable(),
+  interval: z.number().int().min(10).max(86400).default(60),
+  timeout: z.number().int().min(1).max(120).default(48),
+  retryInterval: z.number().int().min(1).max(3600).default(60),
+  maxretries: z.number().int().min(0).max(5).default(0),
+  method: z.enum(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']).default('GET'),
+  body: z.string().max(1048576).optional().nullable(),
+  headers: z.record(z.string().max(256), z.string().max(32768)).refine(value => Object.keys(value).length <= 100).optional().nullable(),
+  queryParams: z.array(z.object({name:z.string().max(256),value:z.string().max(8192)}).strict()).max(100).optional().nullable(),
+  keyword: z.string().optional().nullable(),
+  jsonPath: z.string().refine(value => { try { if (value) parseSelector(value); return true } catch { return false } }, 'Unsupported JSON selector').optional().nullable(),
+  expectedValue: z.string().optional().nullable(),
+  invertKeyword: z.boolean().default(false),
+  ignoreTls: z.boolean().default(false),
+  upsideDown: z.boolean().default(false),
+  authMethod: z.enum(['','none','basic','oauth2-cc']).optional().nullable(),
+  basicAuthUser: z.string().optional().nullable(),
+  basicAuthPass: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  maxRedirects: z.number().int().min(0).max(10).default(10),
+  active: z.boolean().default(true),
+  assertions: assertionsSchema.optional().nullable(),
+  authConfig: z.object({ tokenUrl: z.string().max(8192), clientId: z.string().max(4096), clientSecret: z.string().max(8192), scopes: z.string().max(4096).optional(), audience: z.string().max(4096).optional() }).strict().optional().nullable(),
+  acceptedStatuscodes: z.array(z.union([z.number().int().min(100).max(599), z.string().regex(/^\d{3}(?:-\d{3})?$/).refine(value=>{const [start,end=start]=value.split('-').map(Number);return start!>=100&&end!<=599&&start!<=end!})])).max(50).optional().nullable(),
+  weight: z.number().int().min(0).max(2147483647).optional(),
+  grpcUrl: z.string().max(8192).optional().nullable(), grpcProtoContent: z.string().max(1048576).optional().nullable(),
+  grpcMethod: z.string().max(256).optional().nullable(), grpcServiceName: z.string().max(256).optional().nullable(),
+  grpcEnableTls: z.boolean().optional(), grpcBody: z.string().max(1048576).optional().nullable(), grpcMetadata: z.string().max(65536).optional().nullable(),
+  mqttTopic: z.string().max(4096).optional().nullable(), mqttUsername: z.string().max(4096).optional().nullable(), mqttPassword: z.string().max(8192).optional().nullable(), mqttSuccessMessage: z.string().max(4096).optional().nullable(),
+  kafkaBrokers: z.array(z.string().max(1024)).max(100).optional().nullable(), kafkaTopic: z.string().max(4096).optional().nullable(),
+  kafkaSaslMechanism: z.string().max(100).optional().nullable(), kafkaUsername: z.string().max(4096).optional().nullable(), kafkaPassword: z.string().max(8192).optional().nullable(),
+  rabbitmqNodes: z.array(z.string().max(8192)).max(100).optional().nullable(), rabbitmqUsername: z.string().max(4096).optional().nullable(), rabbitmqPassword: z.string().max(8192).optional().nullable(),
+  redisConnectionString: z.string().max(8192).optional().nullable(), radiusSecret: z.string().max(8192).optional().nullable(),
+  game: z.string().max(100).optional().nullable(),
+  // TLS Certificate settings
+  expiryNotification: z.boolean().default(false),
+  tlsExpiryDays: z.array(z.number()).optional().nullable(),
+  // DNS settings
+  dnsRecordType: z.string().optional().nullable(),
+  dnsResolver: z.string().optional().nullable(),
+  // Docker settings
+  dockerHost: z.union([z.number(), z.string()]).transform(String).optional().nullable(),
+  remoteBrowserId: z.number().int().positive().optional().nullable(),
+  parent: z.number().int().positive().optional().nullable(),
+  dockerContainer: z.string().optional().nullable(),
+  // Database settings
+  databaseType: z.string().optional().nullable(),
+  databaseConnectionString: z.string().optional().nullable(),
+  databaseQuery: z.string().optional().nullable(),
+  // Proxy
+  proxyId: z.number().optional().nullable(),
+  // Tags and notifications
+  tags: z.array(z.number()).optional().nullable(),
+  notifications: z.array(z.number()).optional().nullable(),
+})

@@ -1,8 +1,10 @@
+import {fenceMonitorData} from '../../../../utils/monitor-mutation'
+import { monitorEditorDTO } from '../../../../utils/monitor-secrets'
 // server/api/v1/monitors/[id]/pause.post.ts
 import { stopMonitorJob } from '../../../../services/monitor/scheduler'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -22,10 +24,7 @@ export default defineEventHandler(async (event) => {
 
   // Check if monitor exists and belongs to user
   const existingMonitor = await prisma.monitor.findFirst({
-    where: { 
-      id,
-      userId: session.user.id 
-    }
+    where: { id, workspaceId: session.workspaceId, environmentId: session.environmentId }
   })
 
   if (!existingMonitor) {
@@ -35,9 +34,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const monitor = await prisma.monitor.update({
-    where: { id },
-    data: { active: false }
+  const monitor=await prisma.$transaction(async tx=>{
+    await tx.$queryRaw`SELECT id FROM monitors WHERE id=${id} FOR UPDATE`
+    const current=await tx.monitor.findFirstOrThrow({where:{id,workspaceId:session.workspaceId,environmentId:session.environmentId}})
+    return tx.monitor.update({where:{id},data:await fenceMonitorData(tx,current,{active:false})})
   })
 
   // Stop the monitor job
@@ -46,6 +46,6 @@ export default defineEventHandler(async (event) => {
   return {
     ok: true,
     message: 'Monitor paused',
-    data: monitor
+    data: monitorEditorDTO(monitor)
   }
 })

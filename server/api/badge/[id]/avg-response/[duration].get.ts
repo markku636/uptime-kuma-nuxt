@@ -3,6 +3,7 @@ import { generateBadge } from '../../../../services/badge/generator'
 
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '')
+  await assertPublishedMonitor(id)
   const duration = getRouterParam(event, 'duration') || '24h'
 
   if (isNaN(id)) {

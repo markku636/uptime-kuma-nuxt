@@ -1,0 +1,9 @@
+meta {
+  name: API
+}
+vars:pre-request {
+  target: folder
+}
+headers {
+  X-Folder: {{target}}
+}

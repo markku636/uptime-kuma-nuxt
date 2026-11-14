@@ -1,7 +1,9 @@
+import { monitorEditorDTO } from '../../../utils/monitor-secrets'
+import { heartbeatSummary, monitorSummary } from '../../../utils/serialize'
 // server/api/v1/monitors/[id].get.ts
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -20,14 +22,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const monitor = await prisma.monitor.findFirst({
-    where: { 
-      id,
-      userId: session.user.id 
-    },
+    where: { id, workspaceId: session.workspaceId, environmentId: session.environmentId },
     include: {
       heartbeats: {
-        take: 100,
-        orderBy: { time: 'desc' }
+        take: 50,
+        orderBy: [{ time: 'desc' },{id:'desc'}]
       },
       tags: { include: { tag: true } },
       monitorNotifications: {
@@ -46,14 +45,11 @@ export default defineEventHandler(async (event) => {
   // Convert BigInt to string for JSON serialization
   const serializedMonitor = {
     ...monitor,
-    heartbeats: monitor.heartbeats.map(hb => ({
-      ...hb,
-      id: hb.id.toString()
-    }))
+    heartbeats: monitor.heartbeats.map(heartbeatSummary)
   }
 
   return {
     ok: true,
-    data: serializedMonitor
+    data: session.role === 'viewer' ? monitorSummary(serializedMonitor) : monitorEditorDTO(serializedMonitor)
   }
 })

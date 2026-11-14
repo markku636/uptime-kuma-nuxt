@@ -1,132 +1,16 @@
-// server/utils/json-query.ts
-// JSON query evaluation utilities for monitors
-
-import { JSONPath } from 'jsonpath-plus'
-
-interface EvaluationResult {
-  status: boolean
-  response: any
-}
-
-/**
- * Evaluate a JSON value against a JSONPath query and expected value
- */
-export async function evaluateJsonQuery(
-  value: any,
-  jsonPath: string | null,
-  jsonPathOperator: string | null,
-  expectedValue: string | null
-): Promise<EvaluationResult> {
-  // If no jsonPath, treat value as-is
-  let response: any = value
-  
-  if (jsonPath) {
-    try {
-      // If value is a buffer, convert to string
-      if (Buffer.isBuffer(value)) {
-        value = value.toString()
-      }
-      
-      // Parse JSON if it's a string
-      let jsonObj = value
-      if (typeof value === 'string') {
-        try {
-          jsonObj = JSON.parse(value)
-        } catch {
-          // Not JSON, use as-is
-          jsonObj = value
-        }
-      }
-      
-      // Execute JSONPath query
-      const result = JSONPath({
-        path: jsonPath,
-        json: jsonObj,
-        wrap: false
-      })
-      
-      response = result
-    } catch (e: any) {
-      return {
-        status: false,
-        response: `JSONPath error: ${e.message}`
-      }
-    }
-  }
-  
-  // If no operator or expected value, just check if value exists
-  if (!jsonPathOperator || !expectedValue) {
-    return {
-      status: response !== undefined && response !== null,
-      response
-    }
-  }
-  
-  // Convert response to string for comparison
-  const responseStr = String(response)
-  const expected = expectedValue
-  
-  let status = false
-  
-  switch (jsonPathOperator) {
-    case '==':
-    case 'equals':
-      status = responseStr === expected
-      break
-      
-    case '!=':
-    case 'not equals':
-      status = responseStr !== expected
-      break
-      
-    case '>':
-    case 'greater than':
-      status = parseFloat(responseStr) > parseFloat(expected)
-      break
-      
-    case '>=':
-    case 'greater than or equal':
-      status = parseFloat(responseStr) >= parseFloat(expected)
-      break
-      
-    case '<':
-    case 'less than':
-      status = parseFloat(responseStr) < parseFloat(expected)
-      break
-      
-    case '<=':
-    case 'less than or equal':
-      status = parseFloat(responseStr) <= parseFloat(expected)
-      break
-      
-    case 'contains':
-      status = responseStr.includes(expected)
-      break
-      
-    case 'not contains':
-      status = !responseStr.includes(expected)
-      break
-      
-    case 'starts with':
-      status = responseStr.startsWith(expected)
-      break
-      
-    case 'ends with':
-      status = responseStr.endsWith(expected)
-      break
-      
-    case 'regex':
-      try {
-        const regex = new RegExp(expected)
-        status = regex.test(responseStr)
-      } catch {
-        status = false
-      }
-      break
-      
-    default:
-      status = responseStr === expected
-  }
-  
-  return { status, response }
+import { evaluateRule, parseSafeJson, selectValue } from './assertions'
+import type { AssertionRule } from '../../shared/types/assertions'
+export async function evaluateJsonQuery(value:unknown,jsonPath:string|null,operator:string|null,expectedValue:string|null){
+  try{
+    if(Buffer.isBuffer(value))value=value.toString('utf8')
+    if(typeof value==='string'){try{value=parseSafeJson(value)}catch{if(jsonPath)throw new Error('Invalid JSON')}}
+    const selected=jsonPath?selectValue(value,jsonPath):{exists:value!==undefined,value}
+    if(!operator||expectedValue===null)return {status:selected.exists,response:selected.exists?'Value exists':'Value is missing'}
+    let expected:unknown;try{expected=JSON.parse(expectedValue)}catch{expected=expectedValue}
+    const aliases:Record<string,AssertionRule['operator']>={'==':'equals','equals':'equals','!=':'notEquals','not equals':'notEquals','>':'gt','greater than':'gt','>=':'gte','greater than or equal':'gte','<':'lt','less than':'lt','<=':'lte','less than or equal':'lte','contains':'contains','not contains':'notContains'}
+    if(['starts with','ends with'].includes(operator))return {status:typeof selected.value==='string'&&typeof expected==='string'&&(operator==='starts with'?selected.value.startsWith(expected):selected.value.endsWith(expected)),response:'String condition evaluated'}
+    const mapped=aliases[operator];if(!mapped)return {status:false,response:'Unsupported comparison operator'}
+    const result=evaluateRule({id:'legacy',source:'json',operator:mapped,expected:expected as any},selected.exists,selected.value)
+    return {status:result.passed,response:result.passed?'Condition matched':'Condition did not match'}
+  }catch{return {status:false,response:'Invalid or unsupported JSON selector'}}
 }

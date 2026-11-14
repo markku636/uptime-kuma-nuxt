@@ -3,6 +3,7 @@ import { generateBadge, getPingColor } from '../../../services/badge/generator'
 
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '0')
+  await assertPublishedMonitor(id)
   const query = getQuery(event)
   
   if (!id) {

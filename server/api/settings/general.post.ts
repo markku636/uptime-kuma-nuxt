@@ -17,7 +17,7 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const session = await requireRequestSession(event)
   const body = await readValidatedBody(event, schema.parse)
 
   // Upsert each setting

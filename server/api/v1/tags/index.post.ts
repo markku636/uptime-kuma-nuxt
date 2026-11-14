@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -29,11 +29,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const tag = await prisma.tag.create({
-    data: {
-      name: body.name.trim(),
-      color: body.color,
-      userId: session.user.id
-    }
+    data: { name: body.name.trim(), color: body.color, workspaceId: session.workspaceId, userId: session.user.id }
   })
 
   return {

@@ -5,7 +5,8 @@ interface RemoteBrowser {
   id: number
   userId: number
   name: string
-  url: string
+  url?: string
+  configured?: Record<string,boolean>
   createdAt?: string
 }
 
@@ -40,11 +41,12 @@ export function useRemoteBrowsers(options: UseRemoteBrowsersOptions = {}) {
   async function createRemoteBrowser(browserData: Partial<RemoteBrowser>) {
     try {
       isLoading.value = true
-      const data = await $fetch<RemoteBrowser>('/api/v1/remote-browsers', {
+      const response = await $fetch<{data:RemoteBrowser}>('/api/v1/remote-browsers', {
         method: 'POST',
         body: browserData
       })
       
+      const data=response.data
       remoteBrowsers.value.push(data)
       return data
     } catch (e: any) {
@@ -58,11 +60,12 @@ export function useRemoteBrowsers(options: UseRemoteBrowsersOptions = {}) {
   async function updateRemoteBrowser(id: number, browserData: Partial<RemoteBrowser>) {
     try {
       isLoading.value = true
-      const data = await $fetch<RemoteBrowser>(`/api/v1/remote-browsers/${id}`, {
+      const response = await $fetch<{data:RemoteBrowser}>(`/api/v1/remote-browsers/${id}`, {
         method: 'PUT',
         body: browserData
       })
       
+      const data=response.data
       const index = remoteBrowsers.value.findIndex(b => b.id === id)
       if (index !== -1) {
         remoteBrowsers.value[index] = data

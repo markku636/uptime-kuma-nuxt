@@ -5,7 +5,8 @@ interface Proxy {
   id: number
   userId: number
   protocol: string
-  host: string
+  host?: string
+  configured?: Record<string,boolean>
   port: number
   auth: boolean
   username?: string
@@ -42,8 +43,8 @@ export function useProxies(options: UseProxiesOptions = {}) {
       isLoading.value = true
       error.value = null
       
-      const response = await $fetch<{ ok: boolean; data: Proxy[] }>('/api/v1/proxies')
-      proxies.value = response.data || []
+      const response = await $fetch<Proxy[] | { ok: boolean; data: Proxy[] }>('/api/v1/proxies')
+      proxies.value = Array.isArray(response) ? response : response.data || []
     } catch (e: any) {
       error.value = e.message || 'Failed to fetch proxies'
       console.error('Failed to fetch proxies:', e)

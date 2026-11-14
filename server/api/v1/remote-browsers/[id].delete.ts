@@ -3,7 +3,7 @@ import { defineEventHandler, getRouterParam } from 'h3'
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   // Check ownership
   const existing = await prisma.remoteBrowser.findFirst({
-    where: { id, userId: session.user.id }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   if (!existing) {
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
   // Check if browser is in use by any monitor
   const monitorsUsingBrowser = await prisma.monitor.count({
-    where: { remoteBrowserId: id }
+    where: { remoteBrowserId: id, workspaceId: session.workspaceId, environmentId: session.environmentId }
   })
 
   if (monitorsUsingBrowser > 0) {
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await prisma.remoteBrowser.delete({
-    where: { id }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   return {

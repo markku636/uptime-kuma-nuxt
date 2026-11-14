@@ -38,7 +38,7 @@
           </div>
           
           <!-- Actions -->
-          <div class="flex items-center gap-2 flex-wrap">
+          <div v-if="canEdit" class="flex items-center gap-2 flex-wrap">
             <button v-if="monitor.active" @click="pauseMonitor" class="btn btn-secondary">
               <UIcon name="i-heroicons-pause" class="w-4 h-4 mr-1" />
               Pause
@@ -87,6 +87,7 @@
       </div>
       </Transition>
 
+      <div v-if="lastHeartbeat?.assertionResults" class="section-card"><MonitorAssertionResults :result="lastHeartbeat.assertionResults" /></div>
       <!-- Status & Heartbeat Bar -->
       <div class="card card-body mb-6 card-interactive">
         <div class="flex flex-col lg:flex-row lg:items-center gap-6">
@@ -349,6 +350,7 @@
 </template>
 
 <script setup lang="ts">
+const { canEdit } = useWorkspace()
 import dayjs from 'dayjs'
 
 definePageMeta({
@@ -378,7 +380,7 @@ const loadingCert = ref(false)
 
 // Show TLS info only for HTTPS monitors
 const showTlsInfo = computed(() => {
-  return monitor.value?.url?.startsWith('https://')
+  return monitor.value?.tlsConfigured
 })
 
 // Cert status classes
@@ -448,7 +450,7 @@ onMounted(async () => {
     heartbeats.value = heartbeatsRes.data || heartbeatsRes || []
     
     // Fetch certificate info for HTTPS monitors
-    if (monitor.value?.url?.startsWith('https://')) {
+    if (monitor.value?.tlsConfigured) {
       refreshCertInfo()
     }
   } catch (error: any) {
@@ -465,6 +467,7 @@ onMounted(async () => {
     
     socket?.on('heartbeat', (data: any) => {
       if (data.monitorId === monitorId.value) {
+        try{if(heartbeats.value[0]?.id&&BigInt(data.heartbeat.id)<=BigInt(heartbeats.value[0].id))return}catch{}
         // Add new heartbeat with animation flag
         const newHeartbeat = { ...data.heartbeat, isNew: true }
         heartbeats.value.unshift(newHeartbeat)

@@ -10,7 +10,7 @@
         class="selected-tag"
       >
         <span class="tag-name">{{ monitor.name }}</span>
-        <button class="tag-remove" @click="removeMonitor(monitor.id)">
+        <button type="button" class="tag-remove" @click="removeMonitor(monitor.id)">
           <UIcon name="i-heroicons-x-mark" />
         </button>
       </div>
@@ -45,6 +45,8 @@
         </div>
       </div>
 
+      <div v-if="isOpen" class="flex justify-between gap-2 py-2"><button type="button" :disabled="!picker.canBack.value||picker.pending.value" @click="picker.back">Previous results</button><span>{{ picker.summary.value.total }} monitors</span><button type="button" :disabled="!picker.page.value?.hasMore||picker.pending.value" @click="picker.next">Next results</button></div>
+      <p v-if="picker.error.value" role="alert">Unable to load monitors.</p>
       <!-- Empty State -->
       <div v-if="isOpen && searchQuery && filteredMonitors.length === 0" class="dropdown-empty">
         No monitors found
@@ -65,7 +67,7 @@ interface Monitor {
 
 const props = withDefaults(defineProps<{
   modelValue: number[]
-  monitors: Monitor[]
+  monitors?: Monitor[]
   label?: string
   placeholder?: string
   multiple?: boolean
@@ -80,7 +82,8 @@ const emit = defineEmits<{
 }>()
 
 const dropdownRef = ref<HTMLElement | null>(null)
-const searchQuery = ref('')
+const picker=useMonitorPicker(computed(()=>props.modelValue))
+const searchQuery=picker.search
 const isOpen = ref(false)
 
 // Close dropdown when clicking outside
@@ -89,18 +92,8 @@ onClickOutside(dropdownRef, () => {
 })
 
 // Computed
-const filteredMonitors = computed(() => {
-  const query = searchQuery.value.toLowerCase()
-  return props.monitors.filter(monitor => {
-    const matchesSearch = !query || monitor.name.toLowerCase().includes(query)
-    return matchesSearch
-  })
-})
-
-const selectedMonitorDetails = computed(() => {
-  return props.monitors.filter(m => props.modelValue.includes(m.id))
-})
-
+const filteredMonitors=picker.monitors
+const selectedMonitorDetails=picker.selectedMonitors
 // Methods
 function isSelected(id: number): boolean {
   return props.modelValue.includes(id)

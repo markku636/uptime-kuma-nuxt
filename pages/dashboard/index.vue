@@ -2,7 +2,7 @@
   <div class="page-container">
     <!-- Header with Connection Status -->
     <div class="flex items-center justify-between mb-6">
-      <NuxtLink to="/monitors/add" class="btn btn-primary">
+      <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
         <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
         Add New Monitor
       </NuxtLink>
@@ -65,7 +65,7 @@
             <option value="down">Down</option>
             <option value="maintenance">Maintenance</option>
             <option value="unknown">Unknown</option>
-            <option value="paused">Paused</option>
+            <option value="paused">Paused</option><option value="stale">Stale</option>
           </select>
           <select v-model="typeFilter" class="select-field">
             <option value="all">All Types</option>
@@ -100,7 +100,7 @@
             <tr v-for="(beat, index) in importantHeartbeats" :key="index" class="hover-row">
               <td>
                 <NuxtLink :to="`/monitors/${beat.monitorId}`" class="link">
-                  {{ getMonitorName(beat.monitorId) }}
+                  {{ beat.monitorName || getMonitorName(beat.monitorId) }}
                 </NuxtLink>
               </td>
               <td>
@@ -143,6 +143,8 @@
       </div>
     </div>
 
+    <p v-if="error" role="alert">Unable to load monitors. Please retry.</p>
+    <MonitorMonitorPagination :count="monitors.length" :total="stats.total" :can-back="canBack" :has-more="!!page?.hasMore" :loading="pending" @back="back" @next="next" />
     <div v-if="pending" class="text-center py-8">
       <div class="spinner w-8 h-8 mx-auto"></div>
       <p class="text-secondary mt-2">Loading monitors...</p>
@@ -235,7 +237,7 @@
               </div>
             </td>
             <td class="text-right">
-              <div class="flex items-center justify-end gap-1">
+              <div v-if="canEdit" class="flex items-center justify-end gap-1">
                 <button 
                   v-if="monitor.active"
                   @click.prevent="pauseMonitor(monitor.id)" 
@@ -269,6 +271,7 @@
 </template>
 
 <script setup lang="ts">
+const { canEdit } = useWorkspace()
 import dayjs from 'dayjs'
 
 definePageMeta({
@@ -279,6 +282,7 @@ definePageMeta({
 const { $socket } = useNuxtApp()
 const socketConnected = ref(false)
 const heartbeatsMap = ref<Record<number, any[]>>({})
+let socket:any=null
 
 // View state
 const viewMode = ref<'grid' | 'list'>('grid')
@@ -286,70 +290,19 @@ const searchQuery = ref('')
 const statusFilter = ref('all')
 const typeFilter = ref('all')
 
-// Fetch monitors
-const { data, pending, refresh } = await useFetch('/api/v1/monitors', {
-  credentials: 'include',
-  headers: useRequestHeaders(['cookie'])
-})
-
-const monitors = computed(() => data.value?.data || [])
-
-// Merge real-time heartbeats with fetched data
-const monitorsWithLiveData = computed(() => {
-  return monitors.value.map((m: any) => ({
-    ...m,
-    heartbeats: heartbeatsMap.value[m.id] || m.heartbeats || []
-  }))
-})
-
-// Filtered monitors
-const filteredMonitors = computed(() => {
-  let result = monitorsWithLiveData.value
-
-  // Search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter((m: any) => 
-      m.name.toLowerCase().includes(query) ||
-      m.url?.toLowerCase().includes(query) ||
-      m.hostname?.toLowerCase().includes(query)
-    )
-  }
-
-  // Status filter
-  if (statusFilter.value !== 'all') {
-    result = result.filter((m: any) => {
-      const status = getLatestStatus(m)
-      switch (statusFilter.value) {
-        case 'up': return m.active && status === 1
-        case 'down': return m.active && status === 0
-        case 'maintenance': return status === 3
-        case 'unknown': return m.active && status === 2
-        case 'paused': return !m.active
-        default: return true
-      }
-    })
-  }
-
-  // Type filter
-  if (typeFilter.value !== 'all') {
-    result = result.filter((m: any) => m.type === typeFilter.value)
-  }
-
-  return result
-})
-
-const stats = computed(() => {
-  const list = monitorsWithLiveData.value
-  return {
-    up: list.filter((m: any) => m.active && getLatestStatus(m) === 1).length,
-    down: list.filter((m: any) => m.active && getLatestStatus(m) === 0).length,
-    maintenance: list.filter((m: any) => getLatestStatus(m) === 3).length,
-    unknown: list.filter((m: any) => m.active && getLatestStatus(m) === 2).length,
-    paused: list.filter((m: any) => !m.active).length,
-  }
-})
-
+const {monitors,pending,error,page,summary:stats,next,back,canBack,refresh}=useMonitorPageForDashboard()
+function useMonitorPageForDashboard(){const result=useMonitorPage();watch(searchQuery,value=>result.search.value=value);watch(statusFilter,value=>result.status.value=value);watch(typeFilter,value=>result.type.value=value);return result}
+const monitorsWithLiveData=computed(()=>monitors.value.map((m:any)=>({...m,heartbeats:heartbeatsMap.value[m.id]||m.heartbeats||[]})))
+const filteredMonitors=monitorsWithLiveData
+const {data:eventData,refresh:refreshEvents}=await useFetch<any>('/api/v1/monitors/events',{headers:useRequestHeaders(['cookie'])})
+watch(monitors,async rows=>{
+  const ids=rows.map((row:any)=>row.id);heartbeatsMap.value={};socket?.emit('subscribe_monitors',ids)
+  for(const row of rows)heartbeatsMap.value[row.id]=row.heartbeats||[]
+  if(!ids.length)return
+  const response=await $fetch<any>('/api/v1/monitors/recent-heartbeats',{query:{ids:ids.join(','),limit:20}})
+  if(ids.join(',')!==monitors.value.map((row:any)=>row.id).join(','))return
+  for(const id of ids){const live=heartbeatsMap.value[id]||[],seen=new Set(live.map((beat:any)=>beat.id));heartbeatsMap.value[id]=[...live,...(response.data[id]||[]).filter((beat:any)=>!seen.has(beat.id))].sort((a:any,b:any)=>BigInt(a.id)>BigInt(b.id)?-1:1).slice(0,20)}
+},{flush:'post',immediate:true})
 const filterByStatus = (status: string) => {
   statusFilter.value = statusFilter.value === status ? 'all' : status
 }
@@ -361,6 +314,7 @@ const clearFilters = () => {
 }
 
 const getLatestStatus = (monitor: any) => {
+  if(monitor.viewStatus==='stale')return 2
   const heartbeats = heartbeatsMap.value[monitor.id] || monitor.heartbeats || []
   return heartbeats[0]?.status ?? -1
 }
@@ -375,18 +329,7 @@ const getMonitorName = (monitorId: number) => {
   return monitor?.name || `Monitor ${monitorId}`
 }
 
-const importantHeartbeats = computed(() => {
-  const events: any[] = []
-  monitorsWithLiveData.value.forEach((m: any) => {
-    const heartbeats = m.heartbeats || []
-    heartbeats.forEach((h: any) => {
-      if (h.important || h.status === 0) {
-        events.push({ ...h, monitorId: m.id })
-      }
-    })
-  })
-  return events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 25)
-})
+const importantHeartbeats=computed<any[]>(()=>eventData.value?.data||[])
 
 const formatDateTime = (time: string) => {
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
@@ -423,6 +366,7 @@ const getMonitorStatusClass = (monitor: any) => {
 
 const getMonitorStatusText = (monitor: any) => {
   if (!monitor.active) return 'PAUSED'
+  if(monitor.viewStatus==='stale')return 'STALE'
   const status = getLatestStatus(monitor)
   switch (status) {
     case 1: return 'UP'
@@ -471,7 +415,7 @@ const resumeMonitor = async (id: number) => {
 }
 
 // WebSocket setup
-let socket: any = null
+
 
 onMounted(() => {
   if ($socket) {
@@ -482,7 +426,7 @@ onMounted(() => {
       console.log('[Dashboard] Socket connected')
       
       // Subscribe to monitor updates
-      socket?.emit('subscribe_monitors')
+      socket?.emit('subscribe_monitors',monitors.value.map((monitor:any)=>monitor.id))
     })
     
     socket?.on('disconnect', () => {
@@ -494,6 +438,10 @@ onMounted(() => {
     socket?.on('heartbeat', (data: any) => {
       console.log('[Dashboard] Heartbeat received:', data)
       const { monitorId, heartbeat } = data
+      if(!monitors.value.some((monitor:any)=>monitor.id===monitorId))return
+      const current=heartbeatsMap.value[monitorId]?.[0]
+      try{if(current?.id&&BigInt(heartbeat.id)<=BigInt(current.id))return}catch{}
+
       
       if (!heartbeatsMap.value[monitorId]) {
         heartbeatsMap.value[monitorId] = []

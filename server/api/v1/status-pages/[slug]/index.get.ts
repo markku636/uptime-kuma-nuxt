@@ -1,63 +1,9 @@
-// server/api/v1/status-pages/[slug]/index.get.ts
-import { prisma } from '~/server/utils/prisma'
-
-export default defineEventHandler(async (event) => {
-  const slug = getRouterParam(event, 'slug')
-
-  if (!slug) {
-    throw createError({
-      statusCode: 400,
-      message: 'Slug is required'
-    })
-  }
-
-  const statusPage = await prisma.statusPage.findUnique({
-    where: { slug },
-    include: {
-      groups: {
-        include: {
-          monitors: {
-            include: {
-              monitor: {
-                include: {
-                  heartbeats: {
-                    take: 50,
-                    orderBy: { time: 'desc' }
-                  }
-                }
-              }
-            }
-          }
-        },
-        orderBy: { weight: 'asc' }
-      },
-      incidents: {
-        where: { pin: true },
-        orderBy: { createdAt: 'desc' }
-      }
-    }
-  })
-
-  if (!statusPage) {
-    throw createError({
-      statusCode: 404,
-      message: 'Status page not found'
-    })
-  }
-
-  if (!statusPage.published) {
-    // Check if user is authenticated
-    const session = await getUserSession(event)
-    if (!session?.user) {
-      throw createError({
-        statusCode: 404,
-        message: 'Status page not found'
-      })
-    }
-  }
-
-  return {
-    ok: true,
-    data: statusPage
-  }
+import { statusConfig, visibleStatusPage } from '../../../../utils/public-status'
+export default defineEventHandler(async event => {
+  const page = await visibleStatusPage(event)
+  const groups = await prisma.statusPageGroup.findMany({ where: { statusPageId: page.id }, orderBy: { weight: 'asc' }, take: 100,
+    include: { monitors: { where: { monitor: { workspaceId: page.workspaceId } }, take: 200,
+      select: { id: true, monitorId: true, sendUrl: true, monitor: { select: { id: true, name: true, type: true, active: true } } } } } })
+  const incidents = await prisma.incident.findMany({ where: { statusPageId: page.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 20 })
+  return { ok: true, data: { ...statusConfig(page), groups, incidents } }
 })

@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -20,8 +20,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const statusPage = await prisma.statusPage.findUnique({
-    where: { slug },
+  const statusPage = await prisma.statusPage.findFirst({
+    where: { slug, workspaceId: session.workspaceId },
     include: {
       incidents: {
         where: { pin: true },
@@ -39,12 +39,6 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify ownership
-  if (statusPage.userId !== session.user.id) {
-    throw createError({
-      statusCode: 403,
-      message: 'Not authorized to modify this status page'
-    })
-  }
 
   // Unpin the latest incident
   if (statusPage.incidents.length > 0) {

@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   // Check ownership
   const existing = await prisma.notification.findFirst({
-    where: { id, userId: session.user.id }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   if (!existing) {
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await prisma.notification.delete({
-    where: { id }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   return {

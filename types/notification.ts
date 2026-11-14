@@ -14,7 +14,8 @@ export interface Notification {
   name: string
   userId: number
   type: NotificationType
-  config: Record<string, any>
+  configured?: Record<string, boolean>
+  config?: never
   isDefault: boolean
   active: boolean
 }

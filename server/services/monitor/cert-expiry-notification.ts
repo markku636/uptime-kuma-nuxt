@@ -1,6 +1,7 @@
 // server/services/monitor/cert-expiry-notification.ts
 // Certificate expiry notification service
 
+import { hydrateResource } from '../../utils/resource-secrets'
 import { prisma } from '../../utils/prisma'
 import { sendNotification } from '../notification/sender'
 
@@ -60,13 +61,13 @@ export async function checkCertExpiryNotifications(
 
   // Get notifications for this monitor
   const monitorNotifications = await prisma.monitorNotification.findMany({
-    where: { monitorId: monitor.id },
+    where: { monitorId: monitor.id, monitor: { workspaceId: monitor.workspaceId }, notification: { workspaceId: monitor.workspaceId } },
     include: { notification: true }
   })
 
   const defaultNotifications = await prisma.notification.findMany({
     where: {
-      userId: monitor.userId,
+      workspaceId: monitor.workspaceId,
       isDefault: true,
       active: true
     }
@@ -190,7 +191,7 @@ async function sendCertExpiryNotification(
 
   for (const notification of notifications) {
     try {
-      let config = notification.config
+      let config = hydrateResource('notification',notification).config
       if (typeof config === 'string') {
         config = JSON.parse(config)
       }
@@ -203,7 +204,7 @@ async function sendCertExpiryNotification(
       
       console.log(`[CertExpiry] Sent ${notification.type} notification for certificate "${subjectCN}"`)
     } catch (error: any) {
-      console.error(`[CertExpiry] Failed to send ${notification.type} notification:`, error.message)
+      console.error('[CertExpiry] Notification delivery failed')
     }
   }
 }

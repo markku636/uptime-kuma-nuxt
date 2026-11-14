@@ -9,7 +9,7 @@ const querySchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user?.id) {
     throw createError({
@@ -29,10 +29,7 @@ export default defineEventHandler(async (event) => {
 
   // Verify monitor belongs to user
   const monitor = await prisma.monitor.findFirst({
-    where: {
-      id: monitorId,
-      userId: session.user.id
-    },
+    where: { id: monitorId, workspaceId: session.workspaceId, environmentId: session.environmentId },
     select: { id: true, name: true }
   })
 

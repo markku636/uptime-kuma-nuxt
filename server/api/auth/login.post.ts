@@ -4,8 +4,8 @@ import { verifyPassword } from '../../utils/password'
 import { verifyTwoFactorToken } from '../../services/auth/two-factor'
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, 'Username is required').max(100),
+  password: z.string().min(1, 'Password is required').max(200),
   token: z.string().optional(), // 2FA token (optional, required if 2FA enabled)
 })
 
@@ -33,7 +33,8 @@ export default defineEventHandler(async (event) => {
       active: true,
       timezone: true,
       twofaStatus: true,
-      twofaSecret: true
+      twofaSecret: true,
+      sessionVersion: true
     }
   })
 
@@ -88,6 +89,7 @@ export default defineEventHandler(async (event) => {
       id: user.id,
       username: user.username,
       timezone: user.timezone,
+      sessionVersion: user.sessionVersion,
     }
   })
 
@@ -97,6 +99,7 @@ export default defineEventHandler(async (event) => {
       id: user.id,
       username: user.username,
       timezone: user.timezone,
+      sessionVersion: user.sessionVersion,
     }
   }
 })

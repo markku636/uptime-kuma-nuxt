@@ -1,9 +1,8 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const session = await requireRequestSession(event)
   const id = parseInt(getRouterParam(event, 'id') || '')
 
   if (isNaN(id)) {
@@ -15,10 +14,7 @@ export default defineEventHandler(async (event) => {
 
   // Verify ownership
   const existing = await prisma.dockerHost.findFirst({
-    where: {
-      id,
-      userId: session.user.id
-    }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   if (!existing) {
@@ -29,7 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await prisma.dockerHost.delete({
-    where: { id }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   return { success: true }

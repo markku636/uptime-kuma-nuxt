@@ -14,7 +14,7 @@ const nodeSchema = z.object({
 
 export default defineEventHandler(async (event) => {
     // Require authentication
-    await requireUserSession(event);
+    await requireRequestSession(event);
 
     const body = await readBody(event);
     const data = nodeSchema.parse(body);

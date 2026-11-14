@@ -5,7 +5,7 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -23,8 +23,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const statusPage = await prisma.statusPage.findUnique({
-    where: { slug }
+  const statusPage = await prisma.statusPage.findFirst({
+    where: { slug, workspaceId: session.workspaceId }
   })
 
   if (!statusPage) {
@@ -35,12 +35,6 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify ownership
-  if (statusPage.userId !== session.user.id) {
-    throw createError({
-      statusCode: 403,
-      message: 'Not authorized to modify this status page'
-    })
-  }
 
   const body = await readBody(event)
   const { logo } = body
@@ -92,7 +86,7 @@ export default defineEventHandler(async (event) => {
   const logoUrl = `/uploads/status-pages/${filename}`
   
   await prisma.statusPage.update({
-    where: { slug },
+    where: { slug, workspaceId: session.workspaceId },
     data: { icon: logoUrl }
   })
 

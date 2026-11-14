@@ -2,7 +2,7 @@
 import { stopMonitorJob } from '../../../services/monitor/scheduler'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -22,10 +22,7 @@ export default defineEventHandler(async (event) => {
 
   // Check if monitor exists and belongs to user
   const existingMonitor = await prisma.monitor.findFirst({
-    where: { 
-      id,
-      userId: session.user.id 
-    }
+    where: { id, workspaceId: session.workspaceId, environmentId: session.environmentId }
   })
 
   if (!existingMonitor) {
@@ -40,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
   // Delete monitor (cascades to heartbeats, tags, etc.)
   await prisma.monitor.delete({
-    where: { id }
+    where: { id, workspaceId: session.workspaceId, environmentId: session.environmentId }
   })
 
   return {

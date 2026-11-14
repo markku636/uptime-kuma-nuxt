@@ -1,5 +1,6 @@
 // server/services/notification/providers/webhook.ts
 import type { NotificationMessage } from '../sender'
+import { notificationFetch } from '../transport'
 
 export const webhookProvider = {
   async send(config: {
@@ -7,7 +8,7 @@ export const webhookProvider = {
     method?: 'GET' | 'POST' | 'PUT'
     headers?: Record<string, string>
     body?: string
-  }, message: NotificationMessage) {
+  }, message: NotificationMessage, options:{signal?:AbortSignal}={}) {
     if (!config.url) {
       throw new Error('Webhook URL is required')
     }
@@ -40,8 +41,9 @@ export const webhookProvider = {
       }
     }
 
-    await $fetch(config.url, {
+    await notificationFetch(config.url, {
       method,
+      signal:options.signal,
       headers: {
         'Content-Type': 'application/json',
         ...headers

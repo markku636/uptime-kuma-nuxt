@@ -34,6 +34,11 @@ export enum MonitorStatus {
 }
 
 export interface Monitor {
+  workspaceId?: number
+  environmentId?: number
+  assertions?: import('../shared/types/assertions').AssertionSet | null
+  configuredSecrets?: Record<string,boolean>
+  tlsConfigured?: boolean
   id: number
   name: string
   description?: string

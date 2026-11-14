@@ -1,4 +1,5 @@
 // server/services/notification/sender.ts
+import { hydrateResource } from '../../utils/resource-secrets'
 import { prisma } from '../../utils/prisma'
 import type { CheckResult } from '../monitor/checker'
 
@@ -39,12 +40,12 @@ function formatMessage(monitor: any, result: CheckResult): NotificationMessage {
 
   return {
     title: `${statusEmoji} ${monitor.name} is ${statusText}`,
-    body: result.msg,
+    body: Number.isInteger(monitor.certificateDays)?`Certificate expires in ${monitor.certificateDays} days`:`${statusText}${result.code&&/^[A-Z0-9_]{1,64}$/.test(result.code)?' · '+result.code:''}`,
     monitorName: monitor.name,
-    monitorUrl: monitor.url,
+    monitorUrl: undefined,
     status,
     ping: result.ping,
-    time: new Date().toISOString(),
+    time: typeof monitor.eventTime==='string'&&!Number.isNaN(Date.parse(monitor.eventTime))?new Date(monitor.eventTime).toISOString():new Date().toISOString(),
   }
 }
 
@@ -54,21 +55,22 @@ function formatMessage(monitor: any, result: CheckResult): NotificationMessage {
 export async function sendNotification(
   notification: { type: string; config: any },
   monitor: any,
-  result: CheckResult
+  result: CheckResult,
+  signal?:AbortSignal
 ): Promise<void> {
   const provider = providers[notification.type]
   
   if (!provider) {
-    throw new Error(`Unknown notification provider type: ${notification.type}`)
+    throw new Error('UNSUPPORTED_PROVIDER')
   }
 
   const message = formatMessage(monitor, result)
 
   try {
-    await provider.send(notification.config, message)
-    console.log(`[Notification] Sent ${notification.type} notification for ${monitor.name}`)
+    await provider.send(notification.config, message,{signal})
+    console.log('[Notification] Delivery completed')
   } catch (error: any) {
-    console.error(`[Notification] Failed to send ${notification.type} notification:`, error.message)
+    console.error('[Notification] Provider delivery failed')
     throw error  // Re-throw to propagate the error
   }
 }
@@ -81,6 +83,7 @@ export async function sendNotificationForMonitor(
   result: CheckResult,
   previousStatus: number
 ): Promise<void> {
+  if(!Number.isSafeInteger(monitor.workspaceId))throw new Error('Missing workspace context for notification')
   // Only send notifications on status change
   if (result.status === previousStatus) {
     return
@@ -88,14 +91,14 @@ export async function sendNotificationForMonitor(
 
   // Get all notifications linked to this monitor
   const monitorNotifications = await prisma.monitorNotification.findMany({
-    where: { monitorId: monitor.id },
+    where: { monitorId: monitor.id, monitor:{workspaceId:monitor.workspaceId}, notification:{workspaceId:monitor.workspaceId} },
     include: { notification: true }
   })
 
   // Also get default notifications
   const defaultNotifications = await prisma.notification.findMany({
     where: {
-      userId: monitor.userId,
+      workspaceId: monitor.workspaceId,
       isDefault: true,
       active: true,
     }
@@ -115,7 +118,7 @@ export async function sendNotificationForMonitor(
   await Promise.allSettled(
     allNotifications.map(notification =>
       sendNotification(
-        { type: notification.type, config: notification.config as any },
+        { type: notification.type, config: hydrateResource('notification',notification).config },
         monitor,
         result
       )

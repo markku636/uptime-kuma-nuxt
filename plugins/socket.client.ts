@@ -10,8 +10,13 @@ export default defineNuxtPlugin(() => {
     if (socket?.connected) return socket
 
     socket = io(config.public.appUrl as string, {
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],
       autoConnect: true,
+      auth: (callback) => {
+        $fetch<{ ticket: string }>('/api/auth/socket-ticket', { method: 'POST' })
+          .then(({ ticket }) => callback({ ticket }))
+          .catch(() => callback({ ticket: '' }))
+      },
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

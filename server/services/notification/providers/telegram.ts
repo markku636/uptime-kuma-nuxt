@@ -1,8 +1,9 @@
 // server/services/notification/providers/telegram.ts
 import type { NotificationMessage } from '../sender'
+import { notificationFetch } from '../transport'
 
 export const telegramProvider = {
-  async send(config: { telegramBotToken?: string; telegramChatID?: string; botToken?: string; chatId?: string }, message: NotificationMessage) {
+  async send(config: { telegramBotToken?: string; telegramChatID?: string; botToken?: string; chatId?: string }, message: NotificationMessage, options:{signal?:AbortSignal}={}) {
     // Support both naming conventions
     const botToken = config.telegramBotToken || config.botToken
     const chatId = config.telegramChatID || config.chatId
@@ -20,8 +21,9 @@ export const telegramProvider = {
 <b>Response Time:</b> ${message.ping}ms
 ${message.monitorUrl ? `<b>URL:</b> ${escapeHtml(message.monitorUrl)}` : ''}`
 
-    const response = await $fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    const response = await notificationFetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
+      signal:options.signal,
       body: {
         chat_id: chatId,
         text,

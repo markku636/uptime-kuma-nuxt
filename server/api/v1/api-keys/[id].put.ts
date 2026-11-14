@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { z } from 'zod'
 
-const prisma = new PrismaClient()
 
 const updateApiKeySchema = z.object({
   active: z.boolean().optional(),
@@ -9,7 +8,7 @@ const updateApiKeySchema = z.object({
 }).partial()
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const session = await requireWorkspace(event, 'owner')
   const id = parseInt(getRouterParam(event, 'id') || '')
   const body = await readBody(event)
 
@@ -22,10 +21,7 @@ export default defineEventHandler(async (event) => {
 
   // Verify ownership
   const existing = await prisma.apiKey.findFirst({
-    where: {
-      id,
-      userId: session.user.id
-    }
+    where: { id, workspaceId: session.workspaceId }
   })
 
   if (!existing) {
@@ -38,7 +34,7 @@ export default defineEventHandler(async (event) => {
   const data = updateApiKeySchema.parse(body)
 
   const apiKey = await prisma.apiKey.update({
-    where: { id },
+    where: { id, workspaceId: session.workspaceId },
     data,
     select: {
       id: true,

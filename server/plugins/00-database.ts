@@ -1,32 +1,10 @@
-// server/plugins/00-database.ts
-// This plugin runs first (00- prefix) to ensure scheduler starts after database is ready
-// Database tables are created by docker-entrypoint.sh using prisma/init.sql
-
-import { initializeScheduler } from '../services/monitor/scheduler'
-import { initBackgroundJobs, stopBackgroundJobs } from '../jobs'
-
-export default defineNitroPlugin(async (nitroApp) => {
-  console.log('[App] Starting initialization...')
-  
-  try {
-    // Database tables should already be created by docker-entrypoint.sh
-    // Initialize the monitor scheduler
-    console.log('[Scheduler] Initializing monitor scheduler...')
-    await initializeScheduler()
-    console.log('[Scheduler] Monitor scheduler initialized successfully')
-
-    // Initialize background jobs (clear-old-data, reconcile-monitors, etc.)
-    console.log('[Jobs] Initializing background jobs...')
-    await initBackgroundJobs()
-    console.log('[Jobs] Background jobs initialized successfully')
-  } catch (error) {
-    console.error('[App] Initialization failed:', error)
-  }
-
-  // Register shutdown hook to stop background jobs gracefully
-  nitroApp.hooks.hook('close', () => {
-    console.log('[App] Shutting down...')
-    stopBackgroundJobs()
-  })
+import {initializeRuntime,drainRuntime} from '../services/monitor/runtime'
+import {runtimeOptions} from '../services/monitor/runtime-config'
+export default defineNitroPlugin(nitroApp=>{
+  // Validate synchronously: Nitro does not await async plugin functions.
+  runtimeOptions()
+  initializeRuntime().catch(()=>console.error('[Runtime] Initialization unavailable; readiness remains false'))
+  nitroApp.hooks.hook('close',drainRuntime)
+  process.once('SIGTERM',()=>{void drainRuntime()})
+  process.once('SIGINT',()=>{void drainRuntime()})
 })
-

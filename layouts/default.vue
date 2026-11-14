@@ -48,6 +48,7 @@
               API Docs
             </NuxtLink>
           </nav>
+          <ClientOnly><LayoutWorkspaceSelector /></ClientOnly>
 
           <!-- Right side -->
           <div class="flex items-center gap-4">

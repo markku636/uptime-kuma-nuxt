@@ -2,7 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await requireRequestSession(event)
   
   if (!session?.user) {
     throw createError({
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const statusPages = await prisma.statusPage.findMany({
+  const statusPages = await prisma.statusPage.findMany({where: { workspaceId: session.workspaceId },
     include: {
       groups: {
         include: {

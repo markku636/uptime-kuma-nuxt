@@ -51,6 +51,8 @@ const route = useRoute()
 const router = useRouter()
 
 const settingsNav = [
+  { label: 'Bruno Import', to: '/settings/bruno', icon: 'i-heroicons-arrow-down-tray' },
+  { label: 'Workspaces', to: '/settings/workspaces', icon: 'i-heroicons-building-office-2' },
   { label: 'Profile', to: '/settings/profile', icon: 'i-heroicons-user-circle' },
   { label: 'General', to: '/settings/general', icon: 'i-heroicons-cog-6-tooth' },
   { label: 'Appearance', to: '/settings/appearance', icon: 'i-heroicons-paint-brush' },

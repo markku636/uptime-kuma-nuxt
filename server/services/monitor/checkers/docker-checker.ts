@@ -1,4 +1,6 @@
 // server/services/monitor/checkers/docker-checker.ts
+import { prisma } from '../../../utils/prisma'
+import { hydrateResource } from '../../../utils/resource-secrets'
 import type { CheckResult } from '../checker'
 import axios from 'axios'
 import https from 'https'
@@ -15,7 +17,14 @@ export async function checkDocker(monitor: any, startTime: number): Promise<Chec
       }
     }
 
-    const dockerHost = monitor.dockerHost || '/var/run/docker.sock'
+    let dockerHost = monitor.dockerHost || '/var/run/docker.sock'
+    if(/^\d+$/.test(String(dockerHost))){
+      const stored=await prisma.dockerHost.findFirst({where:{id:Number(dockerHost),workspaceId:monitor.workspaceId}})
+      if(!stored)throw new Error('CONFIG_ERROR')
+      const resource=hydrateResource('dockerHost',stored)
+      dockerHost=resource.dockerType==='socket'?resource.dockerDaemon:resource.connectionUrl
+      if(!dockerHost)throw new Error('CONFIG_ERROR')
+    }
     const container = monitor.dockerContainer
 
     let containerInfo: any
@@ -90,7 +99,7 @@ export async function checkDocker(monitor: any, startTime: number): Promise<Chec
     return {
       status: monitor.upsideDown ? 1 : 0,
       ping,
-      msg: error.message || 'Docker check failed'
+      msg: 'Docker check failed'
     }
   }
 }

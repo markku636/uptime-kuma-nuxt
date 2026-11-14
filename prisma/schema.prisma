@@ -14,11 +14,14 @@ model User {
   username      String         @unique
   password      String
   active        Boolean        @default(true)
+  platformAdmin Boolean        @default(false) @map("platform_admin")
+  sessionVersion Int           @default(0) @map("session_version")
   timezone      String         @default("UTC")
   twofaStatus   Boolean        @default(false) @map("twofa_status")
   twofaSecret   String?        @map("twofa_secret")
   createdAt     DateTime       @default(now()) @map("created_at")
 
+  memberships   WorkspaceMember[]
   monitors      Monitor[]
   notifications Notification[]
   apiKeys       ApiKey[]
@@ -27,6 +30,26 @@ model User {
 }
 
 model Monitor {
+  nextCheckAt DateTime @default(now()) @map("next_check_at") @db.Timestamptz(3)
+  runId String? @map("run_id") @db.Uuid
+  scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz(3)
+  leaseOwner String? @map("lease_owner")
+  leaseToken BigInt @default(0) @map("lease_token")
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(3)
+  claimedConfigVersion Int? @map("claimed_config_version")
+  states MonitorState[]
+  notificationOutbox NotificationOutbox[]
+  configVersion Int @default(1) @map("config_version")
+  brunoSources BrunoSource[]
+  @@unique([id, workspaceId, environmentId], map: "monitors_id_workspace_environment_key")
+  requestSecrets String? @map("request_secrets")
+  assertions Json?
+  authConfig Json? @map("auth_config")
+  environmentId Int @map("environment_id")
+  environment Environment @relation(fields: [environmentId, workspaceId], references: [id, workspaceId])
+  maintenances MaintenanceMonitor[]
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id              Int       @id @default(autoincrement())
   name            String
   description     String?
@@ -143,9 +166,16 @@ model Monitor {
   @@index([nodeId])
   @@index([assignedNode])
   @@map("monitors")
+  @@index([workspaceId])
+  @@index([workspaceId, environmentId, id])
 }
 
 model Heartbeat {
+  runId String? @unique @map("run_id") @db.Uuid
+  scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz(3)
+  configVersion Int? @map("config_version")
+  assertionResults Json? @map("assertion_results")
+  checkCode String? @map("check_code")
   id        BigInt   @id @default(autoincrement())
   monitorId Int      @map("monitor_id")
   status    Int      @db.SmallInt // 0: DOWN, 1: UP, 2: PENDING, 3: MAINTENANCE
@@ -162,6 +192,11 @@ model Heartbeat {
 }
 
 model Notification {
+  outbox NotificationOutbox[]
+  @@unique([id,workspaceId],map:"notifications_id_workspace_key")
+  resourceSecrets String? @map("resource_secrets")
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id        Int     @id @default(autoincrement())
   name      String
   userId    Int     @map("user_id")
@@ -175,6 +210,7 @@ model Notification {
 
   @@index([userId])
   @@map("notifications")
+  @@index([workspaceId])
 }
 
 model MonitorNotification {
@@ -189,6 +225,8 @@ model MonitorNotification {
 }
 
 model StatusPage {
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id                    Int       @id @default(autoincrement())
   slug                  String    @unique
   title                 String
@@ -212,6 +250,8 @@ model StatusPage {
 
   @@index([userId])
   @@map("status_pages")
+  @@index([workspaceId])
+  maintenances MaintenanceStatusPage[]
 }
 
 model StatusPageGroup {
@@ -254,6 +294,8 @@ model Incident {
 }
 
 model Tag {
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id     Int    @id @default(autoincrement())
   name   String
   color  String
@@ -263,6 +305,7 @@ model Tag {
 
   @@index([userId])
   @@map("tags")
+  @@index([workspaceId])
 }
 
 model MonitorTag {
@@ -278,6 +321,9 @@ model MonitorTag {
 }
 
 model Proxy {
+  resourceSecrets String? @map("resource_secrets")
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id        Int      @id @default(autoincrement())
   protocol  String   // http, https, socks5
   host      String
@@ -294,9 +340,13 @@ model Proxy {
 
   @@index([userId])
   @@map("proxies")
+  @@index([workspaceId])
 }
 
 model DockerHost {
+  resourceSecrets String? @map("resource_secrets")
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id            Int      @id @default(autoincrement())
   name          String
   dockerType    String   @default("socket") @map("docker_type") // socket, tcp
@@ -308,9 +358,12 @@ model DockerHost {
 
   @@index([userId])
   @@map("docker_hosts")
+  @@index([workspaceId])
 }
 
 model Maintenance {
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id             Int       @id @default(autoincrement())
   title          String
   description    String?
@@ -336,6 +389,7 @@ model Maintenance {
 
   @@index([userId])
   @@map("maintenances")
+  @@index([workspaceId])
 }
 
 model MaintenanceMonitor {
@@ -344,6 +398,7 @@ model MaintenanceMonitor {
   monitorId     Int @map("monitor_id")
 
   maintenance Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
   @@unique([maintenanceId, monitorId])
   @@map("maintenance_monitors")
@@ -355,12 +410,17 @@ model MaintenanceStatusPage {
   statusPageId  Int @map("status_page_id")
 
   maintenance Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  statusPage StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
 
   @@unique([maintenanceId, statusPageId])
   @@map("maintenance_status_pages")
 }
 
 model ApiKey {
+  scope String @default("read")
+  environmentId Int? @map("environment_id")
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id        Int       @id @default(autoincrement())
   key       String    @unique
   name      String
@@ -372,6 +432,7 @@ model ApiKey {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("api_keys")
+  @@index([workspaceId])
 }
 
 model Setting {
@@ -384,6 +445,9 @@ model Setting {
 }
 
 model RemoteBrowser {
+  resourceSecrets String? @map("resource_secrets")
+  workspaceId Int @map("workspace_id")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   id        Int      @id @default(autoincrement())
   name      String
   url       String
@@ -393,6 +457,7 @@ model RemoteBrowser {
 
   @@index([userId])
   @@map("remote_browsers")
+  @@index([workspaceId])
 }
 
 model Node {
@@ -415,4 +480,122 @@ model Node {
   @@index([active])
   @@index([isPrimary])
   @@map("nodes")
+}
+
+
+model Workspace {
+  id Int @id @default(autoincrement())
+  name String
+  personalUserId Int? @unique @map("personal_user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  members WorkspaceMember[]
+  environments Environment[]
+  monitors Monitor[]
+  notifications Notification[]
+  statusPages StatusPage[]
+  tags Tag[]
+  proxies Proxy[]
+  dockerHosts DockerHost[]
+  maintenances Maintenance[]
+  apiKeys ApiKey[]
+  remoteBrowsers RemoteBrowser[]
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  workspaceId Int @map("workspace_id")
+  userId Int @map("user_id")
+  role String @default("viewer")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model Environment {
+  id Int @id @default(autoincrement())
+  workspaceId Int @map("workspace_id")
+  name String
+  variables Json @default("{}")
+  secrets Json @default("{}")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  monitors Monitor[]
+  @@unique([workspaceId, name])
+  @@unique([id, workspaceId])
+  @@map("environments")
+}
+
+model BrunoSource {
+  id Int @id @default(autoincrement())
+  workspaceId Int @map("workspace_id")
+  environmentId Int @map("environment_id")
+  collectionId String @map("collection_id")
+  sourceEnvironment String @default("") @map("source_environment")
+  path String
+  monitorId Int @unique @map("monitor_id")
+  monitor Monitor @relation(fields:[monitorId,workspaceId,environmentId],references:[id,workspaceId,environmentId],onDelete:Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  @@unique([workspaceId,environmentId,collectionId,sourceEnvironment,path],map:"bruno_source_identity")
+  @@map("bruno_sources")
+}
+
+
+model MonitorState {
+  monitorId Int @id @map("monitor_id")
+  workspaceId Int @map("workspace_id")
+  environmentId Int @map("environment_id")
+  monitor Monitor @relation(fields:[monitorId,workspaceId,environmentId],references:[id,workspaceId,environmentId],onDelete:Cascade)
+  heartbeatId BigInt? @map("heartbeat_id")
+  runId String? @map("run_id") @db.Uuid
+  status Int
+  ping Int
+  checkCode String @map("check_code")
+  checkedAt DateTime @map("checked_at") @db.Timestamptz(3)
+  statusChangedAt DateTime @map("status_changed_at") @db.Timestamptz(3)
+  revision BigInt @default(1)
+  @@index([workspaceId,environmentId,monitorId])
+  @@map("monitor_states")
+}
+
+model NotificationOutbox {
+  dedupeKey String? @unique @map("dedupe_key")
+  id BigInt @id @default(autoincrement())
+  runId String @map("run_id") @db.Uuid
+  eventType String @map("event_type")
+  notificationId Int @map("notification_id")
+  workspaceId Int @map("workspace_id")
+  environmentId Int @map("environment_id")
+  monitorId Int @map("monitor_id")
+  monitor Monitor @relation(fields:[monitorId,workspaceId,environmentId],references:[id,workspaceId,environmentId],onDelete:Cascade)
+  notification Notification @relation(fields:[notificationId,workspaceId],references:[id,workspaceId],onDelete:Cascade)
+  payload Json
+  status String @default("pending")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  leaseOwner String? @map("lease_owner")
+  leaseToken BigInt @default(0) @map("lease_token")
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(3)
+  errorCode String? @map("error_code")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(3)
+  @@unique([runId,notificationId,eventType])
+  @@index([status,nextAttemptAt])
+  @@index([leaseUntil])
+  @@index([workspaceId,createdAt])
+  @@map("notification_outbox")
+}
+
+model WorkerInstance {
+  instanceId String @id @map("instance_id") @db.Uuid
+  role String
+  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz(3)
+  lastSeen DateTime @default(now()) @map("last_seen") @db.Timestamptz(3)
+  draining Boolean @default(false)
+  concurrency Int
+  inflight Int @default(0)
+  metrics Json
+  @@index([lastSeen])
+  @@map("worker_instances")
 }

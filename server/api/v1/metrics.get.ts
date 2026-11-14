@@ -1,16 +1,16 @@
 // API endpoint for Prometheus metrics export
 import { defineEventHandler, createError, setHeader } from 'h3'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
+  const session = await requireRequestSession(event)
   try {
     // Set content type for Prometheus
     setHeader(event, 'Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
 
     // Fetch all monitors with their latest heartbeats
-    const monitors = await prisma.monitor.findMany({
+    const monitors = await prisma.monitor.findMany({where: { workspaceId: session.workspaceId, environmentId: session.environmentId },
       include: {
         heartbeats: {
           take: 1,

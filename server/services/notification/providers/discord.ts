@@ -1,16 +1,18 @@
 // server/services/notification/providers/discord.ts
 import type { NotificationMessage } from '../sender'
+import { notificationFetch } from '../transport'
 
 export const discordProvider = {
-  async send(config: { webhookUrl: string; username?: string }, message: NotificationMessage) {
+  async send(config: { webhookUrl: string; username?: string }, message: NotificationMessage, options:{signal?:AbortSignal}={}) {
     if (!config.webhookUrl) {
       throw new Error('Discord webhook URL is required')
     }
 
     const color = message.status === 'up' ? 0x2ecc71 : 0xe74c3c // Green or Red
 
-    await $fetch(config.webhookUrl, {
+    await notificationFetch(config.webhookUrl, {
       method: 'POST',
+      signal:options.signal,
       body: {
         username: config.username || 'Uptime Kuma',
         embeds: [{

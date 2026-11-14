@@ -20,9 +20,7 @@ const { data: statusPage, pending: loadingStatusPage } = useFetch<StatusPage>(
   }
 )
 
-const { data: monitors } = useFetch('/api/v1/monitors', {
-  headers: useRequestHeaders(['cookie'])
-})
+
 
 // Form state
 const form = ref({
@@ -201,12 +199,7 @@ const previewUrl = computed(() => {
           <h3 class="text-lg font-medium text-gray-900 dark:text-white">Monitors</h3>
           
           <UFormField label="Select Monitors to Display">
-            <USelectMenu
-              v-model="form.monitors"
-              :items="(monitors || []).map((m: any) => ({ label: m.name, value: m.id }))"
-              multiple
-              placeholder="Select monitors..."
-            />
+            <StatusPageMonitorSelector v-model="form.monitors" />
           </UFormField>
 
           <UCheckbox v-model="form.showTags" label="Show tags on status page" />

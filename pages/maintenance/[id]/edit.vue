@@ -20,9 +20,7 @@ const { data: maintenance, pending: loadingMaintenance } = useFetch<Maintenance>
   }
 )
 
-const { data: monitors } = useFetch('/api/v1/monitors', {
-  headers: useRequestHeaders(['cookie'])
-})
+
 
 // Form state
 const form = ref({
@@ -294,12 +292,7 @@ async function handleSubmit() {
           <h3 class="text-lg font-medium text-gray-900 dark:text-white">Affected Monitors</h3>
           
           <UFormField label="Select Monitors">
-            <USelectMenu
-              v-model="form.monitors"
-              :items="(monitors || []).map((m: any) => ({ label: m.name, value: m.id }))"
-              multiple
-              placeholder="Select monitors..."
-            />
+            <StatusPageMonitorSelector v-model="form.monitors" />
           </UFormField>
         </div>
 
