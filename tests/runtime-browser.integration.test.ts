@@ -10,10 +10,10 @@ test('runtime UI shows real worker diagnostics to platform admin and hides clust
     admin=await user('runtime-ui-admin');owner=await user('runtime-ui-owner');scope=await workspace(admin,'Runtime admin');ownerScope=await workspace(owner,'Runtime owner')
     await prisma.user.update({where:{id:admin.id},data:{platformAdmin:true}})
     const adminPage=await page(admin,scope),errors:string[]=[];adminPage.on('pageerror',error=>errors.push(error.message));await adminPage.goto(base+'/settings/nodes')
-    await adminPage.getByRole('heading',{name:'PostgreSQL workers',exact:true}).waitFor();await adminPage.getByText(/Role: all · Ready/).waitFor()
-    assert.ok(await adminPage.getByRole('cell',{name:'all',exact:true}).count()>0)
+    await adminPage.getByRole('heading',{name:'Runtime topology',exact:true}).waitFor();await adminPage.getByText(/Single-process mode|Workers are not tied to an API instance/).waitFor()
+    assert.ok(await adminPage.getByText('API + worker',{exact:true}).count()>0)
     await adminPage.screenshot({path:'/tmp/uptime-runtime-browser.png',fullPage:true})
     const ownerPage=await page(owner,ownerScope);await ownerPage.goto(base+'/settings/nodes');await ownerPage.getByRole('status').filter({hasText:'Platform administrator permission required.'}).waitFor()
-    assert.equal(await ownerPage.getByRole('button',{name:/Add Node|Refresh runtime/}).count(),0);assert.deepEqual(errors,[])
+    assert.equal(await ownerPage.getByRole('button',{name:/Add legacy metadata|^Refresh$/}).count(),0);assert.deepEqual(errors,[])
   }finally{await browser.close();if(admin&&owner&&scope&&ownerScope)await cleanup([admin,owner],[scope,ownerScope])}
 })

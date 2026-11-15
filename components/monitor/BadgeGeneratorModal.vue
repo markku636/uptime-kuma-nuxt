@@ -22,14 +22,13 @@
             <option value="ping">Ping</option>
             <option value="avg-response">Average Response</option>
             <option value="cert-exp">Certificate Expiry</option>
-            <option value="response">Response</option>
           </select>
         </div>
 
         <!-- Duration (for uptime, ping, avg-response) -->
         <div v-if="showDuration">
           <label class="block text-sm font-medium text-gray-300 mb-2">Duration (hours)</label>
-          <input v-model.number="badge.duration" type="number" min="1" placeholder="24" class="input w-full" />
+          <input v-model.number="badge.duration" type="number" min="1" max="9600" placeholder="24" class="input w-full" />
         </div>
 
         <!-- Label -->
@@ -46,7 +45,6 @@
             <option value="plastic">Plastic</option>
             <option value="flat-square">Flat Square</option>
             <option value="for-the-badge">For the Badge</option>
-            <option value="social">Social</option>
           </select>
         </div>
 
@@ -153,11 +151,12 @@ const copiedMarkdown = ref(false)
 const copiedHtml = ref(false)
 
 const showDuration = computed(() => {
-  return ['uptime', 'ping', 'avg-response'].includes(badge.value.type)
+  return ['uptime', 'avg-response'].includes(badge.value.type)
 })
 
+const requestUrl = useRequestURL()
 const badgeUrl = computed(() => {
-  const baseUrl = config.public.appUrl || window.location.origin
+  const baseUrl = requestUrl.origin
   let url = `${baseUrl}/api/badge/${props.monitorId}/${badge.value.type}`
   
   // Add duration for certain types
@@ -181,12 +180,14 @@ const badgeUrl = computed(() => {
   return url
 })
 
+function escapeHtml(value:string){return value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function escapeMarkdown(value:string){return value.replace(/[\r\n]/g,' ').replace(/[\\[\]]/g,'\\$&')}
 const markdownCode = computed(() => {
-  return `![${props.monitorName} Status](${badgeUrl.value})`
+  return `![${escapeMarkdown(props.monitorName)} Status](${badgeUrl.value})`
 })
 
 const htmlCode = computed(() => {
-  return `<img src="${badgeUrl.value}" alt="${props.monitorName} Status" />`
+  return `<img src="${escapeHtml(badgeUrl.value)}" alt="${escapeHtml(props.monitorName)} Status" />`
 })
 
 const copyUrl = async () => {

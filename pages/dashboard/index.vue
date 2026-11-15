@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <div class="mb-6"><h1 class="text-2xl font-bold text-primary">Monitor overview</h1><p class="text-secondary mt-1">Health and recent events in your selected environment.</p></div>
     <!-- Header with Connection Status -->
     <div class="flex items-center justify-between mb-6">
       <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
@@ -7,8 +8,8 @@
         Add New Monitor
       </NuxtLink>
       <div class="flex items-center gap-2 text-sm">
-        <span 
-          class="w-2 h-2 rounded-full" 
+        <span
+          class="w-2 h-2 rounded-full"
           :class="socketConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'"
         ></span>
         <span class="text-secondary">{{ socketConnected ? 'Live' : 'Offline' }}</span>
@@ -17,7 +18,7 @@
 
     <!-- Quick Stats -->
     <h2 class="section-title">Quick Stats</h2>
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-emerald-500/50" @click="filterByStatus('up')">
         <div class="stat-label">Up</div>
         <div class="stat-value" :class="stats.up > 0 ? 'text-emerald-500' : 'text-tertiary'">
@@ -37,13 +38,14 @@
         </div>
       </div>
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-gray-500/50" @click="filterByStatus('unknown')">
-        <div class="stat-label">Unknown</div>
+        <div class="stat-label">Pending</div>
         <div class="stat-value text-tertiary">{{ stats.unknown }}</div>
       </div>
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-gray-500/50" @click="filterByStatus('paused')">
         <div class="stat-label">Paused</div>
         <div class="stat-value text-tertiary">{{ stats.paused }}</div>
       </div>
+      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-amber-500/50" @click="filterByStatus('stale')"><div class="stat-label">Stale</div><div class="stat-value text-amber-500">{{stats.stale}}</div></div>
     </div>
 
     <!-- Search and Filter Bar -->
@@ -51,11 +53,11 @@
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
           <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-tertiary" />
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            class="input-field pl-10" 
-            placeholder="Search monitors..."
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="input-field !pl-10"
+            placeholder="Search monitors..." aria-label="Search monitors" maxlength="200"
           />
         </div>
         <div class="flex gap-2">
@@ -64,7 +66,7 @@
             <option value="up">Up</option>
             <option value="down">Down</option>
             <option value="maintenance">Maintenance</option>
-            <option value="unknown">Unknown</option>
+            <option value="unknown">Pending</option>
             <option value="paused">Paused</option><option value="stale">Stale</option>
           </select>
           <select v-model="typeFilter" class="select-field">
@@ -80,61 +82,19 @@
       </div>
     </div>
 
-    <!-- Important Events -->
-    <div class="card mb-6">
-      <div class="p-4 border-b border-default flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-primary">Important Events</h3>
-        <span class="text-sm text-secondary">{{ importantHeartbeats.length }} events</span>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>DateTime</th>
-              <th>Message</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(beat, index) in importantHeartbeats" :key="index" class="hover-row">
-              <td>
-                <NuxtLink :to="`/monitors/${beat.monitorId}`" class="link">
-                  {{ beat.monitorName || getMonitorName(beat.monitorId) }}
-                </NuxtLink>
-              </td>
-              <td>
-                <span :class="getStatusClass(beat.status)">
-                  {{ getStatusText(beat.status) }}
-                </span>
-              </td>
-              <td class="text-secondary">{{ formatDateTime(beat.time) }}</td>
-              <td class="text-secondary max-w-xs truncate">{{ beat.msg || '-' }}</td>
-            </tr>
-            <tr v-if="importantHeartbeats.length === 0">
-              <td colspan="4" class="text-center text-tertiary py-8">
-                <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500" />
-                <p>No important events - all systems operational</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- Monitor List -->
     <div class="flex items-center justify-between mb-4">
-      <h2 class="section-title !mb-0">Monitors ({{ filteredMonitors.length }})</h2>
+      <h2 class="section-title !mb-0">Monitors ({{ stats.total }})</h2>
       <div class="flex items-center gap-2">
-        <button 
-          @click="viewMode = 'grid'" 
-          class="p-2 rounded view-toggle" 
+        <button
+          @click="viewMode = 'grid'" aria-label="Grid view"
+          class="p-2 rounded view-toggle"
           :class="viewMode === 'grid' ? 'active' : ''"
         >
           <UIcon name="i-heroicons-squares-2x2" class="w-5 h-5" />
         </button>
-        <button 
-          @click="viewMode = 'list'" 
+        <button
+          @click="viewMode = 'list'" aria-label="List view"
           class="p-2 rounded view-toggle"
           :class="viewMode === 'list' ? 'active' : ''"
         >
@@ -144,7 +104,7 @@
     </div>
 
     <p v-if="error" role="alert">Unable to load monitors. Please retry.</p>
-    <MonitorMonitorPagination :count="monitors.length" :total="stats.total" :can-back="canBack" :has-more="!!page?.hasMore" :loading="pending" @back="back" @next="next" />
+    <MonitorPagination :count="monitors.length" :total="stats.total" :can-back="canBack" :has-more="!!page?.hasMore" :loading="pending" @back="back" @next="next" />
     <div v-if="pending" class="text-center py-8">
       <div class="spinner w-8 h-8 mx-auto"></div>
       <p class="text-secondary mt-2">Loading monitors...</p>
@@ -194,7 +154,7 @@
     </div>
 
     <!-- List View -->
-    <div v-else class="card overflow-hidden">
+    <div v-else class="card overflow-x-auto">
       <table class="table">
         <thead>
           <tr>
@@ -203,7 +163,7 @@
             <th>Type</th>
             <th>Target</th>
             <th>Response</th>
-            <th>Uptime (24h)</th>
+            <th>Recent checks</th>
             <th class="text-right">Actions</th>
           </tr>
         </thead>
@@ -238,24 +198,24 @@
             </td>
             <td class="text-right">
               <div v-if="canEdit" class="flex items-center justify-end gap-1">
-                <button 
+                <button
                   v-if="monitor.active"
-                  @click.prevent="pauseMonitor(monitor.id)" 
+                  @click.prevent="pauseMonitor(monitor.id)"
                   class="action-btn"
                   title="Pause"
                 >
                   <UIcon name="i-heroicons-pause" class="w-4 h-4" />
                 </button>
-                <button 
+                <button
                   v-else
-                  @click.prevent="resumeMonitor(monitor.id)" 
+                  @click.prevent="resumeMonitor(monitor.id)"
                   class="action-btn action-btn-success"
                   title="Resume"
                 >
                   <UIcon name="i-heroicons-play" class="w-4 h-4" />
                 </button>
-                <NuxtLink 
-                  :to="`/monitors/${monitor.id}/edit`" 
+                <NuxtLink
+                  :to="`/monitors/${monitor.id}/edit`"
                   class="action-btn action-btn-info"
                   title="Edit"
                 >
@@ -267,6 +227,48 @@
         </tbody>
       </table>
     </div>
+    <!-- Important Events -->
+    <details class="card mt-6 mb-6">
+      <summary class="p-4 flex items-center justify-between cursor-pointer">
+        <h3 class="text-lg font-semibold text-primary">Important Events</h3>
+        <span class="text-sm text-secondary">{{ importantHeartbeats.length }} events</span>
+      </summary>
+      <div class="overflow-x-auto max-h-64">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>DateTime</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(beat, index) in importantHeartbeats" :key="index" class="hover-row">
+              <td>
+                <NuxtLink :to="`/monitors/${beat.monitorId}`" class="link">
+                  {{ beat.monitorName || getMonitorName(beat.monitorId) }}
+                </NuxtLink>
+              </td>
+              <td>
+                <span :class="getStatusClass(beat.status)">
+                  {{ getStatusText(beat.status) }}
+                </span>
+              </td>
+              <td class="text-secondary">{{ formatDateTime(beat.time) }}</td>
+              <td class="text-secondary max-w-xs truncate">{{ beat.msg || '-' }}</td>
+            </tr>
+            <tr v-if="importantHeartbeats.length === 0">
+              <td colspan="4" class="text-center text-tertiary py-8">
+                <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+                <p>No recent status changes recorded</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
   </div>
 </template>
 
@@ -292,15 +294,18 @@ const typeFilter = ref('all')
 
 const {monitors,pending,error,page,summary:stats,next,back,canBack,refresh}=useMonitorPageForDashboard()
 function useMonitorPageForDashboard(){const result=useMonitorPage();watch(searchQuery,value=>result.search.value=value);watch(statusFilter,value=>result.status.value=value);watch(typeFilter,value=>result.type.value=value);return result}
-const monitorsWithLiveData=computed(()=>monitors.value.map((m:any)=>({...m,heartbeats:heartbeatsMap.value[m.id]||m.heartbeats||[]})))
+const monitorsWithLiveData=computed(()=>monitors.value.map((m:any)=>{const beats=heartbeatsMap.value[m.id]||m.heartbeats||[],latest=beats[0],fresh=latest&&Date.now()-new Date(latest.time).getTime()<=Math.max(m.interval*2,m.interval+m.timeout)*1000;return {...m,viewStatus:!m.active?'paused':!latest?'pending':!fresh?'stale':latest.status===1?'up':latest.status===0?'down':latest.status===3?'maintenance':'pending',heartbeats:beats}}))
 const filteredMonitors=monitorsWithLiveData
 const {data:eventData,refresh:refreshEvents}=await useFetch<any>('/api/v1/monitors/events',{headers:useRequestHeaders(['cookie'])})
+let historySequence=0
 watch(monitors,async rows=>{
-  const ids=rows.map((row:any)=>row.id);heartbeatsMap.value={};socket?.emit('subscribe_monitors',ids)
-  for(const row of rows)heartbeatsMap.value[row.id]=row.heartbeats||[]
+  if(import.meta.server)return
+  const sequence=++historySequence,ids=rows.map((row:any)=>row.id),previous=heartbeatsMap.value,nextMap:Record<number,any[]>={};socket?.emit('subscribe_monitors',ids)
+  for(const row of rows){const old=previous[row.id]||[],incoming=row.heartbeats||[];nextMap[row.id]=old[0]?.id&&(!incoming[0]?.id||BigInt(old[0].id)>=BigInt(incoming[0].id))?old:incoming}
+  heartbeatsMap.value=nextMap
   if(!ids.length)return
-  const response=await $fetch<any>('/api/v1/monitors/recent-heartbeats',{query:{ids:ids.join(','),limit:20}})
-  if(ids.join(',')!==monitors.value.map((row:any)=>row.id).join(','))return
+  let response:any;try{response=await $fetch<any>('/api/v1/monitors/recent-heartbeats',{query:{ids:ids.join(','),limit:20}})}catch{return}
+  if(sequence!==historySequence||ids.join(',')!==monitors.value.map((row:any)=>row.id).join(','))return
   for(const id of ids){const live=heartbeatsMap.value[id]||[],seen=new Set(live.map((beat:any)=>beat.id));heartbeatsMap.value[id]=[...live,...(response.data[id]||[]).filter((beat:any)=>!seen.has(beat.id))].sort((a:any,b:any)=>BigInt(a.id)>BigInt(b.id)?-1:1).slice(0,20)}
 },{flush:'post',immediate:true})
 const filterByStatus = (status: string) => {
@@ -420,20 +425,22 @@ const resumeMonitor = async (id: number) => {
 onMounted(() => {
   if ($socket) {
     socket = $socket.connect()
-    
+    socketConnected.value=!!socket?.connected
+    if(socket?.connected)socket.emit('subscribe_monitors',monitors.value.map((monitor:any)=>monitor.id))
+
     socket?.on('connect', () => {
       socketConnected.value = true
       console.log('[Dashboard] Socket connected')
-      
+
       // Subscribe to monitor updates
       socket?.emit('subscribe_monitors',monitors.value.map((monitor:any)=>monitor.id))
     })
-    
+
     socket?.on('disconnect', () => {
       socketConnected.value = false
       console.log('[Dashboard] Socket disconnected')
     })
-    
+
     // Handle heartbeat updates
     socket?.on('heartbeat', (data: any) => {
       console.log('[Dashboard] Heartbeat received:', data)
@@ -442,20 +449,20 @@ onMounted(() => {
       const current=heartbeatsMap.value[monitorId]?.[0]
       try{if(current?.id&&BigInt(heartbeat.id)<=BigInt(current.id))return}catch{}
 
-      
+
       if (!heartbeatsMap.value[monitorId]) {
         heartbeatsMap.value[monitorId] = []
       }
-      
+
       // Add new heartbeat at the beginning
       heartbeatsMap.value[monitorId].unshift(heartbeat)
-      
+
       // Keep only last 100 heartbeats
       if (heartbeatsMap.value[monitorId].length > 100) {
         heartbeatsMap.value[monitorId] = heartbeatsMap.value[monitorId].slice(0, 100)
       }
     })
-    
+
     // Handle heartbeat list (bulk update)
     socket?.on('heartbeatList', (data: any) => {
       const { monitorId, heartbeats, overwrite } = data
@@ -465,14 +472,14 @@ onMounted(() => {
         heartbeatsMap.value[monitorId] = [...heartbeats, ...(heartbeatsMap.value[monitorId] || [])]
       }
     })
-    
+
     // Handle monitor status change
     socket?.on('monitorStatus', (data: any) => {
       console.log('[Dashboard] Monitor status changed:', data)
       refresh()
     })
   }
-  
+
   // Initialize heartbeats from fetched data
   monitors.value.forEach((m: any) => {
     if (m.heartbeats) {
@@ -486,11 +493,7 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   // Auto-refresh every 30 seconds as fallback
-  refreshInterval = setInterval(() => {
-    if (!socketConnected.value) {
-      refresh()
-    }
-  }, 30000)
+  refreshInterval=setInterval(()=>{refresh();refreshEvents()},15000)
 })
 
 onUnmounted(() => {

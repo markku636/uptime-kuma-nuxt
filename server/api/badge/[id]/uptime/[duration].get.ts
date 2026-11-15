@@ -1,12 +1,13 @@
+import {parseBadgeId,parseBadgeQuery,parseBadgeDuration} from '../../../../utils/badge-input'
 // server/api/badge/[id]/uptime/[duration].get.ts
 import { generateBadge, getUptimeColor } from '../../../../services/badge/generator'
 import { calculateUptime } from '../../../../services/uptime/calculator'
 
 export default defineEventHandler(async (event) => {
-  const id = parseInt(getRouterParam(event, 'id') || '0')
+  const id = parseBadgeId(getRouterParam(event, 'id'))
   const durationParam = getRouterParam(event, 'duration') || '24'
   await assertPublishedMonitor(id)
-  const query = getQuery(event)
+  const query = parseBadgeQuery(getQuery(event))
   
   if (!id) {
     throw createError({
@@ -15,14 +16,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Parse duration (e.g., "24h", "7d", "30d", "720h")
-  let hours = 24
-  const match = durationParam.match(/^(\d+)(h|d)?$/)
-  if (match) {
-    const value = parseInt(match[1])
-    const unit = match[2] || 'h'
-    hours = unit === 'd' ? value * 24 : value
-  }
+  const hours = parseBadgeDuration(durationParam)
 
   // Get monitor
   const monitor = await prisma.monitor.findUnique({
@@ -38,12 +32,13 @@ export default defineEventHandler(async (event) => {
   }
 
   // Calculate uptime
-  const startTime = new Date(Date.now() - hours * 60 * 60 * 1000)
-  const uptimeResult = await calculateUptime(id, startTime)
+  const endTime = new Date()
+  const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000)
+  const uptimeResult = await calculateUptime(id, startTime, endTime)
 
   // Format uptime
-  const uptimeValue = uptimeResult.uptime.toFixed(2)
-  const message = `${uptimeValue}%`
+  const uptimeValue = uptimeResult.uptime?.toFixed(2)??'N/A'
+  const message = uptimeResult.uptime===null?'N/A':`${uptimeValue}%`
 
   // Format label
   let labelSuffix = `${hours}h`
@@ -52,10 +47,10 @@ export default defineEventHandler(async (event) => {
   }
 
   // Generate badge
-  const label = String(query.label || `Uptime (${labelSuffix})`)
-  const style = String(query.style || 'flat') as any
-  const labelColor = String(query.labelColor || '#555')
-  const color = query.color ? String(query.color) : getUptimeColor(uptimeResult.uptime)
+  const label = (query.label ?? `Uptime (${labelSuffix})`)
+  const style = (query.style ?? 'flat')
+  const labelColor = (query.labelColor ?? '#555')
+  const color = query.color ? query.color : (uptimeResult.uptime===null?'#999':getUptimeColor(uptimeResult.uptime))
 
   const svg = generateBadge({
     label,

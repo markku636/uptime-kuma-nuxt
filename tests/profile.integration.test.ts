@@ -1,0 +1,22 @@
+import {test} from 'node:test'
+import assert from 'node:assert/strict'
+import {user,workspace,request,data,cleanup,prisma,type Identity,type Scope} from './helpers/http'
+test('profile uses actual user fields, validates timezone and cannot update another account',async()=>{
+ let owner:Identity|undefined,other:Identity|undefined,scope:Scope|undefined
+ try{owner=await user('profile-owner');other=await user('profile-other');scope=await workspace(owner,'Profile validation')
+ const original=await prisma.user.findUniqueOrThrow({where:{id:owner.id}}),profile=await data(await request('/api/auth/profile','GET',owner));assert.deepEqual(Object.keys(profile).sort(),['ok','id','username','timezone','createdAt'].sort());assert.equal(profile.username,owner.username);assert.equal(profile.createdAt,original.createdAt.toISOString())
+ assert.equal((await request('/api/auth/profile')).status,401)
+ const key=await data(await request('/api/v1/api-keys','POST',owner,scope,{name:'Cannot edit profile',scope:'write'}));assert.equal((await request('/api/auth/profile','GET',undefined,undefined,undefined,{'x-api-key':key.key})).status,401)
+ await data(await request('/api/auth/profile','PUT',owner,undefined,{timezone:'Asia/Taipei'}));assert.equal((await data(await request('/api/auth/profile','GET',owner))).timezone,'Asia/Taipei');assert.equal((await prisma.user.findUniqueOrThrow({where:{id:other.id}})).timezone,'UTC')
+ for(const body of [{timezone:'Invalid/Zone'},{timezone:'UTC',id:other.id},{timezone:'UTC',platformAdmin:true},{email:'not-supported'},{}])assert.equal((await request('/api/auth/profile','PUT',owner,undefined,body)).status,400)
+ assert.equal((await prisma.user.findUniqueOrThrow({where:{id:owner.id}})).timezone,'Asia/Taipei')
+ const multipart=await fetch((process.env.TEST_BASE_URL||'http://127.0.0.1:32511')+'/api/auth/profile',{method:'PUT',headers:{cookie:owner.cookie},body:new FormData()});assert.equal(multipart.status,415)
+ }finally{if(owner&&other&&scope)await cleanup([owner,other],[scope])}
+})
+test('profile mobile page loads real username and persists timezone after reload',{timeout:30000},async()=>{
+ const {chromium}=await import('playwright'),{base}=await import('./helpers/http'),browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});let owner:Identity|undefined,scope:Scope|undefined
+ try{owner=await user('profile-browser');scope=await workspace(owner,'Profile browser');const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([...owner.cookie.split('; ').map(part=>{const i=part.indexOf('=');return {name:part.slice(0,i),value:part.slice(i+1),url:base}}),{name:'workspace_id',value:String(scope.workspaceId),url:base},{name:'environment_id',value:String(scope.environmentId),url:base}]);await context.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort())
+ const initialHTML=await (await fetch(base+'/settings/profile',{headers:{cookie:owner.cookie}})).text();assert.match(initialHTML,/<input[^>]*disabled[^>]*aria-label="Profile timezone"/);assert.match(initialHTML,/<button[^>]*disabled[^>]*>Save profile<\/button>/);const page=await context.newPage(),errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));await page.goto(base+'/settings/profile');await page.waitForFunction(()=>!document.querySelector<HTMLInputElement>('[aria-label="Profile timezone"]')?.disabled);assert.equal(await page.getByRole('combobox',{name:'Settings section'}).inputValue(),'/settings/profile');assert.equal(await page.getByRole('textbox',{name:'Profile username'}).inputValue(),owner.username);await page.getByRole('textbox',{name:'Profile timezone'}).fill('Asia/Taipei');await page.getByRole('button',{name:'Save profile',exact:true}).click();await page.getByText('Profile saved.',{exact:true}).waitFor();assert.equal((await prisma.user.findUniqueOrThrow({where:{id:owner.id}})).timezone,'Asia/Taipei');await page.reload();await page.waitForLoadState('networkidle');assert.equal(await page.getByRole('textbox',{name:'Profile timezone'}).inputValue(),'Asia/Taipei');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));assert.deepEqual(errors,[])
+ await page.screenshot({path:'.data/validation-logs/profile-mobile.png',fullPage:true})
+ }finally{await browser.close();if(owner&&scope)await cleanup([owner],[scope])}
+})

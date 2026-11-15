@@ -11,7 +11,7 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "test": "node scripts/test-unit.mjs",
-    "test:integration": "tsx --test --test-concurrency=1 tests/*.integration.test.ts",
+    "test:integration": "node scripts/test-integration.mjs",
     "typecheck": "nuxt typecheck",
     "start:worker": "node scripts/start-worker.mjs"
   },

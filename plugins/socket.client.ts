@@ -7,9 +7,9 @@ export default defineNuxtPlugin(() => {
   let socket: Socket | null = null
 
   const connect = () => {
-    if (socket?.connected) return socket
+    if (socket) return socket
 
-    socket = io(config.public.appUrl as string, {
+    socket = io(window.location.origin, {
       transports: ['websocket'],
       autoConnect: true,
       auth: (callback) => {

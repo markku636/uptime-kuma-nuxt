@@ -1,8 +1,11 @@
+import {SerialQueue} from '../utils/serial-queue'
+import {allowedOrigins} from '../utils/allowed-origins'
 import type { Server as HTTPServer } from 'node:http'
 import { Server as SocketServer, type Socket } from 'socket.io'
 import { workerPrisma as prisma } from '../utils/worker-prisma'
 import { verifySocketTicket } from '../utils/socket-ticket'
 import { monitorSummary, heartbeatSummary } from '../utils/serialize'
+import {stateHeartbeat} from '../utils/monitor-query'
 import { getMonitorTypeListForClient } from './monitor/types'
 
 let io: SocketServer | null = null
@@ -17,13 +20,13 @@ async function validSocket(socket: AuthenticatedSocket) {
 
 export function initSocketServer(server: HTTPServer) {
   if (io) return io
-  const allowedOrigin = new URL(useRuntimeConfig().public.appUrl).origin
-  io = new SocketServer(server, { cors: { origin: allowedOrigin, credentials: true },transports:['websocket'],
+  const origins=allowedOrigins(useRuntimeConfig().public.appUrl)
+  io = new SocketServer(server, { cors: { origin: origins, credentials: true },transports:['websocket'],
     maxHttpBufferSize: 64 * 1024, pingTimeout: 60_000, pingInterval: 25_000 })
   io.use(async (socket: AuthenticatedSocket, next) => {
     try {
       const origin = socket.handshake.headers.origin
-      if (origin && origin !== allowedOrigin) throw new Error('Origin denied')
+      if (origin && !origins.includes(origin)) throw new Error('Origin denied')
       const ticket = verifySocketTicket(socket.handshake.auth.ticket, useRuntimeConfig().session.password)
       socket.data.userId = ticket.userId
       socket.data.sessionVersion = ticket.sessionVersion
@@ -38,7 +41,13 @@ export function initSocketServer(server: HTTPServer) {
     socket.join(`workspace:${socket.data.workspaceId}`)
     socket.join(`workspace:${socket.data.workspaceId}:environment:${socket.data.environmentId}`)
     const scopeRoom = `workspace:${socket.data.workspaceId}:environment:${socket.data.environmentId}:user:${socket.data.userId}`
-    socket.use(async (packet, next) => {
+    const authorizationQueue=new SerialQueue(32)
+    let packetWindow=Date.now(),packetCount=0
+    socket.use((packet, next) => {
+      if(Date.now()-packetWindow>1000){packetWindow=Date.now();packetCount=0}
+      if(++packetCount>20){socket.disconnect(true);return}
+      void authorizationQueue.enqueue(async()=>{
+      if(!socket.connected)return
       try {
         if (!await validSocket(socket)) { socket.disconnect(true); return }
         // The old mutation handlers had separate, incomplete authorization. Use REST.
@@ -50,6 +59,7 @@ export function initSocketServer(server: HTTPServer) {
         }
         next()
       } catch { socket.disconnect(true) }
+      }).catch(()=>socket.disconnect(true))
     })
     socket.on('loginByToken', (_token, callback) => {
       if (typeof callback === 'function') callback({ ok: true })
@@ -72,10 +82,30 @@ export function initSocketServer(server: HTTPServer) {
         callback(monitor ? { ok: true, monitor: monitorSummary(monitor) } : { ok: false, msg: 'Monitor not found' })
       } catch { callback({ ok: false, msg: 'Unable to load monitor' }) }
     })
-    socket.on('subscribe_monitors', () => socket.join(`${scopeRoom}:monitors`))
-    socket.on('unsubscribe_monitors', () => socket.leave(`${scopeRoom}:monitors`))
-    socket.on('subscribe_monitor', async (id: number, callback?: Function) => {
+    let subscriptionQueue=Promise.resolve(),pendingSubscriptions=0
+    const subscriptionEvent=(event:string,handler:(...input:any[])=>unknown)=>socket.on(event,(...input:any[])=>{
+      if(++pendingSubscriptions>32){socket.disconnect(true);return}
+      subscriptionQueue=subscriptionQueue.then(async()=>{if(socket.connected)await handler(...input)}).catch(()=>{const callback=input.at(-1);if(typeof callback==='function')callback({ok:false,code:'SUBSCRIPTION_UNAVAILABLE'})}).finally(()=>{pendingSubscriptions--})
+    })
+    subscriptionEvent('subscribe_monitors',async(input?:number[]|Function,callback?:Function)=>{
+      if(typeof input==='function'){callback=input;input=undefined}
+      try{
+        let ids:number[]
+        if(input===undefined){const rows=await prisma.monitor.findMany({where:{workspaceId:socket.data.workspaceId,environmentId:socket.data.environmentId},select:{id:true},orderBy:{id:'asc'},take:201});if(rows.length>200){callback?.({ok:false,code:'PAGE_SUBSCRIPTION_REQUIRED'});socket.emit('subscription_error',{code:'PAGE_SUBSCRIPTION_REQUIRED'});return}ids=rows.map(row=>row.id)}
+        else{if(!Array.isArray(input)||input.length>200||input.some(id=>!Number.isSafeInteger(id)||id<=0)){callback?.({ok:false,code:'INVALID_IDS'});return}ids=[...new Set(input)]}
+        const rows=ids.length?await prisma.monitor.findMany({where:{workspaceId:socket.data.workspaceId,environmentId:socket.data.environmentId,id:{in:ids}},select:{id:true}}):[]
+        if(rows.length!==ids.length){callback?.({ok:false,code:'MONITOR_NOT_FOUND'});return}
+        for(const room of socket.rooms)if(room===`${scopeRoom}:monitors`||room.startsWith(`${scopeRoom}:monitor:`))socket.leave(room)
+        const revisions:Map<number,bigint>=(socket.data as any).stateRevisions||=new Map()
+        for(const id of revisions.keys())if(!ids.includes(id))revisions.delete(id)
+        for(const id of ids)await socket.join(`${scopeRoom}:monitor:${id}`)
+        callback?.({ok:true,count:ids.length,bounded:true})
+      }catch{callback?.({ok:false,code:'SUBSCRIPTION_UNAVAILABLE'})}
+    })
+    subscriptionEvent('unsubscribe_monitors',()=>{for(const room of socket.rooms)if(room===`${scopeRoom}:monitors`||room.startsWith(`${scopeRoom}:monitor:`))socket.leave(room);(socket.data as any).stateRevisions?.clear()})
+    subscriptionEvent('subscribe_monitor', async (id: number, callback?: Function) => {
       if (!Number.isSafeInteger(id)) return
+      if([...socket.rooms].filter(room=>room.startsWith(`${scopeRoom}:monitor:`)).length>=200&&!socket.rooms.has(`${scopeRoom}:monitor:${id}`)){callback?.({ok:false,code:'SUBSCRIPTION_LIMIT'});return}
       try {
         const monitor = await prisma.monitor.findFirst({ where: { id, workspaceId: socket.data.workspaceId, environmentId: socket.data.environmentId }, select: { id: true } })
         if (!monitor) { callback?.({ ok: false, msg: 'Monitor not found' }); return }
@@ -83,7 +113,7 @@ export function initSocketServer(server: HTTPServer) {
         callback?.({ ok: true })
       } catch { callback?.({ ok: false, msg: 'Unable to subscribe' }) }
     })
-    socket.on('unsubscribe_monitor', (id: number) => socket.leave(`${scopeRoom}:monitor:${id}`))
+    subscriptionEvent('unsubscribe_monitor', (id:number)=>{socket.leave(`${scopeRoom}:monitor:${id}`);(socket.data as any).stateRevisions?.delete(id)})
   })
   return io
 }
@@ -150,7 +180,7 @@ export async function deliverMonitorStates(states:any[],heartbeats:any[]){
     for(const state of states){
       if(state.workspaceId!==socket.data.workspaceId||state.environmentId!==socket.data.environmentId||!all&&!socket.rooms.has(`${prefix}:monitor:${state.monitorId}`))continue
       if((revisions.get(state.monitorId)||0n)>=state.revision)continue
-      const heartbeat=beats.get(String(state.heartbeatId));if(!heartbeat)continue
+      const heartbeat=beats.get(String(state.heartbeatId))||stateHeartbeat(state)
       revisions.set(state.monitorId,state.revision)
       if(revisions.size>5000)revisions.delete(revisions.keys().next().value!)
       socket.emit('heartbeat',{monitorId:state.monitorId,revision:String(state.revision),heartbeat:heartbeatSummary(heartbeat)});delivered++

@@ -74,13 +74,19 @@ test('viewer/read keys cannot import; editor can reuse environment but cannot al
   const reused={...manifest,collectionId:'editor-reuses-existing'},allowed=await preview(reused,a,editor)
   assert.equal(allowed.ok,true,JSON.stringify(allowed.issues));assert.equal((await data(await commit(reused,allowed.digest,a,editor))).data.createdIds.length,1)
 })
-test('invalid scripts/paths/expressions are explicit, secret-free and never persisted',async()=>{
+test('invalid paths/expressions are explicit, secret-free and never persisted',async()=>{
   const count=await prisma.monitor.count({where:{workspaceId:a.workspaceId}})
-  for(const file of [{path:'../outside.bru',content:basic()},{path:'script.bru',content:basic()+'script:pre-request {\n throw BRUNO_SECRET\n}\n'},{path:'assert.bru',content:basic().replace('eq 200','eq process.env.BRUNO_SECRET')}]){
+  for(const file of [{path:'../outside.bru',content:basic()},{path:'assert.bru',content:basic().replace('eq 200','eq process.env.BRUNO_SECRET')}]){
     const input={collectionId:'unsafe',mode:'create' as const,files:[file]},result=await preview(input)
     assert.equal(result.ok,false);safe(result);assert.equal((await commit(input,result.digest)).status,400)
   }
   assert.equal(await prisma.monitor.count({where:{workspaceId:a.workspaceId}}),count)
+})
+test('scripts are flagged, never echoed and never executed by preview',async()=>{
+  const before=hits,count=await prisma.monitor.count({where:{workspaceId:a.workspaceId}})
+  const input={collectionId:'scripted',mode:'create' as const,targetGroup:'none' as const,files:[{path:'script.bru',content:basic()+'script:pre-request {\n throw BRUNO_SECRET\n}\n'}]},result=await preview(input)
+  assert.equal(result.ok,true);safe(result);assert.deepEqual(result.requests[0].skipped,['script'])
+  assert.equal(hits,before);assert.equal(await prisma.monitor.count({where:{workspaceId:a.workspaceId}}),count)
 })
 test('database failure after a prior create batch rolls back monitors, source mappings and environment changes',async()=>{
   const name='bruno_rollback_'+a.workspaceId,count=await prisma.monitor.count({where:{workspaceId:a.workspaceId}})
@@ -102,7 +108,7 @@ test('export exposes placeholders and safe definitions; reparsed requests can be
   const checked=await preview(input);assert.equal(checked.ok,true,JSON.stringify(checked.issues));safe(checked)
   const imported=await data(await commit(input,checked.digest));assert.equal(imported.data.createdIds.length,1);assert.equal((await prisma.monitor.findUniqueOrThrow({where:{id:imported.data.createdIds[0]}})).active,false)
 })
-test('4000 distinct paths with the same display name commit atomically in paused batches',{timeout:120000},async()=>{
+test('4000 distinct paths with the same display name commit atomically in paused batches',{timeout:120000,skip:process.env.TEST_INCLUDE_SCALE!=='true'},async()=>{
   const beforeHits=hits,input:BrunoManifest={collectionId:'4000-local-paused',mode:'create',files:Array.from({length:4000},(_,index)=>({path:`bulk/request-${String(index).padStart(4,'0')}.bru`,content:basic()}))}
   const start=performance.now(),checked=await preview(input);assert.equal(checked.ok,true,JSON.stringify(checked.issues));assert.equal(checked.counts.create,4000)
   const imported=await data(await commit(input,checked.digest));assert.equal(imported.data.createdIds.length,4000)

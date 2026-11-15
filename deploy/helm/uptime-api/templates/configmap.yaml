@@ -1,0 +1,12 @@
+{{- if or .Values.application.enabled .Values.migration.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uptime-config
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+data:
+{{- range $name,$value := .Values.config }}
+  {{ $name }}: {{ $value | quote }}
+{{- end }}
+{{- end }}

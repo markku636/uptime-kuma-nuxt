@@ -1,64 +1,29 @@
-FROM node:22-alpine AS base
+FROM node:24.22.0-bookworm-slim AS dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /workspace
-
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* ./
-RUN yarn --frozen-lockfile
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /workspace
-COPY --from=deps /workspace/node_modules ./node_modules
+FROM dependencies AS builder
 COPY . .
+ENV NODE_OPTIONS=--max-old-space-size=4096
+RUN npm run build
 
-# Generate Prisma Client with dummy DATABASE_URL (not used at runtime)
-ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
-ENV DATABASE_URL=${DATABASE_URL}
-RUN npx prisma generate
-
-# Build the application
-RUN yarn build
-
-# Production image, copy all the files and run nuxt
-FROM base AS runner
-WORKDIR /workspace
-
-ENV NODE_ENV=production
-
-# Install PostgreSQL client for database initialization and curl for health checks
-RUN apk add --no-cache postgresql-client curl
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nuxtjs
-
-# Copy built assets
-COPY --from=builder /workspace/.output ./.output
-COPY --from=builder /workspace/node_modules/.prisma ./node_modules/.prisma
-# Copy prisma schema and init SQL for migrations
-COPY --from=builder /workspace/prisma ./prisma
-# Copy @prisma/client for CLI operations
-COPY --from=builder /workspace/node_modules/@prisma/client ./node_modules/@prisma/client
-COPY --from=builder /workspace/node_modules/prisma ./node_modules/prisma
-# Copy @prisma/engines for migrations
-COPY --from=builder /workspace/node_modules/@prisma/engines ./node_modules/@prisma/engines
-COPY --from=builder /workspace/node_modules/@prisma/engines-version ./node_modules/@prisma/engines-version
-
-# Copy entrypoint script
-COPY --from=builder /workspace/docker-entrypoint.sh ./docker-entrypoint.sh
-
-# Make entrypoint executable and change ownership
-USER root
-RUN chmod +x ./docker-entrypoint.sh && chown nuxtjs:nodejs ./docker-entrypoint.sh
-
-USER nuxtjs
-
+FROM node:24.22.0-bookworm-slim AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 NODE_OPTIONS=--max-old-space-size=512
+# Include the complete locked migration dependency graph; migrations are a separate Job.
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/.output ./.output
+COPY --from=builder --chown=node:node /app/prisma ./prisma
+COPY --from=builder --chown=node:node /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder --chown=node:node /app/scripts/check-runtime.mjs ./scripts/check-runtime.mjs
+COPY --from=builder --chown=node:node /app/scripts/demo-fixture.mjs ./scripts/demo-fixture.mjs
+COPY --from=builder --chown=node:node /app/package.json ./package.json
+COPY --chown=node:node docker-entrypoint.sh ./docker-entrypoint.sh
+USER node
 EXPOSE 3000
-
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["./docker-entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
+CMD ["node", ".output/server/index.mjs"]

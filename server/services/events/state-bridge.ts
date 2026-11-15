@@ -30,8 +30,8 @@ export class StateBridge {
           if(this.stopped)return
           const states=await prisma.monitorState.findMany({where:{workspaceId:scope.workspaceId,environmentId:scope.environmentId,monitorId:{gt:after,...(!scope.all?{in:[...scope.ids]}:{})}},orderBy:{monitorId:'asc'},take:200})
           if(!states.length)break;this.metrics.rows+=states.length
-          const changed=states.filter(stateNeedsDelivery),ids=changed.map(state=>state.heartbeatId).filter((id):id is bigint=>id!==null)
-          if(ids.length){const heartbeats=await prisma.heartbeat.findMany({where:{id:{in:ids}}});this.metrics.delivered+=await deliverMonitorStates(changed,heartbeats)}
+          const changed=states.filter(stateNeedsDelivery)
+          if(changed.length)this.metrics.delivered+=await deliverMonitorStates(changed,[])
           after=states.at(-1)!.monitorId
           if(states.length<200)break
         }

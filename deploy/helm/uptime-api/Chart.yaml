@@ -1,0 +1,6 @@
+apiVersion: v2
+name: uptime-api
+description: Isolated API monitoring platform demonstration
+version: 0.1.0
+appVersion: "2026.11.14"
+type: application

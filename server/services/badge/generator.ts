@@ -1,3 +1,4 @@
+import {badgeText,badgeColor,badgeStyle} from '../../utils/badge-input'
 // server/services/badge/generator.ts
 
 export interface BadgeOptions {
@@ -14,13 +15,9 @@ export interface BadgeOptions {
  * Generate an SVG badge
  */
 export function generateBadge(options: BadgeOptions): string {
-  const {
-    label,
-    message,
-    labelColor = '#555',
-    color = '#4c1',
-    style = 'flat'
-  } = options
+  const label=badgeText(options.label),message=badgeText(options.message)
+  const labelColor=badgeColor(options.labelColor??'#555'),color=badgeColor(options.color??'#4c1')
+  const style=badgeStyle(options.style??'flat')
 
   const labelWidth = getTextWidth(label) + 10
   const messageWidth = getTextWidth(message) + 10
@@ -57,7 +54,7 @@ function generateFlatBadge(
   totalWidth: number
 ): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img">
-  <title>${label}: ${message}</title>
+  <title>${escapeXml(label)}: ${escapeXml(message)}</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
@@ -89,7 +86,7 @@ function generateFlatSquareBadge(
   totalWidth: number
 ): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img">
-  <title>${label}: ${message}</title>
+  <title>${escapeXml(label)}: ${escapeXml(message)}</title>
   <g shape-rendering="crispEdges">
     <rect width="${labelWidth}" height="20" fill="${labelColor}"/>
     <rect x="${labelWidth}" width="${messageWidth}" height="20" fill="${color}"/>
@@ -111,7 +108,7 @@ function generatePlasticBadge(
   totalWidth: number
 ): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="18" role="img">
-  <title>${label}: ${message}</title>
+  <title>${escapeXml(label)}: ${escapeXml(message)}</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
     <stop offset=".1" stop-color="#aaa" stop-opacity=".1"/>
@@ -146,7 +143,7 @@ function generateForTheBadge(
   const totalWidth = labelWidth + messageWidth
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="28" role="img">
-  <title>${label}: ${message}</title>
+  <title>${escapeXml(label)}: ${escapeXml(message)}</title>
   <g shape-rendering="crispEdges">
     <rect width="${labelWidth}" height="28" fill="${labelColor}"/>
     <rect x="${labelWidth}" width="${messageWidth}" height="28" fill="${color}"/>

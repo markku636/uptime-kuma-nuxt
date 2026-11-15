@@ -1,6 +1,6 @@
 // server/api/v1/monitors/[id]/uptime.get.ts
 import { z } from 'zod'
-import { calculateUptimeByPeriod, getDailyUptimeHistory } from '../../../../services/uptime/calculator'
+import { calculateUptimeByPeriod, calculateUptime,periodHours, getDailyUptimeHistory } from '../../../../services/uptime/calculator'
 
 const querySchema = z.object({
   period: z.enum(['24h', '7d', '30d', '1y', 'all']).optional().default('all'),
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
   const { period, history, historyDays } = params.data
 
   // Get uptime by period
-  const uptimeByPeriod = await calculateUptimeByPeriod(monitorId)
+  const uptimeByPeriod = period==='all'?await calculateUptimeByPeriod(monitorId):null
 
   const result: any = {
     monitorId,
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
   if (period === 'all') {
     result.uptime = uptimeByPeriod
   } else {
-    result.uptime = uptimeByPeriod[period as keyof typeof uptimeByPeriod]
+    result.uptime = await calculateUptime(monitorId,new Date(Date.now()-periodHours[period]*3600000))
   }
 
   // Include daily history if requested

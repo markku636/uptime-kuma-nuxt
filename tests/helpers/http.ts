@@ -28,7 +28,7 @@ export async function workspace(user: Identity, name: string) {
 }
 export async function connect(user: Identity, scope: Scope): Promise<Socket> {
   const { ticket } = await data(await request('/api/auth/socket-ticket','POST',user,scope))
-  const socket = io(base, { auth: { ticket }, transports: ['websocket'], reconnection: false, timeout: 2000 })
+  const socket = io(base, { auth: { ticket }, extraHeaders:{Origin:base}, transports: ['websocket'], reconnection: false, timeout: 2000 })
   await new Promise<void>((resolve,reject) => { socket.once('connect',resolve); socket.once('connect_error',reject) })
   return socket
 }

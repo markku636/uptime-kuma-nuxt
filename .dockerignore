@@ -53,3 +53,7 @@ nginx/
 .DS_Store
 Thumbs.db
 temp_response.html
+
+# Local validation, ownership manifests and private deployment credentials
+.data/
+.env*

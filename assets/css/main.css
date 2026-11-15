@@ -2,8 +2,17 @@
 
 /* ========== Color Palette ========== */
 :root {
-  /* Brand Colors */
-  --uk-primary: #12b06a;
+  /* Brand Colors
+     --uk-primary        filled surfaces (primary buttons, active pills)
+     --uk-on-primary     text placed on --uk-primary
+     --uk-primary-text   accent used as text/links/active nav on page surfaces
+     Each pair keeps >=4.5:1 contrast per theme; the Appearance accent picks a
+     preset through html[data-accent] below instead of one hex for both themes. */
+  --uk-primary: #047857;
+  --uk-primary-hover: #065f46;
+  --uk-on-primary: #ffffff;
+  --uk-primary-text: #047857;
+  --uk-primary-soft: rgba(4, 120, 87, 0.1);
   --uk-danger: #e11d48;
   --uk-warning: #f59f0b;
   --uk-info: #2563eb;
@@ -48,11 +57,31 @@ html.dark {
   --text-primary: #d1d5db;           /* old project: $dark-font-color */
   --text-secondary: #b1b8c0;
   --text-tertiary: #9ca3af;
-  --text-muted: #020b05;             /* old project: $dark-font-color2 */
+  --text-muted: #8b949e;
   --border-color: #1d2634;           /* old project: $dark-border-color */
   --shadow-color: rgba(0, 0, 0, 0.3);
   --hover-bg: rgba(255, 255, 255, 0.05);
+  --uk-primary: #5cdd8b;
+  --uk-primary-hover: #7ce8a4;
+  --uk-on-primary: #020b05;          /* old project: $dark-font-color2 */
+  --uk-primary-text: #5cdd8b;
+  --uk-primary-soft: rgba(92, 221, 139, 0.14);
 }
+
+/* Appearance accent presets: light uses the 700 shade (white text), dark the 400 shade (dark text) */
+html[data-accent="blue"] { --uk-primary: #1d4ed8; --uk-primary-hover: #1e40af; --uk-primary-text: #1d4ed8; --uk-primary-soft: rgba(29, 78, 216, 0.1); }
+html.dark[data-accent="blue"] { --uk-primary: #60a5fa; --uk-primary-hover: #93c5fd; --uk-primary-text: #60a5fa; --uk-primary-soft: rgba(96, 165, 250, 0.14); }
+html[data-accent="purple"] { --uk-primary: #6d28d9; --uk-primary-hover: #5b21b6; --uk-primary-text: #6d28d9; --uk-primary-soft: rgba(109, 40, 217, 0.1); }
+html.dark[data-accent="purple"] { --uk-primary: #a78bfa; --uk-primary-hover: #c4b5fd; --uk-primary-text: #a78bfa; --uk-primary-soft: rgba(167, 139, 250, 0.14); }
+html[data-accent="red"] { --uk-primary: #b91c1c; --uk-primary-hover: #991b1b; --uk-primary-text: #b91c1c; --uk-primary-soft: rgba(185, 28, 28, 0.1); }
+html.dark[data-accent="red"] { --uk-primary: #f87171; --uk-primary-hover: #fca5a5; --uk-primary-text: #f87171; --uk-primary-soft: rgba(248, 113, 113, 0.14); }
+html[data-accent="orange"] { --uk-primary: #c2410c; --uk-primary-hover: #9a3412; --uk-primary-text: #c2410c; --uk-primary-soft: rgba(194, 65, 12, 0.1); }
+html.dark[data-accent="orange"] { --uk-primary: #fb923c; --uk-primary-hover: #fdba74; --uk-primary-text: #fb923c; --uk-primary-soft: rgba(251, 146, 60, 0.14); }
+html[data-accent="pink"] { --uk-primary: #be185d; --uk-primary-hover: #9d174d; --uk-primary-text: #be185d; --uk-primary-soft: rgba(190, 24, 93, 0.1); }
+html.dark[data-accent="pink"] { --uk-primary: #f472b6; --uk-primary-hover: #f9a8d4; --uk-primary-text: #f472b6; --uk-primary-soft: rgba(244, 114, 182, 0.14); }
+
+/* Nuxt UI components follow the same accent */
+html:root, html.dark { --ui-primary: var(--uk-primary); }
 
 /* Apply color scheme */
 html {
@@ -89,11 +118,11 @@ html:not(.dark) .text-gray-600 {
 }
 
 html:not(.dark) .text-gray-500 {
-  color: #6b7280 !important; /* Tailwind gray-500 */
+  color: #4b5563 !important; /* gray-600: gray-500 misses 4.5:1 on tinted cards */
 }
 
 html:not(.dark) .text-gray-400 {
-  color: #9ca3af !important; /* Tailwind gray-400 - make darker in light mode */
+  color: #5b6779 !important; /* gray-400 is unreadable on white; this keeps 4.5:1 on tinted cards */
 }
 
 html:not(.dark) .text-gray-300 {
@@ -102,6 +131,11 @@ html:not(.dark) .text-gray-300 {
 
 html:not(.dark) .text-gray-200 {
   color: #4b5563 !important; /* Make gray-200 much darker in light mode */
+}
+
+/* gray-500 on the near-black dark surfaces misses 4.5:1 */
+html.dark .text-gray-500 {
+  color: #8b949e;
 }
 
 /* Semantic text color classes */
@@ -301,19 +335,30 @@ html:not(.dark) .bg-gray-700 {
 
 .btn-primary {
   background-color: var(--uk-primary);
-  color: white;
+  color: var(--uk-on-primary);
 }
 
 .btn-primary:hover {
-  background-color: #0f9c5d;
+  background-color: var(--uk-primary-hover);
 }
 
 .btn-secondary {
-  background-color: #334155;
-  color: white;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--border-color);
 }
 
 .btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+}
+
+html.dark .btn-secondary {
+  background-color: #334155;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+html.dark .btn-secondary:hover {
   background-color: #1e293b;
 }
 
@@ -336,12 +381,12 @@ html:not(.dark) .bg-gray-700 {
 }
 
 .btn-outline {
-  border: 1px solid #94a3b8;
-  color: #1f2937;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 
 .btn-outline:hover {
-  background-color: #e2e8f0;
+  background-color: var(--hover-bg);
 }
 
 /* Card styles */
@@ -695,13 +740,21 @@ html:not(.dark) .bg-gray-700 {
 
 /* Link hover effect */
 .link {
-  color: rgb(96 165 250);
+  color: #1d4ed8;
   transition: color 0.2s ease;
 }
 
 .link:hover {
-  color: rgb(147 197 253);
+  color: #1e40af;
   text-decoration: underline;
+}
+
+html.dark .link {
+  color: rgb(96 165 250);
+}
+
+html.dark .link:hover {
+  color: rgb(147 197 253);
 }
 
 /* Code block */

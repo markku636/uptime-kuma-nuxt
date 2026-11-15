@@ -298,13 +298,13 @@ function confirmCrop() {
 }
 
 .btn-primary {
-  background: var(--color-primary, #10b981);
-  color: white;
+  background: var(--uk-primary);
+  color: var(--uk-on-primary);
   border: none;
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-dark, #059669);
+  background: var(--uk-primary-hover);
 }
 
 .btn-outline {

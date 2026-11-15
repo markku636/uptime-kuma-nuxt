@@ -1,3 +1,4 @@
+import {Prisma} from '@prisma/client'
 import {createHash} from 'node:crypto'
 import type {CheckResult} from './checker'
 function safeCode(code:unknown){return typeof code==='string'&&/^[A-Z0-9_]{1,64}$/.test(code)?code:'CHECK_COMPLETE'}
@@ -10,8 +11,8 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
     let previous=await tx.monitorState.findUnique({where:{monitorId:monitor.id}})
     if(!previous){const legacy=await tx.heartbeat.findFirst({where:{monitorId:monitor.id},orderBy:[{time:'desc'},{id:'desc'}]});if(legacy)previous={status:legacy.status,statusChangedAt:legacy.time,checkedAt:legacy.time,revision:0n}}
     const changed=!previous||previous.status!==result.status,code=safeCode(result.code),ping=Math.min(300000,Math.max(0,Math.round(result.ping)))
-    const heartbeat=await tx.heartbeat.create({data:{monitorId:monitor.id,runId:monitor.runId,scheduledFor:monitor.scheduledFor,configVersion:monitor.configVersion,time:now,status:result.status,ping,msg:result.status===1?'Up':result.status===3?'Under maintenance':result.status===2?'Pending':'Check failed',checkCode:code,assertionResults:safeAssertions(result.assertionResults),important:changed,duration:previous?Math.max(0,Math.floor((now.getTime()-previous.checkedAt.getTime())/1000)):0}})
-    const state=await tx.monitorState.upsert({where:{monitorId:monitor.id},create:{monitorId:monitor.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,heartbeatId:heartbeat.id,runId:monitor.runId,status:result.status,ping,checkCode:code,checkedAt:now,statusChangedAt:now},update:{heartbeatId:heartbeat.id,runId:monitor.runId,status:result.status,ping,checkCode:code,checkedAt:now,statusChangedAt:changed?now:previous.statusChangedAt,revision:{increment:1}}})
+    const heartbeat=await tx.heartbeat.create({data:{monitorId:monitor.id,runId:monitor.runId,scheduledFor:monitor.scheduledFor,configVersion:monitor.configVersion,coverageSeconds:Math.min(7200,Math.max(2,monitor.interval*2)),time:now,status:result.status,ping,msg:result.status===1?'Up':result.status===3?'Under maintenance':result.status===2?'Pending':'Check failed',checkCode:code,assertionResults:safeAssertions(result.assertionResults)??Prisma.DbNull,important:changed,duration:previous?Math.max(0,Math.floor((now.getTime()-previous.checkedAt.getTime())/1000)):0}})
+    const state=await tx.monitorState.upsert({where:{monitorId:monitor.id},create:{monitorId:monitor.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,heartbeatId:heartbeat.id,runId:monitor.runId,status:result.status,ping,checkCode:code,assertionResults:safeAssertions(result.assertionResults)??Prisma.DbNull,checkedAt:now,statusChangedAt:now},update:{heartbeatId:heartbeat.id,runId:monitor.runId,status:result.status,ping,checkCode:code,assertionResults:safeAssertions(result.assertionResults)??Prisma.DbNull,checkedAt:now,statusChangedAt:changed?now:previous.statusChangedAt,revision:{increment:1}}})
     const tls=(result as any).tlsInfo
     const tlsWarning=monitor.expiryNotification&&!monitor.ignoreTls&&tls&&Number.isFinite(tls.daysRemaining)&&typeof tls.fingerprint==='string'&&tls.fingerprint.length>0
     if(previous&&changed&&[0,1].includes(result.status)||tlsWarning){
@@ -24,7 +25,11 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
         const reached=thresholds.filter(day=>tls.daysRemaining<=day)
         // Send the most urgent crossed threshold once per certificate and channel.
         const threshold=reached.length?Math.min(...reached):undefined
-        if(threshold!==undefined)await tx.notificationOutbox.createMany({data:channels.map((channel:any)=>({runId:monitor.runId,eventType:'tls-expiry',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,dedupeKey:createHash('sha256').update(`tls:${monitor.id}:${channel.id}:${tls.fingerprint}:${threshold}`).digest('hex'),payload:{monitorId:monitor.id,name:monitor.name,status:0,ping,code:'TLS_EXPIRY',certificateDays:Math.floor(tls.daysRemaining),time:now.toISOString()},nextAttemptAt:now})),skipDuplicates:true})
+        if(threshold!==undefined){
+          const rows=channels.map((channel:any)=>({runId:monitor.runId,eventType:'tls-expiry',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,dedupeKey:createHash('sha256').update(`tls:${monitor.id}:${channel.id}:${tls.fingerprint}:${threshold}`).digest('hex'),payload:{monitorId:monitor.id,name:monitor.name,status:0,ping,code:'TLS_EXPIRY',certificateDays:Math.floor(tls.daysRemaining),time:now.toISOString()},nextAttemptAt:now}))
+          const fresh=await tx.notificationDedupe.createManyAndReturn({data:rows.map((row:any)=>({key:row.dedupeKey,monitorId:monitor.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,notificationId:row.notificationId})),skipDuplicates:true,select:{key:true}})
+          const keys=new Set(fresh.map((row:any)=>row.key));if(keys.size)await tx.notificationOutbox.createMany({data:rows.filter((row:any)=>keys.has(row.dedupeKey)),skipDuplicates:true})
+        }
       }
     }
     return {now,heartbeat,state}

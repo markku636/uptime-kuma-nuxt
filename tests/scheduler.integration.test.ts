@@ -14,7 +14,7 @@ import {claimMonitors,renewMonitorLease} from '../server/services/monitor/leases
 import {completeMonitorRun} from '../server/services/monitor/completion'
 const adminURL=process.env.TEST_PG_ADMIN_URL||'postgresql://postgres@127.0.0.1:55464/postgres'
 if(!['127.0.0.1','localhost'].includes(new URL(adminURL).hostname))throw Error('Scheduler tests require local disposable PostgreSQL')
-process.env.APP_ENCRYPTION_KEY='0123456789abcdef'.repeat(4)
+process.env.APP_ENCRYPTION_KEY||='0123456789abcdef'.repeat(4)
 let admin:pg.Client,db:PrismaClient,url:string,name:string,owner:number,workspaceId:number,environmentId:number,server:http.Server,origin:string,hits=0,open=0,maxOpen=0,tcpOpen=0,maxTcp=0
 const pause=(ms:number)=>new Promise(r=>setTimeout(r,ms))
 async function until(condition:()=>Promise<boolean>|boolean,timeout=10000){const end=Date.now()+timeout;while(Date.now()<end){if(await condition())return;await pause(20)}assert.fail('Timed out waiting for fixture state')}
@@ -173,9 +173,9 @@ test('500 local monitors complete with bounded actual connections across two wor
   const a=new Child(url),b=new Child(url),start=Date.now()
   try{
     await Promise.all([a.call('run'),b.call('run')]);await until(async()=>await db.monitorState.count()===500,45000)
-    assert.equal(await db.heartbeat.count(),500);assert.equal(hits,500);assert.ok(maxOpen<=8,`actual inflight ${maxOpen} > two workers × perOrigin4`);assert.ok(maxTcp<=8,`actual TCP sockets ${maxTcp} > 8`)
-    const [sa,sb]=await Promise.all([a.call('status'),b.call('status')]);assert.ok(sa.status.maxInflight<=8);assert.ok(sb.status.maxInflight<=8)
-    console.info(`500 monitors: ${Date.now()-start}ms, actual inflight=${maxOpen}, actual TCP sockets=${maxTcp}, claimed=${sa.status.claimed+sb.status.claimed}, deferred=${sa.status.deferred+sb.status.deferred}`)
+    assert.equal(await db.heartbeat.count(),500);assert.ok(hits>=500,'lease recovery can repeat HTTP but accepted logical runs remain unique');assert.ok(maxOpen<=8,`actual inflight ${maxOpen} > two workers × perOrigin4`);assert.ok(maxTcp<=8,`actual TCP sockets ${maxTcp} > 8`)
+    const [sa,sb]=await Promise.all([a.call('status'),b.call('status')]);assert.ok(sa.status.maxInflight<=8);assert.ok(sb.status.maxInflight<=8);assert.ok(sa.status.deferred+sb.status.deferred<=1000,'saturated origin must not repeatedly amplify claims')
+    console.info(`500 monitors: ${Date.now()-start}ms, actual inflight=${maxOpen}, actual TCP sockets=${maxTcp}, requests=${hits}, leaseLost=${sa.status.leaseLost+sb.status.leaseLost}, stale=${sa.status.stale+sb.status.stale}, claimed=${sa.status.claimed+sb.status.claimed}, deferred=${sa.status.deferred+sb.status.deferred}`)
     const future=await db.monitor.count({where:{nextCheckAt:{gt:new Date()},runId:null,leaseOwner:null}});assert.equal(future,500)
   }finally{await a.stop();await b.stop()}
 })

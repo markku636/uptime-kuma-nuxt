@@ -10,7 +10,7 @@ interface ClusterNodeResponse {
   host: string
   port: number
   healthy: boolean
-  lastCheck: number
+  lastCheck: number | null
   error: string
   isPrimary: boolean
   monitorCount: number
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
 
     // 使用資料庫中的狀態作為主要來源
     const isOnline = node.status === 'online'
-    const lastHeartbeat = node.lastHeartbeat?.getTime() || 0
+    const lastSeen = node.lastSeen?.getTime() ?? null
 
     // 檢查快取或執行即時健康檢查 (僅在需要時)
     let healthStatus = { healthy: isOnline, error: '' }
@@ -104,7 +104,7 @@ export default defineEventHandler(async (event) => {
       host: nodeHost,
       port: nodePort,
       healthy: healthStatus.healthy,
-      lastCheck: lastHeartbeat || now,
+      lastCheck: lastSeen,
       error: healthStatus.error,
       isPrimary: node.isPrimary,
       monitorCount: monitorCountMap.get(node.nodeId) || 0

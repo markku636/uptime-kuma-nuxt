@@ -124,3 +124,33 @@ phase4的500個200ms同origin兩worker smoke：實際TCP max8，但defer約3645�
 5A 實際拆分：新增 `server/api/v1/monitors/lookup.get.ts`（GET ids≤200）、`composables/useMonitorPage.ts`、`composables/useMonitorPicker.ts`、`components/monitor/MonitorPagination.vue`。列表排序id ASC，cursor綁完整scope/filter；list僅一筆current-state相容heartbeat，不是raw history；bars另batch。
 
 實際額外consumer修正：`pages/status-pages/[id]/edit.vue`、`pages/maintenance/[id]/edit.vue` 直接使用共用遠端 MonitorSelector，避免原有錯誤response envelope與全量USelectMenu。
+
+遷移拆分：`20261114050000_read_projection` 先加heartbeat coverageSeconds、state assertionResults與bounded recent/history/important indexes；`20261114051000_hourly_rollups` 後續加hourly/checkpoint。legacy coverage固定120秒並estimated，不用目前interval倒推；新樣本snapshot min(7200,max(2,interval*2))秒。pause若已有state則同tx寫pending/PAUSED boundary，避免舊UP延續；無state不製造假check。
+
+介面外觀／mobile實際檔案：`layouts/default.vue`、`components/layout/WorkspaceSelector.vue`、`components/monitor/MonitorPagination.vue`、dashboard與monitor list重新排header/navigation/scope bar；保留workspace/env可切、手機menu與表單、頁面100筆DOM上限。legacy node filter不再占通用header（舊node metadata仍在settings，不能暗示它控制新排程）。Chrome desktop1280與mobile390真截圖/overflow/搜尋跨頁/selector選>201保留原300關聯驗收；root另做MCP。新增`tests/scale-browser.integration.test.ts`。
+
+Status-page配置安全讀：新增`server/api/v1/status-pages/[slug]/config.get.ts`（workspace editor、最多4000個page-bound IDs/100groups，安全名稱與metadata），編輯頁使用slug與正確data envelope，保留原groups及300+已選關聯；保存publicGroupList而非被忽略的monitors欄。`pages/status-pages/index.vue`加Configure monitors連結到canonical editor，`useMonitorPicker`可從既有安全selected metadata初始化。public GET仍有限page projection，不供編輯全量資料。
+
+5B實際模型：`HeartbeatHourly`、`HistoryCheckpoint`（firstBucket/sealedBefore/rawDeletedBefore/generation/clearing）、`HistoryClearJob`（workspace、captured maxMonitorId、cutoff、cursor、deletedRows、status）、`NotificationDedupe`（opaque key，scope composite FKs；資源生命週期保存，outbox清除不忘TLS通知）。migration `20261114051000_hourly_rollups` 先backfill既有TLS dedupe keys。
+
+rollup每輪最多32 monitors×24小時；鎖monitor並驗checkpoint generation，同tx寫整桶與watermark，可重跑不加倍。raw預設48小時但`HEARTBEAT_RETENTION_ENABLED=false`需顯式開啟；hourly400天。raw刪1000/輪，只有continuous已seal至cutoff者可刪且每monitor保留最後前置anchor。對已刪raw的非整點舊起點，明確向下整點對齊並回precision/rangeStart/rangeEnd。raw/rollup讀互斥，ping以sum/count合併。
+
+清歷史改202非同步owner job，新增`server/api/v1/maintenance/clear-heartbeats/[id].get.ts`與共用`server/services/uptime/clear-history.ts`，`components/settings/DatabaseManagement.vue`顯示job進度；只清captured cutoff前資料與聚合，state自足保留。worker job逐monitor鎖定、generation遞增、clearing期間不rollup，有限刪1000後繼續，最後恢復checkpoint，避免舊batch重建已清資料。
+
+5B讀取拆檔`server/services/uptime/rollup-reader.ts`，raw ranges支援同SQL內不同monitor/window邊界。新樣本trigger若落已seal區且raw仍可重建，鎖monitor後降低watermark/增generation；若已超rawDeletedBefore則明確拒絕late insert，禁止破壞無法重建之桶。非整點舊窗口的左右端均向外整點對齊並回hourly precision。
+
+socket序列化必須從async auth前開始：新增`server/utils/serial-queue.ts`（有限queue）、`tests/serial-queue.test.ts`故意延遲第一個authorization，保證收到順序不被DB回應先後翻轉；socket permission與subscription commit均使用同received-order鏈，超限disconnect而非堆無限Promise。
+
+Status-page列表 `server/api/v1/status-pages/index.get.ts` 移除raw monitor include，僅statusConfig metadata投影；browser保存後必須確認列表API200及名稱可見，避免只驗route跳轉就忽略BigInt序列化500。新增config匿名/viewer/foreign負例由read integration涵蓋。
+
+5B 鎖定契約補強：新增 `prisma/migrations/20261114051500_history_lock_contract/migration.sql`，以新 migration 替換 late-heartbeat function，不修改已套用的 51000 migration。所有 history writer 在判斷 checkpoint 前先取得 monitor lock，再取得 checkpoint lock；第一次 seal 尚無可見 checkpoint 時也不可跳過 monitor lock。Retention 同樣先鎖有限 monitor 集合，鎖後重新檢查 sealed/clearing 才刪 raw，rawDeletedBefore 使用單調 GREATEST。Reader `rollup-reader.ts` 的 checkpoint/raw/hourly 多段查詢放在同一 bounded REPEATABLE READ transaction，避免 seal/retention/clear 穿過讀取接縫。
+
+5B 實際新增背景工作路徑：`server/services/uptime/background.ts`、`server/services/uptime/clear-history.ts`，並由 `server/services/monitor/runtime.ts` 啟停；`server/services/monitor/commit-result.ts` 消費 durable TLS dedupe ledger、`cleanup.ts` 清除 outbox 仍保留 ledger。背景批次需有界且 stop/drain 等待實際 DB 工作結束；不把未接線服務當已完成。相關新增／調整測試包括 `tests/rollup.integration.test.ts`、`tests/retention.integration.test.ts` 與既有 outbox/runtime suites。Astra 唯讀審查證據另存 `docs/validation/astra-review-11.md`、`astra-rollup-race-probe.json`，不是產品實作檔。
+
+5B 鎖後重讀亦適用 aggregator：`rollup.ts` 首個 locking query 僅選取／鎖定 monitor IDs，不能把該 statement 在取得鎖前讀到的 joined checkpoint 當最新資料；鎖後下一 statement 重讀 checkpoint、first heartbeat 與 clearing/target eligibility，再規劃 ranges。讀取 snapshot 的規則與 writer 鎖後重讀不可互相取代。
+
+5C 實際路徑：新增 `server/utils/origin-hint.ts`、`prisma/migrations/20261114052000_origin_hint/migration.sql`；調整 `server/services/monitor/leases.ts`、`worker.ts`、`completion.ts`、`server/utils/monitor-mutation.ts`、`prisma/schema.prisma` 與 scheduler integration fixture。Origin hint 是以 APP_ENCRYPTION_KEY 作 HMAC 的不可逆 scheduling hint，不能作權限／lease 的依據；配置與 environment 變更時清空。候選集合仍須有限、按 origin 可用 slots 選取，再以原 monitor lock/fence claim；既有最終實際 HTTP concurrency 檢查不可省略。測量需明列候選上限、claimed/completed/deferred、同源／混合快慢源條件，不能把單次 500 同源結果當所有 fairness 或 4,000 steady 證明。
+
+Prometheus 受影響路徑補充：`server/api/metrics.get.ts`、`server/api/v1/metrics.get.ts` 共用新增 `server/utils/metrics-exporter.ts`。禁止全24h heartbeat回JS與每monitor逐一查詢；改單次 current-state SQL 聚合，固定狀態維度、移除URL/hostname/secret labels，明示不再提供昂貴歷史百分比 metric。全平台endpoint維持platform-admin，v1維持workspace/environment scope；新增對4k rows與sentinel無洩漏的integration。
+
+Selected monitor chips 每頁最多50，保留完整ID集合並有獨立selected next/previous controls；不把4,000個已選值一次掛DOM。StatusPage Chrome驗收改檢300 selected及保存後精確301IDs，搜尋 options 仍與selected paging互不覆蓋。`pages/settings/workspaces.vue` scope切換立即清members/env/secret輸入與notice，讀取以scopeID+sequence拒絕晚回應；initial load不顯示Saved。

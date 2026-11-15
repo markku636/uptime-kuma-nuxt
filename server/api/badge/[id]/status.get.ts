@@ -1,10 +1,11 @@
+import {parseBadgeId,parseBadgeQuery,parseBadgeDuration} from '../../../utils/badge-input'
 // server/api/badge/[id]/status.get.ts
 import { generateBadge, getStatusColor } from '../../../services/badge/generator'
 
 export default defineEventHandler(async (event) => {
-  const id = parseInt(getRouterParam(event, 'id') || '0')
+  const id = parseBadgeId(getRouterParam(event, 'id'))
   await assertPublishedMonitor(id)
-  const query = getQuery(event)
+  const query = parseBadgeQuery(getQuery(event))
   
   if (!id) {
     throw createError({
@@ -65,13 +66,13 @@ export default defineEventHandler(async (event) => {
   }
 
   // Generate badge
-  const label = String(query.label || 'Status')
-  const style = String(query.style || 'flat') as any
-  const labelColor = String(query.labelColor || '#555')
-  const upColor = String(query.upColor || '#4c1')
-  const downColor = String(query.downColor || '#e05d44')
+  const label = (query.label ?? 'Status')
+  const style = (query.style ?? 'flat')
+  const labelColor = (query.labelColor ?? '#555')
+  const upColor = (query.upColor ?? '#4c1')
+  const downColor = (query.downColor ?? '#e05d44')
 
-  const color = status === 'up' ? upColor : status === 'down' ? downColor : getStatusColor(status)
+  const color = status === 'up' ? upColor : status === 'down' ? downColor : status === 'pending' ? (query.pendingColor??getStatusColor(status)) : (query.maintenanceColor??getStatusColor(status))
 
   const svg = generateBadge({
     label,

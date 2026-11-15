@@ -5,7 +5,7 @@
     <!-- Selected Monitors -->
     <div v-if="modelValue.length > 0" class="selected-monitors">
       <div
-        v-for="monitor in selectedMonitorDetails"
+        v-for="monitor in visibleSelected"
         :key="monitor.id"
         class="selected-tag"
       >
@@ -15,6 +15,8 @@
         </button>
       </div>
     </div>
+
+    <div v-if="modelValue.length" class="flex flex-wrap gap-3 items-center text-sm py-2"><span>{{modelValue.length}} selected</span><template v-if="modelValue.length>50"><button type="button" :disabled="selectedPage===0" aria-label="Previous selected monitors" @click="selectedPage--">Previous selected</button><button type="button" :disabled="(selectedPage+1)*50>=modelValue.length" aria-label="Next selected monitors" @click="selectedPage++">Next selected</button></template></div>
 
     <!-- Dropdown -->
     <div class="dropdown-wrapper" ref="dropdownRef">
@@ -82,7 +84,7 @@ const emit = defineEmits<{
 }>()
 
 const dropdownRef = ref<HTMLElement | null>(null)
-const picker=useMonitorPicker(computed(()=>props.modelValue))
+const picker=useMonitorPicker(computed(()=>props.modelValue),computed(()=>props.monitors||[]))
 const searchQuery=picker.search
 const isOpen = ref(false)
 
@@ -94,6 +96,8 @@ onClickOutside(dropdownRef, () => {
 // Computed
 const filteredMonitors=picker.monitors
 const selectedMonitorDetails=picker.selectedMonitors
+const selectedPage=ref(0),visibleSelected=computed(()=>selectedMonitorDetails.value.slice(selectedPage.value*50,(selectedPage.value+1)*50))
+watch(()=>props.modelValue.length,()=>{if(selectedPage.value*50>=props.modelValue.length)selectedPage.value=0})
 // Methods
 function isSelected(id: number): boolean {
   return props.modelValue.includes(id)

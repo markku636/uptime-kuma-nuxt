@@ -100,8 +100,7 @@ test('published status endpoints, aliases and badges do not expose private monit
   assert.equal((await request(`/api/v1/status-pages/${pageA.slug}/monitors?no_pagination=true`)).status,401)
   assert.equal((await request(`/api/badge/${mb.id}/status`)).status,404)
   assert.equal((await request(`/api/badge/${ma.id}/status`)).status,200)
-  const foreign = await data(await request(`/api/v1/status-pages/${pageA.slug}/heartbeat?monitorIds=${mb.id}`))
-  assert.deepEqual(foreign.data.heartbeatList,{})
+  assert.equal((await request(`/api/v1/status-pages/${pageA.slug}/heartbeat?monitorIds=${mb.id}`)).status,404)
 })
 test('backup export excludes secrets; imported foreign relation IDs roll back the batch', async () => {
   const exported = await request('/api/v1/backup/export','GET',owner,a)

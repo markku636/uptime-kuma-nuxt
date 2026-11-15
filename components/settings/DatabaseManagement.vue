@@ -97,13 +97,15 @@
           />
           <button
             class="btn btn-outline-danger"
-            :disabled="clearHeartbeatsConfirm !== 'DELETE'"
+            :disabled="clearHeartbeatsConfirm !== 'DELETE' || !!historyJob && historyJob.status !== 'completed'"
             @click="clearHeartbeats"
           >
             Clear
           </button>
         </div>
       </div>
+
+      <p v-if="historyJob" role="status">History job: {{ historyJob.status }} · {{ historyJob.processedMonitors }} monitors · {{ historyJob.deletedRows }} rows removed. Current status is retained.</p>
 
       <!-- Clear Statistics -->
       <div class="danger-item mb-3">
@@ -219,11 +221,10 @@ async function shrinkDatabase() {
 async function exportData() {
   isExporting.value = true
   try {
-    const blob = await $fetch('/api/v1/settings/export', {
-      responseType: 'blob'
-    })
+    const exported = await $fetch('/api/v1/settings/export')
+    const blob = new Blob([JSON.stringify(exported,null,2)],{type:'application/json'})
     
-    const url = URL.createObjectURL(blob as Blob)
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `uptime-kuma-backup-${new Date().toISOString().split('T')[0]}.json`
@@ -270,11 +271,22 @@ async function importData(file: File) {
   }
 }
 
+const historyJob = ref<any>(null)
+let historyPoll:ReturnType<typeof setTimeout>|undefined
+onBeforeUnmount(()=>{if(historyPoll)clearTimeout(historyPoll)})
+async function pollHistoryJob(){
+ if(!historyJob.value)return
+ const response:any=await $fetch(`/api/v1/maintenance/clear-heartbeats/${historyJob.value.id}`)
+ historyJob.value=response.data
+ if(historyJob.value.status!=="completed")historyPoll=setTimeout(()=>void pollHistoryJob().catch(()=>{}),2000)
+}
 async function clearHeartbeats() {
   if (clearHeartbeatsConfirm.value !== 'DELETE') return
   
   try {
-    await $fetch('/api/v1/maintenance/clear-heartbeats', { method: 'POST' })
+    const response:any=await $fetch('/api/v1/maintenance/clear-heartbeats', { method: 'POST' })
+    historyJob.value=response.data
+    void pollHistoryJob().catch(()=>{})
     clearHeartbeatsConfirm.value = ''
     // Refresh db info
     const info = await $fetch<DbInfo>('/api/v1/settings/database-info')

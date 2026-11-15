@@ -1,0 +1,75 @@
+{{- if .Values.buildVerification.enabled }}
+{{- $sha := required "buildVerification.contextSha required" .Values.buildVerification.contextSha }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uptime-build-context-loader
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+data:
+  load.py: |
+{{ .Files.Get "files/load-context.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uptime-build-{{ $sha | trunc 12 }}-{{ .Values.buildVerification.attempt | default 1 | int }}
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 1800
+  template:
+    metadata:
+      labels:
+        monitoring.owner: {{ .Values.owner | quote }}
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      initContainers:
+        - name: context
+          image: python:3.13.11-slim-bookworm
+          command: [python, /loader/load.py]
+          env:
+            - {name: CONTEXT_SHA, value: {{ $sha | quote }}}
+            - {name: CONTEXT_BYTES, value: {{ .Values.buildVerification.contextBytes | int64 | quote }}}
+            - {name: CONTEXT_URL, value: {{ required "buildVerification.contextUrl required" .Values.buildVerification.contextUrl | quote }}}
+          securityContext: {runAsUser: 0, allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: "1", memory: 256Mi}
+          volumeMounts:
+            - {name: workspace, mountPath: /workspace}
+            - {name: loader, mountPath: /loader, readOnly: true}
+      containers:
+        - name: build
+          image: gcr.io/kaniko-project/executor:v1.23.2-debug
+          imagePullPolicy: IfNotPresent
+          command: [/busybox/sh, -ec]
+          args:
+            - >-
+              /kaniko/executor --context=dir:///workspace --dockerfile=/workspace/Dockerfile
+              --target=runtime --destination=uptime-build-only:{{ $sha | trunc 12 }}
+              --no-push --no-push-cache --cache=false --snapshot-mode=full
+              --tar-path=/result/image.tar --digest-file=/result/image.digest;
+              echo IMAGE_DIGEST; /busybox/cat /result/image.digest;
+              echo IMAGE_SHA256; /busybox/sha256sum /result/image.tar;
+              echo IMAGE_BYTES; /busybox/wc -c /result/image.tar
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            privileged: false
+          resources:
+            requests: {cpu: "1", memory: 2Gi, ephemeral-storage: 4Gi}
+            limits: {cpu: "2", memory: 6Gi, ephemeral-storage: 16Gi}
+          volumeMounts:
+            - {name: workspace, mountPath: /workspace}
+            - {name: result, mountPath: /result}
+      volumes:
+        - name: workspace
+          emptyDir: {sizeLimit: 4Gi}
+        - name: result
+          emptyDir: {sizeLimit: 4Gi}
+        - name: loader
+          configMap: {name: uptime-build-context-loader}
+{{- end }}

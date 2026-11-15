@@ -71,6 +71,7 @@ const {
   addGroup,
   removeGroup,
   updateGroupName,
+  reorderGroups,
   addMonitorToGroup,
   removeMonitorFromGroup,
   uploadLogo
@@ -1168,12 +1169,12 @@ function formatLastUpdated(date: Date | null) {
 }
 
 .btn-primary {
-  background-color: #22c55e;
-  color: white;
+  background-color: var(--uk-primary);
+  color: var(--uk-on-primary);
 }
 
 .btn-primary:hover {
-  background-color: #16a34a;
+  background-color: var(--uk-primary-hover);
 }
 
 .btn-primary:disabled {

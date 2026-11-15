@@ -1,0 +1,124 @@
+{
+  "kustomize": [
+    {
+      "name": "uptime-api",
+      "spread": {
+        "labelSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/component": "api",
+            "app.kubernetes.io/name": "uptime-api"
+          }
+        },
+        "matchLabelKeys": [
+          "pod-template-hash"
+        ],
+        "maxSkew": 1,
+        "minDomains": 2,
+        "topologyKey": "kubernetes.io/hostname",
+        "whenUnsatisfiable": "DoNotSchedule"
+      },
+      "grace": 45
+    },
+    {
+      "name": "uptime-worker",
+      "spread": {
+        "labelSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/component": "worker",
+            "app.kubernetes.io/name": "uptime-api"
+          }
+        },
+        "matchLabelKeys": [
+          "pod-template-hash"
+        ],
+        "maxSkew": 1,
+        "minDomains": 2,
+        "topologyKey": "kubernetes.io/hostname",
+        "whenUnsatisfiable": "DoNotSchedule"
+      },
+      "grace": 45
+    }
+  ],
+  "helmImage": [
+    {
+      "name": "uptime-api",
+      "spread": {
+        "maxSkew": 1,
+        "topologyKey": "kubernetes.io/hostname",
+        "whenUnsatisfiable": "DoNotSchedule",
+        "minDomains": 2,
+        "matchLabelKeys": [
+          "pod-template-hash"
+        ],
+        "labelSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "uptime-api",
+            "app.kubernetes.io/instance": "review",
+            "app.kubernetes.io/component": "api",
+            "monitoring.owner": "uptime-api-demo-20261114"
+          }
+        }
+      },
+      "grace": 45
+    },
+    {
+      "name": "uptime-worker",
+      "spread": {
+        "maxSkew": 1,
+        "topologyKey": "kubernetes.io/hostname",
+        "whenUnsatisfiable": "DoNotSchedule",
+        "minDomains": 2,
+        "matchLabelKeys": [
+          "pod-template-hash"
+        ],
+        "labelSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "uptime-api",
+            "app.kubernetes.io/instance": "review",
+            "app.kubernetes.io/component": "worker",
+            "monitoring.owner": "uptime-api-demo-20261114"
+          }
+        }
+      },
+      "grace": 45
+    }
+  ],
+  "helmArtifact": [
+    {
+      "name": "uptime-api",
+      "spread": {
+        "maxSkew": 1,
+        "topologyKey": "kubernetes.io/hostname",
+        "whenUnsatisfiable": "ScheduleAnyway",
+        "labelSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "uptime-api",
+            "app.kubernetes.io/instance": "review",
+            "app.kubernetes.io/component": "api",
+            "monitoring.owner": "uptime-api-demo-20261114"
+          }
+        }
+      },
+      "grace": 45
+    },
+    {
+      "name": "uptime-worker",
+      "spread": {
+        "maxSkew": 1,
+        "topologyKey": "kubernetes.io/hostname",
+        "whenUnsatisfiable": "ScheduleAnyway",
+        "labelSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "uptime-api",
+            "app.kubernetes.io/instance": "review",
+            "app.kubernetes.io/component": "worker",
+            "monitoring.owner": "uptime-api-demo-20261114"
+          }
+        }
+      },
+      "grace": 45
+    }
+  ],
+  "passed": true,
+  "readOnlyRender": true
+}

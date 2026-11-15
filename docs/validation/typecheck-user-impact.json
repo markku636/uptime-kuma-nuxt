@@ -1,0 +1,682 @@
+{
+  "count": 66,
+  "status": "nonzero",
+  "comparison": "Source-line comparison only; unchanged text does not prove the diagnostic existed under the original dependency/schema graph.",
+  "exactSourceLinesPresentInOriginal": 66,
+  "diagnostics": [
+    {
+      "path": "components/common/ConfirmDialog.vue",
+      "line": 92,
+      "column": 10,
+      "code": "TS2322",
+      "message": "Type '\"red\" | \"primary\" | \"yellow\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": ":color=\"confirmButtonColor\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/common/CopyableInput.vue",
+      "line": 31,
+      "column": 7,
+      "code": "TS2322",
+      "message": "Type '\"green\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "color: 'green',",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/common/CopyableInput.vue",
+      "line": 41,
+      "column": 7,
+      "code": "TS2322",
+      "message": "Type '\"red\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "color: 'red',",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/common/LanguageSelector.vue",
+      "line": 18,
+      "column": 37,
+      "code": "TS2345",
+      "message": "Argument of type 'string' is not assignable to parameter of type '\"en\" | \"ms\" | \"ab\" | \"af\" | \"ang\" | \"ar\" | \"ar-SY\" | \"bar\" | \"be\" | \"bg-BG\" | \"bn\" | \"ca\" | \"ckb\" | \"cs-CZ\" | \"da-DK\" | \"de-CH\" | \"de-DE\" | \"el-GR\" | \"enm\" | \"es-ES\" | \"et-EE\" | \"eu\" | ... 50 more ... | \"zh-TW\"'.",
+      "sourceLine": "set: (value: string) => setLocale(value)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/common/TagsManager.vue",
+      "line": 2,
+      "column": 15,
+      "code": "TS2305",
+      "message": "Module '\"~/types\"' has no exported member 'Tag'.",
+      "sourceLine": "import type { Tag } from '~/types'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/group/CreateGroupDialog.vue",
+      "line": 96,
+      "column": 18,
+      "code": "TS2339",
+      "message": "Property 'id' does not exist on type '{ data: {}; ok: boolean; provisioning?: { pushToken: string; }; }'.",
+      "sourceLine": "id: result.id,",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/group/CreateGroupDialog.vue",
+      "line": 97,
+      "column": 20,
+      "code": "TS2339",
+      "message": "Property 'name' does not exist on type '{ data: {}; ok: boolean; provisioning?: { pushToken: string; }; }'.",
+      "sourceLine": "name: result.name,",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/group/CreateGroupDialog.vue",
+      "line": 98,
+      "column": 27,
+      "code": "TS2339",
+      "message": "Property 'description' does not exist on type '{ data: {}; ok: boolean; provisioning?: { pushToken: string; }; }'.",
+      "sourceLine": "description: result.description",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/monitor/HttpHeaders.vue",
+      "line": 40,
+      "column": 11,
+      "code": "TS2322",
+      "message": "Type '\"red\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "color=\"red\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/monitor/MonitorCard.vue",
+      "line": 100,
+      "column": 29,
+      "code": "TS2345",
+      "message": "Argument of type 'string | 0' is not assignable to parameter of type 'string'.",
+      "sourceLine": "const uptime = parseFloat(uptimePercentage.value)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/monitor/MonitorConditions.vue",
+      "line": 65,
+      "column": 11,
+      "code": "TS2322",
+      "message": "Type '\"red\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "color=\"red\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/monitor/MonitorListFilter.vue",
+      "line": 37,
+      "column": 9,
+      "code": "TS2322",
+      "message": "Type 'string | number' is not assignable to type 'string'.",
+      "sourceLine": "v-model=\"tagFilter\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/monitor/MonitorListFilter.vue",
+      "line": 188,
+      "column": 22,
+      "code": "TS2322",
+      "message": "Type 'number' is not assignable to type 'string'.",
+      "sourceLine": "options.push({ value: tag.id, label: tag.name })",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/monitor/PingChart.vue",
+      "line": 2,
+      "column": 22,
+      "code": "TS2307",
+      "message": "Cannot find module 'vue-chartjs' or its corresponding type declarations.",
+      "sourceLine": "import { Line } from 'vue-chartjs'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/monitor/PingChart.vue",
+      "line": 13,
+      "column": 8,
+      "code": "TS2307",
+      "message": "Cannot find module 'chart.js' or its corresponding type declarations.",
+      "sourceLine": "} from 'chart.js'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/monitor/ScreenshotDialog.vue",
+      "line": 102,
+      "column": 34,
+      "code": "TS2339",
+      "message": "Property 'url' does not exist on type '{ data: {} | { scheduleSupported: boolean; runtimeStatus: string; }; ok: boolean; }'.",
+      "sourceLine": "screenshotUrl.value = result.url || null",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/monitor/ScreenshotDialog.vue",
+      "line": 103,
+      "column": 35,
+      "code": "TS2339",
+      "message": "Property 'time' does not exist on type '{ data: {} | { scheduleSupported: boolean; runtimeStatus: string; }; ok: boolean; }'.",
+      "sourceLine": "screenshotTime.value = result.time ? new Date(result.time) : null",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/monitor/ScreenshotDialog.vue",
+      "line": 103,
+      "column": 58,
+      "code": "TS2339",
+      "message": "Property 'time' does not exist on type '{ data: {} | { scheduleSupported: boolean; runtimeStatus: string; }; ok: boolean; }'.",
+      "sourceLine": "screenshotTime.value = result.time ? new Date(result.time) : null",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/monitor/ScreenshotDialog.vue",
+      "line": 116,
+      "column": 7,
+      "code": "TS2322",
+      "message": "Type '\"POST\"' is not assignable to type '\"GET\" | \"PUT\" | \"DELETE\" | \"get\" | \"put\" | \"delete\"'.",
+      "sourceLine": "method: 'POST'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/notification/providers/LineNotify.vue",
+      "line": 43,
+      "column": 7,
+      "code": "TS2322",
+      "message": "Type '\"amber\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "color=\"amber\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/status-page/EditSidebar.vue",
+      "line": 81,
+      "column": 39,
+      "code": "TS2339",
+      "message": "Property 'perPage' does not exist on type '{ slug: string; title: string; description?: string; icon?: string; theme: \"light\" | \"dark\" | \"auto\"; autoRefreshInterval: number; published: boolean; showTags: boolean; showPoweredBy: boolean; ... 5 more ...; publicGroupList?: any[]; }'.",
+      "sourceLine": "v-model.number=\"localConfig.perPage\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/status-page/GroupEditor.vue",
+      "line": 43,
+      "column": 13,
+      "code": "TS2322",
+      "message": "Type '\"red\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "color=\"red\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/status-page/GroupEditor.vue",
+      "line": 87,
+      "column": 77,
+      "code": "TS2345",
+      "message": "Argument of type 'number' is not assignable to parameter of type 'Monitor'.",
+      "sourceLine": "@update:model-value=\"(monitor) => addMonitorToGroup(groupIndex, monitor)\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/status-page/IncidentDialog.vue",
+      "line": 168,
+      "column": 9,
+      "code": "TS2322",
+      "message": "Type '\"PUT\"' is not assignable to type '\"post\" | \"POST\"'.",
+      "sourceLine": "method: 'PUT',",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "components/status-page/IncidentEditor.vue",
+      "line": 69,
+      "column": 21,
+      "code": "TS2322",
+      "message": "Type 'string' is not assignable to type '\"light\" | \"dark\" | \"info\" | \"warning\" | \"danger\" | \"primary\"'.",
+      "sourceLine": "@click=\"localIncident.style = style.value\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/status/IncidentBanner.vue",
+      "line": 59,
+      "column": 18,
+      "code": "TS2322",
+      "message": "Type '\"white\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "<UButton color=\"white\" size=\"sm\" @click=\"emit('post')\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/status/IncidentBanner.vue",
+      "line": 64,
+      "column": 18,
+      "code": "TS2322",
+      "message": "Type '\"white\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "<UButton color=\"white\" size=\"sm\" @click=\"emit('cancel')\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/status/IncidentBanner.vue",
+      "line": 74,
+      "column": 20,
+      "code": "TS2322",
+      "message": "Type '\"gray\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "<UButton color=\"gray\" size=\"sm\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/status/IncidentBanner.vue",
+      "line": 82,
+      "column": 18,
+      "code": "TS2322",
+      "message": "Type '\"white\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "<UButton color=\"white\" size=\"sm\" @click=\"emit('edit')\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/status/IncidentBanner.vue",
+      "line": 87,
+      "column": 18,
+      "code": "TS2322",
+      "message": "Type '\"white\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "<UButton color=\"white\" size=\"sm\" @click=\"emit('unpin')\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/status/PublicGroupList.vue",
+      "line": 24,
+      "column": 15,
+      "code": "TS2322",
+      "message": "Type '\"red\"' is not assignable to type '\"error\" | \"success\" | \"info\" | \"warning\" | \"primary\" | \"secondary\" | \"neutral\"'.",
+      "sourceLine": "color=\"red\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "D_ui_color_contract"
+    },
+    {
+      "path": "components/tag/TagEditDialog.vue",
+      "line": 56,
+      "column": 15,
+      "code": "TS2305",
+      "message": "Module '\"~/types\"' has no exported member 'Tag'.",
+      "sourceLine": "import type { Tag as TagType } from '~/types'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "components/tag/TagEditDialog.vue",
+      "line": 73,
+      "column": 9,
+      "code": "TS2339",
+      "message": "Property 'addTag' does not exist on type '{ tags: Ref<Tag[], Tag[]>; isLoading: Ref<boolean, boolean>; error: Ref<string, string>; fetchTags: () => Promise<void>; createTag: (tagData: { name: string; color: string; }) => Promise<...>; updateTag: (id: number, tagData: { ...; }) => Promise<...>; deleteTag: (id: number) => Promise<...>; getTag: (id: number) =>...'.",
+      "sourceLine": "const { addTag, updateTag } = useTags()",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "composables/useAppearanceSettings.ts",
+      "line": 65,
+      "column": 33,
+      "code": "TS2589",
+      "message": "Type instantiation is excessively deep and possibly infinite.",
+      "sourceLine": "const { locale, setLocale } = useI18n()",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "composables/useAppearanceSettings.ts",
+      "line": 67,
+      "column": 15,
+      "code": "TS2345",
+      "message": "Argument of type 'string' is not assignable to parameter of type '\"en\" | \"ms\" | \"ab\" | \"af\" | \"ang\" | \"ar\" | \"ar-SY\" | \"bar\" | \"be\" | \"bg-BG\" | \"bn\" | \"ca\" | \"ckb\" | \"cs-CZ\" | \"da-DK\" | \"de-CH\" | \"de-DE\" | \"el-GR\" | \"enm\" | \"es-ES\" | \"et-EE\" | \"eu\" | ... 50 more ... | \"zh-TW\"'.",
+      "sourceLine": "setLocale(language)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "pages/settings/appearance.vue",
+      "line": 13,
+      "column": 30,
+      "code": "TS2345",
+      "message": "Argument of type 'string' is not assignable to parameter of type '\"light\" | \"dark\" | \"system\" | \"auto\"'.",
+      "sourceLine": "@click=\"setTheme(t.value)\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "pages/settings/appearance.vue",
+      "line": 65,
+      "column": 21,
+      "code": "TS2322",
+      "message": "Type 'string' is not assignable to type '\"normal\" | \"bottom\" | \"none\"'.",
+      "sourceLine": "@click=\"heartbeatBarStyle = style.value\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "pages/settings/appearance.vue",
+      "line": 78,
+      "column": 21,
+      "code": "TS2322",
+      "message": "Type 'string' is not assignable to type '\"none\" | \"no-line\" | \"with-line\"'.",
+      "sourceLine": "@click=\"elapsedTimeStyle = style.value\">",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "pages/settings/security.vue",
+      "line": 159,
+      "column": 55,
+      "code": "TS2322",
+      "message": "Type '\"DELETE\"' is not assignable to type '\"GET\" | \"get\"'.",
+      "sourceLine": "await $fetch(`/api/auth/sessions/${sessionId}`, { method: 'DELETE' })",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "pages/settings/security.vue",
+      "line": 170,
+      "column": 53,
+      "code": "TS2322",
+      "message": "Type '\"POST\"' is not assignable to type '\"GET\" | \"get\"'.",
+      "sourceLine": "await $fetch('/api/auth/sessions/revoke-all', { method: 'POST' })",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "pages/settings/tags.vue",
+      "line": 46,
+      "column": 61,
+      "code": "TS2322",
+      "message": "Type '\"PUT\"' is not assignable to type '\"DELETE\" | \"delete\"'.",
+      "sourceLine": "await $fetch(`/api/v1/tags/${editingTag.value.id}`, { method: 'PUT', body: form.value })",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "pages/status/[slug].vue",
+      "line": 398,
+      "column": 5,
+      "code": "TS2304",
+      "message": "Cannot find name 'reorderGroups'.",
+      "sourceLine": "reorderGroups(groups)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "pages/status/[slug].vue",
+      "line": 691,
+      "column": 32,
+      "code": "TS2339",
+      "message": "Property 'startTime' does not exist on type '{ id: number; title: string; description?: string; }'.",
+      "sourceLine": "{{ maintenance.startTime }} - {{ maintenance.endTime }}",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "F_public_maintenance_integration_unverified"
+    },
+    {
+      "path": "pages/status/[slug].vue",
+      "line": 691,
+      "column": 62,
+      "code": "TS2339",
+      "message": "Property 'endTime' does not exist on type '{ id: number; title: string; description?: string; }'.",
+      "sourceLine": "{{ maintenance.startTime }} - {{ maintenance.endTime }}",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "F_public_maintenance_integration_unverified"
+    },
+    {
+      "path": "pages/status/[slug].vue",
+      "line": 938,
+      "column": 8,
+      "code": "TS2322",
+      "message": "Type '{ slug?: string; title?: string; description?: string; icon?: string; theme?: \"light\" | \"dark\" | \"auto\"; autoRefreshInterval?: number; perPage?: number; published?: boolean; showTags?: boolean; showPoweredBy?: boolean; ... 5 more ...; publicGroupList?: { ...; }[]; }' is not assignable to type 'StatusPageConfig'.",
+      "sourceLine": ":config=\"draftConfig\"",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "plugins/pwa.client.ts",
+      "line": 73,
+      "column": 13,
+      "code": "TS2769",
+      "message": "No overload matches this call.",
+      "sourceLine": "applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "server/api/badge/[id]/avg-response/[duration].get.ts",
+      "line": 59,
+      "column": 45,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge(`Avg Response`, `${avgResponse}ms`, color)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 67,
+      "column": 43,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'N/A', '#808080')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 77,
+      "column": 45,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'N/A', '#808080')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 85,
+      "column": 45,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'Error', '#e74c3c')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 98,
+      "column": 43,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', label, color)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 105,
+      "column": 43,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'Error', '#e74c3c')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/cluster/nodes.get.ts",
+      "line": 83,
+      "column": 32,
+      "code": "TS2339",
+      "message": "Property 'lastHeartbeat' does not exist on type '{ status: string; id: number; active: boolean; createdAt: Date; hostname: string; nodeId: string; host: string; nodeName: string; location: string; isPrimary: boolean; lastSeen: Date; lastError: string; modifiedAt: Date; }'.",
+      "sourceLine": "const lastHeartbeat = node.lastHeartbeat?.getTime() || 0",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/services/monitor/checkers/real-browser-checker.ts",
+      "line": 2,
+      "column": 15,
+      "code": "TS2305",
+      "message": "Module '\"./index\"' has no exported member 'CheckResult'.",
+      "sourceLine": "import type { CheckResult } from './index'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "C_explicitly_unsupported_legacy_checker"
+    },
+    {
+      "path": "stores/ui.ts",
+      "line": 4,
+      "column": 27,
+      "code": "TS2769",
+      "message": "No overload matches this call.",
+      "sourceLine": "export const useUIStore = defineStore('ui', {",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "B_dormant_or_unproven_reachability"
+    },
+    {
+      "path": "server/api/badge/[id]/avg-response/[duration].get.ts",
+      "line": 59,
+      "column": 45,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge(`Avg Response`, `${avgResponse}ms`, color)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 67,
+      "column": 43,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'N/A', '#808080')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 77,
+      "column": 45,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'N/A', '#808080')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 85,
+      "column": 45,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'Error', '#e74c3c')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 98,
+      "column": 43,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', label, color)",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/badge/[id]/cert-exp.get.ts",
+      "line": 105,
+      "column": 43,
+      "code": "TS2554",
+      "message": "Expected 1 arguments, but got 3.",
+      "sourceLine": "const svg = generateBadge('Cert Exp', 'Error', '#e74c3c')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/cluster/nodes.get.ts",
+      "line": 83,
+      "column": 32,
+      "code": "TS2339",
+      "message": "Property 'lastHeartbeat' does not exist on type '{ id: number; createdAt: Date; active: boolean; hostname: string | null; nodeId: string; status: string; host: string | null; nodeName: string; location: string | null; isPrimary: boolean; lastSeen: Date | null; lastError: string | null; modifiedAt: Date; }'.",
+      "sourceLine": "const lastHeartbeat = node.lastHeartbeat?.getTime() || 0",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "A_reachable_contract_or_display_defect"
+    },
+    {
+      "path": "server/api/status/[slug]/rss.get.ts",
+      "line": 2,
+      "column": 17,
+      "code": "TS7016",
+      "message": "Could not find a declaration file for module 'rss'. '/home/mark/projects/uptime-kuma-nuxt-20261114/node_modules/rss/lib/index.js' implicitly has an 'any' type.",
+      "sourceLine": "import RSS from 'rss'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "E_type_annotation_or_no_proven_runtime_failure"
+    },
+    {
+      "path": "server/services/monitor/checkers/game-checker.ts",
+      "line": 87,
+      "column": 34,
+      "code": "TS7016",
+      "message": "Could not find a declaration file for module 'gamedig'. '/home/mark/projects/uptime-kuma-nuxt-20261114/node_modules/gamedig/lib/index.js' implicitly has an 'any' type.",
+      "sourceLine": "const Gamedig = await import('gamedig')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "C_explicitly_unsupported_legacy_checker"
+    },
+    {
+      "path": "server/services/monitor/checkers/network-checker.ts",
+      "line": 280,
+      "column": 31,
+      "code": "TS7016",
+      "message": "Could not find a declaration file for module 'snmp-native'. '/home/mark/projects/uptime-kuma-nuxt-20261114/node_modules/snmp-native/lib/snmp.js' implicitly has an 'any' type.",
+      "sourceLine": "const snmp = await import('snmp-native')",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "C_explicitly_unsupported_legacy_checker"
+    },
+    {
+      "path": "server/services/monitor/checkers/real-browser-checker.ts",
+      "line": 2,
+      "column": 15,
+      "code": "TS2305",
+      "message": "Module '\"./index\"' has no exported member 'CheckResult'.",
+      "sourceLine": "import type { CheckResult } from './index'",
+      "sourceLineExistsInOriginal": true,
+      "impactCategory": "C_explicitly_unsupported_legacy_checker"
+    }
+  ],
+  "npmExitCode": 1,
+  "underlyingTypecheckerExitCode": 2,
+  "sourceLog": ".data/validation-logs/final-settings-typecheck.log",
+  "impactCounts": {
+    "D_ui_color_contract": 13,
+    "E_type_annotation_or_no_proven_runtime_failure": 16,
+    "B_dormant_or_unproven_reachability": 13,
+    "A_reachable_contract_or_display_defect": 18,
+    "F_public_maintenance_integration_unverified": 2,
+    "C_explicitly_unsupported_legacy_checker": 4
+  },
+  "uniqueLocations": 58,
+  "scope": "Read-only source audit; no whole-suite rerun. One pure badge generator call reproduced TypeError; no HTTP badge or UI actions exercised.",
+  "warning": "All matching original source lines is not proof that diagnostics are harmless or pre-existing under the old dependency/schema graph."
+}

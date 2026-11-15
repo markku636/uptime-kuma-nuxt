@@ -1,0 +1,35 @@
+{
+  "database": "uptime_astra_rollup_1794630616548",
+  "scope": "Isolated full migrated DB; replace trigger only inside this disposable DB to compare 51000 and 51500",
+  "cases": [
+    {
+      "version": "20261114051000_hourly_rollups",
+      "scenario": "existing-seal",
+      "sealedBefore": "2026-01-01T11:00:00.000Z",
+      "generation": "1",
+      "invalidationApplied": false
+    },
+    {
+      "version": "20261114051000_hourly_rollups",
+      "scenario": "first-seal",
+      "sealedBefore": "2026-01-01T11:00:00.000Z",
+      "generation": "1",
+      "invalidationApplied": false
+    },
+    {
+      "version": "20261114051500_history_lock_contract",
+      "scenario": "existing-seal",
+      "sealedBefore": "2026-01-01T10:00:00.000Z",
+      "generation": "2",
+      "invalidationApplied": true
+    },
+    {
+      "version": "20261114051500_history_lock_contract",
+      "scenario": "first-seal",
+      "sealedBefore": "2026-01-01T10:00:00.000Z",
+      "generation": "2",
+      "invalidationApplied": true
+    }
+  ],
+  "cleaned": true
+}

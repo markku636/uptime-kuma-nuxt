@@ -1,0 +1,47 @@
+{{- if and .Values.application.enabled .Values.fixture.enabled }}
+{{- if ne .Values.application.mode "artifact" }}{{ fail "demo fixture requires the owned artifact demo mode" }}{{ end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uptime-fixture
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: uptime-fixture}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: uptime-fixture}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, runAsNonRoot: true}
+      containers:
+        - name: fixture
+          image: {{ .Values.application.artifactImage | quote }}
+          workingDir: /app
+          command: [node, scripts/demo-fixture.mjs]
+          env:
+            - {name: NODE_OPTIONS, value: "--max-old-space-size=64"}
+            - {name: FIXTURE_HOST, value: "0.0.0.0"}
+            - {name: FIXTURE_PORT, value: "3000"}
+          ports: [{name: http, containerPort: 3000}]
+          readinessProbe: {httpGet: {path: /health, port: http}, periodSeconds: 5}
+          securityContext: {readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          volumeMounts:
+            - {name: artifacts, mountPath: /app, subPath: {{ printf "releases/%s" .Values.application.artifactSha | quote }}, readOnly: true}
+      volumes:
+        - name: artifacts
+          persistentVolumeClaim: {claimName: uptime-artifacts}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uptime-fixture
+spec:
+  selector: {app.kubernetes.io/name: uptime-fixture}
+  ports: [{port: 3000, targetPort: http}]
+{{- end }}

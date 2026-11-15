@@ -1,3 +1,4 @@
+import {projectTLSCache} from '../../utils/tls-cache'
 import {commitMonitorResult} from './commit-result'
 import {Prisma} from '@prisma/client'
 import {prisma} from '../../utils/prisma'
@@ -13,8 +14,8 @@ export async function completeMonitorRun(lease:MonitorLease,result:CheckResult,d
     const monitor=await tx.monitor.findUniqueOrThrow({where:{id:lease.id}})
     const {now,heartbeat,state}=await commitMonitorResult(tx,monitor,result)
     const interval=Math.max(1,monitor.interval)*1000,scheduled=lease.scheduledFor.getTime(),next=scheduled+(Math.floor(Math.max(0,now.getTime()-scheduled)/interval)+1)*interval
-    const data:any={nextCheckAt:new Date(next),runId:null,scheduledFor:null,leaseOwner:null,leaseUntil:null,claimedConfigVersion:null}
-    if((result as any).tlsInfo)data.tlsInfo=JSON.parse(JSON.stringify((result as any).tlsInfo))
+    const data:any={...((result as any).originHint?{originHint:(result as any).originHint}:{}),nextCheckAt:new Date(next),runId:null,scheduledFor:null,leaseOwner:null,leaseUntil:null,claimedConfigVersion:null}
+    if((result as any).tlsInfo)data.tlsInfo=projectTLSCache((result as any).tlsInfo,monitor.configVersion,now)??Prisma.DbNull
     const renewed=await tx.$queryRaw(Prisma.sql`SELECT id FROM monitors WHERE id=${lease.id} AND lease_until>clock_timestamp()` )
     if(!renewed.length)throw new Error('LEASE_EXPIRED_DURING_COMPLETION')
     await tx.monitor.update({where:{id:lease.id},data})

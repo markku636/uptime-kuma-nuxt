@@ -1,0 +1,74 @@
+{{- if .Values.artifact.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uptime-artifacts
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.artifact.storageClass | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.artifact.storage }}
+{{- if .Values.artifact.load.enabled }}
+{{- $sha := required "artifact.sha256 required" .Values.artifact.sha256 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uptime-artifact-loader
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+data:
+  load.py: |
+{{ .Files.Get "files/load-artifact.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uptime-artifact-{{ $sha | trunc 12 }}-{{ .Values.artifact.load.attempt | default 1 | int }}
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        monitoring.owner: {{ .Values.owner | quote }}
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext: {runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, runAsNonRoot: true}
+      containers:
+        - name: loader
+          image: python:3.13.11-slim-bookworm
+          imagePullPolicy: IfNotPresent
+          command: [python, /loader/load.py]
+          env:
+            - {name: ARTIFACT_SHA, value: {{ $sha | quote }}}
+            - {name: ARTIFACT_BYTES, value: {{ .Values.artifact.sizeBytes | int64 | quote }}}
+            - {name: ARTIFACT_URL, value: {{ required "artifact.sourceUrl required" .Values.artifact.sourceUrl | quote }}}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 250m, memory: 128Mi}
+            limits: {cpu: "2", memory: 512Mi}
+          volumeMounts:
+            - {name: artifacts, mountPath: /artifacts}
+            - {name: loader, mountPath: /loader, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: artifacts
+          persistentVolumeClaim: {claimName: uptime-artifacts}
+        - name: loader
+          configMap: {name: uptime-artifact-loader}
+        - name: tmp
+          emptyDir: {}
+{{- end }}
+{{- end }}

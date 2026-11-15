@@ -35,6 +35,17 @@
               </a>
               <span v-else-if="monitor.hostname">{{ monitor.hostname }}{{ monitor.port ? `:${monitor.port}` : '' }}</span>
             </div>
+            <div v-if="monitor.groupId || monitor.bruno" class="flex items-center gap-2 mt-2 text-sm flex-wrap">
+              <NuxtLink v-if="monitor.groupId" to="/monitors/groups" class="origin-chip" :title="'Group: ' + pathOf(monitor.groupId)">
+                <UIcon name="i-heroicons-folder" class="w-4 h-4" />{{ pathOf(monitor.groupId) || 'Group' }}
+              </NuxtLink>
+              <span v-if="monitor.bruno" class="origin-chip" :title="`Imported from Bruno collection ${monitor.bruno.collectionId}`">
+                <UIcon name="i-heroicons-arrow-path-rounded-square" class="w-4 h-4" />Bruno · {{ monitor.bruno.path }}
+              </span>
+              <span v-if="monitor.bruno?.ignoredBlocks?.length" class="origin-chip warning" role="note">
+                <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4" />Not executed: {{ monitor.bruno.ignoredBlocks.join(', ') }}
+              </span>
+            </div>
           </div>
           
           <!-- Actions -->
@@ -54,6 +65,10 @@
             <button @click="cloneMonitor" class="btn btn-secondary" :disabled="cloning">
               <UIcon name="i-heroicons-document-duplicate" class="w-4 h-4 mr-1" />
               {{ cloning ? "Cloning..." : "Clone" }}
+            </button>
+            <button v-if="canManage && ['http', 'keyword', 'json-query'].includes(monitor.type)" class="btn btn-secondary" :disabled="exportingBruno" title="Download this monitor as a Bruno request" @click="exportToBruno">
+              <UIcon name="i-heroicons-arrow-up-tray" class="w-4 h-4 mr-1" />
+              Export .bru
             </button>
             <!-- Badge Generator -->
             <button @click="showBadgeGenerator = true" class="btn btn-secondary">
@@ -124,28 +139,28 @@
         <div class="stat-card card-interactive">
           <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Response Time</div>
           <div class="stat-value text-2xl font-bold text-emerald-400" :key="lastPing">
-            <span class="tabular-nums">{{ animatedPing }}</span><span class="text-lg">ms</span>
+            <span class="tabular-nums">{{ lastPing === null ? 'N/A' : animatedPing }}</span><span v-if="lastPing !== null" class="text-lg">ms</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">Current</div>
         </div>
         <div class="stat-card card-interactive">
           <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Response</div>
           <div class="stat-value text-2xl font-bold text-blue-400">
-            <span class="tabular-nums">{{ avgPing }}</span><span class="text-lg">ms</span>
+            <span class="tabular-nums">{{ avgPing ?? 'N/A' }}</span><span v-if="avgPing !== null" class="text-lg">ms</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">24-hour</div>
         </div>
         <div class="stat-card card-interactive">
           <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime24hColor">
-            <span class="tabular-nums">{{ uptime24h }}</span><span class="text-lg">%</span>
+            <span class="tabular-nums">{{ uptime24h }}</span><span v-if="uptime24h !== 'N/A'" class="text-lg">%</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">24-hour</div>
         </div>
         <div class="stat-card card-interactive">
           <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime30dColor">
-            <span class="tabular-nums">{{ uptime30d }}</span><span class="text-lg">%</span>
+            <span class="tabular-nums">{{ uptime30d }}</span><span v-if="uptime30d !== 'N/A'" class="text-lg">%</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">30-day</div>
         </div>
@@ -255,6 +270,7 @@
         </div>
       </div>
 
+      <button v-if="historyCursor" class="btn btn-secondary mb-4" :disabled="loadingHistory" @click="loadMoreHistory">Load older heartbeats</button>
       <!-- Important Events Table -->
       <div class="card mb-6">
         <div class="p-4 border-b border-gray-700 flex items-center justify-between">
@@ -350,7 +366,8 @@
 </template>
 
 <script setup lang="ts">
-const { canEdit } = useWorkspace()
+const { canEdit, canManage } = useWorkspace()
+const { pathOf, load: loadGroups } = useMonitorGroups()
 import dayjs from 'dayjs'
 
 definePageMeta({
@@ -364,6 +381,21 @@ const { $socket } = useNuxtApp()
 
 const monitorId = computed(() => Number(route.params.id))
 const monitor = ref<any>(null)
+const exportingBruno = ref(false)
+
+async function exportToBruno() {
+  exportingBruno.value = true
+  try {
+    const result = await downloadBruno({ ids: monitor.value.id })
+    toast.add({ title: `Downloaded ${result.name}`, description: result.secretNames.length ? `Set these secrets in Bruno: ${result.secretNames.join(', ')}.` : undefined, color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Export failed', description: error.message, color: 'error' })
+  } finally {
+    exportingBruno.value = false
+  }
+}
+
+onMounted(() => { loadGroups().catch(() => {}) })
 const heartbeats = ref<any[]>([])
 const loading = ref(true)
 const deleting = ref(false)
@@ -439,13 +471,18 @@ const formatDate = (date: string | Date | null) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
 }
 
+const uptimeData=ref<any>(null),historyCursor=ref<string|null>(null),loadingHistory=ref(false)
+async function loadMoreHistory(){if(!historyCursor.value||loadingHistory.value)return;loadingHistory.value=true;try{const result=await $fetch<any>(`/api/v1/monitors/${monitorId.value}/heartbeats`,{query:{cursor:historyCursor.value}});const seen=new Set(heartbeats.value.map((beat:any)=>beat.id));heartbeats.value.push(...result.data.filter((beat:any)=>!seen.has(beat.id)));historyCursor.value=result.page.nextCursor}finally{loadingHistory.value=false}}
 // Fetch data
 onMounted(async () => {
   try {
-    const [monitorRes, heartbeatsRes] = await Promise.all([
+    const [monitorRes,heartbeatsRes,uptimeRes]=await Promise.all([
       $fetch<any>(`/api/v1/monitors/${monitorId.value}`),
-      $fetch<any>(`/api/v1/monitors/${monitorId.value}/heartbeats?hours=24`)
+      $fetch<any>(`/api/v1/monitors/${monitorId.value}/heartbeats?limit=50`),
+      $fetch<any>(`/api/v1/monitors/${monitorId.value}/uptime`)
     ])
+    uptimeData.value=uptimeRes.data.uptime
+    historyCursor.value=heartbeatsRes.page.nextCursor
     monitor.value = monitorRes.data || monitorRes
     heartbeats.value = heartbeatsRes.data || heartbeatsRes || []
     
@@ -543,13 +580,13 @@ const statusText = computed(() => {
 })
 
 const statusBadgeClass = computed(() => {
-  if (!monitor.value?.active) return 'bg-gray-600'
-  if (!lastHeartbeat.value) return 'bg-yellow-600'
+  if (!monitor.value?.active) return 'bg-gray-600 text-white'
+  if (!lastHeartbeat.value) return 'bg-yellow-600 text-white'
   switch (lastHeartbeat.value.status) {
     case 1: return 'badge-success'
     case 0: return 'badge-danger'
     case 3: return 'badge-info'
-    default: return 'bg-gray-600'
+    default: return 'bg-gray-600 text-white'
   }
 })
 
@@ -564,37 +601,19 @@ const statusColorClass = computed(() => {
   }
 })
 
-const lastPing = computed(() => lastHeartbeat.value?.ping || 0)
-
-const avgPing = computed(() => {
-  const beats = heartbeats.value.filter(h => h.ping > 0)
-  if (beats.length === 0) return 0
-  return Math.round(beats.reduce((a, b) => a + b.ping, 0) / beats.length)
-})
+const lastPing = computed(() => lastHeartbeat.value?.ping ?? null)
+const avgPing = computed(() => uptimeData.value?.['24h']?.avgPing ?? null)
 
 const maxPing = computed(() => {
   const max = Math.max(...heartbeats.value.map(h => h.ping || 0), 100)
   return Math.ceil(max / 100) * 100
 })
 
-const uptime24h = computed(() => {
-  const now = Date.now()
-  const beats = heartbeats.value.filter(h => new Date(h.time).getTime() > now - 24 * 60 * 60 * 1000)
-  if (beats.length === 0) return '0.00'
-  const up = beats.filter(h => h.status === 1).length
-  return ((up / beats.length) * 100).toFixed(2)
-})
-
-const uptime30d = computed(() => {
-  const now = Date.now()
-  const beats = heartbeats.value.filter(h => new Date(h.time).getTime() > now - 30 * 24 * 60 * 60 * 1000)
-  if (beats.length === 0) return '0.00'
-  const up = beats.filter(h => h.status === 1).length
-  return ((up / beats.length) * 100).toFixed(2)
-})
-
+const uptime24h=computed(()=>uptimeData.value?.['24h']?.uptime?.toFixed(2)??'N/A')
+const uptime30d=computed(()=>uptimeData.value?.['30d']?.uptime?.toFixed(2)??'N/A')
 const uptime24hColor = computed(() => {
   const val = parseFloat(uptime24h.value)
+  if(!Number.isFinite(val))return 'text-gray-400'
   if (val >= 99) return 'text-emerald-400'
   if (val >= 95) return 'text-yellow-400'
   return 'text-red-400'
@@ -602,6 +621,7 @@ const uptime24hColor = computed(() => {
 
 const uptime30dColor = computed(() => {
   const val = parseFloat(uptime30d.value)
+  if(!Number.isFinite(val))return 'text-gray-400'
   if (val >= 99) return 'text-emerald-400'
   if (val >= 95) return 'text-yellow-400'
   return 'text-red-400'
@@ -717,3 +737,8 @@ const confirmDelete = async () => {
   }
 }
 </script>
+
+<style scoped>
+.origin-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px solid var(--border-color); color: var(--text-secondary); }
+.origin-chip.warning { border-color: rgba(245, 159, 11, 0.5); background: rgba(245, 159, 11, 0.1); color: var(--text-primary); }
+</style>

@@ -69,7 +69,7 @@ test('legacy request backfill fails closed without a key, seals in batches and r
     delete process.env.APP_ENCRYPTION_KEY
     await assert.rejects(backfillMonitorSecrets(db),/APP_ENCRYPTION_KEY/)
     assert.equal((await db.monitor.findUniqueOrThrow({where:{id}})).basicAuthPass,'BACKFILL_SECRET')
-    process.env.APP_ENCRYPTION_KEY='0123456789abcdef'.repeat(4)
+    process.env.APP_ENCRYPTION_KEY||='0123456789abcdef'.repeat(4)
     assert.equal(await backfillMonitorSecrets(db),1);assert.equal(await backfillMonitorSecrets(db),0)
     const row=await db.monitor.findUniqueOrThrow({where:{id}})
     assert.equal(row.url,null);assert.equal(row.headers,null);assert.equal(row.basicAuthPass,null)

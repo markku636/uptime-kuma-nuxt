@@ -1,0 +1,8 @@
+{
+  "database": "uptime_astra_snapshot_1794631343793",
+  "scope": "Only disposable DB adds a delay predicate to make JOIN snapshot versus monitor-lock ordering deterministic",
+  "cleaned": true,
+  "selectionSealedBefore": "2026-01-01T12:00:00.000Z",
+  "lockedRereadSealedBefore": "2026-01-01T10:00:00.000Z",
+  "oldJoinWasStale": true
+}

@@ -41,14 +41,26 @@ const COLOR_HEX_MAP: Record<string, string> = {
   pink: '#ec4899',
 }
 
+const ACCENT_VARS = ['--uk-primary', '--uk-primary-hover', '--uk-primary-text', '--uk-on-primary', '--uk-primary-soft']
+
+// Presets resolve to per-theme shades in main.css (html[data-accent]); only a custom hex is set inline.
 function applyPrimaryColor(color: string) {
   if (!import.meta.client) return
   const hex = COLOR_HEX_MAP[color] || color || COLOR_HEX_MAP.green
   const root = document.documentElement
-  root.style.setProperty('--uk-primary', hex)
-  // Keep Nuxt UI primary in sync for buttons/badges
-  root.style.setProperty('--color-primary-500', hex)
-  root.style.setProperty('--color-primary-600', hex)
+  for (const name of ['--color-primary-500', '--color-primary-600', ...ACCENT_VARS]) root.style.removeProperty(name)
+  if (COLOR_HEX_MAP[color]) {
+    root.dataset.accent = color
+  } else if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    delete root.dataset.accent
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+    const light = 0.2126 * r! + 0.7152 * g! + 0.0722 * b! > 0.18
+    root.style.setProperty('--uk-primary', hex)
+    root.style.setProperty('--uk-primary-hover', hex)
+    root.style.setProperty('--uk-primary-text', hex)
+    root.style.setProperty('--uk-on-primary', light ? '#020b05' : '#ffffff')
+    root.style.setProperty('--uk-primary-soft', hex + '24')
+  }
   const themeMeta = document.querySelector('meta[name="theme-color"]')
   if (themeMeta) {
     themeMeta.setAttribute('content', hex)

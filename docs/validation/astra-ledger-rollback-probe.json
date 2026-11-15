@@ -1,0 +1,9 @@
+{
+  "database": "uptime_astra_ledger_1794631315438",
+  "checks": [
+    "365-day threshold retained after 100-day outbox cleanup; repeated certificate creates no outbox",
+    "forced completion rollback leaves heartbeat/state/ledger/outbox unchanged",
+    "same certificate can enqueue after rollback; no poisoned dedupe key"
+  ],
+  "cleaned": true
+}

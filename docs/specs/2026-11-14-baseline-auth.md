@@ -74,3 +74,5 @@ workspace 隔離下一階段必須擴充範圍至全體 `server/api/v1`、public
 使用 additive migration，先保留既有 userId 與 session 登入方式；schema 變更不執行 destructive reset。若舊 socket API 不再安全則明確回傳 unsupported/auth error，前端改用已授權 API。測試使用獨立 DB，不更新既有正式部署。實作完填入驗收證據再將狀態改為完成。
 
 Seed相容修正：`prisma/seed.ts` 不再建立硬編密碼admin與未綁workspace/sample外站notification；初次管理者需顯式SEED_ADMIN_PASSWORD（≥12字），建立platform admin及personal workspace/default environment，既有使用者不自動提升權限。不輸出明文密碼。受影響`.env.example`文件seed項與migration驗收fresh seed。
+
+雙測試域名：新增`server/utils/allowed-origins.ts`與`.env.example APP_ALLOWED_ORIGINS`精確origin allowlist（含primary、最多8個、拒萬用字元／userinfo／非http(s)／path）；`server/services/socket.ts` CORS與handshake檢同名單；`plugins/socket.client.ts`連current window origin保留host-local session，`server/plugins/00-database.ts`啟動時驗設定。新增`tests/allowed-origins.test.ts`。不接受任意來源。

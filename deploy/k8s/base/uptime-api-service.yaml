@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: uptime-api
+  labels:
+    monitoring.owner: uptime-api-demo-20261114
+  namespace: uptime-api
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: uptime-api
+    app.kubernetes.io/instance: uptime-api
+    app.kubernetes.io/component: api
+  ports:
+  - name: http
+    port: 3000
+    targetPort: http

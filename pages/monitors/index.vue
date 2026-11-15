@@ -5,15 +5,21 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Monitors</h1>
         <p class="text-gray-600 dark:text-gray-400">Manage your monitors</p>
       </div>
-      <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
-        <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
-        Add Monitor
-      </NuxtLink>
+      <div class="flex gap-2 shrink-0">
+        <NuxtLink to="/monitors/groups" class="btn btn-secondary">
+          <UIcon name="i-heroicons-folder" class="w-4 h-4 mr-2" />
+          Groups
+        </NuxtLink>
+        <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary shrink-0">
+          <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
+          Add Monitor
+        </NuxtLink>
+      </div>
     </div>
 
-    <div class="flex gap-3 mb-4"><input v-model="search" class="input-field" placeholder="Search monitors..."/><select v-model="status" class="select-field"><option value="all">All statuses</option><option value="up">Up</option><option value="down">Down</option><option value="pending">Pending</option><option value="paused">Paused</option><option value="stale">Stale</option></select><input v-model="type" class="input-field" placeholder="Type (all, http, push...)" /></div>
+    <div class="flex flex-col sm:flex-row gap-3 mb-4"><input v-model="search" class="input-field" placeholder="Search monitors..." aria-label="Search monitors" maxlength="200"/><select v-model="status" class="select-field"><option value="all">All statuses</option><option value="up">Up</option><option value="down">Down</option><option value="pending">Pending</option><option value="maintenance">Maintenance</option><option value="paused">Paused</option><option value="stale">Stale</option></select><select v-model="type" class="select-field" aria-label="Monitor type"><option value="all">All types</option><option value="http">HTTP</option><option value="keyword">Keyword</option><option value="json-query">JSON query</option><option value="push">Push</option><option value="tcp">TCP (unsupported)</option></select></div>
     <p v-if="error" role="alert">Unable to load monitors.</p>
-    <MonitorMonitorPagination :count="monitors.length" :total="summary.total" :can-back="canBack" :has-more="!!page?.hasMore" :loading="pending" @back="back" @next="next" />
+    <MonitorPagination :count="monitors.length" :total="summary.total" :can-back="canBack" :has-more="!!page?.hasMore" :loading="pending" @back="back" @next="next" />
     <div class="card card-body">
       <div v-if="pending" class="text-center py-12">
         <div class="spinner w-8 h-8 mx-auto"></div>
@@ -23,7 +29,7 @@
       <div v-else-if="monitors.length === 0" class="text-center py-12">
         <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto text-gray-500 mb-3" />
         <p class="text-gray-600 dark:text-gray-400 mb-4">No monitors yet</p>
-        <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
+        <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary shrink-0">
           Add your first monitor
         </NuxtLink>
       </div>
@@ -35,16 +41,17 @@
           :to="`/monitors/${monitor.id}`"
           class="block p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex min-w-0 flex-1 items-center gap-3">
               <span :class="getStatusDotClass(monitor)" class="w-3 h-3 rounded-full"></span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ monitor.name }}</span>
-              <span class="text-gray-500 text-sm uppercase">{{ monitor.type }}</span>
+              <span class="min-w-0 truncate font-semibold text-gray-900 dark:text-gray-100">{{ monitor.name }}</span>
+              <span class="text-gray-500 text-sm uppercase shrink-0 hidden sm:inline">{{ monitor.type }}</span>
             </div>
             <span :class="getStatusBadgeClass(monitor)" class="badge">
               {{ getStatusText(monitor) }}
             </span>
           </div>
+          <div class="mt-1 ml-6 text-xs uppercase text-secondary sm:hidden">{{ monitor.type }}</div>
           <div v-if="monitor.url" class="text-gray-600 dark:text-gray-400 text-sm mt-1 ml-6 truncate">
             {{ monitor.url }}
           </div>

@@ -31,7 +31,8 @@ export default defineEventHandler(async (event) => {
       tags: { include: { tag: true } },
       monitorNotifications: {
         include: { notification: true }
-      }
+      },
+      brunoSources: { select: { collectionId: true, path: true, sourceEnvironment: true, ignoredBlocks: true, updatedAt: true } }
     }
   })
 
@@ -48,8 +49,11 @@ export default defineEventHandler(async (event) => {
     heartbeats: monitor.heartbeats.map(heartbeatSummary)
   }
 
+  const { brunoSources, ...withoutSources } = serializedMonitor
+  const dto = session.role === 'viewer' ? monitorSummary(withoutSources) : monitorEditorDTO(withoutSources)
   return {
     ok: true,
-    data: session.role === 'viewer' ? monitorSummary(serializedMonitor) : monitorEditorDTO(serializedMonitor)
+    // Group and Bruno origin are display metadata, not request configuration.
+    data: { ...dto, groupId: monitor.groupId, bruno: brunoSources[0] ?? null }
   }
 })

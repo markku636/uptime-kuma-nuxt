@@ -2,7 +2,7 @@ import pg from 'pg'
 /** Own the transport deadline: pg query_timeout alone can leave its socket/query alive. */
 export class BoundedPgClient extends pg.Client {
   constructor(config?:pg.ClientConfig){super(config);this.on('error',()=>{})}
-  query(...input:any[]):any {
+  override query(...input:any[]):any {
     let timer:NodeJS.Timeout|undefined
     const clear=()=>clearTimeout(timer)
     const callback=typeof input.at(-1)==='function'?input.at(-1):null
@@ -27,7 +27,7 @@ function connectionError(error:any){
   return error
 }
 export class BoundedPgPool extends pg.Pool {
-  connect(...input:any[]):any {
+  override connect(...input:any[]):any {
     if(typeof input[0]==='function'){
       const callback=input[0];return super.connect((error,client,release)=>callback(error?connectionError(error):undefined,client,release))
     }

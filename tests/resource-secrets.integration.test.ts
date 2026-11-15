@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import http from 'node:http'
 import {prisma,request,data,user,workspace,cleanup,type Identity,type Scope} from './helpers/http'
 import {hydrateResource,sealResource,backfillResourceSecrets,type SecretResource} from '../server/utils/resource-secrets'
-process.env.APP_ENCRYPTION_KEY='0123456789abcdef'.repeat(4)
+process.env.APP_ENCRYPTION_KEY||='0123456789abcdef'.repeat(4)
 let owner:Identity,viewer:Identity,editor:Identity,a:Scope,b:Scope,origin:string,hits=0,server:http.Server,readKey:string
 const sentinel='RESOURCE_PRIVATE_SENTINEL'
 const definitions:[SecretResource,string,any][]=[]

@@ -1,0 +1,136 @@
+{{- if .Values.application.enabled }}
+{{- $root := . }}
+{{- $artifact := eq .Values.application.mode "artifact" }}
+{{- $sha := required "application.artifactSha required" .Values.application.artifactSha }}
+{{- if ne $sha .Values.application.migratedSha }}{{ fail "application artifactSha must match the completed migration SHA" }}{{ end }}
+{{- if and $artifact .Values.application.strictNodeSpread }}{{ fail "strict multi-node spread requires image mode without local-path artifact PVC" }}{{ end }}
+{{- range $role := list "api" "worker" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uptime-{{ $role }}
+  labels: &labels
+    app.kubernetes.io/name: uptime-api
+    app.kubernetes.io/instance: {{ $root.Release.Name }}
+    app.kubernetes.io/component: {{ $role }}
+    monitoring.owner: {{ $root.Values.owner | quote }}
+spec:
+  replicas: {{ if eq $role "api" }}{{ $root.Values.api.replicas }}{{ else }}{{ $root.Values.worker.replicas }}{{ end }}
+  strategy:
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  selector:
+    matchLabels: *labels
+  template:
+    metadata:
+      labels: *labels
+      annotations:
+        monitoring.release-sha: {{ $sha | quote }}
+        monitoring.restart: {{ $root.Values.application.restartToken | quote }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      securityContext: {runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, runAsNonRoot: true}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: *labels
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: {{ if $root.Values.application.strictNodeSpread }}DoNotSchedule{{ else }}ScheduleAnyway{{ end }}
+{{- if $root.Values.application.strictNodeSpread }}
+          minDomains: 2
+          matchLabelKeys: [pod-template-hash]
+{{- end }}
+          labelSelector:
+            matchLabels: *labels
+      containers:
+        - name: {{ $role }}
+          image: {{ if $artifact }}{{ $root.Values.application.artifactImage | quote }}{{ else }}{{ required "application.image required for multi-node image mode" $root.Values.application.image | quote }}{{ end }}
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: [sh, -ec]
+          args:
+            - >-
+              {{ if $artifact }}node -e 'if(JSON.parse(require("fs").readFileSync(".complete")).sha256!==process.env.RELEASE_SHA)process.exit(1)';{{ end }}
+              exec node .output/server/index.mjs
+          env:
+            - {name: APP_ROLE, value: {{ $role | quote }}}
+            - {name: NODE_ENV, value: production}
+            - {name: NODE_OPTIONS, value: {{ if eq $role "api" }}"--max-old-space-size=512"{{ else }}"--max-old-space-size=640"{{ end }}}
+            - {name: HOST, value: "0.0.0.0"}
+            - {name: PORT, value: "3000"}
+            - {name: RELEASE_SHA, value: {{ $sha | quote }}}
+            - {name: NODE_NAME, valueFrom: {fieldRef: {fieldPath: spec.nodeName}}}
+          envFrom:
+            - configMapRef: {name: uptime-config}
+            - secretRef: {name: {{ $root.Values.application.existingSecret }}}
+          ports: [{name: http, containerPort: 3000}]
+          startupProbe:
+            httpGet: {path: /api/health/live, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 24
+          readinessProbe:
+            httpGet: {path: /api/health/ready, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: {path: /api/health/live, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: {{ if eq $role "api" }}250m{{ else }}500m{{ end }}, memory: {{ if eq $role "api" }}256Mi{{ else }}512Mi{{ end }}}
+            limits: {cpu: {{ if eq $role "api" }}"1"{{ else }}"2"{{ end }}, memory: {{ if eq $role "api" }}768Mi{{ else }}1Gi{{ end }}}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+{{- if $artifact }}
+            - {name: artifacts, mountPath: /app, subPath: {{ printf "releases/%s" $sha | quote }}, readOnly: true}
+{{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- if $artifact }}
+        - name: artifacts
+          persistentVolumeClaim: {claimName: uptime-artifacts}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: uptime-{{ $role }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: uptime-api
+      app.kubernetes.io/instance: {{ $root.Release.Name }}
+      app.kubernetes.io/component: {{ $role }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uptime-api
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: uptime-api
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: api
+  ports:
+    - {name: http, port: 3000, targetPort: http, nodePort: {{ .Values.service.nodePort }}}
+{{- end }}

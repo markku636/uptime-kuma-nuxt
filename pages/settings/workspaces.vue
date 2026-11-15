@@ -65,17 +65,25 @@ const secretName = ref(''), secretValue = ref(''), accountName = ref(''), accoun
 const platformAdmin = ref(false), busy = ref(false), error = ref(''), notice = ref('')
 const base = computed(() => `/api/v1/workspaces/${current.value?.id}`)
 function selectEditingEnvironment() { variables.value = JSON.stringify(selectedEnvironment.value?.variables || {}, null, 2); secretName.value = ''; secretValue.value = '' }
+let refreshSequence=0
 async function refresh() {
-  await load()
-  if (!current.value) return
-  environments.value = (await $fetch<{ data: Environment[] }>(`${base.value}/environments`)).data
-  if (!environments.value.some(e => e.id === editingEnvironmentId.value)) editingEnvironmentId.value = environments.value[0]?.id
+  const sequence=++refreshSequence,id=current.value?.id,owner=canManage.value
+  if(!id)return
+  const basePath=`/api/v1/workspaces/${id}`
+  const [environmentResponse,memberResponse]=await Promise.all([$fetch<{data:Environment[]}>(`${basePath}/environments`),owner?$fetch<{data:typeof members.value}>(`${basePath}/members`):Promise.resolve({data:[]})])
+  if(sequence!==refreshSequence||current.value?.id!==id)return
+  environments.value=environmentResponse.data;members.value=memberResponse.data
+  if(!environments.value.some(e=>e.id===editingEnvironmentId.value))editingEnvironmentId.value=environments.value[0]?.id
   selectEditingEnvironment()
-  if (canManage.value) members.value = (await $fetch<{ data: typeof members.value }>(`${base.value}/members`)).data
 }
-async function act(action: () => Promise<unknown>) {
-  busy.value = true; error.value = ''; notice.value = ''
-  try { await action(); notice.value = 'Saved'; await refresh() } catch (e: any) { error.value = e?.data?.message || e.message || 'Unable to save' } finally { busy.value = false }
+watch(()=>current.value?.id,(id,previous)=>{
+ if(id===previous)return
+ ++refreshSequence;members.value=[];environments.value=[];editingEnvironmentId.value=undefined;variables.value='{}';secretName.value='';secretValue.value='';error.value='';notice.value=''
+ if(import.meta.client&&previous)void refresh().catch(()=>{if(current.value?.id===id)error.value='Unable to load workspace'})
+},{flush:'sync'})
+async function act(action:()=>Promise<unknown>){
+ const id=current.value?.id;busy.value=true;error.value='';notice.value=''
+ try{await action();await load();if(current.value?.id===id){await refresh();notice.value='Saved'}}catch(e:any){if(current.value?.id===id)error.value=e?.data?.message||'Unable to save'}finally{busy.value=false}
 }
 async function createWorkspace() { await act(async () => { const response = await $fetch<{ data: { id: number } }>('/api/v1/workspaces', { method: 'POST', body: { name: workspaceName.value } }); await load(); change(response.data.id) }) }
 async function saveMember() { await act(() => $fetch(`${base.value}/members`, { method: 'POST', body: { username: memberName.value, role: memberRole.value } })) }
@@ -89,7 +97,7 @@ async function saveVariables() { await act(async () => {
 }) }
 async function deleteSecret(name: string) { await act(() => $fetch(`${base.value}/environments/${editingEnvironmentId.value}`, { method: 'PUT', body: { secrets: { [name]: null } } })) }
 async function createAccount() { await act(async () => { await $fetch('/api/v1/users', { method: 'POST', body: { username: accountName.value, password: accountPassword.value } }); accountName.value = ''; accountPassword.value = '' }) }
-onMounted(async () => { await act(refresh); platformAdmin.value = !!(await $fetch<{ data?: { platformAdmin?: boolean } }>('/api/auth/session')).data?.platformAdmin })
+onMounted(async()=>{try{await load();await refresh();platformAdmin.value=!!(await $fetch<{data?:{platformAdmin?:boolean}}>('/api/auth/session')).data?.platformAdmin}catch{error.value='Unable to load workspace'}})
 </script>
 <style scoped>
 .field { border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: .5rem; background: transparent; padding: .6rem .8rem; }

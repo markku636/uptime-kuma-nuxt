@@ -8,8 +8,10 @@ import {assertionsSchema,parseSafeJson,parseSelector} from '../../utils/assertio
 import {createMonitorSchema} from '../../utils/monitor-input'
 import {validVariableName} from '../../utils/variables'
 const methods=new Set(['get','head','post','put','patch','delete','options'])
-const requestBlocks=new Set(['meta',...methods,'headers','query','params:query','auth:basic','auth:bearer','body:json','body:text','vars:pre-request','assert','docs'])
-const scopeBlocks=new Set(['meta','headers','query','auth','auth:basic','auth:bearer','vars:pre-request','docs'])
+// Imported but never executed: the monitor keeps the request and the source records which kinds were skipped.
+const skippedBlocks=['script:pre-request','script:post-response','tests','vars:post-response']
+const requestBlocks=new Set(['meta',...methods,'headers','query','params:query','auth:basic','auth:bearer','body:json','body:text','vars:pre-request','assert','docs','settings',...skippedBlocks])
+const scopeBlocks=new Set(['meta','headers','query','auth','auth:basic','auth:bearer','vars:pre-request','docs',...skippedBlocks])
 const envBlocks=new Set(['vars','vars:secret'])
 class Unsupported extends Error{constructor(public code:string,public field?:string){super(code)}}
 function fail(code:string,field?:string):never{throw new Unsupported(code,field)}
@@ -50,6 +52,23 @@ function variablePairs(value:any,field:string){
     result[pair.name]=string(pair.value,field)
   }
   return result
+}
+/** Removes blocks a monitor cannot run and returns the non-empty kinds so the import can flag them. */
+function stripSkipped(ast:any):string[]{
+  const found:string[]=[],text=(value:any)=>typeof value==='string'&&value.trim()!==''
+  if(ast.script!==undefined){if(text(ast.script?.req)||text(ast.script?.res))found.push('script');delete ast.script}
+  if(ast.tests!==undefined){if(text(ast.tests))found.push('tests');delete ast.tests}
+  if(ast.vars?.res!==undefined){
+    if(Array.isArray(ast.vars.res)&&ast.vars.res.some((pair:any)=>pair?.enabled))found.push('post-response vars')
+    delete ast.vars.res;if(!Object.keys(ast.vars).length)delete ast.vars
+  }
+  if(ast.settings!==undefined){
+    // Bruno writes `settings { encodeUrl: true }` into every new request; only flag settings that change behaviour.
+    const {encodeUrl=true,timeout=0,...rest}=ast.settings||{}
+    if(encodeUrl!==true||Number(timeout)>0||Object.keys(rest).length)found.push('settings')
+    delete ast.settings
+  }
+  return found
 }
 function scopeVars(ast:any){if(ast.vars===undefined)return Object.create(null);keys(ast.vars,['req'],'vars');return variablePairs(ast.vars.req,'vars')}
 function strictScope(ast:any){
@@ -129,8 +148,11 @@ function buildRequest(file:string,ast:any,layers:any[],environment:Record<string
   let primary:Record<string,string>=Object.create(null)
   for(const layer of [...layers.slice(1),ast])primary={...primary,...scopeVars(layer)}
   const retain=resolver(primary,environment,collection,true),actual=resolver(primary,environment,collection,false,undefined,new Set(Object.keys(environment)))
-  const url=retain(string(ast.http.url,'http.url',8192));let parsedURL:URL
-  try{parsedURL=new URL(actual(ast.http.url))}catch{fail('INVALID_URL','http.url')}
+  // Bruno keeps enabled query params both in the URL and in params:query; the params block is authoritative.
+  const rawUrl=string(ast.http.url,'http.url',8192),ownQuery=Array.isArray(ast.params)&&ast.params.some((pair:any)=>pair?.type!=='path')
+  const sourceUrl=ownQuery?rawUrl.replace(/\?[^#]*/,''):rawUrl
+  const url=retain(sourceUrl);let parsedURL:URL
+  try{parsedURL=new URL(actual(sourceUrl))}catch{fail('INVALID_URL','http.url')}
   if(!['http:','https:'].includes(parsedURL!.protocol))fail('UNSUPPORTED_URL','http.url')
   const headers:Record<string,string>={},allLayers=[...layers,ast]
   for(const pair of inheritedPairs(allLayers,'headers')){
@@ -163,11 +185,22 @@ function buildRequest(file:string,ast:any,layers:any[],environment:Record<string
   }
   const parsed=createMonitorSchema.safeParse(config)
   if(!parsed.success)fail('INVALID_MONITOR','request')
-  return {path:file,name:parsed.data.name,config:parsed.data}
+  const seq=Number(ast.meta?.seq)
+  return {path:file,name:parsed.data.name,config:parsed.data,folder:path.posix.dirname(file)==='.'?'':path.posix.dirname(file),skipped:[] as string[],...(Number.isSafeInteger(seq)?{seq}:{})}
+}
+/** Every folder (and ancestor) that holds a request, named by folder.bru meta.name when present. */
+function brunoFolders(paths:string[],asts:Map<string,any>){
+  const all=new Set<string>()
+  for(const folder of paths)for(let parts=folder?folder.split('/'):[];parts.length;parts.pop())all.add(parts.join('/'))
+  return [...all].sort((a,b)=>a.split('/').length-b.split('/').length||a.localeCompare(b)).map(folder=>{
+    const meta=asts.get(folder+'/folder.bru')?.meta,seq=Number(meta?.seq)
+    const name=typeof meta?.name==='string'&&meta.name.trim()?meta.name.trim():path.posix.basename(folder)
+    return {path:folder,name:name.slice(0,150),...(Number.isSafeInteger(seq)?{seq}:{})}
+  })
 }
 export async function parseBrunoManifest(manifest:BrunoManifest,targetValues:Record<string,string>={},targetSecretNames:string[]=[]):Promise<BrunoParsed>{
-  const result:BrunoParsed={requests:[],environments:[],issues:[],variables:{},secrets:{},missingSecrets:[]}
-  const started=performance.now(),files=new Map<string,string>(),asts=new Map<string,any>()
+  const result:BrunoParsed={requests:[],environments:[],issues:[],variables:{},secrets:{},missingSecrets:[],folders:[]}
+  const started=performance.now(),files=new Map<string,string>(),asts=new Map<string,any>(),skipped=new Map<string,string[]>()
   let bytes=0
   const issue=(file:string,error:unknown)=>{if(result.issues.length<100)result.issues.push({file,code:error instanceof Unsupported?error.code:'INVALID_SYNTAX',...(error instanceof Unsupported&&error.field?{field:error.field}:{})})}
   for(const file of manifest.files){
@@ -192,13 +225,14 @@ export async function parseBrunoManifest(manifest:BrunoManifest,targetValues:Rec
         const metadata=JSON.parse(source);keys(metadata,['name','version','type','ignore'],'bruno.json')
         if(metadata.type&&metadata.type!=='collection')fail('UNSUPPORTED_TYPE','bruno.json')
         if(metadata.ignore&&(!Array.isArray(metadata.ignore)||metadata.ignore.some((value:any)=>typeof value!=='string')))fail('INVALID_FIELD','bruno.json.ignore')
+        if(typeof metadata.name==='string'&&metadata.name.trim())result.collectionName=metadata.name.trim().slice(0,150)
       }else if(filename.startsWith('environments/')){
         scanBlocks(source,envBlocks);const ast=brunoLang.bruToEnvJsonV2(source);keys(ast,['variables'],'environment');variablePairs(ast.variables,'environment');asts.set(filename,ast);result.environments.push(filename)
       }else if(filename==='collection.bru'||path.posix.basename(filename)==='folder.bru'){
-        scanBlocks(source,scopeBlocks);const ast=brunoLang.collectionBruToJson(source);strictScope(ast);asts.set(filename,ast)
+        scanBlocks(source,scopeBlocks);const ast=brunoLang.collectionBruToJson(source);skipped.set(filename,stripSkipped(ast));strictScope(ast);asts.set(filename,ast)
       }else{
         const blocks=scanBlocks(source,requestBlocks);if(blocks.filter(block=>methods.has(block)).length!==1)fail('HTTP_BLOCK_REQUIRED')
-        asts.set(filename,brunoLang.bruToJsonV2(source))
+        const ast=brunoLang.bruToJsonV2(source);skipped.set(filename,stripSkipped(ast));asts.set(filename,ast)
       }
     }catch(error){issue(filename,error)}
     if(result.issues.length>=100)break
@@ -239,14 +273,17 @@ export async function parseBrunoManifest(manifest:BrunoManifest,targetValues:Rec
       if(filename==='collection.bru'||filename.startsWith('environments/')||path.posix.basename(filename)==='folder.bru')continue
       if(result.requests.length>=4000){issue(filename,new Unsupported('REQUEST_COUNT_LIMIT'));break}
       try{
-        const layers:any[]=[root],parts=filename.split('/');parts.pop()
-        for(let depth=0;depth<=parts.length;depth++){const folder=[...parts.slice(0,depth),'folder.bru'].join('/');if(asts.has(folder))layers.push(asts.get(folder))}
-        result.requests.push(buildRequest(filename,ast,layers,environment,collection))
+        const layers:any[]=[root],parts=filename.split('/'),layerFiles=['collection.bru'];parts.pop()
+        for(let depth=0;depth<=parts.length;depth++){const folder=[...parts.slice(0,depth),'folder.bru'].join('/');if(asts.has(folder)){layers.push(asts.get(folder));layerFiles.push(folder)}}
+        const request=buildRequest(filename,ast,layers,environment,collection)
+        request.skipped=[...new Set([...layerFiles,filename].flatMap(file=>skipped.get(file)||[]))]
+        result.requests.push(request)
       }catch(error){issue(filename,error)}
       if(performance.now()-started>10000){issue(filename,new Unsupported('PARSE_BUDGET_EXCEEDED'));break}
       await yieldTurn()
     }
   }catch(error){issue(manifest.sourceEnvironment||'collection.bru',error)}
   if(!result.requests.length&&!result.issues.length)issue('',new Unsupported('NO_REQUESTS'))
+  result.folders=brunoFolders(result.requests.map(request=>request.folder),asts)
   return result
 }

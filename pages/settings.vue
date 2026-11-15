@@ -6,8 +6,9 @@
     </div>
 
     <div class="flex flex-col lg:flex-row gap-6">
+      <label class="lg:hidden block text-sm">Settings section<select aria-label="Settings section" class="form-control mt-2" v-model="selectedSettingsPage"><option v-for="item in settingsNav" :key="item.to" :value="item.to">{{item.label}}</option></select></label>
       <!-- Settings Sidebar -->
-      <div class="w-full lg:w-64 flex-shrink-0">
+      <div class="hidden lg:block lg:w-64 flex-shrink-0">
         <div class="settings-sidebar">
           <nav class="space-y-1">
             <NuxtLink
@@ -33,7 +34,7 @@
           </div>
           
           <!-- Content Body -->
-          <div class="p-6">
+          <div class="p-4 sm:p-6">
             <NuxtPage />
           </div>
         </div>
@@ -49,9 +50,10 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const selectedSettingsPage = computed({get:()=>route.path,set:(value:string)=>{void router.push(value)}})
 
 const settingsNav = [
-  { label: 'Bruno Import', to: '/settings/bruno', icon: 'i-heroicons-arrow-down-tray' },
+  { label: 'Bruno', to: '/settings/bruno', icon: 'i-heroicons-arrow-path-rounded-square' },
   { label: 'Workspaces', to: '/settings/workspaces', icon: 'i-heroicons-building-office-2' },
   { label: 'Profile', to: '/settings/profile', icon: 'i-heroicons-user-circle' },
   { label: 'General', to: '/settings/general', icon: 'i-heroicons-cog-6-tooth' },
@@ -119,9 +121,9 @@ const isActive = (path: string) => route.path === path
 }
 
 .settings-nav-item-active {
-  background-color: rgba(18, 176, 106, 0.14);
-  color: var(--uk-primary) !important;
-  border-color: rgba(18, 176, 106, 0.35);
+  background-color: var(--uk-primary-soft);
+  color: var(--uk-primary-text) !important;
+  border-color: var(--uk-primary-soft);
 }
 
 .settings-content {
@@ -141,4 +143,8 @@ const isActive = (path: string) => route.path === path
     padding: 1rem;
   }
 }
+</style>
+
+<style scoped>
+@media(max-width:639px){.settings-page{padding:0}}
 </style>

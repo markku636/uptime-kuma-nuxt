@@ -1,0 +1,62 @@
+owner: uptime-api-demo-20261114
+postgres:
+  enabled: true
+  image: postgres:16.14-bookworm
+  database: uptime_kuma
+  username: uptime
+  existingSecret: uptime-api-db-secret
+  passwordKey: POSTGRES_PASSWORD
+  storageClass: local-path
+  storage: 10Gi
+artifact:
+  enabled: false
+  storageClass: local-path
+  storage: 5Gi
+  sha256: ""
+  sizeBytes: 0
+  sourceUrl: ""
+  load:
+    enabled: false
+    attempt: 1
+migration:
+  enabled: false
+  attempt: 1
+  artifactSha: ""
+application:
+  enabled: false
+  artifactSha: ""
+  migratedSha: ""
+  existingSecret: uptime-api-secret
+  restartToken: "initial"
+  mode: artifact
+  artifactImage: node:24.22.0-bookworm
+  image: ""
+  strictNodeSpread: false
+api:
+  replicas: 2
+worker:
+  replicas: 2
+service:
+  nodePort: 32480
+fixture:
+  enabled: false
+config:
+  NUXT_PUBLIC_APP_URL: https://uptime.226network.com
+  APP_ALLOWED_ORIGINS: https://uptime.226network.com,https://uptime.markkulab.net,http://192.168.50.57:32480
+  WORKER_CONCURRENCY: "32"
+  WORKER_PER_ORIGIN: "8"
+  WORKER_CLAIM_BATCH: "8"
+  WORKER_POLL_MS: "100"
+  WORKER_LEASE_MS: "15000"
+  WORKER_RENEW_MS: "3000"
+  WORKER_DRAIN_MS: "15000"
+  WORKER_DB_POOL_SIZE: "3"
+  HEARTBEAT_RETENTION_ENABLED: "false"
+  HEARTBEAT_RAW_HOURS: "48"
+  HEARTBEAT_HOURLY_DAYS: "400"
+buildVerification:
+  enabled: false
+  attempt: 1
+  contextSha: ""
+  contextBytes: 0
+  contextUrl: ""

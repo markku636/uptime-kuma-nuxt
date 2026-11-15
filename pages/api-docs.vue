@@ -13,6 +13,7 @@
       </div>
     </div>
     
+    <p v-if="loadError" role="alert" class="p-4 text-red-400">Interactive documentation could not load. <a :href="swaggerJsonUrl">OpenAPI JSON remains available.</a></p>
     <div id="swagger-ui" class="swagger-wrapper"></div>
   </div>
 </template>
@@ -22,12 +23,13 @@ import { onMounted, onUnmounted } from 'vue'
 
 // Define page meta
 definePageMeta({
-  layout: 'default'
+  layout: 'default', middleware: ['auth']
 })
 
 // Use local proxy endpoint to avoid CORS issues
 const swaggerJsonUrl = '/api/swagger-json'
 
+const loadError=ref(false)
 let swaggerUIBundle: any = null
 
 onMounted(async () => {
@@ -40,6 +42,7 @@ onMounted(async () => {
   // Dynamically load Swagger UI Bundle
   const script = document.createElement('script')
   script.src = 'https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js'
+  script.onerror=()=>{loadError.value=true}
   script.onload = () => {
     initSwaggerUI()
   }
@@ -60,12 +63,13 @@ function initSwaggerUI() {
         (window as any).SwaggerUIBundle.plugins.DownloadUrl
       ],
       layout: 'BaseLayout',
-      persistAuthorization: true,
+      persistAuthorization: false,
       displayRequestDuration: true,
       filter: true,
       showExtensions: true,
       tryItOutEnabled: true,
       supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+      requestInterceptor:(request:any)=>{if(new URL(request.url,window.location.origin).origin!==window.location.origin)throw new Error("Only current-origin API requests are permitted");return request},
       validatorUrl: null
     })
   }

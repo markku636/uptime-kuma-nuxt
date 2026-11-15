@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 
 interface Heartbeat {
-  id: bigint
+  id: string
   monitorId: number
   status: number
   time: string
@@ -25,6 +25,8 @@ export const useMonitorStore = defineStore('monitor', {
   state: () => ({
     monitors: [] as Monitor[],
     heartbeats: {} as Record<number, Heartbeat[]>,
+    page:null as null|{hasMore:boolean;nextCursor:string|null;limit:number},
+    summary:{total:0,up:0,down:0,pending:0,maintenance:0,paused:0,stale:0},
     loading: false,
     error: null as string | null,
   }),
@@ -40,28 +42,19 @@ export const useMonitorStore = defineStore('monitor', {
     
     monitorCount: (state) => state.monitors.length,
     
-    stats: (state) => {
-      const monitors = state.monitors
-      return {
-        total: monitors.length,
-        up: monitors.filter(m => m.heartbeats?.[0]?.status === 1).length,
-        down: monitors.filter(m => m.heartbeats?.[0]?.status === 0).length,
-        pending: monitors.filter(m => m.heartbeats?.[0]?.status === 2).length,
-        maintenance: monitors.filter(m => m.heartbeats?.[0]?.status === 3).length,
-        paused: monitors.filter(m => !m.active).length,
-      }
-    },
+    stats:(state)=>state.summary,
   },
 
   actions: {
-    async fetchMonitors() {
+    async fetchMonitors(query:Record<string,any>={}) {
       this.loading = true
       this.error = null
       
       try {
-        const response = await $fetch<{ ok: boolean; data: Monitor[] }>('/api/v1/monitors')
+        const response = await $fetch<{ ok: boolean; data: Monitor[];page:any }>('/api/v1/monitors',{query})
         if (response.ok) {
-          this.monitors = response.data
+          this.monitors = response.data;this.page=response.page
+          const summary=await $fetch<any>('/api/v1/monitors/summary');this.summary=summary.data
         }
       } catch (e: any) {
         this.error = e.data?.message || 'Failed to fetch monitors'
@@ -75,7 +68,7 @@ export const useMonitorStore = defineStore('monitor', {
       if (index !== -1) {
         this.monitors[index] = monitor
       } else {
-        this.monitors.push(monitor)
+        // New records outside this page are available after refresh/search.
       }
     },
 

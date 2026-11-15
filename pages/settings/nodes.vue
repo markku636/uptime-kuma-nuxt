@@ -164,12 +164,12 @@ function formatDateTime(dateTime: string | null) {
   <p v-else-if="!platformAdmin" role="status">Platform administrator permission required.</p>
   <div v-else>
     <SettingsWorkerRuntime />
-    <p class="text-sm mb-5">Legacy node metadata below does not control PostgreSQL worker leases.</p>
+    <details class="mt-6"><summary class="cursor-pointer text-sm text-tertiary">Legacy metadata (does not create Kubernetes nodes or schedule workers)</summary><div class="pt-5">
     <div class="flex justify-between items-center mb-6">
-      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Cluster Nodes</h4>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Legacy instance metadata</h4>
       <button class="btn btn-primary" @click="openAddForm">
         <span class="i-heroicons-plus mr-1"></span>
-        Add Node
+        Add legacy metadata
       </button>
     </div>
 
@@ -181,11 +181,11 @@ function formatDateTime(dateTime: string | null) {
     <!-- Empty State -->
     <div v-else-if="nodes.length === 0" class="section-card text-center py-8">
       <p class="text-gray-600 dark:text-gray-400 mb-4">No nodes configured yet.</p>
-      <p class="text-gray-500 text-sm mb-4">
-        Node management allows you to organize monitors across multiple Uptime Kuma instances.
+      <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">
+        These records are retained for compatibility. Kubernetes schedules API/worker Pods; PostgreSQL leases coordinate checks.
       </p>
       <button class="btn btn-primary" @click="openAddForm">
-        Add Your First Node
+        Add legacy metadata
       </button>
     </div>
 
@@ -270,10 +270,11 @@ function formatDateTime(dateTime: string | null) {
     </div>
 
     <!-- Info Text -->
-    <div class="text-center mt-6 text-sm text-gray-500">
-      Node management allows you to organize monitors across multiple Uptime Kuma instances.
+    <div class="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
+      These records are retained for compatibility. Kubernetes schedules API/worker Pods; PostgreSQL leases coordinate checks.
     </div>
 
+    </div></details>
     <!-- Add/Edit Form Modal -->
     <div
       v-if="showForm"
@@ -281,7 +282,7 @@ function formatDateTime(dateTime: string | null) {
     >
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          {{ editingNode ? 'Edit Node' : 'Add Node' }}
+          {{ editingNode ? 'Edit legacy metadata' : 'Add legacy metadata' }}
         </h3>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">

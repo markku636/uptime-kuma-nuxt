@@ -1,10 +1,11 @@
+import {parseBoundedQuery} from '../../../../utils/monitor-query'
 import {z} from 'zod'
 import {heartbeatSummary} from '../../../../utils/serialize'
 import {decodeCursor,encodeCursor} from '../../../../utils/pagination'
 const schema=z.object({limit:z.coerce.number().int().min(1).max(200).default(50),cursor:z.string().max(2048).optional(),offset:z.coerce.number().int().min(0).max(1000).default(0),from:z.iso.datetime().optional(),to:z.iso.datetime().optional()}).strict()
 const positionSchema=z.object({time:z.iso.datetime(),id:z.string().regex(/^[1-9]\d{0,19}$/),upperTime:z.iso.datetime(),upperId:z.string().regex(/^[1-9]\d{0,19}$/)})
 export default defineEventHandler(async event=>{
- const scope=await requireRequestSession(event),id=z.coerce.number().int().positive().parse(getRouterParam(event,'id')),query=schema.parse(getQuery(event))
+ const scope=await requireRequestSession(event),id=parseBoundedQuery(z.coerce.number().int().positive(),getRouterParam(event,'id')),query=parseBoundedQuery(schema,getQuery(event))
  if(query.cursor&&query.offset)throw createError({statusCode:400,message:'Cursor and offset cannot be combined'})
  if(!await prisma.monitor.findFirst({where:{id,workspaceId:scope.workspaceId,environmentId:scope.environmentId},select:{id:true}}))throw createError({statusCode:404,message:'Monitor not found'})
  const binding={workspaceId:scope.workspaceId,environmentId:scope.environmentId,monitorId:id,sort:'time-id-desc',from:query.from??null,to:query.to??null},secret=useRuntimeConfig().session.password

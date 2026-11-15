@@ -7,7 +7,6 @@
       item-key="id"
       :animation="100"
       handle=".group-drag-handle"
-      @change="onGroupDragChange"
     >
       <template #item="{ element: group, index }">
         <div class="group-section mb-8">
@@ -214,15 +213,6 @@ function getMonitorsForGroup(group: Group): Monitor[] {
   return group.monitorList
 }
 
-// Handle drag events
-function onGroupDragChange(event: any) {
-  if (event.moved) {
-    const newGroups = [...props.groups]
-    const [removed] = newGroups.splice(event.moved.oldIndex, 1)
-    newGroups.splice(event.moved.newIndex, 0, removed)
-    emit('update:groups', newGroups)
-  }
-}
 </script>
 
 <style scoped>

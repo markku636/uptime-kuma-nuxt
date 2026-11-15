@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireRequestSession(event)
   if (/^\/api\/(cluster(?:\/|$)|node-info$|cloudflared\/|settings\/)/.test(path)
     || /^\/api\/v1\/(users(?:\/|$)|nodes(?:\/|$)|settings\/|maintenance\/shrink-database)/.test(path)
-    || ['/api/metrics', '/api/v1/metrics'].includes(path)) {
+    || path === '/api/metrics') {
     await requirePlatformAdmin(event)
   }
 })

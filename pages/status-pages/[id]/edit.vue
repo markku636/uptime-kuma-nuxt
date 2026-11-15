@@ -12,8 +12,8 @@ const toast = useToast()
 const isEdit = computed(() => !!route.params.id)
 const statusPageId = computed(() => route.params.id as string)
 
-const { data: statusPage, pending: loadingStatusPage } = useFetch<StatusPage>(
-  () => `/api/v1/status-pages/${statusPageId.value}`,
+const { data: statusPage, pending: loadingStatusPage } = useFetch<any>(
+  () => `/api/v1/status-pages/${statusPageId.value}/config`,
   {
     immediate: isEdit.value,
     headers: useRequestHeaders(['cookie'])
@@ -39,12 +39,15 @@ const form = ref({
   monitors: [] as number[]
 })
 
+const originalGroups=ref<any[]>([]),selectedMetadata=ref<any[]>([])
 const loading = ref(false)
 const newDomain = ref('')
 
 // Initialize form with status page data
-watch(statusPage, (val) => {
+watch(statusPage, (response) => {
+  const val=response?.data
   if (val) {
+    originalGroups.value=val.publicGroupList||[];selectedMetadata.value=originalGroups.value.flatMap(group=>group.monitorList)
     form.value = {
       title: val.title,
       slug: val.slug,
@@ -58,7 +61,7 @@ watch(statusPage, (val) => {
       footerText: val.footerText || '',
       showPoweredBy: val.showPoweredBy ?? true,
       googleAnalyticsId: val.googleAnalyticsId || '',
-      monitors: val.monitors?.map((m: any) => m.id) || []
+      monitors: [...new Set(selectedMetadata.value.map((m:any)=>m.id))]
     }
   }
 }, { immediate: true })
@@ -90,18 +93,19 @@ function removeDomain(index: number) {
   form.value.domainNameList.splice(index, 1)
 }
 
+function statusPagePayload(){const selected=new Set(form.value.monitors),known=new Set(originalGroups.value.flatMap(group=>group.monitorList.map((monitor:any)=>monitor.id))),groups=originalGroups.value.map(group=>({...group,monitorList:group.monitorList.filter((monitor:any)=>selected.has(monitor.id)).map((monitor:any)=>({id:monitor.id}))}));if(!groups.length)groups.push({id:0,name:'Monitors',weight:1,monitorList:[]});groups[0].monitorList.push(...form.value.monitors.filter(id=>!known.has(id)).map(id=>({id})));const {monitors,...metadata}=form.value;return {...metadata,publicGroupList:groups}}
 async function handleSubmit() {
   loading.value = true
   try {
     if (isEdit.value) {
       await $fetch(`/api/v1/status-pages/${statusPageId.value}`, {
         method: 'PUT',
-        body: form.value
+        body: statusPagePayload()
       })
       toast.add({
         title: 'Success',
         description: 'Status page updated successfully',
-        color: 'green'
+        color: 'success'
       })
     } else {
       await $fetch('/api/v1/status-pages', {
@@ -111,7 +115,7 @@ async function handleSubmit() {
       toast.add({
         title: 'Success',
         description: 'Status page created successfully',
-        color: 'green'
+        color: 'success'
       })
     }
     router.push('/status-pages')
@@ -119,7 +123,7 @@ async function handleSubmit() {
     toast.add({
       title: 'Error',
       description: error.data?.message || 'Failed to save status page',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     loading.value = false
@@ -199,7 +203,7 @@ const previewUrl = computed(() => {
           <h3 class="text-lg font-medium text-gray-900 dark:text-white">Monitors</h3>
           
           <UFormField label="Select Monitors to Display">
-            <StatusPageMonitorSelector v-model="form.monitors" />
+            <StatusPageMonitorSelector v-model="form.monitors" :monitors="selectedMetadata" />
           </UFormField>
 
           <UCheckbox v-model="form.showTags" label="Show tags on status page" />
@@ -258,7 +262,7 @@ const previewUrl = computed(() => {
               <span class="text-gray-900 dark:text-white">{{ domain }}</span>
               <UButton
                 variant="ghost"
-                color="red"
+                color="error"
                 icon="i-heroicons-trash"
                 size="xs"
                 @click="removeDomain(index)"

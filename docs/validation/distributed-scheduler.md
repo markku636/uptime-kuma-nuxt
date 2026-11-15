@@ -1,5 +1,7 @@
 # PostgreSQL 分散式排程驗證（2026-11-14，phase4）
 
+> 證據時間註記（2026-11-14 13:29 修訂）：以下為該階段當時結果，並非目前整個 working tree 的通過宣告。11:56 主機重啟後早期 `/tmp` logs 已遺失，保留歷史摘要但不可再聲稱原始 logs 可供查閱。最新狀態見 [證據索引](EVIDENCE_INDEX.md)。使用者已取消 4000 活躍負載驗證；既有相關 fixture 數字僅保留歷史意義。
+
 本輪以 PostgreSQL lease/fencing、有限 worker/outbox、API/worker role、跨 API 的安全 current-state resync 取代每 monitor 的 setInterval。僅 HTTP、keyword、JSON Query 進新排程；push 走同一 accepted-result transaction，其餘 legacy checker 配置保留但明示尚需 bounded worker adapter，不會偷偷回舊 scheduler。請配合 [runtime 操作文件](../CLUSTER_RUNTIME.md) 與 [Spec](../specs/2026-11-14-distributed-scheduler.md)。
 
 環境 Node24.22.0、PostgreSQL16.14，獨立 loopback DB／HTTP／notification fixtures；沒有對外站壓測、正式部署或真外部通知。

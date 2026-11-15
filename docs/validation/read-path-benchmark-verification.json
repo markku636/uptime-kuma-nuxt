@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-11-14T04:28:40.923Z",
+  "ownedDatabase": "uptime_read_benchmark_1794630347561",
+  "databaseAbsent": true,
+  "environment": {
+    "os": "Linux",
+    "release": "7.0.0-43-generic",
+    "architecture": "x64",
+    "cpuModel": "Intel(R) Core(TM) Ultra 7 265K",
+    "logicalCpuCount": 20,
+    "totalMemoryBytes": 66758840320,
+    "postgres": [
+      {
+        "name": "effective_cache_size",
+        "setting": "524288",
+        "unit": "8kB"
+      },
+      {
+        "name": "max_connections",
+        "setting": "60",
+        "unit": null
+      },
+      {
+        "name": "server_version",
+        "setting": "16.14",
+        "unit": null
+      },
+      {
+        "name": "shared_buffers",
+        "setting": "8192",
+        "unit": "8kB"
+      },
+      {
+        "name": "work_mem",
+        "setting": "4096",
+        "unit": "kB"
+      }
+    ]
+  },
+  "limitations": [
+    "Shared host; other tasks may consume CPU and memory",
+    "20 sequential warm database-helper samples; no HTTP or concurrent-worker load",
+    "Synthetic minimal history fields, not full production assertion results",
+    "Not evidence for sustained 4000 active checks"
+  ]
+}

@@ -1,0 +1,25 @@
+# Replace image + revision name; run and verify Complete before rolling Deployments.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uptime-migrate-REPLACE_REVISION
+  namespace: uptime-api
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 300
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext: {runAsUser: 1000, runAsGroup: 1000, runAsNonRoot: true}
+      containers:
+        - name: migration
+          image: uptime-api:replace-with-immutable-image
+          command: [node, scripts/migrate.mjs]
+          env:
+            - {name: NODE_OPTIONS, value: "--max-old-space-size=512"}
+          envFrom:
+            - secretRef: {name: uptime-api-secret}
+          securityContext: {readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {}}]

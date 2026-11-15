@@ -1,3 +1,4 @@
+import {originHint} from '../../utils/origin-hint'
 import {workerPrisma} from '../../utils/worker-prisma'
 import {resolveMonitorConfig} from '../../utils/monitor-config'
 import type {CheckResult} from './checker'
@@ -18,7 +19,7 @@ export class MonitorWorker {
     this.polling=true
     try{
       const claimedAt=performance.now()
-      const leases=await claimMonitors(this.owner,available,this.options.leaseMs,this.db,[...this.active.keys()])
+      const leases=await claimMonitors(this.owner,available,this.options.leaseMs,this.db,[...this.active.keys()],[...this.origins].filter(([,count])=>count>=this.options.perOrigin).map(([origin])=>originHint(origin)),{limit:this.options.perOrigin,remaining:Object.fromEntries([...this.origins].map(([origin,count])=>[originHint(origin),Math.max(0,this.options.perOrigin-count)]))})
       for(const lease of leases){
         if(this.draining){await relinquishMonitorLease(lease,this.db);continue}
         const controller=new AbortController()
@@ -54,8 +55,9 @@ export class MonitorWorker {
       try{
         monitor=await resolveMonitorConfig(lease,controller.signal,this.db)
         origin=new URL(monitor.url).origin
-        if((this.origins.get(origin)||0)>=this.options.perOrigin){await deferMonitorLease(lease,Math.max(250,this.options.pollMs*2),this.db);this.metrics.deferred++;deferred=true;origin=undefined;return}
+        if((this.origins.get(origin)||0)>=this.options.perOrigin){await deferMonitorLease(lease,Math.max(250,this.options.pollMs*2),this.db,originHint(origin));this.metrics.deferred++;deferred=true;origin=undefined;return}
         this.origins.set(origin,(this.origins.get(origin)||0)+1)
+        lease.originHint=originHint(origin)
       }catch{if(controller.signal.aborted)return;result={status:0,ping:Date.now()-start,msg:'Invalid configuration',code:'CONFIG_ERROR'}}
       if(monitor&&origin){
         if(await isMonitorUnderMaintenance(lease.id,lease.workspaceId,this.db))result={status:3,ping:0,msg:'Under maintenance',code:'MAINTENANCE'}
@@ -72,7 +74,7 @@ export class MonitorWorker {
         }
       }
       if(controller.signal.aborted||lost)return
-      const completion=await completeMonitorRun(lease,result!,this.db)
+      const completion=await completeMonitorRun(lease,{...result!,originHint:lease.originHint} as CheckResult,this.db)
       submitted=true
       if(completion.accepted)this.metrics.completed++;else this.metrics.stale++
     }catch{this.metrics.failures++;try{await deferMonitorLease(lease,1000,this.db)}catch{}}

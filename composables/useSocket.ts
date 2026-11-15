@@ -43,8 +43,8 @@ export const useSocket = () => {
     socket.value?.off(event, callback)
   }
 
-  const subscribeMonitors = () => {
-    emit('subscribe_monitors')
+  const subscribeMonitors = (ids:number[]) => {
+    emit('subscribe_monitors',ids)
   }
 
   const unsubscribeMonitors = () => {

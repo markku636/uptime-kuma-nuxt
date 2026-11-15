@@ -8,6 +8,7 @@ import {decryptSecret,encryptSecret} from '../../utils/variables'
 import {monitorDbInput} from '../../utils/monitor-secrets'
 import {stopMonitorJob} from '../monitor/scheduler'
 import {parseBrunoManifest} from './parser'
+import {resolveBrunoGroups} from '../groups'
 
 type SourceState={environment:any;sources:any[];values:Record<string,string>}
 function canonical(value:any):any{
@@ -46,10 +47,11 @@ function issuesFor(parsed:BrunoParsed,state:SourceState,manifest:BrunoManifest,c
 export async function previewBruno(scope:RequestPrincipal,manifest:BrunoManifest,canChangeEnvironment:boolean){
   const state=await sourceState(scope,manifest),parsed=await parseBrunoManifest(manifest,state.values,Object.keys(state.environment.secrets)),existing=new Set(state.sources.map(row=>row.path))
   const issues=issuesFor(parsed,state,manifest,canChangeEnvironment)
-  return {ok:issues.length===0,digest:digest(manifest,scope,state),issues,environments:parsed.environments,missingSecrets:parsed.missingSecrets,
+  const groups=issues.length?[]:await resolveBrunoGroups(prisma,scope.workspaceId,manifest,parsed,false)
+  return {ok:issues.length===0,groups,collectionName:parsed.collectionName||null,digest:digest(manifest,scope,state),issues,environments:parsed.environments,missingSecrets:parsed.missingSecrets,
     environmentChanges:environmentChanges(parsed,state),variableNames:Object.keys(parsed.variables),secretNames:Object.keys(parsed.secrets),
     counts:{requests:parsed.requests.length,create:parsed.requests.filter(row=>!existing.has(row.path)).length,replace:manifest.mode==='replace'?parsed.requests.filter(row=>existing.has(row.path)).length:0,skip:manifest.mode==='skip'?parsed.requests.filter(row=>existing.has(row.path)).length:0},
-    requests:parsed.requests.map(row=>({path:row.path,name:row.name,method:row.config.method,assertionCount:row.config.assertions?.rules.length||0,action:existing.has(row.path)?manifest.mode==='skip'?'skip':manifest.mode==='replace'?'replace':'conflict':'create',requestConfigured:true}))}
+    requests:parsed.requests.map(row=>({path:row.path,name:row.name,method:row.config.method,assertionCount:row.config.assertions?.rules.length||0,action:existing.has(row.path)?manifest.mode==='skip'?'skip':manifest.mode==='replace'?'replace':'conflict':'create',requestConfigured:true,folder:row.folder,skipped:row.skipped}))}
 }
 export async function importBruno(scope:RequestPrincipal,manifest:BrunoManifest,expectedDigest:string,canChangeEnvironment:boolean,apiKeyId?:number){
   const initial=await sourceState(scope,manifest),parsed=await parseBrunoManifest(manifest,initial.values,Object.keys(initial.environment.secrets))
@@ -80,6 +82,9 @@ export async function importBruno(scope:RequestPrincipal,manifest:BrunoManifest,
       await tx.environment.update({where:{id:scope.environmentId},data:{variables,secrets}})
       await fenceEnvironment(tx,scope.workspaceId,scope.environmentId)
     }
+    const lockedMonitors=lockedIds.length?await tx.monitor.findMany({where:{id:{in:lockedIds}},select:{id:true,interval:true,active:true,groupId:true}}):[],monitorsById=new Map(lockedMonitors.map(row=>[row.id,row]))
+    // Folders become groups; a replaced monitor keeps a group the user moved it to.
+    const groupIds=new Map((await resolveBrunoGroups(tx,scope.workspaceId,manifest,parsed,true)).map(plan=>[plan.path,plan.groupId]))
     const sources=new Map(current.sources.map(row=>[row.path,row])),newRequests=parsed.requests.filter(row=>!sources.has(row.path))
     const ids=newRequests.length?await tx.$queryRaw<{id:number}[]>`SELECT nextval(pg_get_serial_sequence('monitors','id'))::integer AS id FROM generate_series(1,${newRequests.length}::integer)`:[]
     let index=0;const scheduleTime=await databaseNow(tx),creates:any[]=[],mappings:any[]=[]
@@ -89,18 +94,21 @@ export async function importBruno(scope:RequestPrincipal,manifest:BrunoManifest,
       if(source&&manifest.mode!=='replace')throw createError({statusCode:409,message:'Source already imported'})
       const id=source?.monitorId??ids[index++]!.id
       const {clearSecrets,tags,notifications,...config}=request.config
+      const groupId=groupIds.get(request.folder)??null
       const record:any=monitorDbInput({...config,id,workspaceId:scope.workspaceId,environmentId:scope.environmentId,
-        ...(source?{}:{userId:scope.user.id}),active:false,authMethod:config.authMethod||'none',keyword:null,jsonPath:null,expectedValue:null,proxyId:null})
+        ...(source?{}:{userId:scope.user.id}),...(!source||monitorsById.get(id)?.groupId==null?{groupId}:{}),
+        active:false,authMethod:config.authMethod||'none',keyword:null,jsonPath:null,expectedValue:null,proxyId:null})
       for(const key of ['assertions','acceptedStatuscodes','tlsExpiryDays'])if(record[key]===null)record[key]=Prisma.DbNull
       if(source){
-        await tx.monitor.update({where:{id,workspaceId:scope.workspaceId,environmentId:scope.environmentId},data:await fenceMonitorData(tx,{id,interval:config.interval},record)})
-        await tx.brunoSource.update({where:{id:source.id},data:{updatedAt:new Date()}});changedIds.push(id)
+        await tx.monitor.update({where:{id,workspaceId:scope.workspaceId,environmentId:scope.environmentId},data:await fenceMonitorData(tx,monitorsById.get(id),record)})
+        await tx.brunoSource.update({where:{id:source.id},data:{updatedAt:new Date(),ignoredBlocks:request.skipped}});changedIds.push(id)
       }else{
-        creates.push({...record,...initialMonitorSchedule(id,config.interval,scheduleTime)});mappings.push({workspaceId:scope.workspaceId,environmentId:scope.environmentId,collectionId:manifest.collectionId,sourceEnvironment:manifest.sourceEnvironment||'',path:request.path,monitorId:id});createdIds.push(id)
+        creates.push({...record,...initialMonitorSchedule(id,config.interval,scheduleTime)});mappings.push({workspaceId:scope.workspaceId,environmentId:scope.environmentId,collectionId:manifest.collectionId,sourceEnvironment:manifest.sourceEnvironment||'',path:request.path,monitorId:id,ignoredBlocks:request.skipped});createdIds.push(id)
       }
     }
     for(let start=0;start<creates.length;start+=250){await tx.monitor.createMany({data:creates.slice(start,start+250)});await tx.brunoSource.createMany({data:mappings.slice(start,start+250)})}
   },{timeout:120000,maxWait:10000})
   changedIds.forEach(stopMonitorJob)
-  return {ok:true,data:{createdIds,replacedIds:changedIds,skippedIds,paused:true},notice:'Imported requests are paused. Configure any missing credentials before activation.'}
+  const withSkippedBlocks=parsed.requests.filter(request=>request.skipped.length).length
+  return {ok:true,data:{createdIds,replacedIds:changedIds,skippedIds,paused:true,withSkippedBlocks},notice:'Imported requests are paused. Configure any missing credentials before activation.'}
 }

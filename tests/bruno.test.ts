@@ -21,10 +21,9 @@ test('official parser handles nested scopes, two environments, disabled values, 
   assert.equal(config.assertions.rules.length,3);assert.equal(config.assertions.rules[0].expected,200);assert.equal(config.assertions.rules[1].expected,true);assert.equal(config.assertions.rules[2].source,'header')
   assert.equal(config.active,false);assert.equal(parsed.secrets.token,'SECRET')
 })
-test('scripts, settings, duplicate HTTP blocks, unknown fields and unsupported expressions are explicit errors',async()=>{
+test('duplicate HTTP blocks, unknown fields and unsupported expressions are explicit errors',async()=>{
   const cases:[string,string][]=[
-    ['script:pre-request {\n throw SECRET_SENTINEL\n}\n','UNSUPPORTED_BLOCK'],['tests {\n SECRET_SENTINEL\n}\n','UNSUPPORTED_BLOCK'],['settings {\n unknown: SECRET_SENTINEL\n}\n','UNSUPPORTED_BLOCK'],
-    ['post {\n url: http://127.0.0.1/\n}\n','DUPLICATE_HTTP_BLOCK'],['vars:post-response {\n a: res.body.token\n}\n','UNSUPPORTED_BLOCK'],['params:path {\n id: 1\n}\n','UNSUPPORTED_BLOCK'],
+    ['post {\n url: http://127.0.0.1/\n}\n','DUPLICATE_HTTP_BLOCK'],['params:path {\n id: 1\n}\n','UNSUPPORTED_BLOCK'],
     ['assert {\n res.body.value: eq process.env.SECRET_SENTINEL\n}\n','UNSUPPORTED_ASSERTION'],['assert {\n res.body[?(@.secret)]: eq true\n}\n','INVALID_SYNTAX'],
     ['headers {\n X-Test: one\n x-test: two\n}\n','DUPLICATE_PAIR'],['body:xml {\n <secret/>\n}\n','UNSUPPORTED_BLOCK']
   ]

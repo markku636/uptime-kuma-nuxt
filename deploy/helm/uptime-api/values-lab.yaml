@@ -1,0 +1,10 @@
+# Stage A: no application, migration or artifact download is enabled.
+owner: uptime-api-demo-20261114
+postgres:
+  enabled: true
+application:
+  enabled: false
+artifact:
+  enabled: false
+migration:
+  enabled: false

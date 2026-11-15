@@ -20,6 +20,8 @@ Astra 使用本機 PostgreSQL 的唯讀 SELECT、單連線pool、socket_timeout3
 
 新adapter實際拋 `PrismaClientKnownRequestError`、`code=CONTROL_QUERY_TIMEOUT`、沒有meta。審查時 `server/utils/database-errors.ts` 僅收native P1xxx/P2010SQLSTATE；`initializeRuntime`首次registry黑洞因此不排retry，ready永久false。已同步root/Sol，要求明確辨識已知transport transient（含真測碼），維持auth/schema/cipher fail-closed，新增初始registry失敗→網路恢復→自動ready的process測試。不要只測已成功啟動後的heartbeat恢復。
 
+後續狀態：Sol已新增query/connect transport分類、`BoundedPgPool`將pg三個已知code-less連線timeout訊息正規化；Astra讀碼確認已納入CONTROL_QUERY_TIMEOUT。Sol報production/source完整68/68通過（89.9秒，`/tmp/uptime-control-adapter-all.log`），含cold-connect黑洞恢復3.24秒、ready/SIGTERM；此finding標為已修，新增整套結果由Sol執行，Astra未重跑整套。
+
 `BoundedPgClient`目前query promise/callback路徑在真正settle才清timer，timeout直接destroy自身stream；adapter使用的promise形態有覆蓋。transaction、pool飽和、TLS/schema選項、初次connect及正常idle後重用仍需在最終suite保留，不因三項黑洞過關就宣稱所有回歸完成。
 
 ## 驗證來源與限制
@@ -29,6 +31,8 @@ Astra 使用本機 PostgreSQL 的唯讀 SELECT、單連線pool、socket_timeout3
 - Root獨立unit31/31：`/tmp/uptime-root-unit-audit.log`；migration5/5：`/tmp/uptime-root-migration-audit.log`。
 - Root最新typecheck共110診斷（原baseline453）；已識別phase5 WIP dashboard/monitor index及prisma seed新增差異，**不能稱110項全是既有錯誤**，也不能宣稱typecheck通過。
 - 先前62/62為較早runtime穩定點，adapter與phase5變更後需新的完整回歸報告。500 smoke、4000 Bruno匯入都不等於4000活躍監測steady負載完成。
+
+新68/68是adapter穩定點，phase5後仍需新回歸；不以歷史通過數量代表尚在改動中的phase5完成。
 
 ## 後續交付邊界
 

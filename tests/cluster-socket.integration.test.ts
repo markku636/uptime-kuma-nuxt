@@ -10,7 +10,7 @@ import {io,type Socket} from 'socket.io-client'
 import {monitorDbInput} from '../server/utils/monitor-secrets'
 const adminURL=process.env.TEST_PG_ADMIN_URL||'postgresql://postgres@127.0.0.1:55464/postgres'
 if(!['127.0.0.1','localhost'].includes(new URL(adminURL).hostname))throw Error('Cluster tests require local disposable PostgreSQL')
-process.env.APP_ENCRYPTION_KEY='0123456789abcdef'.repeat(4)
+process.env.APP_ENCRYPTION_KEY||='0123456789abcdef'.repeat(4)
 let admin:pg.Client,db:PrismaClient,url:string,name:string,owner:number,viewer:number,workspaceId:number,environmentId:number,environmentB:number,monitorId:number,fixture:http.Server,origin:string,hits=0,open=0
 const processes:ChildProcess[]=[],logs=new Map<ChildProcess,string>(),sockets:Socket[]=[],eventsA:any[]=[],eventsB:any[]=[],eventsViewer:any[]=[]
 const a='http://127.0.0.1:32516',b='http://127.0.0.1:32517',w='http://127.0.0.1:32518',pause=(ms:number)=>new Promise(r=>setTimeout(r,ms))
@@ -25,11 +25,12 @@ async function start(role:string,port:number,databaseURL=url){
 }
 async function login(base:string,username:string){const response=await request(base,'/api/auth/login','POST','',{username,password:'test-password'});await data(response);return response.headers.getSetCookie().map(value=>value.split(';')[0]).join('; ')}
 async function connect(base:string,cookie:string,events:any[]){
-  const {ticket}=await data(await request(base,'/api/auth/socket-ticket','POST',cookie)),socket=io(base,{auth:{ticket},transports:['websocket'],reconnection:false,timeout:2000})
+  const {ticket}=await data(await request(base,'/api/auth/socket-ticket','POST',cookie)),socket=io(base,{auth:{ticket},extraHeaders:{Origin:base},transports:['websocket'],reconnection:false,timeout:2000})
   sockets.push(socket);socket.on('heartbeat',event=>events.push(event));await new Promise<void>((resolve,reject)=>{socket.once('connect',resolve);socket.once('connect_error',reject)});socket.emit('subscribe_monitors');return socket
 }
-async function createMonitor(input:any={}){const [{id}]=await db.$queryRaw<{id:number}[]>`SELECT nextval(pg_get_serial_sequence('monitors','id'))::integer AS id`;return db.monitor.create({data:monitorDbInput({id,name:'Cross pod monitor',userId:owner,workspaceId,environmentId,type:'http',active:true,interval:60,timeout:2,url:origin+'/?token=CROSS_POD_REQUEST_SECRET',nextCheckAt:new Date(Date.now()-100),...input})})}
-let ownerCookie='',viewerCookie='',viewerSocket:Socket,worker:ChildProcess
+async function createMonitor(input:any={}){const [{id}]=await db.$queryRaw<{id:number}[]>`SELECT nextval(pg_get_serial_sequence('monitors','id'))::integer AS id`;const monitor=await db.monitor.create({data:monitorDbInput({id,name:'Cross pod monitor',userId:owner,workspaceId,environmentId,type:'http',active:true,interval:60,timeout:2,url:origin+'/?token=CROSS_POD_REQUEST_SECRET',nextCheckAt:new Date(Date.now()-100),...input})});await subscribeCurrent();return monitor}
+async function subscribeCurrent(){const ids=(await db.monitor.findMany({where:{workspaceId,environmentId},select:{id:true}})).map(row=>row.id);await Promise.all(sockets.filter(socket=>socket.connected).map(socket=>new Promise<void>(resolve=>socket.timeout(2000).emit('subscribe_monitors',ids,()=>resolve()))))}
+let ownerCookie='',viewerCookie='',viewerSocket:Socket,worker:ChildProcess,actualWorkerInstanceId:string
 before(async()=>{
   admin=new pg.Client({connectionString:adminURL});await admin.connect();name='uptime_cluster_'+Date.now();await admin.query(`CREATE DATABASE "${name}"`);const parsed=new URL(adminURL);parsed.pathname='/'+name;parsed.searchParams.set('connection_limit','4');url=parsed.toString()
   const migration=spawn(process.execPath,['scripts/migrate.mjs'],{env:{...process.env,DATABASE_URL:url},stdio:'ignore'});assert.equal(await new Promise(r=>migration.once('exit',r)),0)
@@ -53,7 +54,7 @@ test('API-only pods never check; worker-only pod exposes probes and both API soc
   await until(()=>eventsA.some(event=>event.monitorId===monitorId)&&eventsB.some(event=>event.monitorId===monitorId)&&eventsViewer.some(event=>event.monitorId===monitorId))
   assert.equal(hits,1);assert.equal(await db.heartbeat.count({where:{monitorId}}),1)
   for(const event of [...eventsA,...eventsB,...eventsViewer]){assert.ok(!JSON.stringify(event).includes('CROSS_POD_REQUEST_SECRET'));assert.ok(!JSON.stringify(event).includes('CROSS_POD_RESPONSE_SECRET'));assert.ok(event.revision)}
-  const instances=await db.workerInstance.findMany();assert.equal(instances.filter(row=>row.role==='api').length,2);assert.equal(instances.filter(row=>row.role==='worker').length,1)
+  const instances=await db.workerInstance.findMany();assert.equal(instances.filter(row=>row.role==='api').length,2);assert.equal(instances.filter(row=>row.role==='worker').length,1);actualWorkerInstanceId=instances.find(row=>row.role==='worker')!.instanceId
 })
 test('LISTEN disconnect/reconnect resyncs without cross-environment delivery and revoked idle viewer receives no event',{timeout:30000},async()=>{
   // Terminate only listeners inside this disposable database, never another application's sessions.
@@ -86,7 +87,7 @@ test('remote API pause/edit fence worker socket; new configuration resumes and r
   await data(await request(b,`/api/v1/workspaces/${workspaceId}/members`,'POST',ownerCookie,{username:'cluster-viewer',role:'viewer'}))
   assert.equal((await request(a,'/api/v1/nodes/runtime','GET',viewerCookie)).status,403)
   worker.kill('SIGTERM');await until(()=>worker.exitCode!==null||worker.signalCode!==null,5000)
-  const instance=await db.workerInstance.findFirst({where:{role:'worker'}});assert.equal(instance?.draining,true)
+  const instance=await db.workerInstance.findUnique({where:{instanceId:actualWorkerInstanceId}});assert.equal(instance?.draining,true)
 })
 
 test('API readiness and runtime registry drain remain bounded during a real TCP database blackhole',{timeout:25000},async()=>{

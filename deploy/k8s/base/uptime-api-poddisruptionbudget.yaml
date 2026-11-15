@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: uptime-api
+  namespace: uptime-api
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: uptime-api
+      app.kubernetes.io/instance: uptime-api
+      app.kubernetes.io/component: api

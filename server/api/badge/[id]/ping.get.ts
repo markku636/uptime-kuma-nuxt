@@ -1,10 +1,11 @@
+import {parseBadgeId,parseBadgeQuery,parseBadgeDuration} from '../../../utils/badge-input'
 // server/api/badge/[id]/ping.get.ts
 import { generateBadge, getPingColor } from '../../../services/badge/generator'
 
 export default defineEventHandler(async (event) => {
-  const id = parseInt(getRouterParam(event, 'id') || '0')
+  const id = parseBadgeId(getRouterParam(event, 'id'))
   await assertPublishedMonitor(id)
-  const query = getQuery(event)
+  const query = parseBadgeQuery(getQuery(event))
   
   if (!id) {
     throw createError({
@@ -44,10 +45,10 @@ export default defineEventHandler(async (event) => {
   }
 
   // Generate badge
-  const label = String(query.label || 'Response Time')
-  const style = String(query.style || 'flat') as any
-  const labelColor = String(query.labelColor || '#555')
-  const color = query.color ? String(query.color) : getPingColor(pingValue)
+  const label = (query.label ?? 'Response Time')
+  const style = (query.style ?? 'flat')
+  const labelColor = (query.labelColor ?? '#555')
+  const color = query.color ? query.color : getPingColor(pingValue)
 
   const svg = generateBadge({
     label,

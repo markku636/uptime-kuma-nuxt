@@ -1,0 +1,56 @@
+{{- if .Values.migration.enabled }}
+{{- $artifact := eq .Values.application.mode "artifact" }}
+{{- $sha := required "migration.artifactSha identifies the migrated release" .Values.migration.artifactSha }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uptime-migrate-{{ $sha | trunc 12 }}-{{ .Values.migration.attempt | default 1 | int }}
+  labels:
+    monitoring.owner: {{ .Values.owner | quote }}
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        monitoring.owner: {{ .Values.owner | quote }}
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext: {runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, runAsNonRoot: true}
+      containers:
+        - name: migration
+          image: {{ if $artifact }}{{ .Values.application.artifactImage | quote }}{{ else }}{{ required "application.image required for image mode" .Values.application.image | quote }}{{ end }}
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: [sh, -ec]
+          args:
+            - >-
+              {{ if $artifact }}node -e 'if(JSON.parse(require("fs").readFileSync(".complete")).sha256!==process.env.RELEASE_SHA)process.exit(1)';{{ end }}
+              node scripts/check-runtime.mjs;
+              exec node scripts/migrate.mjs
+          env:
+            - {name: NODE_OPTIONS, value: "--max-old-space-size=512"}
+            - {name: RELEASE_SHA, value: {{ $sha | quote }}}
+          envFrom:
+            - secretRef: {name: {{ .Values.application.existingSecret }}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 250m, memory: 256Mi}
+            limits: {cpu: "2", memory: 1Gi}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+{{- if $artifact }}
+            - {name: artifacts, mountPath: /app, subPath: {{ printf "releases/%s" $sha | quote }}, readOnly: true}
+{{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- if $artifact }}
+        - name: artifacts
+          persistentVolumeClaim: {claimName: uptime-artifacts}
+{{- end }}
+{{- end }}

@@ -1,38 +1,7 @@
-// server/api/v1/status-pages/index.get.ts
-import { prisma } from '~/server/utils/prisma'
-
-export default defineEventHandler(async (event) => {
-  const session = await requireRequestSession(event)
-  
-  if (!session?.user) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  const statusPages = await prisma.statusPage.findMany({where: { workspaceId: session.workspaceId },
-    include: {
-      groups: {
-        include: {
-          monitors: {
-            include: {
-              monitor: true
-            }
-          }
-        },
-        orderBy: { weight: 'asc' }
-      },
-      incidents: {
-        where: { pin: true },
-        orderBy: { createdAt: 'desc' }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  })
-
-  return {
-    ok: true,
-    data: statusPages
-  }
+import {statusConfig} from '../../../utils/public-status'
+export default defineEventHandler(async event=>{
+ const scope=await requireRequestSession(event)
+ // Configuration lists need page metadata; monitor configuration is never a list projection.
+ const pages=await prisma.statusPage.findMany({where:{workspaceId:scope.workspaceId},orderBy:{createdAt:'desc'}})
+ return {ok:true,data:pages.map(page=>({...statusConfig(page),createdAt:page.createdAt}))}
 })

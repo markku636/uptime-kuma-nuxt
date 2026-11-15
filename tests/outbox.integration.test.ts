@@ -11,7 +11,7 @@ import {claimMonitors} from '../server/services/monitor/leases'
 import {completeMonitorRun} from '../server/services/monitor/completion'
 const adminURL=process.env.TEST_PG_ADMIN_URL||'postgresql://postgres@127.0.0.1:55464/postgres'
 if(!['127.0.0.1','localhost'].includes(new URL(adminURL).hostname))throw Error('Outbox tests require local disposable PostgreSQL')
-process.env.APP_ENCRYPTION_KEY='0123456789abcdef'.repeat(4)
+process.env.APP_ENCRYPTION_KEY||='0123456789abcdef'.repeat(4)
 let admin:pg.Client,db:PrismaClient,url:string,name:string,owner:number,workspaceId:number,environmentId:number,monitorId:number,server:http.Server,origin:string,hits=0,open=0
 const bodies:string[]=[],pause=(ms:number)=>new Promise(r=>setTimeout(r,ms))
 async function until(condition:()=>Promise<boolean>|boolean,timeout=10000){const end=Date.now()+timeout;while(Date.now()<end){if(await condition())return;await pause(20)}assert.fail('Timed out waiting for outbox fixture')}
@@ -67,5 +67,9 @@ test('accepted state transition queues only workspace channels and TLS threshold
   assert.equal((await complete(1)).accepted,true);assert.equal((await complete(0)).accepted,true);assert.equal((await complete(0)).accepted,true)
   const rows=await db.notificationOutbox.findMany();assert.equal(rows.length,2);assert.ok(rows.every(row=>row.notificationId===own.id));assert.equal(rows.filter(row=>row.eventType==='tls-expiry').length,1);assert.equal(rows.filter(row=>row.eventType==='status').length,1)
   assert.ok(!JSON.stringify(rows,(_k,v)=>typeof v==='bigint'?String(v):v).includes('REQUEST_SECRET'))
+  await db.notificationOutbox.updateMany({where:{eventType:'tls-expiry'},data:{status:'delivered',completedAt:new Date(Date.now()-100*86400000)}})
+  const {cleanupRuntime}=await import('../server/services/monitor/cleanup');await cleanupRuntime(db)
+  assert.equal(await db.notificationOutbox.count({where:{eventType:'tls-expiry'}}),0);assert.equal(await db.notificationDedupe.count({where:{monitorId}}),1)
+  assert.equal((await complete(0)).accepted,true);assert.equal(await db.notificationOutbox.count({where:{eventType:'tls-expiry'}}),0)
   await db.monitor.update({where:{id:monitorId},data:{active:false}});await db.workspace.delete({where:{id:otherWorkspace.id}})
 })

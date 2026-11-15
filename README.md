@@ -6,34 +6,24 @@
 ![Vue](https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql)
 ![Prisma](https://img.shields.io/badge/Prisma-6.x-2D3748?style=flat-square&logo=prisma)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)
+![Docker](https://img.shields.io/badge/Dockerfile-provided-2496ED?style=flat-square&logo=docker)
 
 ---
 
 ## ✨ 功能特色
 
-### 🖥️ 監控類型
-- **HTTP(s)** - 網站監控、關鍵字檢測、JSON 查詢
-- **TCP Port** - 端口連接測試
-- **Ping** - ICMP 網路監控
-- **DNS** - DNS 解析監控
-- **Push** - 被動推送監控
-- **Docker** - 容器健康檢查
-- **gRPC** - gRPC 服務監控
-- **Database** - PostgreSQL、MySQL、MSSQL、MongoDB、Redis 連線監控
-- **MQTT** - 消息佇列監控
-- **Kafka** - Kafka 叢集監控
-- **RabbitMQ** - RabbitMQ 監控
-- **Game Server** - 遊戲伺服器監控 (透過 GameDig)
+### 🖥️ 監控與 API 能力
+
+- HTTP(s)、關鍵字與安全 JSON 查詢；支援 status/header/body/JSON/response-time 宣告式回應斷言與試跑。
+- Push 回報；workspace／environment 隔離、API key 權限、加密且不可回讀的 request／環境 secrets。
+- Bruno `.bru` 宣告式子集 preview／原子 paused import／placeholder export。JavaScript scripts/tests、未支援 auth 與格式會明確拒絕，見 [相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
+- PostgreSQL lease/fencing、多 API／worker、Kubernetes 多節點部署設定。
+
+舊 TCP、Ping、DNS、Docker、gRPC、database、MQTT、Kafka、RabbitMQ、GameDig 等配置可保留，但目前分散 worker 沒有對應 bounded adapter，會顯示 unsupported；不要視為已可排程。HTTP proxy、NTLM/mTLS 同樣未支援，不會悄悄改成直接連線。
 
 ### 🔔 通知渠道
-- Email (SMTP)
-- Webhook
-- Discord
-- Slack
-- Telegram
-- Microsoft Teams
-- 更多...
+
+Webhook、Discord、Slack、Telegram、Microsoft Teams 透過 bounded transport 與 durable outbox 發送。SMTP/email 目前明確 unsupported；通知送出後本機 ACK 前故障仍可能重送，不承諾外部 exactly-once。
 
 ### 📊 功能亮點
 - 📈 多語言支援 (70+ 語言)
@@ -44,8 +34,7 @@
 - 🔧 維護排程管理
 - 🏷️ 標籤分組管理
 - 🔑 API Key 管理
-- 🌐 Proxy 代理支援
-- 🖥️ Remote Browser 支援
+- 🔒 Proxy／Remote Browser 設定有安全憑證管理；不代表本版 HTTP worker 已整合這些 transport
 
 ---
 
@@ -125,7 +114,7 @@ nuxtjs/
 | **i18n** | @nuxtjs/i18n (70+ 語言) |
 | **Styling** | Tailwind CSS, @nuxt/ui |
 | **Container** | Docker, Docker Compose |
-| **Load Balancer** | OpenResty (Nginx + Lua) |
+| **多節點協調** | PostgreSQL leases／NOTIFY＋bounded resync；API Service／自有 ingress |
 
 ---
 
@@ -133,34 +122,30 @@ nuxtjs/
 
 ### 環境需求
 
-- Node.js 20+
-- PostgreSQL 16+
-- npm / pnpm / yarn
+- Node.js 24（package engines 最低 22.18）
+- PostgreSQL 16
+- npm 與已提交的 package-lock.json
 
 ### 本地開發
 
 1. **安裝依賴**
 
 ```bash
-npm install
+npm ci
 ```
 
 2. **設定環境變數**
 
-建立 `.env` 檔案：
+由 `.env.example` 建立本機不提交的 `.env`，填入自己的 PostgreSQL URL、隨機 `NUXT_SESSION_PASSWORD`（至少32字元）與 `APP_ENCRYPTION_KEY`（64 hex）。不要沿用公開預設值。保留 encryption key 與 DB 備份，否則密文無法恢復。
 
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/uptime_kuma?schema=public
-JWT_SECRET=your-secret-key-change-this-in-production
-NUXT_SESSION_PASSWORD=your-session-password-at-least-32-chars
-```
-
-3. **初始化資料庫**
+3. **以版本化 migration 初始化資料庫**
 
 ```bash
 npm run db:generate
-npm run db:push
+node --env-file=.env scripts/migrate.mjs
 ```
+
+既有安裝先備份並停止舊 scheduler；未知／不完整 legacy schema 會拒絕遷移，不能用 `db push` 覆蓋。第一次登入前在私人入口完成 admin setup，再公開服務。
 
 4. **啟動開發伺服器**
 
@@ -172,65 +157,19 @@ npm run dev
 
 ---
 
-## 🐳 Docker 部署
+## 🐳 Docker 與 Kubernetes 部署
 
-### 單節點部署
-
-```bash
-docker-compose -f docker-compose.single.yml up -d --build
-```
-
-### 叢集部署 (推薦用於生產環境)
+單機使用 Docker Compose V2 的 canonical 配置。先私下設定 `POSTGRES_PASSWORD`、指向 `db:5432/uptime_kuma` 的 `DATABASE_URL`、session/encryption keys；URL中的特殊密碼字元需正確編碼。
 
 ```bash
-# 啟動 3 節點叢集 (預設)
-docker-compose -f docker-compose-cluster.yaml up -d --build
-
-# 啟動 5 節點叢集 (擴展模式)
-docker-compose -f docker-compose-cluster.yaml --profile extended up -d --build
+docker compose -f docker-compose.single.yml up -d --build
 ```
 
-### 叢集架構
+DB健康後執行獨立 migration service，成功才啟動 APP_ROLE=all；入口為 http://localhost:32401。預設不提供帳密。`docker-compose.yml` 與舊 `docker-compose-cluster.yaml` 現在透過 Compose include 導向同一單機配置，**不再啟動3／5個 OpenResty nodes**，也沒有 `--profile extended` 叢集。
 
-```
-                    ┌─────────────────┐
-                    │   OpenResty     │
-                    │  Load Balancer  │
-                    │   :32400        │
-                    └────────┬────────┘
-                             │
-         ┌───────────────────┼───────────────────┐
-         │                   │                   │
-         ▼                   ▼                   ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│     Node 1      │ │     Node 2      │ │     Node 3      │
-│   (Primary)     │ │                 │ │                 │
-│    :32411       │ │    :32412       │ │    :32413       │
-└────────┬────────┘ └────────┬────────┘ └────────┬────────┘
-         │                   │                   │
-         └───────────────────┼───────────────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │   PostgreSQL    │
-                    │     :32402      │
-                    └─────────────────┘
-```
+Kubernetes 正式多節點使用 immutable application image、外部 PostgreSQL、兩 API＋兩 worker；application Pods 不依賴 shared artifact PVC。詳見 [Kubernetes 操作流程](docs/KUBERNETES_DEPLOYMENT.md)、[實際 manifests](deploy/README.md) 與 [runtime 契約](docs/CLUSTER_RUNTIME.md)。修改／發布本任務部署仍由 root 走 v-terminal GitOps。
 
-### 叢集管理 API
-
-| 方法 | 端點 | 說明 |
-|------|------|------|
-| GET | `/api/cluster/nodes` | 取得所有節點狀態 |
-| GET | `/api/cluster/current` | 取得當前節點資訊 |
-| POST | `/api/cluster/switch` | 切換節點 |
-
-**切換節點範例：**
-```bash
-curl -X POST http://localhost:32400/api/cluster/switch \
-  -H "Content-Type: application/json" \
-  -d '{"node": "node2"}'
-```
+本次 lab 只有一個 Ready node。官方 Node base＋SHA artifact 的 demo 可驗多 Pod 協調與重建，不能宣稱跨 node failover；Dockerfile build、built-image runtime、artifact runtime 亦分開記錄。最新結果與未完成項見 [證據索引](docs/validation/EVIDENCE_INDEX.md)。使用者已取消 4000 活躍容量驗證，最終保留5筆 demo。
 
 ---
 
@@ -247,7 +186,7 @@ npm run generate      # 生成靜態網站
 
 # 資料庫
 npm run db:generate   # 生成 Prisma Client
-npm run db:push       # 同步資料庫結構
+node --env-file=.env scripts/migrate.mjs  # 套用版本化 migrations（先備份）
 ```
 
 ---
@@ -258,22 +197,27 @@ npm run db:push       # 同步資料庫結構
 
 - **Swagger UI**: `/api-docs`
 - **OpenAPI JSON**: `/api/swagger-json`
-- **健康檢查**: `/api/health`
-- **Prometheus 指標**: `/api/metrics`
+- **Monitor／maintenance REST 使用說明**: [REST_API.md](docs/REST_API.md)
+- **健康檢查**: `/api/health/live`、`/api/health/ready`
+- **Prometheus 指標**: `/api/v1/metrics`（workspace/environment scoped）；`/api/metrics`（platform admin）
+- **測試重現**: [TESTING.md](docs/TESTING.md)
 
 ---
 
 ## 🌐 環境變數
 
-| 變數名稱 | 說明 | 預設值 |
-|----------|------|--------|
-| `DATABASE_URL` | PostgreSQL 連接字串 | - |
-| `JWT_SECRET` | JWT 簽名密鑰 | - |
-| `NUXT_SESSION_PASSWORD` | Session 加密密碼 (32+ 字元) | - |
-| `NUXT_PUBLIC_APP_URL` | 應用程式公開 URL | `http://localhost:32400` |
-| `NODE_ID` | 節點 ID (叢集模式) | `node1` |
-| `NODE_NAME` | 節點名稱 (叢集模式) | `Node 1` |
-| `IS_PRIMARY` | 是否為主節點 | `false` |
+| 變數名稱 | 說明 |
+|----------|------|
+| `DATABASE_URL` | PostgreSQL URL；多節點所有 process 連同一 DB |
+| `NUXT_SESSION_PASSWORD` | 隨機 session secret，32+ 字元，所有 API 相同 |
+| `APP_ENCRYPTION_KEY` | 隨機64 hex，所有 API／worker相同，需安全備份 |
+| `APP_ROLE` | `api`／`worker`／`all`，預設 all；K8s分開兩種 Deployment |
+| `NUXT_PUBLIC_APP_URL` | 主要公開 origin |
+| `APP_ALLOWED_ORIGINS` | 額外完整 origins，逗號分隔；無 wildcard |
+| `WORKER_CONCURRENCY`／`WORKER_PER_ORIGIN` | 每 process 全域／origin並行上限，預設32／8 |
+| `HEARTBEAT_RETENTION_ENABLED` | 預設false；先驗聚合／備份再顯式開啟刪除 |
+
+`NODE_ID`／`IS_PRIMARY` 不再分配工作，worker 每次啟動使用新 UUID。完整設定見 [.env.example](.env.example) 與 [CLUSTER_RUNTIME.md](docs/CLUSTER_RUNTIME.md)。
 
 ---
 

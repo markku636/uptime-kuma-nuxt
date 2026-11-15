@@ -4,7 +4,7 @@ import http from 'node:http'
 import {chromium,type BrowserContext} from 'playwright'
 import {base,user,workspace,cleanup,prisma,request,data,type Identity,type Scope} from './helpers/http'
 import {hydrateResource} from '../server/utils/resource-secrets'
-process.env.APP_ENCRYPTION_KEY='0123456789abcdef'.repeat(4)
+process.env.APP_ENCRYPTION_KEY||='0123456789abcdef'.repeat(4)
 test('resource UI preserves write-only notification and browser settings, tests by ID and hides viewer mutations',{timeout:60000},async()=>{
   let owner:Identity|undefined,viewer:Identity|undefined,scope:Scope|undefined,hits=0
   const fixture=http.createServer(async(req,res)=>{hits++;for await(const _ of req){};res.setHeader('content-type','application/json');res.end(JSON.stringify({Browser:'Chrome',webSocketDebuggerUrl:'ws://private/UI_SECRET'}))})

@@ -632,13 +632,13 @@ function handleDiscard() {
 }
 
 .btn-primary {
-  background: var(--color-primary, #10b981);
-  color: white;
+  background: var(--uk-primary);
+  color: var(--uk-on-primary);
   border: none;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--color-primary-dark, #059669);
+  background: var(--uk-primary-hover);
 }
 
 .btn-primary:disabled {

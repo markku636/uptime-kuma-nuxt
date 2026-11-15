@@ -30,6 +30,7 @@ model User {
 }
 
 model Monitor {
+  originHint String? @map("origin_hint") @db.VarChar(64)
   nextCheckAt DateTime @default(now()) @map("next_check_at") @db.Timestamptz(3)
   runId String? @map("run_id") @db.Uuid
   scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz(3)
@@ -38,9 +39,14 @@ model Monitor {
   leaseUntil DateTime? @map("lease_until") @db.Timestamptz(3)
   claimedConfigVersion Int? @map("claimed_config_version")
   states MonitorState[]
+  hourly HeartbeatHourly[]
+  historyCheckpoints HistoryCheckpoint[]
+  notificationDedupe NotificationDedupe[]
   notificationOutbox NotificationOutbox[]
   configVersion Int @default(1) @map("config_version")
   brunoSources BrunoSource[]
+  // FK (group_id, workspace_id) -> monitor_groups is defined in SQL with ON DELETE SET NULL (group_id).
+  groupId Int? @map("group_id")
   @@unique([id, workspaceId, environmentId], map: "monitors_id_workspace_environment_key")
   requestSecrets String? @map("request_secrets")
   assertions Json?
@@ -168,9 +174,11 @@ model Monitor {
   @@map("monitors")
   @@index([workspaceId])
   @@index([workspaceId, environmentId, id])
+  @@index([workspaceId, groupId], map: "monitors_workspace_group_idx")
 }
 
 model Heartbeat {
+  coverageSeconds Int? @map("coverage_seconds")
   runId String? @unique @map("run_id") @db.Uuid
   scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz(3)
   configVersion Int? @map("config_version")
@@ -187,11 +195,13 @@ model Heartbeat {
 
   monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
-  @@index([monitorId, time(sort: Desc)])
+  @@index([monitorId, time(sort: Desc),id(sort: Desc)])
+  @@index([time,id])
   @@map("heartbeats")
 }
 
 model Notification {
+  dedupe NotificationDedupe[]
   outbox NotificationOutbox[]
   @@unique([id,workspaceId],map:"notifications_id_workspace_key")
   resourceSecrets String? @map("resource_secrets")
@@ -499,6 +509,7 @@ model Workspace {
   maintenances Maintenance[]
   apiKeys ApiKey[]
   remoteBrowsers RemoteBrowser[]
+  monitorGroups MonitorGroup[]
   @@map("workspaces")
 }
 
@@ -533,6 +544,7 @@ model BrunoSource {
   collectionId String @map("collection_id")
   sourceEnvironment String @default("") @map("source_environment")
   path String
+  ignoredBlocks String[] @default([]) @map("ignored_blocks")
   monitorId Int @unique @map("monitor_id")
   monitor Monitor @relation(fields:[monitorId,workspaceId,environmentId],references:[id,workspaceId,environmentId],onDelete:Cascade)
   createdAt DateTime @default(now()) @map("created_at")
@@ -542,7 +554,25 @@ model BrunoSource {
 }
 
 
+model MonitorGroup {
+  id Int @id @default(autoincrement())
+  workspaceId Int @map("workspace_id")
+  // FK (parent_id, workspace_id) is defined in SQL; parents cascade to their subtree.
+  parentId Int? @map("parent_id")
+  name String @db.VarChar(150)
+  sortOrder Int @default(0) @map("sort_order")
+  sourceKind String @default("manual") @map("source_kind") @db.VarChar(16)
+  collectionId String? @map("collection_id") @db.VarChar(100)
+  sourcePath String? @map("source_path") @db.VarChar(256)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@unique([id, workspaceId], map: "monitor_groups_id_workspace_key")
+  @@index([workspaceId, parentId, sortOrder, id], map: "monitor_groups_workspace_parent_idx")
+  @@map("monitor_groups")
+}
 model MonitorState {
+  assertionResults Json? @map("assertion_results")
   monitorId Int @id @map("monitor_id")
   workspaceId Int @map("workspace_id")
   environmentId Int @map("environment_id")
@@ -598,4 +628,67 @@ model WorkerInstance {
   metrics Json
   @@index([lastSeen])
   @@map("worker_instances")
+}
+
+model HeartbeatHourly {
+ monitorId Int @map("monitor_id")
+ workspaceId Int @map("workspace_id")
+ environmentId Int @map("environment_id")
+ monitor Monitor @relation(fields:[monitorId,workspaceId,environmentId],references:[id,workspaceId,environmentId],onDelete:Cascade)
+ bucketStart DateTime @map("bucket_start") @db.Timestamptz(3)
+ upMs BigInt @map("up_ms")
+ downMs BigInt @map("down_ms")
+ maintenanceMs BigInt @map("maintenance_ms")
+ unknownMs BigInt @map("unknown_ms")
+ pingSum BigInt @map("ping_sum")
+ pingCount Int @map("ping_count")
+ minPing Int? @map("min_ping")
+ maxPing Int? @map("max_ping")
+ upCount Int @map("up_count")
+ downCount Int @map("down_count")
+ totalCount Int @map("total_count")
+ estimated Boolean @default(false)
+ generation BigInt @default(1)
+ @@id([monitorId,bucketStart])
+ @@index([bucketStart,monitorId])
+ @@map("heartbeat_hourly")
+}
+model HistoryCheckpoint {
+ monitorId Int @id @map("monitor_id")
+ workspaceId Int @map("workspace_id")
+ environmentId Int @map("environment_id")
+ monitor Monitor @relation(fields:[monitorId,workspaceId,environmentId],references:[id,workspaceId,environmentId],onDelete:Cascade)
+ firstBucket DateTime @map("first_bucket") @db.Timestamptz(3)
+ sealedBefore DateTime @map("sealed_before") @db.Timestamptz(3)
+ rawDeletedBefore DateTime? @map("raw_deleted_before") @db.Timestamptz(3)
+ generation BigInt @default(1)
+ clearing Boolean @default(false)
+ @@index([sealedBefore,monitorId])
+ @@map("history_checkpoints")
+}
+model HistoryClearJob {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId Int @map("workspace_id")
+ maxMonitorId Int @map("max_monitor_id")
+ cursor Int @default(0)
+ currentMonitorId Int? @map("current_monitor_id")
+ cutoff DateTime @db.Timestamptz(3)
+ status String @default("pending")
+ deletedRows BigInt @default(0) @map("deleted_rows")
+ processedMonitors Int @default(0) @map("processed_monitors")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+ completedAt DateTime? @map("completed_at") @db.Timestamptz(3)
+ @@index([status,createdAt])
+ @@map("history_clear_jobs")
+}
+model NotificationDedupe {
+ key String @id
+ monitorId Int @map("monitor_id")
+ workspaceId Int @map("workspace_id")
+ environmentId Int @map("environment_id")
+ notificationId Int @map("notification_id")
+ monitor Monitor @relation(fields:[monitorId,workspaceId,environmentId],references:[id,workspaceId,environmentId],onDelete:Cascade)
+ notification Notification @relation(fields:[notificationId,workspaceId],references:[id,workspaceId],onDelete:Cascade)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+ @@map("notification_dedupe")
 }

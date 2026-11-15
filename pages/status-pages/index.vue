@@ -31,8 +31,10 @@
                 <span v-if="!page.published" class="draft-badge">Draft</span>
               </div>
               <div class="slug">/status/{{ page.slug }}</div>
+
             </div>
-            <div class="actions">
+            <div v-if="canEdit" class="actions">
+              <button class="btn btn-sm btn-outline" @click.prevent="navigateTo(`/status-pages/${page.slug}/edit`)">Configure monitors</button>
               <button class="btn btn-sm btn-outline" @click.prevent="openEditModal(page)">
                 Edit
               </button>
@@ -111,6 +113,7 @@
 </template>
 
 <script setup lang="ts">
+const {canEdit}=useWorkspace()
 definePageMeta({
   middleware: ['auth']
 })
@@ -249,11 +252,11 @@ async function handleDelete() {
   transition: all 0.15s;
 }
 
-.btn-primary { background: #5cdd8b; color: white; border-color: #5cdd8b; }
-.btn-primary:hover { background: #4cc77a; }
+.btn-primary { background: var(--uk-primary); color: var(--uk-on-primary); border-color: var(--uk-primary); }
+.btn-primary:hover { background: var(--uk-primary-hover); }
 .btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
 
-.btn-outline { background: transparent; border-color: #dee2e6; color: #212529; }
+.btn-outline { background: transparent; border-color: var(--border-color); color: var(--text-primary); }
 .dark .btn-outline { border-color: #30363d; color: #c9d1d9; }
 .btn-outline:hover { background: #f8f9fa; }
 .dark .btn-outline:hover { background: #30363d; }

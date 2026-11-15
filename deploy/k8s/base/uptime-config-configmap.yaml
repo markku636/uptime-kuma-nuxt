@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uptime-config
+  labels:
+    monitoring.owner: uptime-api-demo-20261114
+  namespace: uptime-api
+data:
+  APP_ALLOWED_ORIGINS: https://uptime.226network.com,https://uptime.markkulab.net,http://192.168.50.57:32480
+  HEARTBEAT_HOURLY_DAYS: '400'
+  HEARTBEAT_RAW_HOURS: '48'
+  HEARTBEAT_RETENTION_ENABLED: 'false'
+  NUXT_PUBLIC_APP_URL: https://uptime.226network.com
+  WORKER_CLAIM_BATCH: '8'
+  WORKER_CONCURRENCY: '32'
+  WORKER_DB_POOL_SIZE: '3'
+  WORKER_DRAIN_MS: '15000'
+  WORKER_LEASE_MS: '15000'
+  WORKER_PER_ORIGIN: '8'
+  WORKER_POLL_MS: '100'
+  WORKER_RENEW_MS: '3000'

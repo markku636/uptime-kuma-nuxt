@@ -2,9 +2,15 @@
 
 日期：2026-11-14。規劃：Astra；程式實作：單一 Sol agent。來源快照：`896c4575f22bf58119b85792b929b6ecb30a1bbd`。本文件是待實作與驗收的計畫，並非完成報告。
 
+> 2026-11-14 13:29 台北範圍修訂：使用者取消 4000 API 負載／容量驗證，改以 K8s 多節點支援為重點。只清除本次仍存在的 owned 4000 fixture，保留 5 筆 demo；其餘 REST、maintenance、UI、assertions、Bruno、workspace 與雙網域要求保留。已完成量測僅是歷史證據。
+
+## 16:35 交付狀態索引
+
+此處不把計畫各列自動標完成。產品已凍結runtime `8d0593a9492538112988024e4b2c1ea9fdbcaf5a3e36164267a58df00075d4b4`；最新build、full77pass＋1skip與targeted5/5通過，unit37/37；typecheck仍66 diagnostics、exit2。cluster最終8d0593 revision9已Healthy／Synced，loader／migration／runtime及新版5-demo雙API smoke通過；先前a4134b另有150秒rolling update證據。多node設定可交付，但現場單node，跨node實測未做；Kaniko d6 context no-push build已成功（非最新版image runtime）；雙網域仍受平台權限阻擋。各版本與限制見 [交付驗證摘要](validation/RELEASE_VALIDATION.md) 和 [證據索引](validation/EVIDENCE_INDEX.md)。4000取消與保留少量demo的範圍不變。
+
 ## 目標與設計決策
 
-讓現有 Nuxt／Prisma／PostgreSQL 系統能管理 4,000 個 API monitor，驗證回應內容、從 Bruno 匯入、隔離多 workspace 與環境，並以 Kubernetes 多 worker 執行。K8s 首版範圍是部署及執行本平台，不含 Kubernetes 資源探索或取代 Prometheus。
+讓現有 Nuxt／Prisma／PostgreSQL 系統能管理 API monitors，驗證回應內容、從 Bruno 匯入、隔離多 workspace 與環境，並以 Kubernetes 多 worker 執行。K8s 首版範圍是部署及執行本平台，不含 Kubernetes 資源探索或取代 Prometheus。
 
 保留 PostgreSQL 作為唯一排程真實來源；不因加入 cluster 就強制新增 Redis。分開 API 與 worker 角色，移除每個 monitor 各自 setInterval 的排程核心。多環境以每個 monitor 綁定一個 environment 表達，同一 request 可明確複製到其他環境；不暗中將一次排程展開成所有環境。
 
@@ -17,7 +23,7 @@
 - PostgreSQL `FOR UPDATE SKIP LOCKED` 適合多個 consumer 競爭工作列；它不提供外部 HTTP 呼叫 exactly-once 保證。[PostgreSQL 16 SELECT](https://www.postgresql.org/docs/16/sql-select.html)
 - Socket.IO 多節點必須處理跨 server 訊息轉送，使用 polling 時還須 session affinity；單純多開 pod 不能保證所有 UI 都收到 heartbeat。[官方文件](https://socket.io/docs/v4/using-multiple-nodes/)
 
-## 已確認的現況缺口
+## 起始基線缺口（歷史盤點，非目前未修清單）
 
 1. `server/services/monitor/scheduler.ts` 每個 monitor 立即執行並建立 setInterval，沒有跨節點 lease、同 monitor in-flight guard 或全域並行上限；retry 可能跨越下一次 interval。
 2. `server/api/v1/monitors/index.get.ts` 取全部 monitors，且每筆附 50 heartbeats；4,000 monitors 即可能返回 200,000 heartbeats。Prisma 物件直接展開亦可能洩漏認證欄位。
@@ -36,7 +42,7 @@
 | 3 Bruno | preview、欄位映射、環境選擇、批次 paused import、相容矩陣 | 官方風格 fixture、明確拒絕 scripts、未知 block、缺變數；失敗不留下半套資料；匯入後可編輯與試跑 |
 | 4 分散排程 | atomic claims、lease/fencing、角色拆分、並行上限、通知 outbox | 2 worker 同時 claim 無重複有效結果；crash/timeout/lease loss/config update/pause 測試 |
 | 5 規模與操作 | cursor 列表、batch latest state、聚合統計、retention、跨 pod 更新 | UI 不下載全資料；DB 查詢數不隨單頁 monitor 數線性增加；刪除有 batch 上限；斷線可重新同步 |
-| 6 K8s 與 4,000 驗證 | manifests、runbook、負載工具、量測報告 | 真實本機兩 worker + PG；可用時 kind/K8s smoke；4000 monitors 實際排程報告；未執行的檢查明確列出 |
+| 6 K8s 多節點支援 | immutable image、跨節點 manifests、migration、runbook | 兩 API／兩 worker 的小量功能與故障測試；image 模式無單節點 artifact PVC；實際 lab 單節點限制與未執行的跨 node 驗收明列 |
 
 ## Workspace、環境、授權
 
@@ -78,30 +84,34 @@ preview 顯示每個檔案會建立什麼 monitor/environment、warnings、block
 
 同一 monitor 僅一個有效 lease；claim 必須有硬 batch 上限。lease 需涵蓋有效 timeout/retry budget 並 heartbeat renew；續租失敗即 abort。completion transaction 再檢查 owner、fence、leaseUntil、configVersion、active；只有匹配者可寫 heartbeat、latest summary、下一次時間與 notification outbox。run 唯一鍵 `(monitorId,scheduledFor)` 防重複結果；舊 worker 不得覆蓋新結果。pause/delete/config update 使舊 fence 失效。
 
-採 jitter 分散 4,000 monitors；重啟不瞬間執行全部，不補跑每個錯過週期。嚴格限制 worker global concurrency、per host concurrency、queue length、retry count、總 timeout 及 DB pool。重試需 jitter/backoff；非冪等 HTTP 重試須明確設定。外部 HTTP 不能保證 exactly-once；lease 過期重領可能重送，產品與文件須如此說明。
+採 jitter 分散 monitors；重啟不瞬間執行全部，不補跑每個錯過週期。嚴格限制 worker global concurrency、per host concurrency、queue length、retry count、總 timeout 及 DB pool。重試需 jitter/backoff；非冪等 HTTP 重試須明確設定。外部 HTTP 不能保證 exactly-once；lease 過期重領可能重送，產品與文件須如此說明。
 
 outbox 與結果同 transaction，唯一事件鍵避免同一 transition 多次 enqueue；sender 自己 lease、可重試。第三方通知若沒有 idempotency API，crash 後重送不能宣稱 exactly-once。跨 API pod fanout 可用 PostgreSQL NOTIFY 作失效提示，再讀有權限的 DB state；通知丟失不影響結果正確性，client reconnect 用 cursor 同步。也可採正式 Socket.IO PG adapter，但必須測跨 pod 的實際連線。
 
 API cursor pagination 預設 100、最多 200，穩定排序含 ID，search/environment/status/tag 都在 DB 篩選；list 只拿安全摘要及 latest state，不附 50 heartbeats。詳情另有 bounded history API；summary 是全 workspace aggregate，不可把單頁統計當全局。更新推送批次化，慢 client 合併狀態並設 queue cap。
 
-4,000 × 每分鐘一次 = 66.67 checks/s；每天 5,760,000 raw results。平均 1 秒需約 67 並行，平均 10 秒需約 667，必須依實測 sizing。raw 預設短期保留（建議 7 天，可設定），hourly/daily rollup 長期保存；rollup 依狀態持續時間計算 uptime，不以不等頻次簡單計數。cleanup 使用有時間索引的 bounded batches，單一 maintenance lease；不能一次刪除數千萬筆。
+容量須依實際工作負載 sizing，本輪不再驗證特定 4000 筆容量。目前 raw 保留設定為48小時、hourly rollup400天，實際刪除預設關閉；沒有交付daily rollup；rollup 依狀態持續時間計算 uptime，不以不等頻次簡單計數。cleanup 使用有時間索引的 bounded batches，單一 maintenance lease；不能一次刪除數千萬筆。
 
 ## K8s 交付
 
-同 image 以 APP_ROLE=api|worker|all 分工，cluster 使用分開 Deployments；Pod UID 作唯一 workerId。API 無排程，worker 無外部管理入口。提供 Secret/ConfigMap、Service、Ingress 範例、requests/limits、startup/readiness/liveness、PDB、terminationGracePeriodSeconds、non-root securityContext、migration Job。DB migration 只跑一次，不讓每個 replica 自行 db push。readiness 可檢查 DB 與 worker loop，liveness 不因短 DB outage 無限重啟。
+實作與驗收以 [phase6詳細Spec](specs/2026-11-14-k8s-scale-validation.md) 為準：canonical Docker/Compose入口、獨立migration Job、可重現integration harness、跨節點 image 部署設定與隔離 namespace 小量功能實跑；built-image與artifact smoke分開列證據。
 
-SIGTERM 停止 claims，維持/安全結束既有租約，在期限內完成或取消；timeout 留待 lease expire，不能在仍有 in-flight request 時立即釋放租約。K8s HPA 只擴 API／worker；worker sizing 以 queue lag、utilization 為依據。PostgreSQL HA、備份、連線池為部署前提，不能因有多 worker 就宣稱整體無單點。
+同 image 以 APP_ROLE=api|worker|all 分工，cluster 使用分開 Deployments；每 process 新UUID 作唯一 workerId，Pod UID只作診斷。API 無排程，worker 無外部管理入口。提供 Secret/ConfigMap、Service、Ingress 範例、requests/limits、startup/readiness/liveness、PDB、terminationGracePeriodSeconds、non-root securityContext、migration Job。DB migration 只跑一次，不讓每個 replica 自行 db push。readiness 可檢查 DB 與 worker loop，liveness 不因短 DB outage 無限重啟。
+
+SIGTERM 停止 claims，維持/安全結束既有租約，在期限內完成或取消；timeout 留待 lease expire，不能在仍有 in-flight request 時立即釋放租約。若後續配置 K8s HPA，只擴 API／worker（本期未交付 HPA 自動擴縮驗證）；worker sizing 以 queue lag、utilization 為依據。PostgreSQL HA、備份、連線池為部署前提，不能因有多 worker 就宣稱整體無單點。
 
 ## 驗收與證據
 
 1. 自動測試：typed assertions／malicious paths／oversized response；Bruno parser fixture／scripts rejection／variable precedence；role/resource matrix；lease race／stale commit／pause race／outbox dedupe。
 2. DB 整合：新安裝與既有 schema 資料遷移；兩個 workspace 的 REST、socket、import/export、public endpoint 越權；真正 PostgreSQL transaction，不只 mock。
 3. Browser：登入、建 workspace/env、建 API monitor、試跑、編輯重載、Bruno preview/import、跨 workspace 切換、viewer 按鈕與 server 拒絕。若無 MCP，只能記為瀏覽器自動化，不能寫 MCP 驗證通過。
-4. Load：seed 4,000 monitors 對本機受控 fixture，60 秒 interval，warmup 2 分鐘 + steady 10 分鐘；記錄實際硬體／版本／body大小／延遲分布／concurrency／DB pool。建議基線 fixture：95% 100ms、4% 1s、1% timeout；另跑慢回應及 1 MiB 上限壓力，不替外部網站做壓測。
-5. 量測：due/claimed/completed/failed/expired、schedule lag p50/p95/p99、throughput、max in-flight、duplicate accepted results、HTTP count、API p95、RSS/event-loop lag、DB query time/pool wait。穩態目標完成率 ≥99% due checks、schedule lag p95 <5秒、單頁 API p95 <500ms；均為指定硬體 fixture 的驗收目標，未實測不得當宣稱。
+4. K8s：少量 task-owned HTTP fixture 驗兩 API／兩 worker、migration、role、fanout、rollout、lease 接手；取消新增 4000 seed 與持續負載 runner。
+5. 證據：分列 image build、built-image runtime、artifact runtime、實際 node placement 與故障事件。單節點 lab 不可宣稱跨 node failover；既有 SQL/helper 量測不等同容量 SLA。
 6. 故障：2 worker 啟動，kill 一個、延遲舊結果、DB 暫斷、滾動重啟；有效結果不重複、stale result 被拒、lease expiry 後恢復。K8s 如只有 manifests 靜態驗證，報告必須直說尚未實際部署。
 
 ## 變更策略
+
+使用者新增交付要求依 [REST／maintenance／UI與雙網域Spec](specs/2026-11-14-rest-maintenance-ui-delivery.md)：維護窗口真時間語意與REST權限／OpenAPI、desktop/mobile介面收束、兩網域測試、精確清除實際存在的 owned 4000 fixture 並保留 5 筆 demo（不再先跑負載）。公開demo使用獨立持久化PVC，不隨 fixture cleanup 刪除；DNS發布前完成admin setup。這些接續原phase5/6，不取代其完整驗收。
 
 第 5 階段依 [分頁、聚合與保留詳細 Spec](specs/2026-11-14-scale-read-retention.md)：5A同步API/UI/pickers/current state，5B先驗證時間加權rollup再啟retention，5C量測busy-origin claim/defer成本。歷史clear/retention不得破壞current state或TLS通知去重；不能把現有duration方向錯誤永久寫入rollup。
 
@@ -129,3 +139,34 @@ SIGTERM 停止 claims，維持/安全結束既有租約，在期限內完成或�
 遷移順序為 expand → backfill → validate → switch readers/writers → 最後才考慮移除舊欄位。先在獨立 PostgreSQL 跑新安裝與舊資料 fixture，再對 production 做備份／restore rehearsal；大型 index 評估 concurrent 建立，避免把長鎖混入 Prisma transaction。backfill 有批次／checkpoint，migration script 重跑必須安全。
 
 回滾先停 worker/claims、保留 DB、回復上一相容版本及 feature flag；保留新增欄位/table，避免 destructive down migration。跨入 workspace 共享資料後，舊版僅依 userId 不能安全解釋會員權限，因此禁止直接回舊版對外服務；需進 maintenance mode 修復／前滾，或還原切換前完整 DB 備份並明確承認切換後新資料需另行搬移。scheduler 回滾先 drain/等待 lease 到期並確保新 worker 全停，再啟舊排程，避免雙跑。retention 真刪 raw data 前須驗證 rollup/備份與保留政策，刪除後只能由備份復原；不得宣稱 migration rollback 可復原被刪結果。
+
+## Kaniko完成追記（16:24:05）
+
+Astra已直接讀 `kaniko-d6-build-result.json`：canonical Dockerfile no-push build Succeeded，image digest `sha256:bc37be21e220d9d88d6193525ab8fdaca4787fab5b2b63452335b82d2f6bd764`，tar353607680bytes。這只證明d6 source context的實際image建置，不是registry發布或built-image runtime，也不包含其後最終UI修復。較早「執行中」是當時狀態，現以本追記為準。98eb511c候選未部署，Sol因最後UI select修復再產新artifact，最後部署identity待新manifest。多node模板獨立render及每revision spread finding見 [review16](validation/astra-review-16.md)。
+
+## 最後文件交接
+
+最新產品8d0593已完成K8s revision9與live REST補驗／精確cleanup。仍有66次typecheck診斷，其中部分為可達功能缺口，詳 [使用者影響維修清單](validation/TYPECHECK_REPAIR_QUEUE.md)；不能說全部既有或無影響。live REST第一輪503原因未明、雙網域權限／產品GitHub未推送／實際跨node與built-image runtime未驗仍保留，見 [交付摘要](validation/RELEASE_VALIDATION.md)。Astra文件自此凍結供Sol完整source bundle收錄；後續root唯讀觀察以獨立結果／最終回報追加，不在打包中途改檔。
+
+
+## 17:22後授權 continuation：typecheck修復
+
+Astra規劃/審查、Sol唯一實作者，因本輪sandbox不同，所有變更先在/tmp Spec/patch/old-new SHA與guarded apply交root正常require_escalated套用；不繞過寫權、不自行build/部署。第一切片tags PUT／status group reorder／legacy lastSeen已套source，4/4 VM驗證，真PG/HTTP/browser待累積切片後build驗收。第二切片badge XML/input contracts、avg rollup統計、fenced TLS cache讀取與失效、有效UI URLs在staging；其純函數/HTTP驗收須逐項記真實結果，線上仍8d0593 revision9直到下一次發布。Session契約另切片，不新增session registry/schema。4000負載仍取消，原5paused demos保持。
+
+
+## 2026-11-14 18:13 continuation 已部署
+
+Tag／badge／群組拖曳修正已經GitOps部署revision12，線上REST驗證與owned資料清理通過；詳見 [部署驗收](validation/continuation-1813.md)。Session修復仍為未套用staging；全量typecheck與跨實體node驗證未完成。使用者指定Tenon綁雙網域，目前仍受settings:write權限阻擋。
+
+
+## 2026-11-15 Tenon 雙域 HTTPS 交付追記
+
+`uptime.226network.com`（Tenon route 71）與 `uptime.markkulab.net`（route 72）已透過 V-TERMINAL admin MCP 建立，均由 agent 2 連至 `127.0.0.1:32480`，公開 DNS 為 A `161.33.213.93`。API release revision 12 為 Healthy／Synced，API 2/2、worker 2/2。兩域各連續三次通過可信 TLS `/login` HTTP 200 且包含 Uptime Kuma 內容；CUA 一般帳密登入、dashboard Live、原 5 paused demos 與 reload 保持登入均通過，第二域 hydration 後恢復 Live。第二域最終截圖為完整 5 筆列表，使用者 tab 保留已登入 dashboard。
+
+兩域另以 Python 標準 `http.cookiejar` 各登入 HTTP 200，確認 Set-Cookie 屬性 `Path=/; HttpOnly; Secure; SameSite=Lax`；後續 `/api/_auth/session` 均為 HTTP 200 且有 user，沒有輸出 Cookie 值。原 HTTP NodePort 登入循環的根因為 Secure cookie 不隨 HTTP 回送；公開 HTTPS 已通過，Secure cookie 全程維持，沒有產品 rollout。
+
+仍有 **P2 hydration mismatch**：兩域均出現 `Hydration completed but contains mismatches.`，未定位或修復，不能宣稱 console 無 error。訊息 UTC 時間為第一域 `2026-11-14T16:22:09.914Z`、第二域 `2026-11-14T16:24:16.864Z`。另有 **P3 空結果文案**：第二域搜尋無匹配時顯示 `0 on this page · 5 in environment`，卻提示 `No monitors yet. Click Add...`；已清除搜尋並恢復 5 筆，本次未修正文案。
+
+功能結果與 wizard 狀態分列：初次 job `0ac6f36b-5b13-4861-b2bc-3e11956b5115` 的 LAN target 不在 `allow_targets`，僅清本任務 route 再改 loopback。job `a1e4e085-4185-4b9c-8316-718542d58e6c` 雖通過直連 TLS，因 Tenon 自動 A 與 wizard 僅接受 CNAME 的檢查衝突而為 `rollback_failed`，且缺 `dnsAfter`，沒有盲目回滾。第二域以正常 `tenon_create_route` 建立；preview `79b55da6-7085-4fed-b6db-476c512ea19e` 未 apply。自動 A 記錄經審查保留；公開入口成功不改寫 wizard 狀態。完整結果與截圖見 [Tenon HTTPS／登入驗收](validation/20261115-tenon-https-login.md)。
+
+此追記取代先前「settings:write 阻擋、網域未發布」作為目前狀態，舊記錄保留為歷史。Session 第三切片仍是未套用 staging；4000 負載仍取消，跨實體 node 與 built-image runtime 限制未改。
