@@ -161,14 +161,15 @@ function onDrop(target: number | 'ungrouped') {
     <section
       v-for="{ group, monitors, depth, label } in sections"
       :key="group.id"
-      class="overflow-hidden rounded-lg border transition-colors"
+      class="group-section overflow-hidden rounded-lg border transition-colors"
       :class="dropTarget === group.id ? 'border-primary bg-primary/5' : 'border-default'"
-      :style="depth ? { marginLeft: `${Math.min(depth, 4) * 1.5}rem` } : undefined"
+      :style="depth ? { '--depth': Math.min(depth, 4) } : undefined"
       @dragover="onDragOver($event, group.id)"
       @dragleave="dropTarget = null"
       @drop.prevent="onDrop(group.id)"
     >
-      <header class="flex items-center gap-2 bg-muted px-3 py-2">
+      <!-- Wraps on narrow screens: the actions move to a second line so the name stays readable -->
+      <header class="flex flex-wrap items-center gap-x-2 gap-y-1 bg-muted px-3 py-2">
         <input
           type="checkbox"
           class="checkbox"
@@ -180,7 +181,7 @@ function onDrop(target: number | 'ungrouped') {
         >
         <button
           type="button"
-          class="flex min-w-0 flex-1 items-center gap-2 text-left"
+          class="flex min-w-0 flex-1 basis-40 items-center gap-2 text-left"
           :aria-expanded="isOpen(group.id)"
           @click="toggle(group.id)"
         >
@@ -191,12 +192,13 @@ function onDrop(target: number | 'ungrouped') {
           />
           <UIcon name="i-heroicons-folder" class="size-4 shrink-0 text-muted" />
           <span class="truncate font-medium text-highlighted" :title="label">{{ label ?? group.name }}</span>
-          <UBadge variant="subtle" color="neutral" size="sm">{{ monitors.length }}</UBadge>
-          <UBadge v-if="downCount(monitors) > 0" variant="subtle" color="error" size="sm">
+          <UBadge variant="subtle" color="neutral" size="sm" class="shrink-0">{{ monitors.length }}</UBadge>
+          <UBadge v-if="downCount(monitors) > 0" variant="subtle" color="error" size="sm" class="shrink-0">
             {{ downCount(monitors) }} {{ t('Down') }}
           </UBadge>
           <span v-if="group.description" class="hidden truncate text-sm text-muted md:inline">{{ group.description }}</span>
         </button>
+        <div class="ml-auto flex shrink-0 items-center">
         <UButton
           variant="ghost"
           color="neutral"
@@ -224,6 +226,7 @@ function onDrop(target: number | 'ungrouped') {
           :title="t('Delete Group')"
           @click="emit('deleteGroup', group)"
         />
+        </div>
       </header>
 
       <div v-if="isOpen(group.id)">
@@ -329,3 +332,16 @@ function onDrop(target: number | 'ungrouped') {
     </section>
   </div>
 </template>
+
+<style scoped>
+/* Subgroups are indented per level (--depth), less on phones */
+.group-section {
+  margin-left: calc(var(--depth, 0) * 0.75rem);
+}
+
+@media (min-width: 640px) {
+  .group-section {
+    margin-left: calc(var(--depth, 0) * 1.5rem);
+  }
+}
+</style>
