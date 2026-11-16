@@ -1,0 +1,26 @@
+meta {
+  name: List variables
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/variables
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得所有變數
+
+  Global variables have `workspaceId: null`. Secret values are never returned (`value` is empty, `hasValue` tells whether one is set).
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

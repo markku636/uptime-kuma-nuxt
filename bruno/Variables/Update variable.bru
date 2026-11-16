@@ -1,0 +1,29 @@
+meta {
+  name: Update variable
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/variables/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{variableId}}
+}
+
+body:json {
+  {
+    "value": "https://staging.example.com"
+  }
+}
+
+docs {
+  更新變數
+
+  Omit `value` to keep the current one (e.g. a secret).
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Delete variable
+  type: http
+  seq: 5
+  tags: [
+    destructive
+  ]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/variables/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{variableId}}
+}
+
+docs {
+  刪除變數
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

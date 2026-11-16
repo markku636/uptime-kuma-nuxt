@@ -1,0 +1,38 @@
+meta {
+  name: Create variable
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/variables
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "baseUrl",
+    "value": "https://api.example.com",
+    "secret": false,
+    "workspaceId": null
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("variableId", value);
+  }
+}
+
+docs {
+  建立變數
+
+  Monitors reference it by name in double braces in URL, hostname, headers, body, auth and keyword; a workspace variable overrides a global one with the same name.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{variableId}}` for the following requests.
+}

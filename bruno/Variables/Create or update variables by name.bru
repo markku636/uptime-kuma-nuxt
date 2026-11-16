@@ -1,0 +1,36 @@
+meta {
+  name: Create or update variables by name
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/variables/bulk
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "workspaceId": null,
+    "variables": [
+      {
+        "name": "baseUrl",
+        "value": "https://api.example.com"
+      },
+      {
+        "name": "token",
+        "value": "secret",
+        "secret": true
+      }
+    ]
+  }
+}
+
+docs {
+  批次建立或更新變數
+
+  Upserts by name within one scope. An empty value never overwrites a stored one.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}
