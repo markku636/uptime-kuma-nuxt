@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const userId = (session.user as { id: number }).id
   
   // Fetch all user data for export
-  const [monitors, notifications, statusPages, maintenances, proxies, dockerHosts, tags, workspaces] = await Promise.all([
+  const [monitors, notifications, statusPages, maintenances, proxies, dockerHosts, tags, workspaces, variables] = await Promise.all([
     prisma.monitor.findMany({
       where: { userId: userId },
       include: {
@@ -46,6 +46,12 @@ export default defineEventHandler(async (event) => {
     prisma.workspace.findMany({
       where: { userId: userId },
       orderBy: [{ weight: 'asc' }, { id: 'asc' }]
+    }),
+    // Monitors refer to these as {{name}}; secret values are included, like
+    // the monitors' own passwords, so a restore works without re-entering them
+    prisma.variable.findMany({
+      where: { userId: userId },
+      select: { name: true, value: true, secret: true, workspaceId: true }
     })
   ])
 
@@ -72,7 +78,8 @@ export default defineEventHandler(async (event) => {
       proxies,
       dockerHosts,
       tags,
-      workspaces
+      workspaces,
+      variables
     }
   }
 

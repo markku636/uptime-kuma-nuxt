@@ -5,6 +5,8 @@ import { pickScalars, prepareMonitor, remapIds, resolveParents, type IdMap } fro
 import { startMonitorJob, stopMonitorJob } from '~/server/services/monitor/scheduler'
 import { normalizeWorkspaces } from '~/server/services/workspace/service'
 import { wouldCreateCycle } from '~/server/services/workspace/tree'
+import { invalidateVariables } from '~/server/services/variables/service'
+import { VARIABLE_NAME } from '~/server/services/variables/resolve'
 import { startMaintenanceJob } from '~/server/services/maintenance/scheduler'
 
 
@@ -31,7 +33,8 @@ const importSchema = z.object({
       proxies: z.array(z.any()).optional(),
       dockerHosts: z.array(z.any()).optional(),
       tags: z.array(z.any()).optional(),
-      workspaces: z.array(z.any()).optional()
+      workspaces: z.array(z.any()).optional(),
+      variables: z.array(z.any()).optional()
     })
   }),
   options: importOptionsSchema
@@ -53,7 +56,8 @@ export default defineEventHandler(async (event) => {
     proxies: { imported: 0, skipped: 0 },
     dockerHosts: { imported: 0, skipped: 0 },
     tags: { imported: 0, skipped: 0 },
-    workspaces: { imported: 0, skipped: 0 }
+    workspaces: { imported: 0, skipped: 0 },
+    variables: { imported: 0, skipped: 0 }
   }
 
   // Ids in the backup belong to the source database: old id -> id here
@@ -266,6 +270,36 @@ export default defineEventHandler(async (event) => {
         results.workspaces.skipped++
       }
     }
+  }
+
+  // Import variables (matched by scope and name) after workspaces, before monitors use them
+  if (options.importMonitors && backupData.variables) {
+    for (const variable of backupData.variables) {
+      try {
+        const name = String(variable?.name ?? '')
+        if (!VARIABLE_NAME.test(name)) throw new Error('Invalid variable name')
+        // A variable of a workspace that was not restored is skipped, never made global
+        let workspaceId: number | null = null
+        if (variable.workspaceId != null) {
+          const mapped = workspaceMap.get(Number(variable.workspaceId))
+          if (mapped == null) throw new Error('Workspace not restored')
+          workspaceId = mapped
+        }
+        const data = { value: String(variable.value ?? ''), secret: !!variable.secret }
+        const existing = await prisma.variable.findFirst({ where: { userId, workspaceId, name } })
+        if (existing && !options.overwrite) {
+          results.variables.skipped++
+          continue
+        }
+        if (existing) await prisma.variable.update({ where: { id: existing.id }, data })
+        else await prisma.variable.create({ data: { ...data, name, workspaceId, userId } })
+        results.variables.imported++
+      } catch (error) {
+        console.error('[Backup] Variable import failed:', variable?.name, error)
+        results.variables.skipped++
+      }
+    }
+    invalidateVariables(userId)
   }
 
   // Import monitors (matched by name). References are remapped to ids in this
