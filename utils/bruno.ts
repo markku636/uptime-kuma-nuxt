@@ -39,6 +39,8 @@ export interface BrunoRequest {
   auth: BrunoAuth
   /** Folder and request variables (vars:pre-request), inner ones win */
   vars: Record<string, string>
+  /** The request's `docs` (Markdown), used as the monitor description */
+  docs: string
   /** From `assert { res.status: … }` */
   expectedStatus: string[]
   /** From `assert { res.body: contains … }` */
@@ -272,6 +274,7 @@ export function parseBruRequest(source: string, path = 'request.bru'): BrunoRequ
     bodyMode: mode,
     auth: authFromBlocks(blocks, dictGet(methodBlock, 'auth')),
     vars: toVars(blocks.find(b => b.name === 'vars:pre-request')?.dict),
+    docs: blocks.find(b => b.name === 'docs')?.text ?? '',
     ...parseAssertions(blocks.find(b => b.name === 'assert')?.dict ?? []),
     seq: Number(dictGet(meta, 'seq')) || 0,
   }
@@ -520,6 +523,7 @@ export function parseBrunoCollectionJson(json: any): BrunoImport {
         bodyMode,
         auth: authFromJson(r.auth),
         vars: toVars(enabled(r.vars?.req)),
+        docs: typeof r.docs === 'string' ? r.docs : '',
         ...parseAssertions(enabled(r.assertions)),
         seq: Number(item.seq) || index,
       })
@@ -642,6 +646,8 @@ export interface MonitorDraft {
   basicAuthPass: string
   keyword: string
   acceptedStatuscodes: string[]
+  /** From the request's docs */
+  description: string
   /** Problems the user should know about before saving */
   warnings: string[]
 }
@@ -702,6 +708,7 @@ export function toMonitorDraft(req: BrunoRequest): MonitorDraft {
     basicAuthUser,
     basicAuthPass,
     keyword: req.keyword,
+    description: req.docs.slice(0, 2000),
     acceptedStatuscodes: req.expectedStatus.length ? req.expectedStatus : ['200-299'],
     warnings,
   }
@@ -720,6 +727,7 @@ export function isDraftReady(draft: MonitorDraft): boolean {
 export interface ExportMonitor {
   id: number
   name: string
+  description?: string | null
   type: string
   url?: string | null
   method?: string | null
@@ -823,7 +831,9 @@ export function toBrunoCollection(
         vars: {},
         assertions,
         tests: '',
-        docs: `Exported from Uptime Kuma (monitor #${m.id})`,
+        docs: m.description
+          ? `${m.description}\n\n_Exported from Uptime Kuma (monitor #${m.id})_`
+          : `Exported from Uptime Kuma (monitor #${m.id})`,
       },
     }
     const list = requestsIn.get(parent)

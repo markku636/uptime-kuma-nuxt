@@ -371,6 +371,7 @@ async function createMonitors() {
           basicAuthUser: draft.basicAuthUser || undefined,
           basicAuthPass: draft.basicAuthPass || undefined,
           keyword: draft.keyword || undefined,
+          description: draft.description || undefined,
           acceptedStatuscodes: draft.acceptedStatuscodes,
           interval: Math.max(20, Number(interval.value) || 60),
           retryInterval: Math.max(20, Number(interval.value) || 60),

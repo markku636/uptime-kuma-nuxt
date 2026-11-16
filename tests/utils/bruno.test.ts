@@ -395,3 +395,13 @@ describe('runtime variables', () => {
     expect(result.runtimeVars.sort()).toEqual(['jwt', 'refresh'])
   })
 })
+
+describe('docs', () => {
+  it('uses the request docs as the monitor description, both ways', () => {
+    const req = parseBruRequest('get {\n  url: https://x/health\n}\ndocs {\n  Checks the **health** endpoint.\n}\n')!
+    expect(toMonitorDraft(req).description).toBe('Checks the **health** endpoint.')
+    const exported = toBrunoCollection('C', [{ id: 9, name: 'H', description: 'Health check', type: 'http', url: 'https://x' }], [])
+    const back = parseBrunoCollectionJson(exported).requests[0]
+    expect(back.docs.startsWith('Health check')).toBe(true)
+  })
+})
