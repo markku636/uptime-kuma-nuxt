@@ -433,3 +433,26 @@ describe('parseDotEnv', () => {
     expect(Object.values(parseDotEnv(text))).toEqual(values)
   })
 })
+
+describe('response time assertions', () => {
+  it('turn res.responseTime lt into a timeout in seconds', () => {
+    const req = parseBruRequest([
+      'get {',
+      '  url: https://example.com',
+      '}',
+      '',
+      'assert {',
+      '  res.status: eq 200',
+      '  res.responseTime: lt 2500',
+      '}',
+    ].join('\n'))!
+    expect(req.timeout).toBe(3)
+    expect(toMonitorDraft(req).timeout).toBe(3)
+  })
+
+  it('leave the timeout unset without such an assertion', () => {
+    const req = parseBruRequest('get {\n  url: https://example.com\n}\n')!
+    expect(req.timeout).toBeUndefined()
+    expect(toMonitorDraft(req)).not.toHaveProperty('timeout')
+  })
+})

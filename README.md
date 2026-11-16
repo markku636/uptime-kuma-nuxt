@@ -328,6 +328,7 @@ npm run bruno:generate
 - **相容性**：
   - 會讀取 `collection.bru` 與各層 `folder.bru` 的 headers、驗證和變數（`auth: inherit` 依序往上找）。
   - 會讀取請求本身的 `vars:pre-request`、`params:path`（`/:id`）、GraphQL（轉成 JSON POST）、API Key 驗證（header 或 query）、多行值（`'''`），以及 collection 的 `.env`（`{{process.env.NAME}}`）。
+  - `assert` 區塊：`res.status`（`eq`、`in`、`gte`/`lt` 範圍）成為接受的狀態碼，`res.body: contains` 成為關鍵字，`res.responseTime: lt 2000` 成為逾時秒數（無條件進位，且不超過檢查間隔的 80%）。
   - 變數優先順序與 Bruno 相同：collection < 環境 < 資料夾 < 請求 < 對話框中輸入的值。
 - **變數面板**：列出所有用到的變數、目前的值和來源，可以補填或覆寫。機密值與 `.env` 會遮罩；非機密的值會依 collection 記在瀏覽器中，機密值不會儲存。
 - **整個 collection**：可指定工作區，並依資料夾建立群組（collection → 資料夾 → 子資料夾）。重複匯入會沿用既有群組；已存在的監控（同名稱、方法、URL）會標示出來並預設不勾選。

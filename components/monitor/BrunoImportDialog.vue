@@ -374,6 +374,8 @@ async function createMonitors() {
           description: draft.description || undefined,
           acceptedStatuscodes: draft.acceptedStatuscodes,
           interval: Math.max(20, Number(interval.value) || 60),
+          // The timeout must leave room within the interval
+          ...(draft.timeout ? { timeout: Math.min(draft.timeout, Math.floor(Math.max(20, Number(interval.value) || 60) * 0.8)) } : {}),
           retryInterval: Math.max(20, Number(interval.value) || 60),
           active: true,
           parent,

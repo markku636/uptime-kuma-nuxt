@@ -469,6 +469,7 @@ function applyDraft(draft: MonitorDraft, workspaceId?: number | null) {
   form.keyword = draft.keyword
   if (draft.description) form.description = draft.description
   form.acceptedStatuscodes = draft.acceptedStatuscodes.join(', ')
+  if (draft.timeout) form.timeout = draft.timeout
   form.authMethod = draft.authMethod
   form.basicAuthUser = draft.basicAuthUser
   form.basicAuthPass = draft.basicAuthPass

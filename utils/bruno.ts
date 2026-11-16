@@ -45,6 +45,8 @@ export interface BrunoRequest {
   expectedStatus: string[]
   /** From `assert { res.body: contains … }` */
   keyword: string
+  /** Seconds, from `assert { res.responseTime: lt 2000 }` */
+  timeout?: number
   seq: number
 }
 
@@ -162,9 +164,10 @@ function authFromBlocks(blocks: BruBlock[], mode: string): BrunoAuth {
 }
 
 /** Map assertions to accepted status codes and a keyword */
-export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]; keyword: string } {
+export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]; keyword: string; timeout?: number } {
   const expectedStatus: string[] = []
   let keyword = ''
+  let timeout: number | undefined
   for (const { key, value } of entries) {
     const [op, ...rest] = value.trim().split(/\s+/)
     const arg = rest.join(' ').replace(/^["']|["']$/g, '')
@@ -178,6 +181,10 @@ export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]
       }
     } else if (key === 'res.body' && op === 'contains' && arg) {
       keyword = arg
+    } else if (key === 'res.responseTime' && (op === 'lt' || op === 'lte')) {
+      // A response-time limit (ms) becomes the monitor's timeout (s)
+      const ms = Number(arg)
+      if (ms > 0) timeout = Math.max(1, Math.ceil(ms / 1000))
     }
   }
   // Fold comparison pairs into ranges ("200-299")
@@ -189,7 +196,8 @@ export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]
     const hi = upper ? Number(upper.split(':')[1]) - (upper.startsWith('lt:') ? 1 : 0) : 599
     plain.push(`${lo}-${hi}`)
   }
-  return { expectedStatus: plain.filter(s => /^\d{3}(-\d{3})?$/.test(s)), keyword }
+  const codes = plain.filter(s => /^\d{3}(-\d{3})?$/.test(s))
+  return timeout ? { expectedStatus: codes, keyword, timeout } : { expectedStatus: codes, keyword }
 }
 
 function formEncode(entries: KeyValue[]): string {
@@ -654,6 +662,8 @@ export interface MonitorDraft {
   basicAuthPass: string
   keyword: string
   acceptedStatuscodes: string[]
+  /** Seconds, from a res.responseTime assertion */
+  timeout?: number
   /** From the request's docs */
   description: string
   /** Problems the user should know about before saving */
@@ -718,6 +728,7 @@ export function toMonitorDraft(req: BrunoRequest): MonitorDraft {
     keyword: req.keyword,
     description: req.docs.slice(0, 2000),
     acceptedStatuscodes: req.expectedStatus.length ? req.expectedStatus : ['200-299'],
+    ...(req.timeout ? { timeout: req.timeout } : {}),
     warnings,
   }
 }
