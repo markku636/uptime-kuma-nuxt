@@ -56,8 +56,9 @@ async function handleSubmit(formData: any) {
       description: 'Monitor updated successfully',
       color: 'success'
     })
-    
-    router.push('/monitors')
+
+    // Back to the monitor that was just edited
+    router.push(`/monitors/${monitorId.value}`)
   } catch (error: any) {
     toast.add({
       title: 'Error',
