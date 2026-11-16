@@ -53,18 +53,26 @@ const overridden = computed(() => new Set(scope.value == null
   : own.value.filter(o => variables.value.some(v => v.workspaceId == null && v.name === o.name)).map(o => o.name)))
 
 // How many monitors refer to each name (any field, e.g. URL or headers)
-const usage = computed(() => {
-  const counts = new Map<string, number>()
+// Monitors that refer to each name (any field), each monitor once
+const users = computed(() => {
+  const byName = new Map<string, { id: number; name: string }[]>()
   for (const m of monitors.value) {
+    // In a workspace only its own monitors count; globally every monitor does
+    if (scope.value != null && m.workspaceId !== scope.value) continue
     const text = JSON.stringify([m.url, m.hostname, m.headers, m.body, m.keyword, m.basicAuthUser, m.basicAuthPass, m.expectedValue, m.jsonPath, m.databaseConnectionString, m.grpcUrl])
-    for (const match of text.matchAll(/\{\{\s*([\w.-]+)\s*\}\}/g)) {
-      // In a workspace only its own monitors count; globally every monitor does
-      if (scope.value != null && m.workspaceId !== scope.value) continue
-      counts.set(match[1], (counts.get(match[1]) ?? 0) + 1)
+    const names = new Set([...text.matchAll(/\{\{\s*([\w.-]+)\s*\}\}/g)].map(match => match[1]))
+    for (const name of names) {
+      const list = byName.get(name)
+      if (list) list.push({ id: m.id, name: m.name })
+      else byName.set(name, [{ id: m.id, name: m.name }])
     }
   }
-  return counts
+  return byName
 })
+const usage = computed(() => new Map([...users.value].map(([name, list]) => [name, list.length])))
+
+/** Name whose monitors are listed under its row */
+const expanded = ref<string | null>(null)
 
 // ---------- Edit ----------
 const drafts = reactive<Record<number, string>>({})
@@ -222,7 +230,23 @@ function override(global: Variable) {
                 @blur="commitValue(v)"
               >
             </td>
-            <td class="hidden px-3 py-2 text-muted sm:table-cell">{{ t('monitorCountShort', [usage.get(v.name) ?? 0]) }}</td>
+            <td class="hidden px-3 py-2 text-muted sm:table-cell">
+              <button
+                v-if="usage.get(v.name)"
+                type="button"
+                class="link"
+                :aria-expanded="expanded === v.name"
+                @click="expanded = expanded === v.name ? null : v.name"
+              >
+                {{ t('monitorCountShort', [usage.get(v.name)]) }}
+              </button>
+              <span v-else>{{ t('monitorCountShort', [0]) }}</span>
+              <ul v-if="expanded === v.name" class="mt-1 space-y-0.5 text-xs">
+                <li v-for="m in users.get(v.name)" :key="m.id">
+                  <NuxtLink :to="`/monitors/${m.id}`" class="link">{{ m.name }}</NuxtLink>
+                </li>
+              </ul>
+            </td>
             <td class="px-3 py-2">
               <div class="flex justify-end gap-1">
                 <UButton
