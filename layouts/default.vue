@@ -7,7 +7,7 @@
           <!-- Logo -->
           <NuxtLink to="/dashboard" class="flex shrink-0 items-center gap-2 text-highlighted hover:no-underline">
             <img src="/icon.svg" alt="" class="h-8 w-8" />
-            <span class="text-xl font-bold">Uptime Kuma</span>
+            <span class="hidden text-xl font-bold min-[380px]:inline">Uptime Kuma</span>
           </NuxtLink>
 
           <!-- Navigation -->
@@ -33,8 +33,10 @@
 
           <!-- Right side -->
           <div class="flex items-center gap-1 sm:gap-2">
-            <!-- Node Selector (Cluster Mode) -->
-            <CommonNodeSelector />
+            <!-- Node Selector (Cluster Mode); in the mobile menu on small screens -->
+            <div class="hidden md:block">
+              <CommonNodeSelector />
+            </div>
 
             <!-- Theme -->
             <UDropdownMenu :items="themeMenuItems" :content="{ align: 'end' }">
@@ -76,6 +78,9 @@
 
         <!-- Mobile menu -->
         <nav v-if="mobileMenuOpen" class="lg:hidden flex flex-col gap-1 border-t border-default py-3">
+          <div class="mb-2 md:hidden">
+            <CommonNodeSelector />
+          </div>
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
@@ -214,8 +219,8 @@ async function handleLogout() {
   background-color: color-mix(in srgb, var(--uk-primary) 14%, transparent);
 }
 
+/* No `display` here: it would override responsive utilities like lg:hidden */
 .header-icon-btn {
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.375rem;

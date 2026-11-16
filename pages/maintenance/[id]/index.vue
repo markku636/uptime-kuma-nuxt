@@ -163,7 +163,8 @@ async function confirmAction() {
       />
 
       <!-- Schedule -->
-      <section class="card card-body space-y-3">
+      <!-- Manual maintenances have no schedule; the strategy is already in the subtitle -->
+      <section v-if="maintenance.strategy !== 'manual'" class="card card-body space-y-3">
         <h2 class="font-semibold text-highlighted">{{ t('Strategy') }}</h2>
         <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
           <template v-if="scheduleDetail">

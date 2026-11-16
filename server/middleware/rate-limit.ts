@@ -74,12 +74,21 @@ export default defineEventHandler(async (event) => {
     let config = RATE_LIMIT_CONFIG.api;
     let prefix = "api";
 
-    if (path.includes("/login") || path.includes("/auth")) {
+    // Credential endpoints get the strict bucket (not every /api/auth/* read)
+    if (/^\/api\/auth\/(login|setup|change-password)(\/|$)/.test(path)) {
         config = RATE_LIMIT_CONFIG.login;
         prefix = "login";
     } else if (path.includes("/2fa") || path.includes("/twofa")) {
         config = RATE_LIMIT_CONFIG.twofa;
         prefix = "twofa";
+    } else {
+        // The generic API bucket protects anonymous and API-key traffic. A
+        // logged-in browser makes many requests (pages, polling) and must not
+        // lock its own user out, so authenticated sessions skip it.
+        const session = await getUserSession(event).catch(() => null);
+        if (session?.user) {
+            return;
+        }
     }
 
     const clientIP = getClientIP(event);
