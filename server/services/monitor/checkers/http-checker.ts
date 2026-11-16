@@ -2,6 +2,7 @@
 import axios from 'axios'
 import type { CheckResult } from '../checker'
 import { getTLSInfo, type TLSInfo } from './tls-checker'
+import { isStatusAccepted } from '../status-codes'
 
 export interface HttpCheckResult extends CheckResult {
   tlsInfo?: TLSInfo | null
@@ -66,12 +67,8 @@ export async function checkHttp(monitor: any, startTime: number): Promise<HttpCh
   const ping = Date.now() - startTime
 
   // Check if response is successful
-  let isUp = response.status >= 200 && response.status < 400
-
-  // Check for specific status codes if defined
-  if (monitor.acceptedStatuscodes && monitor.acceptedStatuscodes.length > 0) {
-    isUp = monitor.acceptedStatuscodes.includes(response.status.toString())
-  }
+  // Accepted codes support ranges ("200-299"); default is 2xx/3xx
+  let isUp = isStatusAccepted(response.status, monitor.acceptedStatuscodes)
 
   // Keyword check
   if (monitor.keyword && isUp) {
