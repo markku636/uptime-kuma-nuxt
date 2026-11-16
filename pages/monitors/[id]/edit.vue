@@ -13,6 +13,15 @@ const monitor = ref<any>(null)
 const loading = ref(true)
 const saving = ref(false)
 
+// A group has nothing to check itself: edit it with the group dialog
+// (name, description, workspace, parent) instead of the monitor form.
+const isGroup = computed(() => monitor.value?.type === 'group')
+const groupDialogOpen = ref(false)
+watch(isGroup, (group) => { if (group) groupDialogOpen.value = true })
+watch(groupDialogOpen, (open, wasOpen) => {
+  if (wasOpen && !open && isGroup.value) router.push(`/monitors/${monitorId.value}`)
+})
+
 // Fetch monitor data
 onMounted(async () => {
   try {
@@ -79,6 +88,16 @@ async function handleSubmit(formData: any) {
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-dimmed" />
       </div>
     </UCard>
+
+    <template v-else-if="isGroup">
+      <UCard>
+        <p class="text-toned">{{ $t('groupDialogHint') }}</p>
+        <UButton class="mt-4" icon="i-heroicons-pencil-square" @click="groupDialogOpen = true">
+          {{ $t('Edit Group') }}
+        </UButton>
+      </UCard>
+      <GroupDialog v-model:open="groupDialogOpen" :group="monitor" />
+    </template>
 
     <MonitorForm
       v-else-if="monitor"

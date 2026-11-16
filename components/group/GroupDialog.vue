@@ -47,7 +47,7 @@ watch(open, (isOpen) => {
   form.description = props.group?.description ?? ''
   form.workspaceId = props.group ? props.group.workspaceId : props.defaultWorkspaceId ?? null
   form.parent = props.group?.parent ?? null
-})
+}, { immediate: true }) // also when created already open
 
 // A subgroup lives in the workspace of its parent
 watch(() => form.parent, (parentId) => {

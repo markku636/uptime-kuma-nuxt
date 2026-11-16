@@ -29,7 +29,7 @@ watch(open, (isOpen) => {
   form.name = props.workspace?.name ?? ''
   form.description = props.workspace?.description ?? ''
   form.color = props.workspace?.color ?? WORKSPACE_COLORS[0]
-})
+}, { immediate: true }) // also when created already open
 
 async function submit() {
   if (!form.name.trim()) {
