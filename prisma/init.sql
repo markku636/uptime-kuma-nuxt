@@ -602,3 +602,13 @@ DO $$ BEGIN
         ALTER TABLE "monitors" ADD CONSTRAINT "monitors_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE SET NULL ON UPDATE CASCADE;
     END IF;
 END $$;
+
+-- Status page display options (present in schema.prisma, missing from older databases)
+ALTER TABLE "status_pages" ADD COLUMN IF NOT EXISTS "show_certificate_expiry" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "status_pages" ADD COLUMN IF NOT EXISTS "per_page" INTEGER NOT NULL DEFAULT 5;
+ALTER TABLE "status_pages" ADD COLUMN IF NOT EXISTS "auto_refresh_interval" INTEGER NOT NULL DEFAULT 300;
+
+-- Cluster lookups (indexes declared in schema.prisma)
+CREATE INDEX IF NOT EXISTS "monitors_node_id_idx" ON "monitors"("node_id");
+CREATE INDEX IF NOT EXISTS "monitors_assigned_node_idx" ON "monitors"("assigned_node");
+CREATE INDEX IF NOT EXISTS "nodes_node_id_idx" ON "nodes"("node_id");
