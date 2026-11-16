@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const userId = (session.user as { id: number }).id
   
   // Fetch all user data for export
-  const [monitors, notifications, statusPages, maintenances, proxies, dockerHosts, tags] = await Promise.all([
+  const [monitors, notifications, statusPages, maintenances, proxies, dockerHosts, tags, workspaces] = await Promise.all([
     prisma.monitor.findMany({
       where: { userId: userId },
       include: {
@@ -39,6 +39,10 @@ export default defineEventHandler(async (event) => {
     }),
     prisma.tag.findMany({
       where: { userId: userId }
+    }),
+    prisma.workspace.findMany({
+      where: { userId: userId },
+      orderBy: [{ weight: 'asc' }, { id: 'asc' }]
     })
   ])
 
@@ -64,7 +68,8 @@ export default defineEventHandler(async (event) => {
       })),
       proxies,
       dockerHosts,
-      tags
+      tags,
+      workspaces
     }
   }
 
