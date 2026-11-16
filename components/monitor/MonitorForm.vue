@@ -36,6 +36,10 @@
             :disabled="loading"
           />
           <p class="mt-1 text-xs text-dimmed">{{ $t('urlVariablesHint') }} <NuxtLink to="/settings/variables" class="link">{{ $t('Variables') }}</NuxtLink></p>
+          <p v-if="urlPreview" class="mt-0.5 break-all text-xs text-muted">
+            {{ $t('Checks') }} <code class="text-toned">{{ urlPreview.text }}</code>
+            <span v-if="urlPreview.missing.length" class="text-pending-fg"> · {{ $t('brunoWarnUnresolved', [urlPreview.missing.join(', ')]) }}</span>
+          </p>
         </div>
 
         <!-- Hostname for TCP/Ping/DNS monitors -->
@@ -1416,6 +1420,9 @@ const clusterNodes = computed(() => {
   // Return nodes fetched from /api/cluster/nodes
   return nodesData.value
 })
+
+// Live preview of {{variables}} in the URL for the chosen workspace
+const urlPreview = useVariablePreview(toRef(form, 'url'), toRef(form, 'workspaceId'))
 
 const handleSubmit = () => {
   const data: any = {

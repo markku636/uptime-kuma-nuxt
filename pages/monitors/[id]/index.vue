@@ -389,35 +389,8 @@ const monitorId = computed(() => Number(route.params.id))
 const monitor = ref<any>(null)
 const isGroupMonitor = computed(() => monitor.value?.type === 'group')
 
-// The URL with its {{variables}} filled in as the check would (workspace over
-// global). Secret values never reach the browser, so they show as dots.
-const variableList = ref<{ name: string; value: string; secret: boolean; workspaceId: number | null }[] | null>(null)
-watch(() => monitor.value?.url, async (url) => {
-  if (!url?.includes('{{') || variableList.value) return
-  try {
-    variableList.value = (await $fetch<{ data: { name: string; value: string; secret: boolean; workspaceId: number | null }[] }>('/api/v1/variables')).data
-  } catch {
-    variableList.value = []
-  }
-}, { immediate: true })
-const resolvedUrl = computed(() => {
-  const url: string | undefined = monitor.value?.url
-  if (!url?.includes('{{') || !variableList.value) return null
-  const ws: number | null = monitor.value?.workspaceId ?? null
-  const pick = (name: string) =>
-    (ws != null ? variableList.value!.find(v => v.name === name && v.workspaceId === ws) : undefined)
-    ?? variableList.value!.find(v => v.name === name && v.workspaceId == null)
-  const missing: string[] = []
-  const text = url.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (match, name: string) => {
-    const v = pick(name)
-    if (!v) {
-      missing.push(name)
-      return match
-    }
-    return v.secret ? '••••••' : v.value
-  })
-  return { text, missing }
-})
+// The URL with its {{variables}} filled in as the check would (secrets as dots)
+const resolvedUrl = useVariablePreview(computed(() => monitor.value?.url), computed(() => monitor.value?.workspaceId ?? null))
 const heartbeats = ref<any[]>([])
 const loading = ref(true)
 const deleting = ref(false)
