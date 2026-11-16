@@ -8,12 +8,14 @@
 export type IdMap = Map<number, number>
 
 /** Columns never copied from a backup: identity, owner and references that are remapped */
-const SKIPPED_FIELDS = new Set(['id', 'userId', 'createdAt', 'workspaceId', 'proxyId', 'parent', 'remoteBrowserId'])
+const SKIPPED_FIELDS = new Set(['id', 'userId', 'createdAt', 'workspaceId', 'proxyId', 'parent', 'pausedByGroup', 'remoteBrowserId'])
 
 export interface PreparedMonitor {
   data: Record<string, unknown>
   /** Group id in the source database, resolved once every monitor exists */
   oldParent: number | null
+  /** Group whose pause paused this monitor, in the source database */
+  oldPausedByGroup: number | null
   tagIds: number[]
   notificationIds: number[]
 }
@@ -55,6 +57,7 @@ export function prepareMonitor(
   return {
     data,
     oldParent: toId(raw.parent),
+    oldPausedByGroup: toId(raw.pausedByGroup),
     tagIds: mapIds(Array.isArray(tagIds) ? tagIds : [], maps.tags),
     notificationIds: mapIds(Array.isArray(notificationIds) ? notificationIds : [], maps.notifications),
   }

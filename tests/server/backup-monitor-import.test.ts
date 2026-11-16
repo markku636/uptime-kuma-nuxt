@@ -28,11 +28,12 @@ describe('prepareMonitor', () => {
     interval: 60, workspaceId: 10, proxyId: 5, parent: 2, headers: null, tlsInfo: { a: 1 },
     // relation rows as exported, plus fields the DB does not know
     tags: [{ tagId: 1 }], monitorNotifications: [{ notificationId: 7 }], heartbeats: [], unknownColumn: 'x',
-    tagIds: [1, 2, 3], notificationIds: [7],
+    tagIds: [1, 2, 3], notificationIds: [7], pausedByGroup: 2,
   }
 
   it('keeps only real columns and drops identity / owner', () => {
-    const { data } = prepareMonitor(exported, scalars, maps())
+    const { data, oldPausedByGroup } = prepareMonitor(exported, [...scalars, 'pausedByGroup'], maps())
+    expect(oldPausedByGroup).toBe(2)
     expect(data).toEqual({
       name: 'api', type: 'http', url: 'https://x', active: true, interval: 60, tlsInfo: { a: 1 },
       workspaceId: 100, proxyId: 50, parent: null,

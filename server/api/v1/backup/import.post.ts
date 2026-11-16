@@ -275,6 +275,7 @@ export default defineEventHandler(async (event) => {
     const scalarFields = Object.values(Prisma.MonitorScalarFieldEnum)
     const maps = { workspaces: workspaceMap, proxies: proxyMap, tags: tagMap, notifications: notificationMap }
     const oldParents = new Map<number, number | null>()
+    const oldPausedBy = new Map<number, number>()
     const importedIds: number[] = []
 
     for (const monitor of backupData.monitors) {
@@ -309,6 +310,7 @@ export default defineEventHandler(async (event) => {
 
         monitorMap.set(monitor.id, saved.id)
         oldParents.set(saved.id, prepared.oldParent)
+        if (prepared.oldPausedByGroup != null) oldPausedBy.set(saved.id, prepared.oldPausedByGroup)
         importedIds.push(saved.id)
 
         if (prepared.tagIds.length) {
@@ -340,6 +342,12 @@ export default defineEventHandler(async (event) => {
       const node = tree.find(m => m.id === id)
       if (node) node.parent = parent
     }
+    // "Paused by group" points at a group of the backup: translate it as well
+    for (const [id, oldGroup] of oldPausedBy) {
+      const groupId = monitorMap.get(oldGroup)
+      if (groupId != null && groupIds.has(groupId)) await prisma.monitor.update({ where: { id }, data: { pausedByGroup: groupId } })
+    }
+
     // A member always lives in its group's workspace, whatever order the rows came in
     await normalizeWorkspaces(userId)
 
