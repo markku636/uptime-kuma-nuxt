@@ -10,13 +10,13 @@
 
         <!-- Username -->
         <div class="form-group">
-          <label for="username" class="input-label">Username</label>
+          <label for="username" class="input-label">{{ $t('Username') }}</label>
           <input
             id="username"
             v-model="form.username"
             type="text"
             class="input-field"
-            placeholder="Enter your username"
+            :placeholder="$t('Username')"
             required
             :disabled="loading"
           />
@@ -24,13 +24,13 @@
 
         <!-- Password -->
         <div class="form-group">
-          <label for="password" class="input-label">Password</label>
+          <label for="password" class="input-label">{{ $t('Password') }}</label>
           <input
             id="password"
             v-model="form.password"
             type="password"
             class="input-field"
-            placeholder="Enter your password"
+            :placeholder="$t('Password')"
             required
             :disabled="loading"
           />
@@ -44,7 +44,7 @@
         <!-- Submit -->
         <button type="submit" class="btn btn-primary w-full mt-4" :disabled="loading">
           <span v-if="loading" class="spinner w-4 h-4 mr-2"></span>
-          Login
+          {{ $t('Login') }}
         </button>
       </form>
     </div>

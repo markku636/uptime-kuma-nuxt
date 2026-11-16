@@ -169,10 +169,6 @@ body {
   accent-color: var(--uk-primary);
 }
 
-.form-group {
-  margin-bottom: 0;
-}
-
 /* ========== Buttons ========== */
 .btn {
   display: inline-flex;
