@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     ] = await Promise.all([
       prisma.monitor.findMany({
         include: {
-          monitorTags: true,
+          tags: true,
           monitorNotifications: true
         }
       }),
@@ -27,12 +27,13 @@ export default defineEventHandler(async (event) => {
       prisma.tag.findMany(),
       prisma.statusPage.findMany({
         include: {
-          statusPageMonitors: true
+          groups: { include: { monitors: true } }
         }
       }),
       prisma.maintenance.findMany({
         include: {
-          maintenanceMonitors: true
+          monitors: true,
+          statusPages: true
         }
       }),
       prisma.proxy.findMany(),

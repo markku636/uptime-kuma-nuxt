@@ -240,7 +240,7 @@ export async function deleteMaintenance(userId: number, id: number): Promise<voi
 }
 
 /** Maintenances linked to a status page that are under maintenance right now (public) */
-export async function listActiveMaintenancesForStatusPage(statusPageId: number): Promise<MaintenancePublicJSON[]> {
+export async function listActiveMaintenancesForStatusPage(statusPageId: number): Promise<Omit<MaintenancePublicJSON, 'monitors' | 'statusPages'>[]> {
   const links = await prisma.maintenanceStatusPage.findMany({
     where: { statusPageId, maintenance: { active: true } },
     include: { maintenance: true },
@@ -265,7 +265,7 @@ export async function handleMaintenanceRequest<T>(
   fn: (userId: number) => Promise<T>,
 ): Promise<T> {
   const session = await getUserSession(event)
-  const userId = Number(session?.user?.id)
+  const userId = Number((session?.user as { id?: number } | undefined)?.id)
   if (!userId) throw createError({ statusCode: 401, message: 'Unauthorized' })
   try {
     return await fn(userId)

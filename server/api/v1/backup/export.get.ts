@@ -4,43 +4,41 @@ import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
+  const userId = (session.user as { id: number }).id
   
   // Fetch all user data for export
   const [monitors, notifications, statusPages, maintenances, proxies, dockerHosts, tags] = await Promise.all([
     prisma.monitor.findMany({
-      where: { userId: session.user.id },
+      where: { userId: userId },
       include: {
-        tags: true,
-        notifications: true
+        tags: { select: { tagId: true } },
+        monitorNotifications: { select: { notificationId: true } }
       }
     }),
     prisma.notification.findMany({
-      where: { userId: session.user.id }
+      where: { userId: userId }
     }),
     prisma.statusPage.findMany({
-      where: { userId: session.user.id },
+      where: { userId: userId },
       include: {
-        monitors: {
-          select: { id: true }
-        }
+        groups: { include: { monitors: { select: { monitorId: true } } } }
       }
     }),
     prisma.maintenance.findMany({
-      where: { userId: session.user.id },
+      where: { userId: userId },
       include: {
-        monitors: {
-          select: { id: true }
-        }
+        monitors: { select: { monitorId: true } },
+        statusPages: { select: { statusPageId: true } }
       }
     }),
     prisma.proxy.findMany({
-      where: { userId: session.user.id }
+      where: { userId: userId }
     }),
     prisma.dockerHost.findMany({
-      where: { userId: session.user.id }
+      where: { userId: userId }
     }),
     prisma.tag.findMany({
-      where: { userId: session.user.id }
+      where: { userId: userId }
     })
   ])
 
@@ -51,17 +49,18 @@ export default defineEventHandler(async (event) => {
     data: {
       monitors: monitors.map(m => ({
         ...m,
-        tagIds: m.tags.map(t => t.id),
-        notificationIds: m.notifications.map(n => n.id)
+        tagIds: m.tags.map(t => t.tagId),
+        notificationIds: m.monitorNotifications.map(n => n.notificationId)
       })),
       notifications,
       statusPages: statusPages.map(sp => ({
         ...sp,
-        monitorIds: sp.monitors.map(m => m.id)
+        monitorIds: sp.groups.flatMap(g => g.monitors.map(m => m.monitorId))
       })),
       maintenances: maintenances.map(mt => ({
         ...mt,
-        monitorIds: mt.monitors.map(m => m.id)
+        monitorIds: mt.monitors.map(m => m.monitorId),
+        statusPageIds: mt.statusPages.map(s => s.statusPageId)
       })),
       proxies,
       dockerHosts,

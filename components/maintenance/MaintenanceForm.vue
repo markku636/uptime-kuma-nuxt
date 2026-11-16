@@ -311,7 +311,7 @@ async function submit() {
         <UFormField v-if="form.strategy === 'recurring-interval'" :label="t('recurringInterval')">
           <div class="flex items-center gap-3">
             <UInput v-model.number="form.intervalDay" type="number" min="1" max="3650" class="w-28" />
-            <span class="text-sm text-muted">{{ t('recurringIntervalMessage', form.intervalDay, [form.intervalDay]) }}</span>
+            <span class="text-sm text-muted">{{ t('recurringIntervalMessage', [form.intervalDay], form.intervalDay) }}</span>
           </div>
         </UFormField>
 

@@ -60,7 +60,7 @@ const strategyLabel = computed(() => {
     case 'manual': return t('strategyManual')
     case 'single': return t('Single Maintenance Window')
     case 'cron': return `${t('cronExpression')}: ${m.cron}`
-    case 'recurring-interval': return `${t('Recurring')} - ${t('recurringIntervalMessage', m.intervalDay, [m.intervalDay])}`
+    case 'recurring-interval': return `${t('Recurring')} - ${t('recurringIntervalMessage', [m.intervalDay], m.intervalDay)}`
     case 'recurring-weekday': return `${t('Recurring')} - ${t('dayOfWeek')}`
     case 'recurring-day-of-month': return `${t('Recurring')} - ${t('dayOfMonth')}`
     default: return m.strategy
@@ -77,7 +77,7 @@ const scheduleDetail = computed(() => {
   if (m.strategy === 'recurring-weekday') return `${m.weekdays.map(d => t(weekdayKeys[d % 7])).join(', ')} · ${window}`
   if (m.strategy === 'recurring-day-of-month') return `${m.daysOfMonth.map(d => (d === 'lastDay1' ? t('lastDay1') : d)).join(', ')} · ${window}`
   if (m.strategy === 'recurring-interval') return window
-  if (m.strategy === 'cron') return t('minuteShort', m.durationMinutes, { n: m.durationMinutes })
+  if (m.strategy === 'cron') return t('minuteShort', { n: m.durationMinutes }, m.durationMinutes)
   return ''
 })
 

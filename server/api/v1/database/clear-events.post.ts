@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Delete all status page incidents (events)
-  const incidentsResult = await prisma.statusPageIncident.deleteMany({})
+  const incidentsResult = await prisma.incident.deleteMany({})
 
   // If you have a separate events table, clear it too
   // const eventsResult = await prisma.event.deleteMany({})
