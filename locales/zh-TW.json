@@ -1207,5 +1207,7 @@
     "Profile": "個人資料",
     "Keyboard Shortcuts": "鍵盤快捷鍵",
     "Toggle navigation": "切換選單",
-    "activeMaintenanceCount": "{n} 個維護進行中"
+    "activeMaintenanceCount": "{n} 個維護進行中",
+    "maintenancePreview": "預覽",
+    "maintenancePreviewNone": "沒有即將到來的時段"
 }

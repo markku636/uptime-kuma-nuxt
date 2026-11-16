@@ -347,3 +347,31 @@ export function dateToWallTime(value: Date | string | null | undefined, tz: stri
   const d = dayjs(value)
   return d.isValid() ? d.tz(tz).format('YYYY-MM-DD HH:mm') : null
 }
+
+/** The next `count` windows starting after `now` (for previews) */
+export function computeUpcoming(m: MaintenanceLike, count = 3, now: Date = new Date()): Timeslot[] {
+  if (m.strategy === 'manual') return []
+  if (m.strategy === 'single') {
+    return computeTimeslots(m, now).filter(s => new Date(s.endDate) > now)
+  }
+  let cron: ReturnType<typeof createCron> = null
+  try {
+    cron = createCron(m)
+  } catch {
+    return []
+  }
+  if (!cron) return []
+  try {
+    const slots: Timeslot[] = []
+    let cursor = now
+    for (let i = 0; i < count; i++) {
+      const next = getNextTimeslot(m, cron.job, cron.duration, cursor)
+      if (!next) break
+      slots.push(next)
+      cursor = new Date(next.startDate)
+    }
+    return slots
+  } finally {
+    cron.job.stop()
+  }
+}

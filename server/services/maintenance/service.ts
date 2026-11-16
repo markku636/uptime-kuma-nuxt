@@ -8,6 +8,9 @@ import { prisma } from '../../utils/prisma'
 import {
   MAINTENANCE_STRATEGIES,
   SAME_AS_SERVER,
+  computeStatus,
+  computeUpcoming,
+  getTimezoneOffset,
   isValidTimezone,
   resolveTimezone,
   validateCron,
@@ -249,6 +252,24 @@ export async function listActiveMaintenancesForStatusPage(statusPageId: number):
   return all
     .filter(m => m.status === 'under-maintenance')
     .map(({ monitors: _m, statusPages: _s, ...publicFields }) => publicFields)
+}
+
+/**
+ * Validate form input and compute the effective status and next windows
+ * without saving anything (used by the form's live preview).
+ */
+export function previewMaintenance(body: unknown, count = 3) {
+  const raw = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>
+  const input = parseMaintenanceInput({ ...raw, title: (raw.title as string) || 'preview', monitors: [], statusPages: [] })
+  const data = toDbData(input)
+  const like = { id: 0, active: true, ...data, createdAt: new Date() }
+  const tz = resolveTimezone(like)
+  return {
+    timezone: tz,
+    timezoneOffset: getTimezoneOffset(tz),
+    status: computeStatus(like),
+    upcoming: computeUpcoming(like, Math.min(Math.max(count, 1), 10)),
+  }
 }
 
 /** Translate service errors for h3 handlers */

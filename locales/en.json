@@ -1195,5 +1195,7 @@
     "Profile": "Profile",
     "Keyboard Shortcuts": "Keyboard Shortcuts",
     "Toggle navigation": "Toggle navigation",
-    "activeMaintenanceCount": "{n} under maintenance"
+    "activeMaintenanceCount": "{n} under maintenance",
+    "maintenancePreview": "Preview",
+    "maintenancePreviewNone": "No upcoming windows"
 }

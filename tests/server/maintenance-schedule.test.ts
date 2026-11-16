@@ -3,6 +3,7 @@ import {
   calcDuration,
   computeStatus,
   computeTimeslots,
+  computeUpcoming,
   dateToWallTime,
   generateCron,
   isIntervalRunDay,
@@ -155,5 +156,32 @@ describe('wall time conversion', () => {
     expect(d?.toISOString()).toBe('2026-03-10T02:00:00.000Z')
     expect(dateToWallTime(d, 'Asia/Taipei')).toBe('2026-03-10 10:00')
     expect(wallTimeToDate('2026-03-10T10:00', 'UTC')?.toISOString()).toBe('2026-03-10T10:00:00.000Z')
+  })
+})
+
+describe('computeUpcoming', () => {
+  it('lists the next windows in order', () => {
+    const now = new Date('2026-03-10T02:30:00Z') // Tuesday
+    const m = base({ strategy: 'recurring-weekday', weekdays: '[1,3]', timeRange: range(2, 0, 3, 0) })
+    expect(computeUpcoming(m, 3, now).map(s => s.startDate)).toEqual([
+      '2026-03-11T02:00:00.000Z',
+      '2026-03-16T02:00:00.000Z',
+      '2026-03-18T02:00:00.000Z',
+    ])
+  })
+
+  it('respects the interval and stops at the end date', () => {
+    const now = new Date('2026-03-10T00:00:00Z')
+    const m = base({ strategy: 'recurring-interval', intervalDay: 3, timeRange: range(1, 0, 2, 0), startDate: '2026-03-01T00:00:00Z', endDate: '2026-03-14T00:00:00Z' })
+    expect(computeUpcoming(m, 5, now).map(s => s.startDate)).toEqual([
+      '2026-03-10T01:00:00.000Z',
+      '2026-03-13T01:00:00.000Z',
+    ])
+  })
+
+  it('returns nothing for manual and an ended single window', () => {
+    expect(computeUpcoming(base({ strategy: 'manual' }))).toEqual([])
+    const ended = base({ strategy: 'single', startDate: '2020-01-01T00:00:00Z', endDate: '2020-01-01T01:00:00Z' })
+    expect(computeUpcoming(ended)).toEqual([])
   })
 })

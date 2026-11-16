@@ -205,6 +205,48 @@ function buildInput(): MaintenanceInput {
   }
 }
 
+// ---------- Live preview of the next windows ----------
+interface Preview {
+  status: Maintenance['status']
+  timezone: string
+  timezoneOffset: string
+  upcoming: { startDate: string; endDate: string }[]
+}
+const preview = ref<Preview | null>(null)
+const previewError = ref<string | null>(null)
+const previewLoading = ref(false)
+let previewSeq = 0
+
+const refreshPreview = useDebounceFn(async () => {
+  if (loading.value) return
+  const seq = ++previewSeq
+  previewLoading.value = true
+  try {
+    const res = await $fetch<{ data: Preview }>('/api/v1/maintenances/preview', { method: 'POST', body: buildInput() })
+    if (seq !== previewSeq) return
+    preview.value = res.data
+    previewError.value = null
+  } catch (e) {
+    if (seq !== previewSeq) return
+    preview.value = null
+    previewError.value = errorMessage(e, '')
+  } finally {
+    if (seq === previewSeq) previewLoading.value = false
+  }
+}, 400)
+
+watch(() => [form.strategy, form.intervalDay, form.startDateTime, form.endDateTime, form.startTime, form.endTime,
+  form.weekdays.join(','), form.daysOfMonth.join(','), form.cron, form.durationMinutes, form.timezoneOption, loading.value],
+() => refreshPreview(), { immediate: true })
+
+function formatSlot(iso: string) {
+  if (!preview.value) return iso
+  return new Intl.DateTimeFormat(locale.value, {
+    timeZone: preview.value.timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date(iso))
+}
+
 async function submit() {
   fieldError.value = null
   if (cronInvalid.value) {
@@ -398,6 +440,24 @@ async function submit() {
             </label>
           </div>
         </UFormField>
+
+        <!-- Preview -->
+        <div v-if="form.strategy !== 'manual'" class="rounded-lg border border-default bg-sunken p-4" aria-live="polite">
+          <div class="mb-2 flex items-center gap-2 text-sm font-medium text-toned">
+            <UIcon name="i-heroicons-eye" class="size-4" />
+            {{ t('maintenancePreview') }}
+            <MaintenanceStatusBadge v-if="preview" :status="preview.status" />
+            <UIcon v-if="previewLoading" name="i-heroicons-arrow-path" class="size-4 animate-spin text-dimmed" />
+          </div>
+          <p v-if="previewError" class="text-sm text-muted">{{ previewError }}</p>
+          <ul v-else-if="preview?.upcoming.length" class="space-y-1 font-mono text-sm text-default">
+            <li v-for="slot in preview.upcoming" :key="slot.startDate">
+              {{ formatSlot(slot.startDate) }} <span class="text-dimmed">→</span> {{ formatSlot(slot.endDate) }}
+            </li>
+          </ul>
+          <p v-else-if="preview" class="text-sm text-muted">{{ t('maintenancePreviewNone') }}</p>
+          <p v-if="preview" class="mt-2 text-xs text-dimmed">{{ preview.timezone }} (UTC{{ preview.timezoneOffset }})</p>
+        </div>
       </section>
 
       <UAlert v-if="fieldError" color="error" variant="subtle" :title="fieldError" icon="i-heroicons-exclamation-triangle" />
