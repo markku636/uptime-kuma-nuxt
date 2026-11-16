@@ -1350,5 +1350,6 @@
     "urlVariablesHint": "可使用 {'{{'}變數{'}}'}（例如 {'{{'}baseUrl{'}}'}/health），每次檢查時代入。",
     "Export to Bruno": "匯出為 Bruno",
     "exportBrunoHint": "將目前檢視中的 HTTP 監控下載為 Bruno 集合（群組成為資料夾、變數成為環境；不含機密值）",
-    "exportBrunoDone": "已匯出 {0} 個監控。在 Bruno 中選擇 Import Collection → Bruno Collection。"
+    "exportBrunoDone": "已匯出 {0} 個監控。在 Bruno 中選擇 Import Collection → Bruno Collection。",
+    "brunoVarRuntime": "執行時由腳本設定，請自行填入"
 }

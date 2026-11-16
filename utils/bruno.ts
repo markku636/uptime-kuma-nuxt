@@ -59,6 +59,8 @@ export interface BrunoImport {
   environments: BrunoEnvironment[]
   /** Variables defined at collection level (collection.bru `vars:pre-request`, .env as process.env.*) */
   collectionVars: Record<string, string>
+  /** Variables set while a collection runs (bru.setVar in scripts, vars:post-response); not available on import */
+  runtimeVars: string[]
   /** Names whose values should be masked (environment secrets, .env values) */
   secretVars: string[]
   errors: string[]
@@ -211,6 +213,23 @@ export function graphqlBody(query: string, variables: string): string {
 const toVars = (entries: KeyValue[] | undefined): Record<string, string> =>
   Object.fromEntries((entries ?? []).map(e => [e.key, e.value]))
 
+const SET_VAR = /bru\.set(?:Env)?Var\(\s*['"`]([\w.-]+)['"`]/g
+
+/** Names a script assigns at run time (bru.setVar / bru.setEnvVar) */
+export function scriptSetVariables(script: string): string[] {
+  return [...new Set([...script.matchAll(SET_VAR)].map(m => m[1]))]
+}
+
+/** Runtime variables declared by a .bru file: scripts and vars:post-response */
+function runtimeVarsFromBlocks(blocks: BruBlock[]): string[] {
+  const names: string[] = []
+  for (const b of blocks) {
+    if (b.name.startsWith('script:') || b.name === 'tests') names.push(...scriptSetVariables(b.text))
+    if (b.name === 'vars:post-response') names.push(...b.dict.map(e => e.key))
+  }
+  return names
+}
+
 /** Parse one .bru request file. Returns null for non-request files. */
 export function parseBruRequest(source: string, path = 'request.bru'): BrunoRequest | null {
   const blocks = parseBruBlocks(source)
@@ -337,7 +356,7 @@ function applyInheritance(req: BrunoRequest, collection: Inherited, folders: Map
 
 /** Parse a set of files picked by the user (single .bru files or a collection folder) */
 export function parseBruFiles(files: BrunoFile[]): BrunoImport {
-  const result: BrunoImport = { collectionName: '', requests: [], environments: [], collectionVars: {}, secretVars: [], errors: [] }
+  const result: BrunoImport = { collectionName: '', requests: [], environments: [], collectionVars: {}, runtimeVars: [], secretVars: [], errors: [] }
   let collection: Inherited = { headers: [], auth: { mode: 'none' }, vars: {} }
   const folders = new Map<string, Inherited>()
 
@@ -376,6 +395,7 @@ export function parseBruFiles(files: BrunoFile[]): BrunoImport {
       } else if (base === 'folder.bru') {
         folders.set(dir, inheritedFromBlocks(parseBruBlocks(file.text)))
       } else if (base.endsWith('.bru')) {
+        result.runtimeVars.push(...runtimeVarsFromBlocks(parseBruBlocks(file.text)))
         const req = parseBruRequest(file.text, path)
         if (req) {
           result.requests.push(req)
@@ -393,6 +413,7 @@ export function parseBruFiles(files: BrunoFile[]): BrunoImport {
 
   for (const req of result.requests) applyInheritance(req, collection, folders)
   result.secretVars = [...new Set(result.secretVars)]
+  result.runtimeVars = [...new Set(result.runtimeVars)]
   result.requests.sort((a, b) => a.folder.localeCompare(b.folder) || a.seq - b.seq || a.name.localeCompare(b.name))
   return result
 }
@@ -444,7 +465,7 @@ export function environmentFromJson(env: any, fallbackName: string): BrunoEnviro
 }
 
 export function parseBrunoCollectionJson(json: any): BrunoImport {
-  const result: BrunoImport = { collectionName: json?.name || '', requests: [], environments: [], collectionVars: {}, secretVars: [], errors: [] }
+  const result: BrunoImport = { collectionName: json?.name || '', requests: [], environments: [], collectionVars: {}, runtimeVars: [], secretVars: [], errors: [] }
   if (!json || !Array.isArray(json.items)) {
     result.errors.push('Not a Bruno collection export (missing "items")')
     return result
@@ -465,6 +486,10 @@ export function parseBrunoCollectionJson(json: any): BrunoImport {
       }
       if ((item?.type !== 'http-request' && item?.type !== 'graphql-request') || !item.request) return
       const r = item.request
+      result.runtimeVars.push(
+        ...scriptSetVariables([r.script?.req, r.script?.res, r.tests].filter(Boolean).join('\n')),
+        ...enabled(r.vars?.res).map(v => v.key),
+      )
       const bodyModeRaw = r.body?.mode || (item.type === 'graphql-request' ? 'graphql' : 'none')
       let body = ''
       let bodyMode: BrunoRequest['bodyMode'] = 'none'
@@ -509,6 +534,7 @@ export function parseBrunoCollectionJson(json: any): BrunoImport {
     result.secretVars.push(...parsedEnv.secrets)
   }
   result.secretVars = [...new Set(result.secretVars)]
+  result.runtimeVars = [...new Set(result.runtimeVars)]
   return result
 }
 
@@ -532,6 +558,7 @@ export function parseBrunoInput(files: BrunoFile[]): BrunoImport {
       merged.environments.push(...part.environments)
       Object.assign(merged.collectionVars, part.collectionVars)
       merged.secretVars = [...new Set([...merged.secretVars, ...part.secretVars])]
+      merged.runtimeVars = [...new Set([...merged.runtimeVars, ...part.runtimeVars])]
       merged.errors.push(...part.errors.map(e => `${file.path}: ${e}`))
       merged.collectionName ||= part.collectionName
     } catch (e: any) {

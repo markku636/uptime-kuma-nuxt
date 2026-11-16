@@ -378,3 +378,20 @@ describe('toBrunoCollection', () => {
     expect(resolveRequest(byName.Home, vars2).url).toBe('https://h/')
   })
 })
+
+describe('runtime variables', () => {
+  it('finds names set by scripts and post-response vars in .bru files', () => {
+    const result = parseBrunoInput([
+      { path: 'login.bru', text: 'post {\n  url: https://x/login\n}\nscript:post-response {\n  bru.setVar("token", res.body.token);\n  bru.setEnvVar(\'userId\', res.body.id)\n}\nvars:post-response {\n  session: res.headers.sid\n}\n' },
+      { path: 'me.bru', text: 'get {\n  url: https://x/me/{{userId}}\n}\nheaders {\n  Authorization: Bearer {{token}}\n}\n' },
+    ])
+    expect(result.runtimeVars.sort()).toEqual(['session', 'token', 'userId'])
+  })
+
+  it('finds them in a collection export', () => {
+    const result = parseBrunoCollectionJson({
+      items: [{ type: 'http-request', name: 'Login', request: { url: 'https://x', script: { res: 'bru.setVar(`jwt`, res.body.jwt)' }, vars: { res: [{ name: 'refresh', value: 'res.body.r', enabled: true }] } } }],
+    })
+    expect(result.runtimeVars.sort()).toEqual(['jwt', 'refresh'])
+  })
+})

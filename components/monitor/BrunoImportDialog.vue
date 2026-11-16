@@ -107,7 +107,7 @@ const rows = computed(() =>
   }),
 )
 
-type Source = 'override' | 'request' | 'environment' | 'collection' | 'dotenv' | 'missing'
+type Source = 'override' | 'request' | 'environment' | 'collection' | 'dotenv' | 'runtime' | 'missing'
 
 /** Every variable the requests use, with its effective value and where it comes from */
 const variableRows = computed(() => {
@@ -132,13 +132,15 @@ const variableRows = computed(() => {
     return {
       name,
       value: hit?.[1] ?? '',
-      source: (hit?.[0] ?? 'missing') as Source,
+      // Without a value: say when a script would have set it while running
+      source: (hit?.[0] ?? (parsed.value!.runtimeVars.includes(name) ? 'runtime' : 'missing')) as Source,
       requests: reqs.length,
       secret: isSecret(name),
     }
-  }).sort((a, b) => Number(b.source === 'missing') - Number(a.source === 'missing') || a.name.localeCompare(b.name))
+  }).sort((a, b) => Number(isMissing(b.source)) - Number(isMissing(a.source)) || a.name.localeCompare(b.name))
 })
-const missingCount = computed(() => variableRows.value.filter(v => v.source === 'missing').length)
+const isMissing = (source: Source) => source === 'missing' || source === 'runtime'
+const missingCount = computed(() => variableRows.value.filter(v => isMissing(v.source)).length)
 
 function setOverride(name: string, value: string) {
   overrides.value = { ...overrides.value, [name]: value }
@@ -156,6 +158,7 @@ const sourceLabel = computed<Record<Source, string>>(() => ({
   environment: t('brunoEnvironment'),
   collection: t('brunoCollection'),
   dotenv: '.env',
+  runtime: t('brunoVarRuntime'),
   missing: t('brunoVarMissing'),
 }))
 
@@ -481,7 +484,7 @@ const methodTone: Record<string, string> = {
                 <tr v-for="v in variableRows" :key="v.name" class="border-b border-default last:border-0">
                   <td class="w-2/5 px-3 py-1.5 align-middle">
                     <code class="break-all text-xs text-highlighted">{{ v.name }}</code>
-                    <div class="text-[11px]" :class="v.source === 'missing' ? 'text-pending-fg' : 'text-dimmed'">
+                    <div class="text-[11px]" :class="isMissing(v.source) ? 'text-pending-fg' : 'text-dimmed'">
                       {{ sourceLabel[v.source] }} · {{ t('brunoVarUsedBy', { n: v.requests }) }}
                     </div>
                   </td>
@@ -490,7 +493,7 @@ const methodTone: Record<string, string> = {
                       <input
                         :type="v.secret && !revealed.has(v.name) ? 'password' : 'text'"
                         class="input-field py-1 font-mono text-xs"
-                        :class="v.source === 'missing' ? 'border-pending' : ''"
+                        :class="isMissing(v.source) ? 'border-pending' : ''"
                         :value="overrides[v.name] ?? ''"
                         :placeholder="v.value || t('brunoVarEnterValue')"
                         :aria-label="v.name"
