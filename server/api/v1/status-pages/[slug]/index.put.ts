@@ -9,7 +9,8 @@ const groupMonitorSchema = z.object({
 const groupSchema = z.object({
   id: z.number(),
   name: z.string(),
-  weight: z.number().optional().default(1),
+  // Omitted by the editor: the position in the list is the order
+  weight: z.number().optional(),
   monitorList: z.array(groupMonitorSchema)
 })
 
