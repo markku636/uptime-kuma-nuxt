@@ -1353,5 +1353,9 @@
     "exportBrunoDone": "已匯出 {0} 個監控。在 Bruno 中選擇 Import Collection → Bruno Collection。",
     "brunoVarRuntime": "執行時由腳本設定，請自行填入",
     "unsecretClearsValue": "「{0}」將不再是機密。為避免洩漏，已儲存的值會被清除，需要重新輸入。要繼續嗎？",
-    "deleteWorkspaceVariables": "此工作區的 {0} 個環境變數也會一併刪除；用到它們的監控若沒有同名全域值，檢查會回報「Unknown variable」。"
+    "deleteWorkspaceVariables": "此工作區的 {0} 個環境變數也會一併刪除；用到它們的監控若沒有同名全域值，檢查會回報「Unknown variable」。",
+    "brunoWarnUnresolved": "未解析的變數：{0}",
+    "brunoWarnAuth": "不支援「{0}」驗證，請於匯入後自行設定",
+    "brunoWarnBody": "不支援此 body 類型，已略過",
+    "brunoWarnUrl": "URL 必須以 http:// 或 https:// 開頭"
 }

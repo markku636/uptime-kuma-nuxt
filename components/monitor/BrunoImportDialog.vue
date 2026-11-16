@@ -394,6 +394,17 @@ async function createMonitors() {
   if (!failures.value.length) open.value = false
 }
 
+// The parser (utils/bruno.ts) is UI-free and words its warnings in English
+function warningText(warning: string): string {
+  let m = /^Unresolved variables: (.+)$/.exec(warning)
+  if (m) return t('brunoWarnUnresolved', [m[1]])
+  m = /^Auth "(.+)" is not supported/.exec(warning)
+  if (m) return t('brunoWarnAuth', [m[1]])
+  if (warning.startsWith('Body type is not supported')) return t('brunoWarnBody')
+  if (warning.startsWith('URL must start with')) return t('brunoWarnUrl')
+  return warning
+}
+
 const methodTone: Record<string, string> = {
   GET: 'text-up-fg',
   POST: 'text-pending-fg',
@@ -556,7 +567,7 @@ const methodTone: Record<string, string> = {
                   <UBadge v-if="row.exists" size="sm" color="info" variant="subtle">{{ t('brunoAlreadyImported') }}</UBadge>
                 </div>
                 <p class="truncate pl-16 font-mono text-xs text-muted">{{ row.draft.url || '—' }}</p>
-                <p v-for="w in row.draft.warnings" :key="w" class="pl-16 text-xs text-pending-fg">⚠ {{ w }}</p>
+                <p v-for="w in row.draft.warnings" :key="w" class="pl-16 text-xs text-pending-fg">⚠ {{ warningText(w) }}</p>
               </div>
             </li>
           </ul>

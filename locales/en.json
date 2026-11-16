@@ -1341,5 +1341,9 @@
     "exportBrunoDone": "Exported {0} monitor(s). In Bruno: Import Collection → Bruno Collection.",
     "brunoVarRuntime": "Set by a script at run time — enter a value",
     "unsecretClearsValue": "\"{0}\" will no longer be secret. Its stored value is cleared and has to be entered again. Continue?",
-    "deleteWorkspaceVariables": "Its {0} variable(s) are deleted too; monitors using them report \"Unknown variable\" unless a global value exists."
+    "deleteWorkspaceVariables": "Its {0} variable(s) are deleted too; monitors using them report \"Unknown variable\" unless a global value exists.",
+    "brunoWarnUnresolved": "Unresolved variables: {0}",
+    "brunoWarnAuth": "Auth \"{0}\" is not supported; add it manually after import",
+    "brunoWarnBody": "Body type is not supported and was skipped",
+    "brunoWarnUrl": "The URL must start with http:// or https://"
 }
