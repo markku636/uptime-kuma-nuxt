@@ -4,10 +4,12 @@ import type { WorkspaceFilter } from '~/composables/useWorkspaces'
 // Chip row to switch the workspace shown on the dashboard / monitor list.
 // The choice is shared (cookie) through useWorkspaces().current.
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   /** Show the shortcut to the management page */
   manage?: boolean
-}>(), { manage: true })
+  /** Monitors the page already loaded; used to flag workspaces with monitors down */
+  monitors?: { type: string; active: boolean; workspaceId?: number | null; heartbeats?: { status: number }[] }[]
+}>(), { manage: true, monitors: () => [] })
 
 const { t } = useI18n()
 const { workspaces, unassigned, current, loaded } = useWorkspaces()
@@ -15,6 +17,17 @@ const { workspaces, unassigned, current, loaded } = useWorkspaces()
 const createOpen = ref(false)
 
 const hasUnassigned = computed(() => unassigned.value.monitorCount + unassigned.value.groupCount > 0)
+
+// Monitors currently DOWN per workspace ('none' = without workspace)
+const downCount = computed(() => {
+  const counts = new Map<number | 'none', number>()
+  for (const m of props.monitors) {
+    if (m.type === 'group' || !m.active || m.heartbeats?.[0]?.status !== 0) continue
+    const key = m.workspaceId ?? 'none'
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return counts
+})
 
 function select(value: WorkspaceFilter) {
   current.value = value
@@ -40,6 +53,9 @@ function select(value: WorkspaceFilter) {
         <span class="size-2.5 rounded-full" :style="{ backgroundColor: workspace.color }" aria-hidden="true" />
         <span class="max-w-40 truncate">{{ workspace.name }}</span>
         <span class="ws-chip-count">{{ workspace.monitorCount }}</span>
+        <span v-if="downCount.get(workspace.id)" class="ws-chip-down" :title="t('monitorsDown', [downCount.get(workspace.id)])">
+          {{ downCount.get(workspace.id) }}<span class="sr-only"> {{ t('Down') }}</span>
+        </span>
       </button>
       <button
         v-if="hasUnassigned"
@@ -51,6 +67,9 @@ function select(value: WorkspaceFilter) {
       >
         {{ t('No workspace') }}
         <span class="ws-chip-count">{{ unassigned.monitorCount }}</span>
+        <span v-if="downCount.get('none')" class="ws-chip-down" :title="t('monitorsDown', [downCount.get('none')])">
+          {{ downCount.get('none') }}<span class="sr-only"> {{ t('Down') }}</span>
+        </span>
       </button>
     </template>
 
@@ -94,6 +113,18 @@ function select(value: WorkspaceFilter) {
   color: var(--uk-text);
   border-color: var(--uk-primary);
   background-color: color-mix(in srgb, var(--uk-primary) 14%, transparent);
+}
+
+.ws-chip-down {
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  text-align: center;
+  color: var(--uk-status-down-fg);
+  background-color: color-mix(in srgb, var(--uk-status-down) 18%, transparent);
 }
 
 .ws-chip-count {

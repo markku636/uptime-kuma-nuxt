@@ -1293,5 +1293,6 @@
     "No monitors yet": "No monitors yet",
     "Add your first monitor": "Add your first monitor",
     "Back to Monitors": "Back to Monitors",
-    "Edit Monitor": "Edit Monitor"
+    "Edit Monitor": "Edit Monitor",
+    "monitorsDown": "{0} monitor(s) down"
 }

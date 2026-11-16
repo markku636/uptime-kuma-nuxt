@@ -1305,5 +1305,6 @@
     "No monitors yet": "尚未建立監控項目",
     "Add your first monitor": "新增第一個監控項目",
     "Back to Monitors": "返回監控列表",
-    "Edit Monitor": "編輯監控項目"
+    "Edit Monitor": "編輯監控項目",
+    "monitorsDown": "{0} 個監控項目離線"
 }

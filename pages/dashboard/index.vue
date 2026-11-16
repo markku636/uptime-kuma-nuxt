@@ -16,7 +16,7 @@
     </div>
 
     <!-- Workspace -->
-    <WorkspaceSwitcher class="mb-6" />
+    <WorkspaceSwitcher class="mb-6" :monitors="monitors" />
 
     <!-- Quick Stats -->
     <h2 class="section-title">Quick Stats</h2>
