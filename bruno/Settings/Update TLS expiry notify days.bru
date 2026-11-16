@@ -1,0 +1,27 @@
+meta {
+  name: Update TLS expiry notify days
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/v1/settings/tls-expiry
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "days": [
+      7,
+      14,
+      21
+    ]
+  }
+}
+
+docs {
+  更新 TLS 到期設定
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

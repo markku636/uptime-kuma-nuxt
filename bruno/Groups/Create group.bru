@@ -1,0 +1,35 @@
+meta {
+  name: Create group
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/groups
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Web servers",
+    "description": "Front-end hosts",
+    "workspaceId": null
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("groupId", value);
+  }
+}
+
+docs {
+  建立群組
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{groupId}}` for the following requests.
+}

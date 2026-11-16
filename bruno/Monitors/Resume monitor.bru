@@ -1,0 +1,21 @@
+meta {
+  name: Resume monitor
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors/:id/resume
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  恢復 Monitor
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

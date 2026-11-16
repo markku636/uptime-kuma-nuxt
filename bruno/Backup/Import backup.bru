@@ -1,0 +1,50 @@
+meta {
+  name: Import backup
+  type: http
+  seq: 2
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/backup/import
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "data": {
+      "version": "2.0.0",
+      "data": {
+        "monitors": [],
+        "notifications": [],
+        "statusPages": [],
+        "maintenances": [],
+        "proxies": [],
+        "dockerHosts": [],
+        "tags": []
+      }
+    },
+    "options": {
+      "overwrite": false,
+      "importMonitors": true,
+      "importNotifications": true,
+      "importStatusPages": true,
+      "importMaintenances": true,
+      "importProxies": true,
+      "importDockerHosts": true
+    }
+  }
+}
+
+docs {
+  匯入備份
+
+  `data` is the document returned by the export endpoint.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

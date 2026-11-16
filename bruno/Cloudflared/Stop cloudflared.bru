@@ -1,0 +1,28 @@
+meta {
+  name: Stop cloudflared
+  type: http
+  seq: 3
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/cloudflared/stop
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "password": "{{password}}"
+  }
+}
+
+docs {
+  停止 Cloudflared
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+
+  **Destructive** — excluded from smoke runs.
+}

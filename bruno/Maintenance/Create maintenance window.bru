@@ -1,0 +1,38 @@
+meta {
+  name: Create maintenance window
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/maintenances
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "System maintenance",
+    "description": "Planned maintenance",
+    "strategy": "manual",
+    "active": true,
+    "monitors": [],
+    "statusPages": []
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("maintenanceId", value);
+  }
+}
+
+docs {
+  建立維護排程
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{maintenanceId}}` for the following requests.
+}

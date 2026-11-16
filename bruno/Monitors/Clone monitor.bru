@@ -1,0 +1,21 @@
+meta {
+  name: Clone monitor
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors/:id/clone
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  複製 Monitor
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

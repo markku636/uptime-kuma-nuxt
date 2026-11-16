@@ -1,0 +1,24 @@
+meta {
+  name: Get selected node
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/cluster/current
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得目前節點
+
+  Public — no login required.
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Get monitor TLS certificate
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{baseUrl}}/api/v1/monitors/:id/certificate
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  取得 Monitor 憑證資訊
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

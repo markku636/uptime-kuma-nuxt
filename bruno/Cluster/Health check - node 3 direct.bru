@@ -1,0 +1,15 @@
+meta {
+  name: Health check - node 3 direct
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{node3Url}}/api/health
+  body: none
+  auth: none
+}
+
+docs {
+  直接存取 Node 3 (繞過 nginx)。Check the `X-Served-By` header.
+}

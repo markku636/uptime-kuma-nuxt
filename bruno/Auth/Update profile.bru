@@ -1,0 +1,27 @@
+meta {
+  name: Update profile
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/auth/profile
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "displayName": "Admin",
+    "email": "admin@example.com",
+    "removeAvatar": false
+  }
+}
+
+docs {
+  更新使用者資料
+
+  Also accepts multipart/form-data with an `avatar` file field.
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Move monitors into a group or workspace
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors/organize
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "monitorIds": [
+      1
+    ],
+    "workspaceId": null
+  }
+}
+
+docs {
+  批次整理監控器 (群組 / 工作區)
+
+  `parent`: group id, or `null` to remove from its group. `workspaceId`: workspace id, or `null` to unassign. Omit a field to keep it; at least one is required.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

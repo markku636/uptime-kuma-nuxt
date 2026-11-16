@@ -1,0 +1,25 @@
+script:pre-request {
+  // Send the apiKey environment secret on /api/v1/* (except key management) when it is set.
+  // Leave apiKey empty to use the session cookie from Auth / Login instead.
+  const apiKey = bru.getEnvVar("apiKey");
+  const url = req.getUrl();
+  if (apiKey && url.includes("/api/v1/") && !url.includes("/api/v1/api-keys")) {
+    req.setHeader("X-API-Key", apiKey);
+  }
+}
+
+docs {
+  # Uptime Kuma Nuxt API
+
+  Generated from `server/openapi/spec.ts` — run `npm run bruno:generate` after changing the API.
+
+  1. Select the **Local** environment.
+  2. Authenticate, either:
+     - set the `password` secret and run **Auth / Login** — Bruno keeps the `nuxt-session` cookie, or
+     - set the `apiKey` secret (Settings → API Keys, `uk_...`) — sent as `X-API-Key` on `/api/v1/*`.
+       Auth, settings and API-key endpoints outside that scope still need the login cookie.
+  3. "Create ..." requests store the new id in a variable (`monitorId`, `tagId`, ...) that the
+     get / update / delete requests of the same folder use.
+
+  Smoke run (read-only): `bru run --env Local --tags smoke`
+}

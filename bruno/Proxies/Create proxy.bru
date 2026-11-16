@@ -1,0 +1,38 @@
+meta {
+  name: Create proxy
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/proxies
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "protocol": "http",
+    "host": "proxy.example.com",
+    "port": 8080,
+    "auth": false,
+    "active": true,
+    "isDefault": false
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("proxyId", value);
+  }
+}
+
+docs {
+  建立 Proxy
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{proxyId}}` for the following requests.
+}

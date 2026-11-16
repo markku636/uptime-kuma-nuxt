@@ -1,0 +1,21 @@
+meta {
+  name: Status page RSS feed
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/status/:slug/rss
+  body: none
+  auth: none
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+docs {
+  狀態頁面 RSS
+
+  Public — no login required.
+}

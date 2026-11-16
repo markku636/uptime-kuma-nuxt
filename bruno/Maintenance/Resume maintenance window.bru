@@ -1,0 +1,21 @@
+meta {
+  name: Resume maintenance window
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/maintenances/:id/resume
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{maintenanceId}}
+}
+
+docs {
+  恢復維護排程
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

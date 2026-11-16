@@ -1,0 +1,42 @@
+meta {
+  name: Create monitor - basic auth
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Basic auth monitor",
+    "type": "http",
+    "url": "https://httpbin.org/basic-auth/user/pass",
+    "method": "GET",
+    "interval": 60,
+    "retryInterval": 30,
+    "timeout": 10,
+    "authMethod": "basic",
+    "basicAuthUser": "user",
+    "basicAuthPass": "pass"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("monitorId", value);
+  }
+}
+
+docs {
+  建立 HTTP 監控器 (Basic Auth)
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{monitorId}}` for the following requests.
+}

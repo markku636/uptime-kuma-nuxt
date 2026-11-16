@@ -1,0 +1,24 @@
+meta {
+  name: List nodes
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/nodes
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得所有節點
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

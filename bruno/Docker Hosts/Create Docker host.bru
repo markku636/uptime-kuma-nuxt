@@ -1,0 +1,35 @@
+meta {
+  name: Create Docker host
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/docker-hosts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Local Docker",
+    "dockerType": "socket",
+    "dockerDaemon": "/var/run/docker.sock"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("dockerHostId", value);
+  }
+}
+
+docs {
+  建立 Docker Host
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{dockerHostId}}` for the following requests.
+}

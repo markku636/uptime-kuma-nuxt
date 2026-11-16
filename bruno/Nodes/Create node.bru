@@ -1,0 +1,37 @@
+meta {
+  name: Create node
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/nodes
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nodeId": "node1",
+    "nodeName": "Node 1",
+    "host": "http://localhost:32411",
+    "location": "local",
+    "isPrimary": false
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("nodeDbId", value);
+  }
+}
+
+docs {
+  建立節點
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{nodeDbId}}` for the following requests.
+}

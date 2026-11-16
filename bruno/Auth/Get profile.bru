@@ -1,0 +1,24 @@
+meta {
+  name: Get profile
+  type: http
+  seq: 5
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/auth/profile
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得使用者資料
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Send test notification
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/notifications/test
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "slack",
+    "config": {
+      "webhookUrl": "https://hooks.slack.com/services/xxx/yyy/zzz"
+    }
+  }
+}
+
+docs {
+  測試通知
+
+  Send either `{ type, config }` or `{ notificationId }`.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

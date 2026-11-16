@@ -1,0 +1,28 @@
+meta {
+  name: Get status page monitors
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/status-pages/:slug/monitors
+  body: none
+  auth: none
+}
+
+params:query {
+  ~page: 1
+  ~limit: 20
+  ~group: 
+  ~no_pagination: true
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+docs {
+  取得狀態頁面的 Monitors
+
+  Public — no login required.
+}

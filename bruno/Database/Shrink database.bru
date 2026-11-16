@@ -1,0 +1,22 @@
+meta {
+  name: Shrink database
+  type: http
+  seq: 4
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/database/shrink-database
+  body: none
+  auth: none
+}
+
+docs {
+  壓縮資料庫
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

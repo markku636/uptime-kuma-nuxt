@@ -1,0 +1,26 @@
+meta {
+  name: Delete maintenance window
+  type: http
+  seq: 10
+  tags: [
+    destructive
+  ]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/maintenances/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{maintenanceId}}
+}
+
+docs {
+  刪除維護排程
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

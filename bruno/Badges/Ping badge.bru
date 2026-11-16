@@ -1,0 +1,28 @@
+meta {
+  name: Ping badge
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/badge/:id/ping
+  body: none
+  auth: none
+}
+
+params:query {
+  ~label: 
+  ~labelColor: 
+  ~color: 
+  ~style: flat
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  Ping 徽章
+
+  Public — no login required.
+}

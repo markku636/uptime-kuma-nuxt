@@ -1,0 +1,26 @@
+meta {
+  name: Update appearance settings
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/settings/appearance
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "theme": "auto",
+    "primaryColor": "#5CDD8B",
+    "heartbeatBarStyle": "normal",
+    "uptimeDisplayStyle": "percentage"
+  }
+}
+
+docs {
+  更新外觀設定
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

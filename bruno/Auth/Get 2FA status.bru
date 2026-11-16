@@ -1,0 +1,24 @@
+meta {
+  name: Get 2FA status
+  type: http
+  seq: 9
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/auth/2fa/status
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得 2FA 狀態
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

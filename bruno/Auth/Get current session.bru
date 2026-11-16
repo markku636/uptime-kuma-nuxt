@@ -1,0 +1,24 @@
+meta {
+  name: Get current session
+  type: http
+  seq: 3
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/auth/session
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得目前 Session
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

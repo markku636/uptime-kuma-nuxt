@@ -1,0 +1,28 @@
+meta {
+  name: Disable 2FA
+  type: http
+  seq: 12
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/auth/2fa/disable
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "password": "{{password}}"
+  }
+}
+
+docs {
+  停用 2FA
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+
+  **Destructive** — excluded from smoke runs.
+}

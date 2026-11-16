@@ -1,0 +1,23 @@
+meta {
+  name: Test remote browser connection
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/remote-browsers/test
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "url": "ws://localhost:3000"
+  }
+}
+
+docs {
+  測試遠端瀏覽器連接
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

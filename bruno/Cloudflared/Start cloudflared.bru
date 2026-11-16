@@ -1,0 +1,28 @@
+meta {
+  name: Start cloudflared
+  type: http
+  seq: 2
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/cloudflared/start
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "token": "your-cloudflare-tunnel-token"
+  }
+}
+
+docs {
+  啟動 Cloudflared
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+
+  **Destructive** — excluded from smoke runs.
+}

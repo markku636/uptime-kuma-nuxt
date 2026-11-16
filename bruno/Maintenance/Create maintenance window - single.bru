@@ -1,0 +1,41 @@
+meta {
+  name: Create maintenance window - single
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/maintenances
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "One-off maintenance",
+    "strategy": "single",
+    "dateRange": [
+      "2030-01-01 02:00:00",
+      "2030-01-01 04:00:00"
+    ],
+    "timezoneOption": "UTC",
+    "monitors": [],
+    "statusPages": []
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("maintenanceId", value);
+  }
+}
+
+docs {
+  建立單次維護排程
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{maintenanceId}}` for the following requests.
+}

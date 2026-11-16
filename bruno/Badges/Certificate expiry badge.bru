@@ -1,0 +1,21 @@
+meta {
+  name: Certificate expiry badge
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/badge/:id/cert-exp
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  憑證到期徽章
+
+  Public — no login required.
+}

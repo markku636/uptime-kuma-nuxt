@@ -1,0 +1,22 @@
+meta {
+  name: Clear statistics
+  type: http
+  seq: 3
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/database/clear-statistics
+  body: none
+  auth: none
+}
+
+docs {
+  清除統計資料
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

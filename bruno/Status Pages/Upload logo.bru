@@ -1,0 +1,29 @@
+meta {
+  name: Upload logo
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/status-pages/:slug/upload-logo
+  body: json
+  auth: none
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+body:json {
+  {
+    "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+  }
+}
+
+docs {
+  上傳 Logo
+
+  `logo` is a base64 data URL.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Update node
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/nodes/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{nodeDbId}}
+}
+
+body:json {
+  {
+    "nodeName": "Node 1 (renamed)",
+    "isPrimary": false
+  }
+}
+
+docs {
+  更新節點
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

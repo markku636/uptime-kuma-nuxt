@@ -1,0 +1,24 @@
+meta {
+  name: List cluster nodes
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/cluster/nodes
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得叢集節點列表
+
+  Public — no login required.
+}

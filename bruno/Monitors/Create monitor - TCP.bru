@@ -1,0 +1,39 @@
+meta {
+  name: Create monitor - TCP
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "TCP monitor",
+    "type": "tcp",
+    "hostname": "google.com",
+    "port": 443,
+    "interval": 60,
+    "retryInterval": 30,
+    "timeout": 10
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("monitorId", value);
+  }
+}
+
+docs {
+  建立 TCP 監控器
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{monitorId}}` for the following requests.
+}

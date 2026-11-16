@@ -1,0 +1,26 @@
+meta {
+  name: Delete remote browser
+  type: http
+  seq: 4
+  tags: [
+    destructive
+  ]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/remote-browsers/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{remoteBrowserId}}
+}
+
+docs {
+  刪除遠端瀏覽器
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

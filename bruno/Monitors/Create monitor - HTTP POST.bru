@@ -1,0 +1,43 @@
+meta {
+  name: Create monitor - HTTP POST
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "HTTP POST monitor",
+    "type": "http",
+    "url": "https://httpbin.org/post",
+    "method": "POST",
+    "interval": 120,
+    "retryInterval": 60,
+    "timeout": 30,
+    "body": "{\"key\": \"value\"}",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("monitorId", value);
+  }
+}
+
+docs {
+  建立 HTTP 監控器 (POST 請求)
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{monitorId}}` for the following requests.
+}

@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Uptime Kuma Nuxt API",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

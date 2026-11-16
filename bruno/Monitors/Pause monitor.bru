@@ -1,0 +1,21 @@
+meta {
+  name: Pause monitor
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors/:id/pause
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  暫停 Monitor
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

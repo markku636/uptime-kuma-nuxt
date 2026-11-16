@@ -1,0 +1,26 @@
+meta {
+  name: Unpin incident
+  type: http
+  seq: 8
+  tags: [
+    destructive
+  ]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/status-pages/:slug/incident
+  body: none
+  auth: none
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+docs {
+  移除事件公告
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

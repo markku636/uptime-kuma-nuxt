@@ -1,0 +1,24 @@
+meta {
+  name: Test Docker connection
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/docker-hosts/test
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "dockerType": "socket",
+    "dockerDaemon": "/var/run/docker.sock"
+  }
+}
+
+docs {
+  測試 Docker 連接
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

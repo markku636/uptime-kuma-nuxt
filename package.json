@@ -11,7 +11,8 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "test": "vitest run",
-    "lint:colors": "node scripts/check-colors.mjs"
+    "lint:colors": "node scripts/check-colors.mjs",
+    "bruno:generate": "node scripts/generate-bruno.mjs"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.11.0",

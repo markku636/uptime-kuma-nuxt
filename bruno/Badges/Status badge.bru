@@ -1,0 +1,29 @@
+meta {
+  name: Status badge
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/badge/:id/status
+  body: none
+  auth: none
+}
+
+params:query {
+  ~label: 
+  ~labelColor: 
+  ~upColor: 
+  ~downColor: 
+  ~style: flat
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  狀態徽章
+
+  Public — no login required.
+}

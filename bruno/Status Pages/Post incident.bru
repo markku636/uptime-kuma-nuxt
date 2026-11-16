@@ -1,0 +1,30 @@
+meta {
+  name: Post incident
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/status-pages/:slug/incidents
+  body: json
+  auth: none
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+body:json {
+  {
+    "title": "Investigating",
+    "content": "We are looking into elevated error rates.",
+    "style": "warning",
+    "pin": true
+  }
+}
+
+docs {
+  發布事件公告
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

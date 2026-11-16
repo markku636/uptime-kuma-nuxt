@@ -1,0 +1,31 @@
+meta {
+  name: Enable or disable authentication
+  type: http
+  seq: 8
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/auth/toggle-auth
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "disableAuth": false,
+    "password": "{{password}}"
+  }
+}
+
+docs {
+  啟用/停用驗證
+
+  `password` is required when disabling.
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+
+  **Destructive** — excluded from smoke runs.
+}

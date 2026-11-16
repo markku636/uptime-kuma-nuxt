@@ -1,0 +1,22 @@
+meta {
+  name: Average response badge
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/badge/:id/avg-response/:duration
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{monitorId}}
+  duration: {{duration}}
+}
+
+docs {
+  平均回應時間徽章
+
+  Public — no login required.
+}

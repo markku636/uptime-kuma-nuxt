@@ -1,0 +1,25 @@
+meta {
+  name: Set entry page
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/settings/entry-page
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "entryPage": "dashboard"
+  }
+}
+
+docs {
+  設定入口頁面
+
+  `statusSlug` is required when `entryPage` is `status`.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

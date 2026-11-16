@@ -1,0 +1,25 @@
+meta {
+  name: Switch node - auto
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/cluster/switch
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "node": "auto"
+  }
+}
+
+docs {
+  切換回自動模式
+
+  Sets the `selected_node` cookie. Use `"auto"` to clear it.
+
+  Public — no login required.
+}

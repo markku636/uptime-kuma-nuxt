@@ -1,0 +1,24 @@
+meta {
+  name: Get entry page settings
+  type: http
+  seq: 8
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/settings/entry-page
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得入口頁面設定 (V1)
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

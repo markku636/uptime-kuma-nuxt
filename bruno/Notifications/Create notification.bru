@@ -1,0 +1,39 @@
+meta {
+  name: Create notification
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/notifications
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Slack",
+    "type": "slack",
+    "config": {
+      "webhookUrl": "https://hooks.slack.com/services/xxx/yyy/zzz"
+    },
+    "isDefault": false,
+    "active": true
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("notificationId", value);
+  }
+}
+
+docs {
+  建立通知
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{notificationId}}` for the following requests.
+}

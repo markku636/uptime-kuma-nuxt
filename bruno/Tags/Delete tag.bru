@@ -1,0 +1,26 @@
+meta {
+  name: Delete tag
+  type: http
+  seq: 3
+  tags: [
+    destructive
+  ]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/tags/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{tagId}}
+}
+
+docs {
+  刪除標籤
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

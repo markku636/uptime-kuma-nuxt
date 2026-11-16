@@ -1,0 +1,21 @@
+meta {
+  name: Get status page heartbeats (unversioned path)
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/status-page/:slug/heartbeat
+  body: none
+  auth: none
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+docs {
+  取得狀態頁面心跳 (無版本路徑)
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

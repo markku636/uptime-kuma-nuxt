@@ -1,0 +1,29 @@
+meta {
+  name: Update monitor
+  type: http
+  seq: 13
+}
+
+put {
+  url: {{baseUrl}}/api/v1/monitors/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+body:json {
+  {
+    "name": "Renamed monitor",
+    "interval": 120,
+    "description": "Updated from the API"
+  }
+}
+
+docs {
+  更新 Monitor
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

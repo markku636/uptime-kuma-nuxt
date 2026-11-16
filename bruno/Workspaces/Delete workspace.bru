@@ -1,0 +1,26 @@
+meta {
+  name: Delete workspace
+  type: http
+  seq: 4
+  tags: [
+    destructive
+  ]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{workspaceId}}
+}
+
+docs {
+  刪除工作區
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

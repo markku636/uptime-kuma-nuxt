@@ -1,0 +1,28 @@
+meta {
+  name: Update workspace
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{workspaceId}}
+}
+
+body:json {
+  {
+    "name": "Production (renamed)",
+    "color": "#4CAF50"
+  }
+}
+
+docs {
+  更新工作區
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

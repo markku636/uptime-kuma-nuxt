@@ -1,0 +1,22 @@
+meta {
+  name: Logout
+  type: http
+  seq: 13
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/auth/logout
+  body: none
+  auth: none
+}
+
+docs {
+  登出
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+
+  **Destructive** — excluded from smoke runs.
+}

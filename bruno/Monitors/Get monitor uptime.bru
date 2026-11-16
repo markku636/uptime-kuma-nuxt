@@ -1,0 +1,26 @@
+meta {
+  name: Get monitor uptime
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/api/v1/monitors/:id/uptime?period=24h
+  body: none
+  auth: none
+}
+
+params:query {
+  period: 24h
+  ~history: false
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  取得 Monitor Uptime
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

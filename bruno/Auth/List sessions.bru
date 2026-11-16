@@ -1,0 +1,24 @@
+meta {
+  name: List sessions
+  type: http
+  seq: 4
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/auth/sessions
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得登入工作階段列表
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Update general settings
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/settings/general
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "primaryBaseUrl": "http://localhost:32400",
+    "keepDataPeriodDays": 180,
+    "searchEngineIndex": false,
+    "entryPage": "dashboard"
+  }
+}
+
+docs {
+  更新一般設定
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

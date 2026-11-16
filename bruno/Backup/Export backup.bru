@@ -1,0 +1,24 @@
+meta {
+  name: Export backup
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/backup/export
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  匯出備份
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

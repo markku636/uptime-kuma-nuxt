@@ -1,0 +1,35 @@
+meta {
+  name: Create workspace
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Production",
+    "description": "Customer-facing services",
+    "color": "#5CDD8B"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("workspaceId", value);
+  }
+}
+
+docs {
+  建立工作區
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{workspaceId}}` for the following requests.
+}

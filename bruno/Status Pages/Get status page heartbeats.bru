@@ -1,0 +1,25 @@
+meta {
+  name: Get status page heartbeats
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/status-pages/:slug/heartbeat
+  body: none
+  auth: none
+}
+
+params:query {
+  ~monitorIds: 1,2
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+docs {
+  取得狀態頁面的心跳資料
+
+  Public — no login required.
+}

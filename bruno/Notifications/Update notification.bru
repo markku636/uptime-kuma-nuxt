@@ -1,0 +1,27 @@
+meta {
+  name: Update notification
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/notifications/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{notificationId}}
+}
+
+body:json {
+  {
+    "name": "Renamed notification"
+  }
+}
+
+docs {
+  更新通知
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

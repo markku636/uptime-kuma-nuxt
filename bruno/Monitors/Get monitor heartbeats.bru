@@ -1,0 +1,26 @@
+meta {
+  name: Get monitor heartbeats
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/api/v1/monitors/:id/heartbeats?limit=100&offset=0
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+  offset: 0
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  取得 Monitor 心跳資料
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Uptime badge
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/badge/:id/uptime
+  body: none
+  auth: none
+}
+
+params:query {
+  ~hours: 24
+  ~label: 
+  ~labelColor: 
+  ~color: 
+  ~style: flat
+}
+
+params:path {
+  id: {{monitorId}}
+}
+
+docs {
+  Uptime 徽章
+
+  Public — no login required.
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Get cloudflared status
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/cloudflared/status
+  body: none
+  auth: none
+}
+
+docs {
+  取得 Cloudflared 狀態
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

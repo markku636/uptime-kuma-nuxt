@@ -1,0 +1,56 @@
+meta {
+  name: Create monitor - tags and notifications
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Fully configured monitor",
+    "type": "http",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "interval": 60,
+    "retryInterval": 30,
+    "timeout": 10,
+    "maxretries": 3,
+    "maxRedirects": 5,
+    "ignoreTls": false,
+    "upsideDown": false,
+    "expiryNotification": true,
+    "tlsExpiryDays": [
+      7,
+      14,
+      30
+    ],
+    "tags": [
+      1,
+      2
+    ],
+    "notifications": [
+      1
+    ]
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("monitorId", value);
+  }
+}
+
+docs {
+  建立監控器 (帶 Tags 和 Notifications)
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{monitorId}}` for the following requests.
+}

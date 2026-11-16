@@ -1,0 +1,32 @@
+meta {
+  name: Update maintenance window
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/v1/maintenances/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{maintenanceId}}
+}
+
+body:json {
+  {
+    "title": "Renamed maintenance",
+    "strategy": "manual",
+    "monitors": [],
+    "statusPages": []
+  }
+}
+
+docs {
+  更新維護排程
+
+  Send the full definition; `monitors` and `statusPages` are replaced.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

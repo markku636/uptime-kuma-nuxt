@@ -1,0 +1,26 @@
+meta {
+  name: Create the first admin user
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/setup
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{username}}",
+    "password": "{{password}}"
+  }
+}
+
+docs {
+  初始化管理員帳號
+
+  Only works while no user exists.
+
+  Public — no login required.
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Update status page
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/status-pages/:slug
+  body: json
+  auth: none
+}
+
+params:path {
+  slug: {{statusPageSlug}}
+}
+
+body:json {
+  {
+    "title": "Renamed status page",
+    "description": "Updated from the API",
+    "showTags": true
+  }
+}
+
+docs {
+  更新狀態頁面
+
+  `publicGroupList` replaces the groups shown on the page: `[{ id, name, weight, monitorList: [{ id }] }]`.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

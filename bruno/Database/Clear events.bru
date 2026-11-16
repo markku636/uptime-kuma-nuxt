@@ -1,0 +1,22 @@
+meta {
+  name: Clear events
+  type: http
+  seq: 1
+  tags: [
+    destructive
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/database/clear-events
+  body: none
+  auth: none
+}
+
+docs {
+  清除事件資料
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

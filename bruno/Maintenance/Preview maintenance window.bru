@@ -1,0 +1,33 @@
+meta {
+  name: Preview maintenance window
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/maintenances/preview
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Nightly maintenance",
+    "strategy": "cron",
+    "cron": "0 3 * * *",
+    "durationMinutes": 60,
+    "dateRange": [
+      "2030-01-01 00:00:00",
+      "2030-12-31 00:00:00"
+    ],
+    "timezoneOption": "UTC"
+  }
+}
+
+docs {
+  預覽維護排程 (不儲存)
+
+  Validates a maintenance definition and returns its status and next windows without saving it.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

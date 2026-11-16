@@ -1,0 +1,36 @@
+meta {
+  name: Create status page
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/status-pages
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "My service status",
+    "slug": "my-service-status",
+    "description": "Service status page",
+    "published": true
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.slug ?? body?.slug;
+  if (value !== undefined && value !== null) {
+    bru.setVar("statusPageSlug", value);
+  }
+}
+
+docs {
+  建立狀態頁面
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{statusPageSlug}}` for the following requests.
+}

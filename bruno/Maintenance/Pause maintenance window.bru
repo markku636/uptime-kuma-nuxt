@@ -1,0 +1,21 @@
+meta {
+  name: Pause maintenance window
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/maintenances/:id/pause
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{maintenanceId}}
+}
+
+docs {
+  暫停維護排程
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

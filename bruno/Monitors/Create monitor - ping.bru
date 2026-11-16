@@ -1,0 +1,38 @@
+meta {
+  name: Create monitor - ping
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/monitors
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Ping monitor",
+    "type": "ping",
+    "hostname": "8.8.8.8",
+    "interval": 60,
+    "retryInterval": 30,
+    "timeout": 10
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const value = body?.data?.id ?? body?.id;
+  if (value !== undefined && value !== null) {
+    bru.setVar("monitorId", value);
+  }
+}
+
+docs {
+  建立 Ping 監控器
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  Stores the new record in `{{monitorId}}` for the following requests.
+}

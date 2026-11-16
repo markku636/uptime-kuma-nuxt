@@ -248,6 +248,9 @@ npm run generate      # 生成靜態網站
 # 資料庫
 npm run db:generate   # 生成 Prisma Client
 npm run db:push       # 同步資料庫結構
+
+# API
+npm run bruno:generate  # 由 server/openapi/spec.ts 重新產生 bruno/ collection
 ```
 
 ---
@@ -260,6 +263,46 @@ npm run db:push       # 同步資料庫結構
 - **OpenAPI JSON**: `/api/swagger-json`
 - **健康檢查**: `/api/health`
 - **Prometheus 指標**: `/api/metrics`
+
+### API Key
+
+`/api/v1/*` 可用 API Key 取代登入，金鑰以建立者身分執行：
+
+```bash
+curl -H "X-API-Key: uk_xxx" http://localhost:32400/api/v1/monitors
+```
+
+```bash
+curl -H "Authorization: Bearer uk_xxx" http://localhost:32400/api/v1/monitors
+```
+
+金鑰無效、停用、過期或擁有者被停用時回傳 401（不會退回使用 Cookie）。
+
+### Bruno
+
+[Bruno](https://www.usebruno.com/) collection 位於 `bruno/`，涵蓋所有 API 端點。
+
+1. Bruno → **Open Collection** → 選擇專案的 `bruno/` 資料夾
+2. 選擇 **Local** 環境，擇一驗證（皆為 secret 變數，只存在本機，不會進版控）：
+   - 填入 `password` 並執行 **Auth / Login**，Session Cookie 會自動套用到其他請求
+   - 或填入 `apiKey`（設定 → API Keys 建立的 `uk_...`），collection 會自動對 `/api/v1/*` 加上 `X-API-Key`
+3. API Key 只適用 `/api/v1/*`，且不能管理 API Key 本身（回傳 403）；`/api/auth/*`、`/api/settings/*` 仍需登入
+4. 「Create ...」請求會把新建的 id 存入變數（`monitorId`、`tagId`…），同資料夾的查詢／更新／刪除請求會直接使用
+
+```bash
+# 只讀冒煙測試（需安裝 Bruno CLI，並以 --env-var password=... 提供密碼）
+cd bruno && bru run --env Local --tags smoke
+```
+
+也可以把 `/api/swagger-json` 以 **Import Collection → OpenAPI V3** 匯入 Bruno。
+
+`bruno/` 與 OpenAPI 文件都由 `server/openapi/spec.ts` 產生。新增或修改 API 後更新該檔並執行：
+
+```bash
+npm run bruno:generate
+```
+
+`npm test` 會檢查 `server/api` 下的每個路由都已登錄在 `server/openapi/spec.ts`。
 
 ---
 

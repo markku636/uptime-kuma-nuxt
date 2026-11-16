@@ -1,0 +1,26 @@
+meta {
+  name: Delete node
+  type: http
+  seq: 5
+  tags: [
+    destructive
+  ]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/nodes/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{nodeDbId}}
+}
+
+docs {
+  刪除節點
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+
+  **Destructive** — excluded from smoke runs.
+}

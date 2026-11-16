@@ -1,0 +1,33 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{username}}",
+    "password": "{{password}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  登入 (取得 Session Cookie)
+
+  Sets the `nuxt-session` cookie used by every other request. When 2FA is enabled, add `"token": "123456"`; without it the response is `{ ok: false, tokenRequired: true }`.
+
+  Public — no login required.
+}

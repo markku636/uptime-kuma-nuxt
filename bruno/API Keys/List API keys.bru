@@ -1,0 +1,24 @@
+meta {
+  name: List API keys
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/api-keys
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得所有 API Key
+
+  Requires the session cookie from **Auth / Login** (API keys are not accepted here).
+}

@@ -1,0 +1,24 @@
+meta {
+  name: Export settings file
+  type: http
+  seq: 3
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/settings/export
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  匯出設定
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}
