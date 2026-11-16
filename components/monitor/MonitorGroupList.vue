@@ -37,6 +37,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   addGroup: []
   editGroup: [group: MonitorGroup]
+  /** Pause (active = false) or resume a whole group */
+  setGroupActive: [group: MonitorGroup, active: boolean]
   deleteGroup: [group: MonitorGroup]
   /** groupId null = remove from its group */
   move: [monitorIds: number[], groupId: number | null]
@@ -195,6 +197,15 @@ function onDrop(target: number | 'ungrouped') {
           </UBadge>
           <span v-if="group.description" class="hidden truncate text-sm text-muted md:inline">{{ group.description }}</span>
         </button>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          :icon="group.active ? 'i-heroicons-pause' : 'i-heroicons-play'"
+          :aria-label="`${group.active ? t('Pause group') : t('Resume group')}: ${group.name}`"
+          :title="group.active ? t('Pause group') : t('Resume group')"
+          @click="emit('setGroupActive', group, !group.active)"
+        />
         <UButton
           variant="ghost"
           color="neutral"

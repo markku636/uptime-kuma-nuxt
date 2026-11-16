@@ -12,7 +12,7 @@ const { t } = useI18n()
 const toast = useToast()
 const {
   workspaces, groups, unassigned, loaded, error, current, currentWorkspace, defaultWorkspaceId,
-  fetchAll, moveWorkspace, deleteWorkspace, deleteGroup, organize,
+  fetchAll, moveWorkspace, deleteWorkspace, setGroupActive, deleteGroup, organize,
 } = useWorkspaces({ autoFetch: false })
 
 // ---------- Data ----------
@@ -142,6 +142,20 @@ async function confirmDelete() {
     await fetchMonitors()
   } catch (e) {
     toast.add({ title: workspaceErrorMessage(e, t('Failed to delete')), color: 'error' })
+  } finally {
+    busy.value = false
+  }
+}
+
+// ---------- Pause / resume a group ----------
+async function toggleGroup(group: MonitorGroup, active: boolean) {
+  busy.value = true
+  try {
+    await setGroupActive(group.id, active)
+    await fetchMonitors()
+    toast.add({ title: active ? t('Group resumed') : t('Group paused'), color: 'success' })
+  } catch (e) {
+    toast.add({ title: workspaceErrorMessage(e, t('Failed to save')), color: 'error' })
   } finally {
     busy.value = false
   }
@@ -328,6 +342,7 @@ const select = (value: WorkspaceFilter) => { current.value = value }
           :busy="busy"
           @add-group="openGroupDialog()"
           @edit-group="openGroupDialog($event)"
+          @set-group-active="toggleGroup"
           @delete-group="pendingDelete = { kind: 'group', item: $event }"
           @move="(ids, groupId) => move(ids, { parent: groupId })"
         />

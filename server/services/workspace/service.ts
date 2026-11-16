@@ -221,6 +221,22 @@ export async function updateGroup(userId: number, id: number, body: unknown) {
   return { ...pick(group), monitorCount }
 }
 
+/** Pause or resume a group together with everything inside it (subgroups included) */
+export async function setGroupActive(userId: number, id: number, active: boolean) {
+  const group = await findGroup(userId, id)
+  const ids = [id, ...descendantIds(await loadTree(userId), id)]
+  await prisma.monitor.updateMany({ where: { id: { in: ids }, userId }, data: { active } })
+
+  const monitors = await prisma.monitor.findMany({ where: { id: { in: ids }, userId } })
+  for (const monitor of monitors) {
+    if (active) startMonitorJob(monitor)
+    else stopMonitorJob(monitor.id)
+  }
+  // The group above (if any) counts this one differently now
+  scheduleGroupRecheck(group.parent)
+  return { updated: ids.length }
+}
+
 /** Members are kept: they move up to the deleted group's own parent (or become ungrouped) */
 export async function deleteGroup(userId: number, id: number) {
   const group = await findGroup(userId, id)

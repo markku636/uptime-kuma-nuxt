@@ -82,6 +82,16 @@
                 variant="ghost"
                 color="neutral"
                 size="xs"
+                :icon="section.group.active ? 'i-heroicons-pause' : 'i-heroicons-play'"
+                :loading="togglingGroup === section.group.id"
+                :aria-label="`${section.group.active ? t('Pause group') : t('Resume group')}: ${section.group.name}`"
+                :title="section.group.active ? t('Pause group') : t('Resume group')"
+                @click="toggleGroup(section.group)"
+              />
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
                 icon="i-heroicons-pencil-square"
                 :aria-label="`${t('Edit Group')}: ${section.group.name}`"
                 :title="t('Edit Group')"
@@ -138,7 +148,8 @@ definePageMeta({
 })
 
 const { t } = useI18n()
-const { workspaces, groups, current, loaded, defaultWorkspaceId } = useWorkspaces()
+const { workspaces, groups, current, loaded, defaultWorkspaceId, setGroupActive } = useWorkspaces()
+const toast = useToast()
 
 const { data, pending, refresh } = await useFetch('/api/v1/monitors', {
   headers: useRequestHeaders(['cookie'])
@@ -205,6 +216,21 @@ function toggle(key: string) {
   if (next.has(key)) next.delete(key)
   else next.add(key)
   collapsed.value = next
+}
+
+// ---------- Pause / resume a whole group ----------
+const togglingGroup = ref<number | null>(null)
+async function toggleGroup(group: MonitorGroup) {
+  togglingGroup.value = group.id
+  try {
+    await setGroupActive(group.id, !group.active)
+    await refresh()
+    toast.add({ title: group.active ? t('Group paused') : t('Group resumed'), color: 'success' })
+  } catch (e: any) {
+    toast.add({ title: e?.data?.message || t('Failed to save'), color: 'error' })
+  } finally {
+    togglingGroup.value = null
+  }
 }
 
 // ---------- Shortcuts ----------

@@ -1292,5 +1292,9 @@
     "Parent group": "上層群組",
     "None (top level)": "無（最上層）",
     "parentGroupHint": "把此群組放進同一工作區的另一個群組中，其狀態會計入上層群組。",
-    "addGroupMembers": "加入其中 {n} 個監控"
+    "addGroupMembers": "加入其中 {n} 個監控",
+    "Pause group": "暫停群組（含所有成員）",
+    "Resume group": "恢復群組（含所有成員）",
+    "Group paused": "已暫停群組與其成員",
+    "Group resumed": "已恢復群組與其成員"
 }

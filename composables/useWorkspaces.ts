@@ -157,6 +157,12 @@ export function useWorkspaces(options: { autoFetch?: boolean } = {}) {
     return res.data
   }
 
+  /** Pause / resume a group and everything inside it */
+  async function setGroupActive(id: number, active: boolean) {
+    await $fetch(`/api/v1/groups/${id}/${active ? 'resume' : 'pause'}`, { method: 'POST' })
+    await fetchAll()
+  }
+
   async function deleteGroup(id: number) {
     await $fetch(`/api/v1/groups/${id}`, { method: 'DELETE' })
     await fetchAll()
@@ -193,6 +199,7 @@ export function useWorkspaces(options: { autoFetch?: boolean } = {}) {
     deleteWorkspace,
     createGroup,
     updateGroup,
+    setGroupActive,
     deleteGroup,
     organize,
   }

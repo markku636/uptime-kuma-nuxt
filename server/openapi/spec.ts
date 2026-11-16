@@ -275,6 +275,8 @@ export const ENDPOINTS: Endpoint[] = [
   ...crud('Groups', '/api/v1/groups', 'group', '群組', 'groupId',
     { name: 'Web servers', description: 'Front-end hosts', workspaceId: null },
     { name: 'Web servers (renamed)' }),
+  { method: 'post', path: '/api/v1/groups/{id}/pause', tag: 'Groups', summary: 'Pause group', zh: '暫停群組 (含所有成員)', description: 'Pauses the group and every monitor inside it, subgroups included.', params: { id: 'groupId' } },
+  { method: 'post', path: '/api/v1/groups/{id}/resume', tag: 'Groups', summary: 'Resume group', zh: '恢復群組 (含所有成員)', description: 'Resumes the group and every monitor inside it, subgroups included.', params: { id: 'groupId' } },
 
   // ───────────────────────────── Tags ─────────────────────────────
   { method: 'get', path: '/api/v1/tags', tag: 'Tags', summary: 'List tags', zh: '取得所有標籤' },
