@@ -11,7 +11,7 @@
       <div class="mb-6">
         <NuxtLink to="/dashboard" class="link inline-flex items-center mb-3 group">
           <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
-          Back to Dashboard
+          {{ $t('Back to Dashboard') }}
         </NuxtLink>
         
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -41,19 +41,19 @@
           <div class="flex items-center gap-2 flex-wrap">
             <button v-if="monitor.active" @click="pauseMonitor" class="btn btn-secondary">
               <UIcon name="i-heroicons-pause" class="w-4 h-4 mr-1" />
-              Pause
+              {{ $t('Pause') }}
             </button>
             <button v-else @click="resumeMonitor" class="btn btn-primary">
               <UIcon name="i-heroicons-play" class="w-4 h-4 mr-1" />
-              Resume
+              {{ $t('Resume') }}
             </button>
             <NuxtLink :to="`/monitors/${monitorId}/edit`" class="btn btn-secondary">
               <UIcon name="i-heroicons-pencil" class="w-4 h-4 mr-1" />
-              Edit
+              {{ $t('Edit') }}
             </NuxtLink>
             <button @click="cloneMonitor" class="btn btn-secondary" :disabled="cloning">
               <UIcon name="i-heroicons-document-duplicate" class="w-4 h-4 mr-1" />
-              {{ cloning ? "Cloning..." : "Clone" }}
+              {{ $t('Clone') }}
             </button>
             <NuxtLink :to="`/maintenance/add?monitorId=${monitorId}`" class="btn btn-secondary">
               <UIcon name="i-heroicons-wrench-screwdriver" class="w-4 h-4 mr-1" />
@@ -62,16 +62,16 @@
             <!-- Badge Generator -->
             <button @click="showBadgeGenerator = true" class="btn btn-secondary">
               <UIcon name="i-heroicons-rectangle-stack" class="w-4 h-4 mr-1" />
-              Badge
+              {{ $t('Badge') }}
             </button>
             <!-- Screenshot (for real-browser type) -->
             <button v-if="monitor.type === 'real-browser'" @click="showScreenshot = true" class="btn btn-secondary">
               <UIcon name="i-heroicons-camera" class="w-4 h-4 mr-1" />
-              Screenshot
+              {{ $t('Screenshot') }}
             </button>
             <button @click="showDeleteConfirm = true" class="btn btn-danger">
               <UIcon name="i-heroicons-trash" class="w-4 h-4 mr-1" />
-              Delete
+              {{ $t('Delete') }}
             </button>
           </div>
         </div>
@@ -98,7 +98,7 @@
       <div class="card card-body mb-6 card-interactive">
         <div class="flex flex-col lg:flex-row lg:items-center gap-6">
           <div class="flex-1">
-            <h3 class="text-sm font-medium text-toned mb-2">Heartbeat History</h3>
+            <h3 class="text-sm font-medium text-toned mb-2">{{ $t('Heartbeat History') }}</h3>
             <div class="flex items-center gap-0.5">
               <div
                 v-for="(beat, i) in displayHeartbeats"
@@ -106,7 +106,7 @@
                 class="heartbeat-bar h-8 w-1.5 rounded-full cursor-pointer"
                 :class="[getHeartbeatClass(beat), i === displayHeartbeats.length - 1 && beat?.status === 1 ? 'pulse' : '']"
                 :style="{ animationDelay: `${i * 20}ms` }"
-                :title="beat ? `${formatDateTime(beat.time)} - ${beat.ping || 0}ms` : 'No data'"
+                :title="beat ? `${formatDateTime(beat.time)} - ${beat.ping || 0}ms` : $t('No data')"
               ></div>
             </div>
             <p class="text-xs text-muted mt-2">Check every {{ monitor.interval }} seconds</p>
@@ -128,32 +128,32 @@
       <!-- Statistics Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-toned mb-1">Response Time</div>
+          <div class="stat-label text-sm text-toned mb-1">{{ $t('Response Time') }}</div>
           <div class="stat-value text-2xl font-bold text-up-fg" :key="lastPing">
             <span class="tabular-nums">{{ animatedPing }}</span><span class="text-lg">ms</span>
           </div>
-          <div class="text-xs text-muted mt-1">Current</div>
+          <div class="text-xs text-muted mt-1">{{ $t('Current') }}</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-toned mb-1">Avg Response</div>
+          <div class="stat-label text-sm text-toned mb-1">{{ $t('Avg. Response') }}</div>
           <div class="stat-value text-2xl font-bold text-info">
             <span class="tabular-nums">{{ avgPing }}</span><span class="text-lg">ms</span>
           </div>
-          <div class="text-xs text-muted mt-1">24-hour</div>
+          <div class="text-xs text-muted mt-1">{{ $t('24-hour') }}</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-toned mb-1">Uptime</div>
+          <div class="stat-label text-sm text-toned mb-1">{{ $t('Uptime') }}</div>
           <div class="stat-value text-2xl font-bold" :class="uptime24hColor">
             <span class="tabular-nums">{{ uptime24h }}</span><span v-if="uptime24h !== '—'" class="text-lg">%</span>
           </div>
-          <div class="text-xs text-muted mt-1">24-hour</div>
+          <div class="text-xs text-muted mt-1">{{ $t('24-hour') }}</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-toned mb-1">Uptime</div>
+          <div class="stat-label text-sm text-toned mb-1">{{ $t('Uptime') }}</div>
           <div class="stat-value text-2xl font-bold" :class="uptime30dColor">
             <span class="tabular-nums">{{ uptime30d }}</span><span v-if="uptime30d !== '—'" class="text-lg">%</span>
           </div>
-          <div class="text-xs text-muted mt-1">30-day</div>
+          <div class="text-xs text-muted mt-1">{{ $t('30-day') }}</div>
         </div>
       </div>
 
@@ -171,7 +171,7 @@
                 height: getChartHeight(beat),
                 animationDelay: `${i * 10}ms`
               }"
-              :title="beat ? `${formatDateTime(beat.time)}: ${beat.ping || 0}ms` : 'No data'"
+              :title="beat ? `${formatDateTime(beat.time)}: ${beat.ping || 0}ms` : $t('No data')"
             ></div>
           </div>
           <!-- Y-axis labels -->
@@ -186,7 +186,7 @@
       <!-- TLS Certificate Info (for HTTPS monitors) -->
       <div v-if="showTlsInfo" class="card card-body mb-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-highlighted">TLS/SSL Certificate</h3>
+          <h3 class="text-lg font-semibold text-highlighted">{{ $t('TLS/SSL Certificate') }}</h3>
           <button @click="refreshCertInfo" class="btn btn-secondary btn-sm" :disabled="loadingCert">
             <UIcon name="i-heroicons-arrow-path" class="w-4 h-4" :class="{ 'animate-spin': loadingCert }" />
           </button>
@@ -204,7 +204,7 @@
             </div>
             <div>
               <div class="font-medium text-highlighted">
-                {{ certInfo.certificate.valid ? 'Valid Certificate' : 'Invalid Certificate' }}
+                {{ certInfo.certificate.valid ? $t('Valid Certificate') : $t('Invalid Certificate') }}
               </div>
               <div class="text-sm" :class="certDaysClass">
                 {{ certDaysMessage }}
@@ -215,34 +215,34 @@
           <!-- Certificate Details -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-default">
             <div>
-              <div class="text-xs text-muted uppercase mb-1">Subject</div>
+              <div class="text-xs text-muted uppercase mb-1">{{ $t('Subject') }}</div>
               <div class="text-sm text-default font-mono break-all">{{ certInfo.certificate.subject }}</div>
             </div>
             <div>
-              <div class="text-xs text-muted uppercase mb-1">Issuer</div>
+              <div class="text-xs text-muted uppercase mb-1">{{ $t('Issuer') }}</div>
               <div class="text-sm text-default font-mono break-all">{{ certInfo.certificate.issuer }}</div>
             </div>
             <div>
-              <div class="text-xs text-muted uppercase mb-1">Valid From</div>
+              <div class="text-xs text-muted uppercase mb-1">{{ $t('Valid From') }}</div>
               <div class="text-sm text-default">{{ formatDate(certInfo.certificate.validFrom) }}</div>
             </div>
             <div>
-              <div class="text-xs text-muted uppercase mb-1">Valid To</div>
+              <div class="text-xs text-muted uppercase mb-1">{{ $t('Valid To') }}</div>
               <div class="text-sm text-default">{{ formatDate(certInfo.certificate.validTo) }}</div>
             </div>
             <div>
-              <div class="text-xs text-muted uppercase mb-1">Days Remaining</div>
+              <div class="text-xs text-muted uppercase mb-1">{{ $t('Days Remaining') }}</div>
               <div class="text-sm font-bold" :class="certDaysClass">{{ certInfo.certificate.daysRemaining }} days</div>
             </div>
             <div>
-              <div class="text-xs text-muted uppercase mb-1">Fingerprint</div>
+              <div class="text-xs text-muted uppercase mb-1">{{ $t('Fingerprint') }}</div>
               <div class="text-sm text-default font-mono truncate">{{ certInfo.certificate.fingerprint }}</div>
             </div>
           </div>
 
           <!-- Subject Alt Names -->
           <div v-if="certInfo.certificate.subjectAltName?.length" class="pt-4 border-t border-default">
-            <div class="text-xs text-muted uppercase mb-2">Subject Alternative Names</div>
+            <div class="text-xs text-muted uppercase mb-2">{{ $t('Subject Alternative Names') }}</div>
             <div class="flex flex-wrap gap-2">
               <span 
                 v-for="(san, idx) in certInfo.certificate.subjectAltName" 
@@ -264,7 +264,7 @@
       <!-- Important Events Table -->
       <div class="card mb-6">
         <div class="p-4 border-b border-default flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-highlighted">Important Events</h3>
+          <h3 class="text-lg font-semibold text-highlighted">{{ $t('Important Events') }}</h3>
           <span class="text-sm text-dimmed">{{ importantHeartbeats.length }} events</span>
         </div>
         <div class="overflow-x-auto">
@@ -291,7 +291,7 @@
               <tr v-if="importantHeartbeats.length === 0">
                 <td colspan="4" class="text-center text-muted py-8">
                   <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-up-fg" />
-                  <p>No important events</p>
+                  <p>{{ $t('No important events') }}</p>
                 </td>
               </tr>
             </tbody>
@@ -325,12 +325,12 @@
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showDeleteConfirm = false">
       <Transition name="scale">
       <div class="card card-body max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-highlighted mb-4">Delete Monitor</h3>
+        <h3 class="text-lg font-semibold text-highlighted mb-4">{{ $t('Delete Monitor') }}</h3>
         <p class="text-dimmed mb-6">Are you sure you want to delete "{{ monitor?.name }}"? This action cannot be undone.</p>
         <div class="flex justify-end gap-3">
-          <button @click="showDeleteConfirm = false" class="btn btn-secondary">Cancel</button>
+          <button @click="showDeleteConfirm = false" class="btn btn-secondary">{{ $t('Cancel') }}</button>
           <button @click="confirmDelete" :disabled="deleting" class="btn btn-danger">
-            {{ deleting ? 'Deleting...' : 'Delete' }}
+            {{ $t('Delete') }}
           </button>
         </div>
       </div>
