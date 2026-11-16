@@ -118,7 +118,18 @@ export default defineNuxtConfig({
     }
   },
 
+  // Claude Code keeps session worktrees (each with its own node_modules) under
+  // .claude/. Watching them slows dev down and the locked Prisma engine files
+  // there make the watcher crash (EBUSY), so keep them out of every watcher.
+  ignore: ['.claude/**'],
+  vite: {
+    server: {
+      watch: { ignored: ['**/.claude/**'] },
+    },
+  },
+
   nitro: {
+    watchOptions: { ignored: ['**/.claude/**'] },
     experimental: {
       tasks: true,
     },
