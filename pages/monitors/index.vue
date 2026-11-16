@@ -16,8 +16,20 @@
       </div>
     </div>
 
-    <!-- Workspace -->
-    <WorkspaceSwitcher class="mb-4" />
+    <!-- Workspace + search -->
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <WorkspaceSwitcher class="min-w-0 flex-1" />
+      <div class="relative w-full sm:w-64">
+        <UIcon name="i-heroicons-magnifying-glass" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
+        <input
+          v-model="search"
+          type="search"
+          class="input-field pl-9"
+          :placeholder="t('Search monitors')"
+          :aria-label="t('Search monitors')"
+        >
+      </div>
+    </div>
 
     <div class="card card-body">
       <div v-if="(pending && !data) || !loaded" class="text-center py-12">
@@ -31,6 +43,12 @@
         <NuxtLink to="/monitors/add" class="btn btn-primary">
           Add your first monitor
         </NuxtLink>
+      </div>
+
+      <div v-else-if="sections.length === 0 && query" class="text-center py-12">
+        <UIcon name="i-heroicons-magnifying-glass" class="w-12 h-12 mx-auto text-muted mb-3" />
+        <p class="text-toned mb-4">{{ t('No monitors match your search') }}</p>
+        <button type="button" class="btn btn-secondary" @click="search = ''">{{ t('Clear') }}</button>
       </div>
 
       <div v-else-if="sections.length === 0" class="text-center py-12">
@@ -49,13 +67,13 @@
             <button
               type="button"
               class="flex min-w-0 flex-1 items-center gap-2 text-left"
-              :aria-expanded="!collapsed.has(section.key)"
+              :aria-expanded="!isCollapsed(section.key)"
               @click="toggle(section.key)"
             >
               <UIcon
                 name="i-heroicons-chevron-right"
                 class="w-4 h-4 shrink-0 text-muted transition-transform"
-                :class="{ 'rotate-90': !collapsed.has(section.key) }"
+                :class="{ 'rotate-90': !isCollapsed(section.key) }"
               />
               <UIcon :name="section.group ? 'i-heroicons-folder' : 'i-heroicons-inbox'" class="w-4 h-4 shrink-0 text-muted" />
               <span class="truncate font-semibold text-highlighted">{{ section.group ? section.label ?? section.group.name : t('Ungrouped') }}</span>
@@ -100,7 +118,7 @@
             </template>
           </header>
 
-          <div v-if="!collapsed.has(section.key)" class="space-y-3" :class="{ 'ml-6': section.group || hasGroups }">
+          <div v-if="!isCollapsed(section.key)" class="space-y-3" :class="{ 'ml-6': section.group || hasGroups }">
             <p v-if="section.monitors.length === 0" class="text-sm text-muted py-2">
               {{ t('groupEmptyHint') }}
             </p>
@@ -181,6 +199,12 @@ interface Section {
 
 const hasGroups = computed(() => groups.value.some(g => matchesWorkspace(g, current.value)))
 
+// ---------- Search (name, URL, host or group name) ----------
+const search = ref('')
+const query = computed(() => search.value.trim().toLowerCase())
+const matchesQuery = (m: any) => !query.value
+  || [m.name, m.url, m.hostname].some((v: unknown) => typeof v === 'string' && v.toLowerCase().includes(query.value))
+
 const sections = computed<Section[]>(() => {
   const groupIds = new Set(groups.value.map(g => g.id))
   const byId = new Map(monitors.value.map(m => [m.id, m]))
@@ -196,13 +220,18 @@ const sections = computed<Section[]>(() => {
       workspace: workspaceOf(group.workspaceId),
       // The group itself is a monitor whose status is aggregated from its members
       status: byId.has(group.id) ? statusOf(byId.get(group.id)) : 'pending',
-      monitors: monitors.value.filter(m => m.type !== 'group' && m.parent === group.id),
+      monitors: monitors.value.filter(m => m.type !== 'group' && m.parent === group.id
+        // A matching group name shows all of its monitors
+        && (matchesQuery(m) || path.toLowerCase().includes(query.value))),
     }))
+    // While searching, keep groups whose name or monitors match
+    .filter(section => !query.value || section.monitors.length > 0 || section.label.toLowerCase().includes(query.value))
 
   const ungrouped = monitors.value.filter(m =>
     m.type !== 'group'
     && (m.parent == null || !groupIds.has(m.parent))
-    && matchesWorkspace(m, current.value),
+    && matchesWorkspace(m, current.value)
+    && matchesQuery(m),
   )
   if (ungrouped.length) {
     result.push({ key: 'ungrouped', group: null, workspace: null, status: 'pending', monitors: ungrouped })
@@ -211,6 +240,7 @@ const sections = computed<Section[]>(() => {
 })
 
 const collapsed = ref(new Set<string>())
+const isCollapsed = (key: string) => !query.value && collapsed.value.has(key)
 function toggle(key: string) {
   const next = new Set(collapsed.value)
   if (next.has(key)) next.delete(key)
