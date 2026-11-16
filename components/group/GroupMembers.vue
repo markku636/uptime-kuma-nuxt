@@ -8,10 +8,16 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
-const { data, pending } = useFetch<{ data: any[] }>('/api/v1/monitors?heartbeats=1', {
+const { data, pending, refresh } = useFetch<{ data: any[] }>('/api/v1/monitors?heartbeats=1', {
   key: `group-members-${props.groupId}`,
   headers: useRequestHeaders(['cookie']),
 })
+
+// Keep member statuses current while the page is open
+const visibility = useDocumentVisibility()
+useIntervalFn(() => {
+  if (visibility.value === 'visible') refresh()
+}, 30_000)
 
 const members = computed(() =>
   (data.value?.data ?? [])
