@@ -6,6 +6,17 @@
         <p class="text-toned">{{ t('Manage your monitors') }}</p>
       </div>
       <div class="flex gap-2">
+        <UButton
+          variant="outline"
+          color="neutral"
+          icon="i-heroicons-arrow-up-tray"
+          :loading="exporting"
+          :disabled="!monitors.length"
+          :title="t('exportBrunoHint')"
+          @click="exportBruno"
+        >
+          {{ t('Export to Bruno') }}
+        </UButton>
         <UButton variant="outline" color="neutral" icon="i-heroicons-folder-plus" @click="openGroupDialog()">
           {{ t('New Group') }}
         </UButton>
@@ -168,6 +179,7 @@
 import type { MonitorGroup, Workspace } from '~/composables/useWorkspaces'
 import { matchesWorkspace } from '~/composables/useWorkspaces'
 import { orderAsTree } from '~/server/services/workspace/tree'
+import { toBrunoCollection } from '~/utils/bruno'
 
 definePageMeta({
   middleware: ['auth']
@@ -255,6 +267,35 @@ function toggle(key: string) {
   if (next.has(key)) next.delete(key)
   else next.add(key)
   collapsed.value = next
+}
+
+// ---------- Export the shown workspace as a Bruno collection ----------
+const exporting = ref(false)
+async function exportBruno() {
+  exporting.value = true
+  try {
+    const ws = typeof current.value === 'number' ? workspaces.value.find(w => w.id === current.value) : null
+    const shownGroups = groups.value.filter(g => matchesWorkspace(g, current.value))
+    const shownMonitors = monitors.value.filter(m => m.type !== 'group' && matchesWorkspace(m, current.value))
+    // Variables in effect: global ones, overridden by the workspace's own
+    const all = (await $fetch<{ data: { name: string; value: string; secret: boolean; workspaceId: number | null }[] }>('/api/v1/variables')).data
+    const effective = new Map<string, { name: string; value: string; secret: boolean }>()
+    for (const v of all) if (v.workspaceId == null) effective.set(v.name, v)
+    if (ws) for (const v of all) if (v.workspaceId === ws.id) effective.set(v.name, v)
+    const name = ws ? ws.name : 'Uptime Kuma'
+    const collection = toBrunoCollection(name, shownMonitors, shownGroups.map(g => ({ id: g.id, name: g.name, parent: g.parent })), [...effective.values()], ws?.name ?? 'Uptime Kuma')
+    const blob = new Blob([JSON.stringify(collection, null, 2)], { type: 'application/json' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${name.replace(/[^\w.-]+/g, '-').toLowerCase() || 'uptime-kuma'}.bruno.json`
+    link.click()
+    URL.revokeObjectURL(link.href)
+    toast.add({ title: t('exportBrunoDone', [collection.items.length ? shownMonitors.filter(m => ['http', 'keyword', 'json-query'].includes(m.type)).length : 0]), color: 'success' })
+  } catch (e: any) {
+    toast.add({ title: e?.data?.message || t('Failed to save'), color: 'error' })
+  } finally {
+    exporting.value = false
+  }
 }
 
 // ---------- Pause / resume a whole group ----------

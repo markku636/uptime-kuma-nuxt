@@ -683,3 +683,143 @@ export function isDraftReady(draft: MonitorDraft): boolean {
   return /^https?:\/\//i.test(draft.url) && unresolvedVariables(draft.url).length === 0
     && !draft.warnings.some(w => w.startsWith('Unresolved'))
 }
+
+// ---------------------------------------------------------------------------
+// Export: monitors -> Bruno collection JSON ("Import Collection" in Bruno)
+// ---------------------------------------------------------------------------
+
+export interface ExportMonitor {
+  id: number
+  name: string
+  type: string
+  url?: string | null
+  method?: string | null
+  body?: string | null
+  headers?: unknown
+  keyword?: string | null
+  invertKeyword?: boolean
+  authMethod?: string | null
+  basicAuthUser?: string | null
+  basicAuthPass?: string | null
+  acceptedStatuscodes?: unknown
+  parent?: number | null
+}
+
+export interface ExportGroup {
+  id: number
+  name: string
+  parent: number | null
+}
+
+export interface ExportVariable {
+  name: string
+  value: string
+  secret: boolean
+}
+
+const HTTP_TYPES = new Set(['http', 'keyword', 'json-query'])
+
+function headerList(headers: unknown): { name: string; value: string; enabled: boolean }[] {
+  let obj = headers
+  if (typeof obj === 'string') {
+    try { obj = JSON.parse(obj) } catch { return [] }
+  }
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return []
+  return Object.entries(obj as Record<string, unknown>).map(([name, value]) => ({ name, value: String(value ?? ''), enabled: true }))
+}
+
+/** Accepted status codes ("200-299", "301") as Bruno assertions */
+export function statusAssertions(codes: unknown): { name: string; value: string; enabled: boolean }[] {
+  const list = Array.isArray(codes) && codes.length ? codes.map(String) : ['200-299']
+  if (list.length === 1) {
+    const range = /^(\d{3})-(\d{3})$/.exec(list[0])
+    if (range) {
+      return [
+        { name: 'res.status', value: `gte ${range[1]}`, enabled: true },
+        { name: 'res.status', value: `lte ${range[2]}`, enabled: true },
+      ]
+    }
+    if (/^\d{3}$/.test(list[0])) return [{ name: 'res.status', value: `eq ${list[0]}`, enabled: true }]
+  }
+  // Several codes: list the single ones (ranges cannot be combined in one assertion)
+  const singles = list.filter(c => /^\d{3}$/.test(c))
+  return singles.length ? [{ name: 'res.status', value: `in [${singles.join(', ')}]`, enabled: true }] : []
+}
+
+function bodyOf(monitor: ExportMonitor, headers: { name: string; value: string }[]) {
+  const text = monitor.body ?? ''
+  if (!text) return { mode: 'none' }
+  const type = headers.find(h => h.name.toLowerCase() === 'content-type')?.value ?? ''
+  if (type.includes('json') || /^\s*[{[]/.test(text)) return { mode: 'json', json: text }
+  if (type.includes('xml')) return { mode: 'xml', xml: text }
+  return { mode: 'text', text }
+}
+
+/**
+ * HTTP monitors as a Bruno collection: groups become folders, accepted status
+ * codes and keywords become assertions, variables an environment. Secret
+ * values are left empty (and marked secret).
+ */
+export function toBrunoCollection(
+  name: string,
+  monitors: ExportMonitor[],
+  groups: ExportGroup[],
+  variables: ExportVariable[] = [],
+  environmentName = 'Uptime Kuma',
+) {
+  const groupIds = new Set(groups.map(g => g.id))
+  // A group whose parent is not exported becomes a top-level folder
+  const folders = groups.map(g => ({ ...g, parent: g.parent != null && groupIds.has(g.parent) ? g.parent : null }))
+
+  const requestsIn = new Map<number | null, any[]>()
+  for (const m of monitors) {
+    if (!HTTP_TYPES.has(m.type) || !m.url) continue
+    const headers = headerList(m.headers)
+    const assertions = statusAssertions(m.acceptedStatuscodes)
+    if (m.keyword && !m.invertKeyword) assertions.push({ name: 'res.body', value: `contains "${m.keyword}"`, enabled: true })
+    const parent = m.parent != null && groupIds.has(m.parent) ? m.parent : null
+    const item = {
+      type: 'http-request',
+      name: m.name,
+      request: {
+        url: m.url,
+        method: String(m.method || 'GET').toUpperCase(),
+        headers,
+        params: [],
+        body: bodyOf(m, headers),
+        auth: m.authMethod === 'basic'
+          ? { mode: 'basic', basic: { username: m.basicAuthUser ?? '', password: m.basicAuthPass ?? '' } }
+          : { mode: 'none' },
+        script: {},
+        vars: {},
+        assertions,
+        tests: '',
+        docs: `Exported from Uptime Kuma (monitor #${m.id})`,
+      },
+    }
+    const list = requestsIn.get(parent)
+    if (list) list.push(item)
+    else requestsIn.set(parent, [item])
+  }
+
+  // Folders first, then requests; folders without any request are left out
+  const build = (parent: number | null, depth = 0): any[] => {
+    const sub = depth > 20
+      ? []
+      : folders
+        .filter(g => g.parent === parent)
+        .map(g => ({ type: 'folder', name: g.name, items: build(g.id, depth + 1) }))
+        .filter(f => f.items.length)
+    return [...sub, ...(requestsIn.get(parent) ?? [])].map((item, i) => ({ ...item, seq: i + 1 }))
+  }
+
+  return {
+    name,
+    version: '1',
+    items: build(null),
+    environments: variables.length
+      ? [{ name: environmentName, variables: variables.map(v => ({ name: v.name, value: v.secret ? '' : v.value, enabled: true, secret: v.secret, type: 'text' })) }]
+      : [],
+    brunoConfig: { version: '1', name, type: 'collection', ignore: ['node_modules', '.git'] },
+  }
+}

@@ -10,6 +10,7 @@ import {
   parseBruRequest,
   requestVariables,
   resolveRequest,
+  toBrunoCollection,
   toMonitorDraft,
   variablesFor,
 } from '../../utils/bruno'
@@ -344,5 +345,36 @@ describe('environments picked on their own', () => {
     expect(result.environments[1].variables).not.toHaveProperty('off')
     expect(result.secretVars).toEqual(['token'])
     expect(result.errors).toEqual([])
+  })
+})
+
+describe('toBrunoCollection', () => {
+  const groups = [{ id: 10, name: 'Web', parent: null }, { id: 11, name: 'Edge', parent: 10 }, { id: 12, name: 'Empty', parent: null }]
+  const monitors = [
+    { id: 1, name: 'Home', type: 'http', url: '{{host}}/', method: 'GET', acceptedStatuscodes: ['200-299'], parent: 10 },
+    { id: 2, name: 'CDN', type: 'keyword', url: 'https://cdn/x', keyword: 'ok', acceptedStatuscodes: ['200'], parent: 11, headers: { 'X-A': '1' } },
+    { id: 3, name: 'Login', type: 'http', url: 'https://x/login', method: 'POST', body: '{"u":1}', authMethod: 'basic', basicAuthUser: 'a', basicAuthPass: 'b', acceptedStatuscodes: ['200', '204'], parent: null },
+    { id: 4, name: 'DB', type: 'postgres', parent: null },
+  ]
+  const vars = [{ name: 'host', value: 'https://h', secret: false }, { name: 'token', value: 'hidden', secret: true }]
+
+  it('mirrors groups as folders and skips empty groups and non-HTTP monitors', () => {
+    const col = toBrunoCollection('Export', monitors, groups, vars)
+    expect(col.items.map((i: any) => [i.type, i.name])).toEqual([['folder', 'Web'], ['http-request', 'Login']])
+    expect(col.items[0].items.map((i: any) => i.name)).toEqual(['Edge', 'Home'])
+    expect(col.environments[0].variables.find((v: any) => v.name === 'token')).toMatchObject({ value: '', secret: true })
+  })
+
+  it('round-trips through the importer', () => {
+    const parsed = parseBrunoCollectionJson(toBrunoCollection('Export', monitors, groups, vars))
+    const byName = Object.fromEntries(parsed.requests.map(r => [r.name, r]))
+    expect(byName.Home.folder).toBe('Web')
+    expect(byName.CDN.folder).toBe('Web/Edge')
+    expect(byName.Home.expectedStatus).toEqual(['200-299'])
+    expect(byName.CDN.keyword).toBe('ok')
+    expect(byName.CDN.headers).toEqual([{ key: 'X-A', value: '1' }])
+    expect(byName.Login).toMatchObject({ method: 'POST', bodyMode: 'json', body: '{"u":1}', auth: { mode: 'basic', username: 'a', password: 'b' }, expectedStatus: ['200', '204'] })
+    const vars2 = variablesFor(byName.Home, parsed.collectionVars, parsed.environments[0].variables)
+    expect(resolveRequest(byName.Home, vars2).url).toBe('https://h/')
   })
 })
