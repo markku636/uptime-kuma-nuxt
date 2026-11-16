@@ -1358,5 +1358,12 @@
     "brunoWarnAuth": "不支援「{0}」驗證，請於匯入後自行設定",
     "brunoWarnBody": "不支援此 body 類型，已略過",
     "brunoWarnUrl": "URL 必須以 http:// 或 https:// 開頭",
-    "Checks": "實際檢查"
+    "Checks": "實際檢查",
+    "Import .env": "匯入 .env",
+    "Download .env": "下載 .env",
+    "envImportHint": "貼上 KEY=value 格式的內容。已存在的名稱會被更新，空值不會取代已儲存的值。",
+    "envImportAsSecret": "全部設為機密",
+    "envFound": "{0} 個變數",
+    "envSkippedNames": "已略過（名稱不合法）：{0}",
+    "envImported": "新增 {0} 個、更新 {1} 個"
 }

@@ -2,6 +2,7 @@
 // Settings > Variables: values monitors use as {{name}}, global or per
 // workspace (a workspace value overrides the global one for its monitors).
 import { workspaceErrorMessage } from '~/composables/useWorkspaces'
+import { parseDotEnv } from '~/utils/bruno'
 
 interface Variable {
   id: number
@@ -131,6 +132,47 @@ async function confirmDelete() {
   } finally {
     busy.value = null
   }
+}
+
+// ---------- .env import / export ----------
+const envOpen = ref(false)
+const envText = ref('')
+const envSecret = ref(false)
+const envBusy = ref(false)
+
+const envParsed = computed(() => Object.entries(parseDotEnv(envText.value)))
+const envInvalid = computed(() => envParsed.value.filter(([name]) => !/^[A-Za-z_][\w.-]{0,99}$/.test(name)).map(([n]) => n))
+
+async function importEnv() {
+  const valid = envParsed.value.filter(([name]) => !envInvalid.value.includes(name))
+  if (!valid.length) return
+  envBusy.value = true
+  try {
+    const res = await $fetch<{ data: { created: number; updated: number } }>('/api/v1/variables/bulk', {
+      method: 'POST',
+      body: { workspaceId: scope.value, variables: valid.map(([name, value]) => ({ name, value, secret: envSecret.value })) },
+    })
+    toast.add({ title: t('envImported', [res.data.created, res.data.updated]), color: 'success' })
+    envOpen.value = false
+    envText.value = ''
+    await load()
+  } catch (e) {
+    toast.add({ title: workspaceErrorMessage(e, t('Failed to save')), color: 'error' })
+  } finally {
+    envBusy.value = false
+  }
+}
+
+/** Download the variables of the shown scope as .env (secret values left empty) */
+function exportEnv() {
+  const quote = (v: string) => (/[\s#"']/.test(v) ? JSON.stringify(v) : v)
+  const lines = own.value.map(v => `${v.name}=${v.secret ? '' : quote(v.value)}${v.secret ? '  # secret' : ''}`)
+  const blob = new Blob([lines.join('\n') + '\n'], { type: 'text/plain' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `${scope.value == null ? 'global' : scopeName.value.replace(/[^\w.-]+/g, '-').toLowerCase()}.env`
+  link.click()
+  URL.revokeObjectURL(link.href)
 }
 
 // ---------- Add ----------
@@ -327,7 +369,41 @@ function override(global: Variable) {
       </form>
     </div>
 
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <UButton size="sm" variant="outline" color="neutral" icon="i-heroicons-document-arrow-down" @click="envOpen = true">
+        {{ t('Import .env') }}
+      </UButton>
+      <UButton size="sm" variant="ghost" color="neutral" icon="i-heroicons-arrow-down-tray" :disabled="!own.length" @click="exportEnv">
+        {{ t('Download .env') }}
+      </UButton>
+    </div>
+
     <p class="mt-3 text-xs text-muted">{{ t('variablesUsageHint') }}</p>
+
+    <UModal v-model:open="envOpen" :title="`${t('Import .env')} → ${scopeName}`" :description="t('envImportHint')" :ui="{ footer: 'justify-end' }">
+      <template #default><span class="hidden" /></template>
+      <template #body>
+        <textarea
+          v-model="envText"
+          rows="8"
+          class="input-field font-mono text-xs"
+          placeholder="BASE_URL=https://api.example.com&#10;API_TOKEN=..."
+          :aria-label="t('Import .env')"
+        />
+        <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <label class="flex items-center gap-1.5 text-sm">
+            <input v-model="envSecret" type="checkbox" class="checkbox">
+            {{ t('envImportAsSecret') }}
+          </label>
+          <span class="text-muted">{{ t('envFound', [envParsed.length - envInvalid.length]) }}</span>
+        </div>
+        <p v-if="envInvalid.length" class="mt-1 text-xs text-pending-fg">{{ t('envSkippedNames', [envInvalid.join(', ')]) }}</p>
+      </template>
+      <template #footer>
+        <UButton variant="ghost" color="neutral" :disabled="envBusy" @click="envOpen = false">{{ t('Cancel') }}</UButton>
+        <UButton :loading="envBusy" :disabled="envParsed.length === envInvalid.length" @click="importEnv">{{ t('Import') }}</UButton>
+      </template>
+    </UModal>
 
     <CommonConfirmDialog
       v-model:open="confirmOpen"
