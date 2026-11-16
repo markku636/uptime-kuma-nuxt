@@ -453,7 +453,10 @@ const showTlsSection = ref(false)
 const showBrunoImport = ref(false)
 const importNotice = ref<{ warnings: string[] } | null>(null)
 
-function applyDraft(draft: MonitorDraft) {
+function applyDraft(draft: MonitorDraft, workspaceId?: number | null) {
+  // Put the monitor where the import put its variables
+  // (a group from another workspace is cleared by the group picker)
+  if (workspaceId !== undefined) form.workspaceId = workspaceId
   form.type = draft.type
   form.name = draft.name
   form.url = draft.url

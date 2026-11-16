@@ -20,7 +20,8 @@ import type { MonitorGroup } from '~/composables/useWorkspaces'
 
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{
-  fill: [draft: MonitorDraft]
+  /** workspaceId: where the kept variables were saved (the monitor must live there) */
+  fill: [draft: MonitorDraft, workspaceId: number | null]
   created: [count: number]
 }>()
 
@@ -288,11 +289,36 @@ watch(rows, (now, before) => {
   selected.value = next
 })
 
-function fillForm() {
+async function fillForm() {
   const row = selectedRows.value[0]
   if (!row) return
-  emit('fill', row.draft)
+  if (keepVariables.value) {
+    // Same as creating: the form gets the placeholders, the values become variables
+    if (!(await saveKeptVariables([row]))) return
+    emit('fill', row.template, workspaceId.value)
+  } else {
+    emit('fill', row.draft, workspaceId.value)
+  }
   open.value = false
+}
+
+/** Save the variables the given rows keep as placeholders; false when that failed */
+async function saveKeptVariables(targets: { template: MonitorDraft }[]): Promise<boolean> {
+  const names = new Set<string>()
+  for (const { template } of targets) {
+    const text = [template.url, template.body, template.basicAuthUser, template.basicAuthPass, template.keyword, ...template.headers.flatMap(h => [h.key, h.value])].join('\n')
+    for (const name of unresolvedVariables(text)) names.add(name)
+  }
+  if (!names.size) return true
+  const effective = { ...(parsed.value?.collectionVars ?? {}), ...(envVars.value ?? {}), ...Object.fromEntries(Object.entries(overrides.value).filter(([, v]) => v !== '')) }
+  const list = [...names].map(name => ({ name, value: effective[name] ?? '', secret: isSecret(name) }))
+  try {
+    await $fetch('/api/v1/variables/bulk', { method: 'POST', body: { workspaceId: workspaceId.value, variables: list } })
+    return true
+  } catch (e: any) {
+    failures.value.push(`${t('Variables')}: ${e?.data?.message || e?.message || 'failed'}`)
+    return false
+  }
 }
 
 // ---------- Creating ----------
@@ -321,22 +347,10 @@ async function createMonitors() {
   let created = 0
   const groupCache = new Map<string, number | null>()
 
-  if (keepVariables.value) {
-    // Every placeholder the new monitors keep, with the value in effect now
-    const names = new Set<string>()
-    for (const { template } of targets) {
-      const text = [template.url, template.body, template.basicAuthUser, template.basicAuthPass, template.keyword, ...template.headers.flatMap(h => [h.key, h.value])].join('\n')
-      for (const name of unresolvedVariables(text)) names.add(name)
-    }
-    const effective = { ...(parsed.value?.collectionVars ?? {}), ...(envVars.value ?? {}), ...Object.fromEntries(Object.entries(overrides.value).filter(([, v]) => v !== '')) }
-    const list = [...names].map(name => ({ name, value: effective[name] ?? '', secret: isSecret(name) }))
-    try {
-      await $fetch('/api/v1/variables/bulk', { method: 'POST', body: { workspaceId: workspaceId.value, variables: list } })
-    } catch (e: any) {
-      failures.value.push(`${t('Variables')}: ${e?.data?.message || e?.message || 'failed'}`)
-      creating.value = false
-      return
-    }
+  // Every placeholder the new monitors keep, saved with the value in effect now
+  if (keepVariables.value && !(await saveKeptVariables(targets))) {
+    creating.value = false
+    return
   }
 
   for (const { req, draft: resolved, template } of targets) {
