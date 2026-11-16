@@ -1343,5 +1343,7 @@
     "noVariablesYet": "{0} 尚未設定變數",
     "addVariableTo": "新增到 {0}",
     "monitorCountShort": "{0} 個監控",
-    "deleteVariableMsg": "有 {0} 個監控使用此變數；若沒有同名的全域值，這些監控的檢查會回報「Unknown variable」。"
+    "deleteVariableMsg": "有 {0} 個監控使用此變數；若沒有同名的全域值，這些監控的檢查會回報「Unknown variable」。",
+    "brunoKeepVariables": "保留 {'{{'}變數{'}}'}，並將值存成「{0}」的環境變數",
+    "brunoKeepVariablesHint": "監控保留變數佔位符；之後在「設定 > 環境變數」修改值即可切換環境或更換 token。"
 }

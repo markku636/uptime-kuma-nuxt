@@ -9,6 +9,7 @@ import {
   requestVariables,
   resolveRequest,
   toMonitorDraft,
+  unresolvedVariables,
   variablesFor,
   type BrunoImport,
   type BrunoFile,
@@ -45,6 +46,8 @@ const failures = ref<string[]>([])
 // Where created monitors go
 const workspaceId = ref<number | null>(null)
 const createGroups = ref(true)
+/** Keep {{placeholders}} in the monitors and save the values as variables */
+const keepVariables = ref(false)
 
 // ---------- Variables ----------
 /** Values typed by the user; they win over every Bruno source */
@@ -96,9 +99,11 @@ const rows = computed(() =>
   (parsed.value?.requests ?? []).map((req) => {
     const vars = variablesFor(req, parsed.value!.collectionVars, envVars.value, overrides.value)
     const draft = toMonitorDraft(resolveRequest(req, vars))
+    // With "keep variables" only request / folder constants are filled in
+    const template = toMonitorDraft(resolveRequest(req, req.vars))
     const exists = existingKeys.value.has(`${draft.method} ${draft.url}`)
       && (existingNames.value.has(req.name) || existingNames.value.has(draft.name))
-    return { req, draft, ready: isDraftReady(draft), exists }
+    return { req, draft, template, ready: isDraftReady(draft), exists }
   }),
 )
 
@@ -201,6 +206,7 @@ async function ingest(entries: { path: string; file: File }[]) {
     loadOverrides()
     showVariables.value = missingCount.value > 0
     createGroups.value = result.requests.some(r => r.folder) || !!result.collectionName
+    keepVariables.value = variableRows.value.some(v => v.source !== 'request')
     // Preselect everything that can be saved as-is and is not here yet
     selected.value = new Set(rows.value.filter(r => r.ready && !r.exists).map(r => r.req.id))
     if (result.requests.length === 0) {
@@ -308,7 +314,27 @@ async function createMonitors() {
   failures.value = []
   let created = 0
   const groupCache = new Map<string, number | null>()
-  for (const { req, draft } of targets) {
+
+  if (keepVariables.value) {
+    // Every placeholder the new monitors keep, with the value in effect now
+    const names = new Set<string>()
+    for (const { template } of targets) {
+      const text = [template.url, template.body, template.basicAuthUser, template.basicAuthPass, template.keyword, ...template.headers.flatMap(h => [h.key, h.value])].join('\n')
+      for (const name of unresolvedVariables(text)) names.add(name)
+    }
+    const effective = { ...(parsed.value?.collectionVars ?? {}), ...(envVars.value ?? {}), ...Object.fromEntries(Object.entries(overrides.value).filter(([, v]) => v !== '')) }
+    const list = [...names].map(name => ({ name, value: effective[name] ?? '', secret: isSecret(name) }))
+    try {
+      await $fetch('/api/v1/variables/bulk', { method: 'POST', body: { workspaceId: workspaceId.value, variables: list } })
+    } catch (e: any) {
+      failures.value.push(`${t('Variables')}: ${e?.data?.message || e?.message || 'failed'}`)
+      creating.value = false
+      return
+    }
+  }
+
+  for (const { req, draft: resolved, template } of targets) {
+    const draft = keepVariables.value ? template : resolved
     try {
       const parent = await groupFor(req.folder, groupCache)
       await $fetch('/api/v1/monitors', {
@@ -415,6 +441,10 @@ const methodTone: Record<string, string> = {
               <option :value="null">{{ t('No workspace') }}</option>
               <option v-for="w in workspaces" :key="w.id" :value="w.id">{{ w.name }}</option>
             </select>
+          </label>
+          <label v-if="variableRows.length" class="flex items-center gap-2" :title="t('brunoKeepVariablesHint')">
+            <input v-model="keepVariables" type="checkbox" class="checkbox">
+            <span>{{ t('brunoKeepVariables', [workspaceId == null ? t('Global') : workspaces.find(w => w.id === workspaceId)?.name]) }}</span>
           </label>
           <label class="flex items-center gap-2">
             <input v-model="createGroups" type="checkbox" class="checkbox">

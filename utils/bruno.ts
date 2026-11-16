@@ -627,7 +627,9 @@ export function toMonitorDraft(req: BrunoRequest): MonitorDraft {
     if (req.auth.placement === 'queryparams') {
       // Add ?key=value (or &key=value) to the URL
       const sep = req.url.includes('?') ? '&' : '?'
-      req = { ...req, url: `${req.url}${sep}${encodeURIComponent(req.auth.key)}=${encodeURIComponent(req.auth.value)}` }
+      // Placeholders stay readable so they can be filled later
+      const enc = (v: string) => (v.includes('{{') ? v : encodeURIComponent(v))
+      req = { ...req, url: `${req.url}${sep}${enc(req.auth.key)}=${enc(req.auth.value)}` }
     } else if (!hasHeader(req.auth.key.toLowerCase())) {
       headers.push({ key: req.auth.key, value: req.auth.value })
     }

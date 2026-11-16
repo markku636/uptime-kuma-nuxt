@@ -1331,5 +1331,7 @@
     "noVariablesYet": "No variables in {0} yet",
     "addVariableTo": "Add to {0}",
     "monitorCountShort": "{0} monitor(s)",
-    "deleteVariableMsg": "{0} monitor(s) use it; their checks will report \"Unknown variable\" unless a global value exists."
+    "deleteVariableMsg": "{0} monitor(s) use it; their checks will report \"Unknown variable\" unless a global value exists.",
+    "brunoKeepVariables": "Keep {'{{'}variables{'}}'} and save their values as variables of {0}",
+    "brunoKeepVariablesHint": "The monitors keep the placeholders; edit the values later under Settings > Variables to switch environment or rotate a token."
 }
