@@ -19,9 +19,10 @@ interface MonitorRow {
 interface GroupSection {
   group: MonitorGroup
   monitors: MonitorRow[]
-  /** Nesting level (0 = top level) and full "Parent / Child" name */
+  /** Nesting level (0 = top level), shown name and full "Parent / Child" path (tooltip) */
   depth?: number
   label?: string
+  path?: string
 }
 
 const props = defineProps<{
@@ -159,7 +160,7 @@ function onDrop(target: number | 'ungrouped') {
   <div class="space-y-3" :class="{ 'pointer-events-none opacity-60': busy }" :aria-busy="busy">
     <!-- Groups -->
     <section
-      v-for="{ group, monitors, depth, label } in sections"
+      v-for="{ group, monitors, depth, label, path } in sections"
       :key="group.id"
       class="group-section overflow-hidden rounded-lg border transition-colors"
       :class="dropTarget === group.id ? 'border-primary bg-primary/5' : 'border-default'"
@@ -191,7 +192,7 @@ function onDrop(target: number | 'ungrouped') {
             :class="{ 'rotate-90': isOpen(group.id) }"
           />
           <UIcon name="i-heroicons-folder" class="size-4 shrink-0 text-muted" />
-          <span class="truncate font-medium text-highlighted" :title="label">{{ label ?? group.name }}</span>
+          <span class="truncate font-medium text-highlighted" :title="path ?? label">{{ label ?? group.name }}</span>
           <UBadge variant="subtle" color="neutral" size="sm" class="shrink-0">{{ monitors.length }}</UBadge>
           <UBadge v-if="downCount(monitors) > 0" variant="subtle" color="error" size="sm" class="shrink-0">
             {{ downCount(monitors) }} {{ t('Down') }}

@@ -57,12 +57,14 @@ const matchesSearch = (m: any) => !search.value.trim() || m.name.toLowerCase().i
 
 const visibleGroups = computed(() => groups.value.filter(g => matchesWorkspace(g, current.value)))
 
-// Subgroups follow their parent, labelled with their full path
+// Subgroups follow their parent and are indented, so their own name is enough (full path as tooltip).
+// While searching the tree is broken up, so show the full path then.
 const sections = computed(() => {
   const list = orderAsTree(visibleGroups.value).map(({ item: group, depth, path }) => ({
     group,
-    depth,
-    label: path,
+    depth: search.value.trim() ? 0 : depth,
+    label: search.value.trim() ? path : group.name,
+    path,
     monitors: monitors.value.filter(m => m.type !== 'group' && m.parent === group.id && matchesSearch(m)),
   }))
   // While searching, hide groups that neither match nor contain a match
