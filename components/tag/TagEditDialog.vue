@@ -24,7 +24,7 @@
             <input 
               type="color" 
               v-model="formData.color"
-              class="w-12 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+              class="w-12 h-10 rounded border border-accented cursor-pointer"
             />
             <UInput 
               v-model="formData.color" 
@@ -35,7 +35,7 @@
         </UFormField>
 
         <div class="flex items-center gap-3">
-          <span class="text-sm text-gray-500">Preview:</span>
+          <span class="text-sm text-muted">Preview:</span>
           <Tag :tag="{ ...formData, id: 0 }" />
         </div>
       </form>

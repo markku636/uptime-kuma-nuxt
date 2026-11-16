@@ -132,20 +132,12 @@ const handleDelete = async () => {
 <style scoped>
 .monitor-card {
   padding: 12px 15px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--uk-border);
   transition: background-color 0.15s;
 }
 
 .monitor-card:hover {
-  background: #f8f9fa;
-}
-
-.dark .monitor-card {
-  border-color: #373d45;
-}
-
-.dark .monitor-card:hover {
-  background: #2d3238;
+  background: var(--uk-bg-sunken);
 }
 
 .monitor-card:last-child {
@@ -166,12 +158,12 @@ const handleDelete = async () => {
 }
 
 .monitor-name:hover {
-  color: #5cdd8b;
+  color: var(--uk-status-up-fg);
 }
 
 .monitor-meta {
   font-size: 0.875rem;
-  color: #6c757d;
+  color: var(--uk-text-muted);
   margin-top: 2px;
 }
 

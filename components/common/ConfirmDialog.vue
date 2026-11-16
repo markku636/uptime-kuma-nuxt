@@ -29,20 +29,20 @@ const iconConfig = computed(() => {
     case 'danger':
       return {
         name: 'i-heroicons-exclamation-triangle',
-        bgColor: 'bg-red-100 dark:bg-red-900/30',
-        iconColor: 'text-red-600 dark:text-red-400'
+        bgColor: 'bg-down-subtle',
+        iconColor: 'text-down-fg'
       }
     case 'warning':
       return {
         name: 'i-heroicons-exclamation-circle',
-        bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-        iconColor: 'text-yellow-600 dark:text-yellow-400'
+        bgColor: 'bg-pending-subtle',
+        iconColor: 'text-pending-fg'
       }
     default:
       return {
         name: 'i-heroicons-information-circle',
-        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-        iconColor: 'text-blue-600 dark:text-blue-400'
+        bgColor: 'bg-maintenance-subtle',
+        iconColor: 'text-maintenance-fg'
       }
   }
 })
@@ -50,9 +50,9 @@ const iconConfig = computed(() => {
 const confirmButtonColor = computed(() => {
   switch (props.type) {
     case 'danger':
-      return 'red'
+      return 'error'
     case 'warning':
-      return 'yellow'
+      return 'warning'
     default:
       return 'primary'
   }

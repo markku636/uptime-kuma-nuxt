@@ -40,7 +40,16 @@ const props = withDefaults(defineProps<Props>(), {
   showLegend: false
 })
 
-const colorMode = useColorMode()
+// Canvas needs concrete colours; resolve them from tokens
+const tokens = useCssTokens({
+  line: '--uk-status-up',
+  grid: '--uk-border',
+  axis: '--uk-text-muted',
+  tooltipBg: '--uk-bg-raised',
+  tooltipTitle: '--uk-text',
+  tooltipBody: '--uk-text-secondary',
+  tooltipBorder: '--uk-border-strong',
+})
 
 const chartData = computed(() => {
   const labels = props.data.map(d => {
@@ -56,8 +65,8 @@ const chartData = computed(() => {
       {
         label: 'Response Time (ms)',
         data: pingData,
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: tokens.value.line || '#5cdd8b',
+        backgroundColor: withAlpha(tokens.value.line || '#5cdd8b', 0.12),
         fill: true,
         tension: 0.3,
         pointRadius: 0,
@@ -79,14 +88,14 @@ const chartOptions = computed(() => ({
     legend: {
       display: props.showLegend,
       labels: {
-        color: colorMode.value === 'dark' ? '#9ca3af' : '#4b5563'
+        color: tokens.value.axis
       }
     },
     tooltip: {
-      backgroundColor: colorMode.value === 'dark' ? '#1f2937' : '#ffffff',
-      titleColor: colorMode.value === 'dark' ? '#f3f4f6' : '#111827',
-      bodyColor: colorMode.value === 'dark' ? '#d1d5db' : '#374151',
-      borderColor: colorMode.value === 'dark' ? '#374151' : '#e5e7eb',
+      backgroundColor: tokens.value.tooltipBg,
+      titleColor: tokens.value.tooltipTitle,
+      bodyColor: tokens.value.tooltipBody,
+      borderColor: tokens.value.tooltipBorder,
       borderWidth: 1,
       callbacks: {
         label: (context: any) => {
@@ -99,22 +108,22 @@ const chartOptions = computed(() => ({
   scales: {
     x: {
       grid: {
-        color: colorMode.value === 'dark' ? '#374151' : '#e5e7eb',
+        color: tokens.value.grid,
         drawBorder: false
       },
       ticks: {
-        color: colorMode.value === 'dark' ? '#9ca3af' : '#4b5563',
+        color: tokens.value.axis,
         maxTicksLimit: 8
       }
     },
     y: {
       beginAtZero: true,
       grid: {
-        color: colorMode.value === 'dark' ? '#374151' : '#e5e7eb',
+        color: tokens.value.grid,
         drawBorder: false
       },
       ticks: {
-        color: colorMode.value === 'dark' ? '#9ca3af' : '#4b5563',
+        color: tokens.value.axis,
         callback: (value: any) => `${value} ms`
       }
     }
@@ -131,7 +140,7 @@ const chartOptions = computed(() => ({
     />
     <div
       v-else
-      class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400"
+      class="flex items-center justify-center h-full text-muted"
     >
       No data available
     </div>

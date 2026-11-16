@@ -113,6 +113,6 @@ onMounted(() => {
 
 .editable:empty::before {
   content: attr(data-placeholder);
-  color: #9ca3af;
+  color: var(--uk-text-muted);
 }
 </style>

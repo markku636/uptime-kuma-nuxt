@@ -17,8 +17,8 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div class="flex items-center gap-3">
-              <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ monitor.name }}</h1>
-              <span class="text-gray-500 text-sm">#{{ monitor.id }}</span>
+              <h1 class="text-2xl font-bold text-highlighted">{{ monitor.name }}</h1>
+              <span class="text-muted text-sm">#{{ monitor.id }}</span>
               <span 
                 :class="[statusBadgeClass, latestStatus === 1 ? 'status-up' : latestStatus === 0 ? 'status-down' : '']" 
                 class="badge text-sm px-3 py-1"
@@ -26,9 +26,9 @@
                 {{ statusText }}
               </span>
             </div>
-            <p v-if="monitor.description" class="text-gray-600 dark:text-gray-400 mt-1">{{ monitor.description }}</p>
-            <div class="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
-              <span class="uppercase font-medium text-gray-700 dark:text-gray-300">{{ monitor.type }}</span>
+            <p v-if="monitor.description" class="text-toned mt-1">{{ monitor.description }}</p>
+            <div class="flex items-center gap-2 mt-2 text-sm text-toned">
+              <span class="uppercase font-medium text-default">{{ monitor.type }}</span>
               <span>|</span>
               <a v-if="monitor.url" :href="monitor.url" target="_blank" class="link truncate max-w-md">
                 {{ monitor.url }}
@@ -91,7 +91,7 @@
       <div class="card card-body mb-6 card-interactive">
         <div class="flex flex-col lg:flex-row lg:items-center gap-6">
           <div class="flex-1">
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Heartbeat History</h3>
+            <h3 class="text-sm font-medium text-toned mb-2">Heartbeat History</h3>
             <div class="flex items-center gap-0.5">
               <div
                 v-for="(beat, i) in displayHeartbeats"
@@ -102,7 +102,7 @@
                 :title="beat ? `${formatDateTime(beat.time)} - ${beat.ping || 0}ms` : 'No data'"
               ></div>
             </div>
-            <p class="text-xs text-gray-500 mt-2">Check every {{ monitor.interval }} seconds</p>
+            <p class="text-xs text-muted mt-2">Check every {{ monitor.interval }} seconds</p>
           </div>
           <div class="text-center lg:text-right">
             <div 
@@ -111,7 +111,7 @@
             >
               {{ statusText }}
             </div>
-            <p v-if="lastHeartbeat" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p v-if="lastHeartbeat" class="text-sm text-toned mt-1">
               Last check: {{ formatDateTime(lastHeartbeat.time) }}
             </p>
           </div>
@@ -121,45 +121,45 @@
       <!-- Statistics Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Response Time</div>
-          <div class="stat-value text-2xl font-bold text-emerald-400" :key="lastPing">
+          <div class="stat-label text-sm text-toned mb-1">Response Time</div>
+          <div class="stat-value text-2xl font-bold text-up-fg" :key="lastPing">
             <span class="tabular-nums">{{ animatedPing }}</span><span class="text-lg">ms</span>
           </div>
-          <div class="text-xs text-gray-500 mt-1">Current</div>
+          <div class="text-xs text-muted mt-1">Current</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Response</div>
+          <div class="stat-label text-sm text-toned mb-1">Avg Response</div>
           <div class="stat-value text-2xl font-bold text-blue-400">
             <span class="tabular-nums">{{ avgPing }}</span><span class="text-lg">ms</span>
           </div>
-          <div class="text-xs text-gray-500 mt-1">24-hour</div>
+          <div class="text-xs text-muted mt-1">24-hour</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Uptime</div>
+          <div class="stat-label text-sm text-toned mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime24hColor">
             <span class="tabular-nums">{{ uptime24h }}</span><span class="text-lg">%</span>
           </div>
-          <div class="text-xs text-gray-500 mt-1">24-hour</div>
+          <div class="text-xs text-muted mt-1">24-hour</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Uptime</div>
+          <div class="stat-label text-sm text-toned mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime30dColor">
             <span class="tabular-nums">{{ uptime30d }}</span><span class="text-lg">%</span>
           </div>
-          <div class="text-xs text-gray-500 mt-1">30-day</div>
+          <div class="text-xs text-muted mt-1">30-day</div>
         </div>
       </div>
 
       <!-- Response Time Chart -->
       <div class="card card-body mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Response Time (Last 24 Hours)</h3>
+        <h3 class="text-lg font-semibold text-highlighted mb-4">Response Time (Last 24 Hours)</h3>
         <div class="h-48 relative pl-14">
           <div class="absolute inset-0 pl-14 flex items-end gap-0.5">
             <div
               v-for="(beat, i) in chartHeartbeats"
               :key="i"
               class="chart-bar flex-1 rounded-t transition-all hover:opacity-80 cursor-pointer"
-              :class="beat?.status === 1 ? 'bg-emerald-500' : beat?.status === 0 ? 'bg-red-500' : 'bg-gray-700'"
+              :class="beat?.status === 1 ? 'bg-up' : beat?.status === 0 ? 'bg-down' : 'bg-unknown'"
               :style="{ 
                 height: getChartHeight(beat),
                 animationDelay: `${i * 10}ms`
@@ -168,7 +168,7 @@
             ></div>
           </div>
           <!-- Y-axis labels -->
-          <div class="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500">
+          <div class="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-muted">
             <span>{{ maxPing }}ms</span>
             <span>{{ Math.round(maxPing / 2) }}ms</span>
             <span>0ms</span>
@@ -179,7 +179,7 @@
       <!-- TLS Certificate Info (for HTTPS monitors) -->
       <div v-if="showTlsInfo" class="card card-body mb-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">TLS/SSL Certificate</h3>
+          <h3 class="text-lg font-semibold text-highlighted">TLS/SSL Certificate</h3>
           <button @click="refreshCertInfo" class="btn btn-secondary btn-sm" :disabled="loadingCert">
             <UIcon name="i-heroicons-arrow-path" class="w-4 h-4" :class="{ 'animate-spin': loadingCert }" />
           </button>
@@ -196,7 +196,7 @@
               <UIcon :name="certStatusIcon" class="w-8 h-8" />
             </div>
             <div>
-              <div class="font-medium text-gray-900 dark:text-gray-100">
+              <div class="font-medium text-highlighted">
                 {{ certInfo.certificate.valid ? 'Valid Certificate' : 'Invalid Certificate' }}
               </div>
               <div class="text-sm" :class="certDaysClass">
@@ -206,41 +206,41 @@
           </div>
 
           <!-- Certificate Details -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-700">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-default">
             <div>
-              <div class="text-xs text-gray-500 uppercase mb-1">Subject</div>
-              <div class="text-sm text-gray-700 dark:text-gray-300 font-mono break-all">{{ certInfo.certificate.subject }}</div>
+              <div class="text-xs text-muted uppercase mb-1">Subject</div>
+              <div class="text-sm text-default font-mono break-all">{{ certInfo.certificate.subject }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-500 uppercase mb-1">Issuer</div>
-              <div class="text-sm text-gray-700 dark:text-gray-300 font-mono break-all">{{ certInfo.certificate.issuer }}</div>
+              <div class="text-xs text-muted uppercase mb-1">Issuer</div>
+              <div class="text-sm text-default font-mono break-all">{{ certInfo.certificate.issuer }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-500 uppercase mb-1">Valid From</div>
-              <div class="text-sm text-gray-700 dark:text-gray-300">{{ formatDate(certInfo.certificate.validFrom) }}</div>
+              <div class="text-xs text-muted uppercase mb-1">Valid From</div>
+              <div class="text-sm text-default">{{ formatDate(certInfo.certificate.validFrom) }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-500 uppercase mb-1">Valid To</div>
-              <div class="text-sm text-gray-700 dark:text-gray-300">{{ formatDate(certInfo.certificate.validTo) }}</div>
+              <div class="text-xs text-muted uppercase mb-1">Valid To</div>
+              <div class="text-sm text-default">{{ formatDate(certInfo.certificate.validTo) }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-500 uppercase mb-1">Days Remaining</div>
+              <div class="text-xs text-muted uppercase mb-1">Days Remaining</div>
               <div class="text-sm font-bold" :class="certDaysClass">{{ certInfo.certificate.daysRemaining }} days</div>
             </div>
             <div>
-              <div class="text-xs text-gray-500 uppercase mb-1">Fingerprint</div>
-              <div class="text-sm text-gray-700 dark:text-gray-300 font-mono truncate">{{ certInfo.certificate.fingerprint }}</div>
+              <div class="text-xs text-muted uppercase mb-1">Fingerprint</div>
+              <div class="text-sm text-default font-mono truncate">{{ certInfo.certificate.fingerprint }}</div>
             </div>
           </div>
 
           <!-- Subject Alt Names -->
-          <div v-if="certInfo.certificate.subjectAltName?.length" class="pt-4 border-t border-gray-700">
-            <div class="text-xs text-gray-500 uppercase mb-2">Subject Alternative Names</div>
+          <div v-if="certInfo.certificate.subjectAltName?.length" class="pt-4 border-t border-default">
+            <div class="text-xs text-muted uppercase mb-2">Subject Alternative Names</div>
             <div class="flex flex-wrap gap-2">
               <span 
                 v-for="(san, idx) in certInfo.certificate.subjectAltName" 
                 :key="idx"
-                class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-700 dark:text-gray-300 font-mono"
+                class="px-2 py-1 bg-elevated rounded text-xs text-default font-mono"
               >
                 {{ san }}
               </span>
@@ -248,7 +248,7 @@
           </div>
         </div>
         
-        <div v-else class="text-center py-8 text-gray-500">
+        <div v-else class="text-center py-8 text-muted">
           <UIcon name="i-heroicons-shield-exclamation" class="w-8 h-8 mx-auto mb-2" />
           <p>{{ certInfo?.message || 'Unable to retrieve certificate information' }}</p>
         </div>
@@ -256,9 +256,9 @@
 
       <!-- Important Events Table -->
       <div class="card mb-6">
-        <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Important Events</h3>
-          <span class="text-sm text-gray-400">{{ importantHeartbeats.length }} events</span>
+        <div class="p-4 border-b border-default flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-highlighted">Important Events</h3>
+          <span class="text-sm text-dimmed">{{ importantHeartbeats.length }} events</span>
         </div>
         <div class="overflow-x-auto">
           <table class="table">
@@ -271,19 +271,19 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(beat, index) in paginatedHeartbeats" :key="index" class="hover:bg-gray-100 dark:hover:bg-gray-700/50">
+              <tr v-for="(beat, index) in paginatedHeartbeats" :key="index" class="hover:bg-elevated">
                 <td>
                   <span :class="getStatusBadgeClass(beat.status)" class="badge">
                     {{ getStatusText(beat.status) }}
                   </span>
                 </td>
-                <td class="text-gray-600 dark:text-gray-400">{{ formatDateTime(beat.time) }}</td>
-                <td class="text-gray-600 dark:text-gray-400">{{ beat.ping ? `${beat.ping}ms` : '-' }}</td>
-                <td class="text-gray-600 dark:text-gray-400 max-w-xs truncate">{{ beat.msg || '-' }}</td>
+                <td class="text-toned">{{ formatDateTime(beat.time) }}</td>
+                <td class="text-toned">{{ beat.ping ? `${beat.ping}ms` : '-' }}</td>
+                <td class="text-toned max-w-xs truncate">{{ beat.msg || '-' }}</td>
               </tr>
               <tr v-if="importantHeartbeats.length === 0">
-                <td colspan="4" class="text-center text-gray-500 py-8">
-                  <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+                <td colspan="4" class="text-center text-muted py-8">
+                  <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-up-fg" />
                   <p>No important events</p>
                 </td>
               </tr>
@@ -292,7 +292,7 @@
         </div>
         
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex items-center justify-center gap-4 p-4 border-t border-gray-700">
+        <div v-if="totalPages > 1" class="flex items-center justify-center gap-4 p-4 border-t border-default">
           <button 
             @click="currentPage--" 
             :disabled="currentPage <= 1"
@@ -300,7 +300,7 @@
           >
             Previous
           </button>
-          <span class="text-sm text-gray-400">Page {{ currentPage }} of {{ totalPages }}</span>
+          <span class="text-sm text-dimmed">Page {{ currentPage }} of {{ totalPages }}</span>
           <button 
             @click="currentPage++" 
             :disabled="currentPage >= totalPages"
@@ -318,8 +318,8 @@
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showDeleteConfirm = false">
       <Transition name="scale">
       <div class="card card-body max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Delete Monitor</h3>
-        <p class="text-gray-400 mb-6">Are you sure you want to delete "{{ monitor?.name }}"? This action cannot be undone.</p>
+        <h3 class="text-lg font-semibold text-highlighted mb-4">Delete Monitor</h3>
+        <p class="text-dimmed mb-6">Are you sure you want to delete "{{ monitor?.name }}"? This action cannot be undone.</p>
         <div class="flex justify-end gap-3">
           <button @click="showDeleteConfirm = false" class="btn btn-secondary">Cancel</button>
           <button @click="confirmDelete" :disabled="deleting" class="btn btn-danger">
@@ -383,13 +383,13 @@ const showTlsInfo = computed(() => {
 
 // Cert status classes
 const certStatusClass = computed(() => {
-  if (!certInfo.value?.certificate) return 'bg-gray-700'
+  if (!certInfo.value?.certificate) return 'bg-unknown'
   const days = certInfo.value.certificate.daysRemaining
-  if (days < 0) return 'bg-red-600/20 text-red-400'
-  if (days <= 7) return 'bg-red-600/20 text-red-400'
+  if (days < 0) return 'bg-down/20 text-down-fg'
+  if (days <= 7) return 'bg-down/20 text-down-fg'
   if (days <= 14) return 'bg-orange-600/20 text-orange-400'
-  if (days <= 30) return 'bg-yellow-600/20 text-yellow-400'
-  return 'bg-emerald-600/20 text-emerald-400'
+  if (days <= 30) return 'bg-pending/20 text-pending-fg'
+  return 'bg-up/20 text-up-fg'
 })
 
 const certStatusIcon = computed(() => {
@@ -401,13 +401,13 @@ const certStatusIcon = computed(() => {
 })
 
 const certDaysClass = computed(() => {
-  if (!certInfo.value?.certificate) return 'text-gray-400'
+  if (!certInfo.value?.certificate) return 'text-dimmed'
   const days = certInfo.value.certificate.daysRemaining
-  if (days < 0) return 'text-red-400'
-  if (days <= 7) return 'text-red-400'
+  if (days < 0) return 'text-down-fg'
+  if (days <= 7) return 'text-down-fg'
   if (days <= 14) return 'text-orange-400'
-  if (days <= 30) return 'text-yellow-400'
-  return 'text-emerald-400'
+  if (days <= 30) return 'text-pending-fg'
+  return 'text-up-fg'
 })
 
 const certDaysMessage = computed(() => {
@@ -540,24 +540,24 @@ const statusText = computed(() => {
 })
 
 const statusBadgeClass = computed(() => {
-  if (!monitor.value?.active) return 'bg-gray-600'
-  if (!lastHeartbeat.value) return 'bg-yellow-600'
+  if (!monitor.value?.active) return 'bg-unknown'
+  if (!lastHeartbeat.value) return 'bg-pending'
   switch (lastHeartbeat.value.status) {
     case 1: return 'badge-success'
     case 0: return 'badge-danger'
     case 3: return 'badge-info'
-    default: return 'bg-gray-600'
+    default: return 'bg-unknown'
   }
 })
 
 const statusColorClass = computed(() => {
-  if (!monitor.value?.active) return 'text-gray-400'
-  if (!lastHeartbeat.value) return 'text-yellow-400'
+  if (!monitor.value?.active) return 'text-dimmed'
+  if (!lastHeartbeat.value) return 'text-pending-fg'
   switch (lastHeartbeat.value.status) {
-    case 1: return 'text-emerald-400'
-    case 0: return 'text-red-400'
-    case 3: return 'text-blue-400'
-    default: return 'text-gray-400'
+    case 1: return 'text-up-fg'
+    case 0: return 'text-down-fg'
+    case 3: return 'text-maintenance-fg'
+    default: return 'text-dimmed'
   }
 })
 
@@ -592,16 +592,16 @@ const uptime30d = computed(() => {
 
 const uptime24hColor = computed(() => {
   const val = parseFloat(uptime24h.value)
-  if (val >= 99) return 'text-emerald-400'
-  if (val >= 95) return 'text-yellow-400'
-  return 'text-red-400'
+  if (val >= 99) return 'text-up-fg'
+  if (val >= 95) return 'text-pending-fg'
+  return 'text-down-fg'
 })
 
 const uptime30dColor = computed(() => {
   const val = parseFloat(uptime30d.value)
-  if (val >= 99) return 'text-emerald-400'
-  if (val >= 95) return 'text-yellow-400'
-  return 'text-red-400'
+  if (val >= 99) return 'text-up-fg'
+  if (val >= 95) return 'text-pending-fg'
+  return 'text-down-fg'
 })
 
 const displayHeartbeats = computed(() => {
@@ -641,12 +641,12 @@ const getChartHeight = (beat: any) => {
 }
 
 const getHeartbeatClass = (beat: any) => {
-  if (!beat) return 'bg-gray-700'
+  if (!beat) return 'bg-unknown'
   switch (beat.status) {
-    case 1: return 'bg-emerald-500'
-    case 0: return 'bg-red-500'
-    case 3: return 'bg-blue-500'
-    default: return 'bg-gray-500'
+    case 1: return 'bg-up'
+    case 0: return 'bg-down'
+    case 3: return 'bg-maintenance'
+    default: return 'bg-unknown'
   }
 }
 
@@ -655,7 +655,7 @@ const getStatusBadgeClass = (status: number) => {
     case 1: return 'badge-success'
     case 0: return 'badge-danger'
     case 3: return 'badge-info'
-    default: return 'bg-gray-600'
+    default: return 'bg-unknown'
   }
 }
 

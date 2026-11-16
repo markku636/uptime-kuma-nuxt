@@ -110,11 +110,11 @@ const monitorOptions = computed(() => {
           required
         >
           <template #leading>
-            <span class="text-gray-400 text-sm">/status/</span>
+            <span class="text-dimmed text-sm">/status/</span>
           </template>
         </UInput>
         <template #hint>
-          <span class="text-xs text-gray-500">
+          <span class="text-xs text-muted">
             This will be the URL path: /status/{{ form.slug || 'your-slug' }}
           </span>
         </template>
@@ -130,12 +130,12 @@ const monitorOptions = computed(() => {
     </div>
 
     <!-- Monitors Selection -->
-    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+    <div class="pt-4 border-t border-default">
+      <h3 class="text-sm font-medium text-default mb-4">
         Select Monitors to Display
       </h3>
       
-      <div v-if="!monitors?.length" class="text-sm text-gray-500">
+      <div v-if="!monitors?.length" class="text-sm text-muted">
         No monitors available. Create monitors first.
       </div>
       
@@ -157,8 +157,8 @@ const monitorOptions = computed(() => {
     </div>
 
     <!-- Appearance -->
-    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+    <div class="pt-4 border-t border-default">
+      <h3 class="text-sm font-medium text-default mb-4">
         Appearance
       </h3>
       
@@ -187,8 +187,8 @@ const monitorOptions = computed(() => {
     </div>
 
     <!-- Analytics -->
-    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+    <div class="pt-4 border-t border-default">
+      <h3 class="text-sm font-medium text-default mb-4">
         Analytics
       </h3>
       
@@ -201,7 +201,7 @@ const monitorOptions = computed(() => {
     </div>
 
     <!-- Publish Status -->
-    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+    <div class="pt-4 border-t border-default">
       <UCheckbox
         v-model="form.published"
         label="Publish this status page (make it publicly accessible)"

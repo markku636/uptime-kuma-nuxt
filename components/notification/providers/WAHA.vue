@@ -46,7 +46,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Format: Phone@c.us for users or GroupID@g.us for groups
         </span>
       </template>

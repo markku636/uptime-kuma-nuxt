@@ -29,7 +29,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           Webhook URL 中的 key 參數值
         </p>
       </template>
@@ -48,8 +48,8 @@ const config = computed({
             <li>在企業微信中進入群組聊天</li>
             <li>點擊右上角「...」→「群機器人」→「添加群機器人」</li>
             <li>建立機器人後，複製 Webhook URL</li>
-            <li>URL 格式為：<code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY</code></li>
-            <li>將 <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">YOUR_KEY</code> 部分填入上方欄位</li>
+            <li>URL 格式為：<code class="text-xs bg-elevated px-1 rounded">https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY</code></li>
+            <li>將 <code class="text-xs bg-elevated px-1 rounded">YOUR_KEY</code> 部分填入上方欄位</li>
           </ol>
           <p class="mt-2">
             <a 

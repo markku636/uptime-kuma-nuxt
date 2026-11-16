@@ -38,11 +38,11 @@ const displayHeartbeats = computed(() => {
 
 const getHeartbeatColor = (heartbeat: Heartbeat) => {
   switch (heartbeat.status) {
-    case 1: return 'bg-green-500'
-    case 0: return 'bg-red-500'
-    case 2: return 'bg-yellow-500'
-    case 3: return 'bg-blue-500'
-    default: return 'bg-gray-200 dark:bg-gray-700'
+    case 1: return 'bg-up'
+    case 0: return 'bg-down'
+    case 2: return 'bg-pending'
+    case 3: return 'bg-maintenance'
+    default: return 'bg-accented'
   }
 }
 

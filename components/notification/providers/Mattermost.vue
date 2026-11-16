@@ -55,7 +55,7 @@ const config = computed({
         placeholder=":robot:"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           <a 
             href="https://www.webfx.com/tools/emoji-cheat-sheet/" 
             target="_blank"
@@ -74,7 +74,7 @@ const config = computed({
         placeholder="town-square"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           留空則使用 Webhook 預設的頻道
         </p>
       </template>

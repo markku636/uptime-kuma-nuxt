@@ -38,7 +38,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Create at: Profile → Long-Lived Access Tokens
         </span>
       </template>
@@ -50,7 +50,7 @@ const localConfig = computed({
         placeholder="notify.mobile_app_phone"
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           The notify service name (e.g., notify.mobile_app_phone)
         </span>
       </template>

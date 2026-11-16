@@ -53,23 +53,23 @@ function getStatusText(monitor: Monitor): string {
       <div
         v-for="i in 5"
         :key="i"
-        class="h-16 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"
+        class="h-16 bg-elevated rounded-lg animate-pulse"
       ></div>
     </div>
 
     <!-- Empty State -->
     <div
       v-else-if="monitors.length === 0"
-      class="text-center py-12 text-gray-500"
+      class="text-center py-12 text-muted"
     >
-      <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto mb-4 text-gray-300" />
+      <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto mb-4 text-dimmed" />
       <p>No monitors found</p>
     </div>
 
     <!-- Monitor Groups -->
     <template v-else>
       <div v-for="(groupMonitors, groupName) in groupedMonitors" :key="groupName">
-        <h3 class="text-sm font-medium text-gray-500 mb-2">{{ groupName }}</h3>
+        <h3 class="text-sm font-medium text-muted mb-2">{{ groupName }}</h3>
         
         <div class="space-y-2">
           <div
@@ -79,7 +79,7 @@ function getStatusText(monitor: Monitor): string {
               'flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors',
               selectedId === monitor.id
                 ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500'
-                : 'bg-white dark:bg-gray-800 border-2 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'bg-default border-2 border-transparent hover:bg-muted'
             ]"
             @click="selectedId = monitor.id; emit('select', monitor)"
           >
@@ -87,15 +87,15 @@ function getStatusText(monitor: Monitor): string {
             <span
               :class="[
                 'w-3 h-3 rounded-full flex-shrink-0',
-                getStatusColor(monitor) === 'green' ? 'bg-green-500' :
-                getStatusColor(monitor) === 'red' ? 'bg-red-500' : 'bg-gray-400'
+                getStatusColor(monitor) === 'green' ? 'bg-up' :
+                getStatusColor(monitor) === 'red' ? 'bg-down' : 'bg-unknown'
               ]"
             ></span>
 
             <!-- Monitor Info -->
             <div class="flex-1 min-w-0">
               <p class="font-medium truncate">{{ monitor.name }}</p>
-              <p class="text-xs text-gray-500 truncate">
+              <p class="text-xs text-muted truncate">
                 {{ monitor.url || monitor.hostname || monitor.keyword }}
               </p>
             </div>

@@ -1,6 +1,7 @@
 // Composable to load and apply appearance settings across the app
 import { useI18n } from '#imports'
 
+/** 'auto' is accepted for settings saved by older versions */
 export type ThemeOption = 'light' | 'dark' | 'system' | 'auto'
 export type UptimeDisplayStyle = 'percentage' | 'nines'
 export type HeartbeatBarStyle = 'normal' | 'bottom' | 'none'
@@ -32,32 +33,29 @@ const DEFAULT_APPEARANCE: AppearanceSettingsState = {
   language: 'en',
 }
 
-const COLOR_HEX_MAP: Record<string, string> = {
-  green: '#5cdd8b',
-  blue: '#3b82f6',
-  purple: '#8b5cf6',
-  red: '#ef4444',
-  orange: '#f97316',
-  pink: '#ec4899',
+// Appearance "primary colour" option -> Nuxt UI palette name (see app.config.ts)
+const PRIMARY_PALETTE: Record<string, string> = {
+  green: 'kuma',
+  blue: 'blue',
+  purple: 'violet',
+  red: 'red',
+  orange: 'orange',
+  pink: 'pink',
 }
 
 function applyPrimaryColor(color: string) {
-  if (!import.meta.client) return
-  const hex = COLOR_HEX_MAP[color] || color || COLOR_HEX_MAP.green
-  const root = document.documentElement
-  root.style.setProperty('--uk-primary', hex)
-  // Keep Nuxt UI primary in sync for buttons/badges
-  root.style.setProperty('--color-primary-500', hex)
-  root.style.setProperty('--color-primary-600', hex)
-  const themeMeta = document.querySelector('meta[name="theme-color"]')
-  if (themeMeta) {
-    themeMeta.setAttribute('content', hex)
-  }
+  const appConfig = useAppConfig()
+  appConfig.ui.colors.primary = PRIMARY_PALETTE[color] || PRIMARY_PALETTE.green
+}
+
+/** 'auto' is the legacy name for 'system' */
+export function normalizeTheme(theme?: string | null): 'light' | 'dark' | 'system' {
+  return theme === 'light' || theme === 'dark' ? theme : 'system'
 }
 
 function applyTheme(theme: ThemeOption) {
   const colorMode = useColorMode()
-  colorMode.preference = theme || 'system'
+  colorMode.preference = normalizeTheme(theme)
 }
 
 function applyLanguage(language?: string) {
@@ -77,9 +75,9 @@ export function useAppearanceSettings() {
   }))
 
   function applyAppearance(settings: AppearanceSettingsState = appearanceState.value) {
+    applyPrimaryColor(settings.primaryColor)
     if (import.meta.client) {
       applyTheme(settings.theme)
-      applyPrimaryColor(settings.primaryColor)
     }
     applyLanguage(settings.language)
   }

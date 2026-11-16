@@ -28,7 +28,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           機器人 Webhook 地址
         </span>
       </template>

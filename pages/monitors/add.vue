@@ -6,7 +6,7 @@
         <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1" />
         Back to Dashboard
       </NuxtLink>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Add New Monitor</h1>
+      <h1 class="text-2xl font-bold text-highlighted">Add New Monitor</h1>
     </div>
 
     <!-- Form -->
@@ -38,34 +38,34 @@
             </div>
 
             <div class="form-group md:col-span-2">
-              <label class="input-label">Friendly Name <span class="text-red-400">*</span></label>
+              <label class="input-label">Friendly Name <span class="text-down-fg">*</span></label>
               <input v-model="form.name" type="text" class="input-field" placeholder="My Monitor" required />
             </div>
 
             <!-- URL field for HTTP types -->
             <div v-if="showUrlField" class="form-group md:col-span-2">
-              <label class="input-label">URL <span class="text-red-400">*</span></label>
+              <label class="input-label">URL <span class="text-down-fg">*</span></label>
               <input v-model="form.url" type="text" class="input-field" placeholder="https://example.com" required />
             </div>
 
             <!-- Hostname/Port for TCP/Ping/DNS -->
             <div v-if="showHostnameField" class="form-group" :class="showPortField ? '' : 'md:col-span-2'">
-              <label class="input-label">Hostname <span class="text-red-400">*</span></label>
+              <label class="input-label">Hostname <span class="text-down-fg">*</span></label>
               <input v-model="form.hostname" type="text" class="input-field" placeholder="example.com" required />
             </div>
 
             <div v-if="showPortField" class="form-group">
-              <label class="input-label">Port <span class="text-red-400">*</span></label>
+              <label class="input-label">Port <span class="text-down-fg">*</span></label>
               <input v-model.number="form.port" type="number" class="input-field" placeholder="443" required />
             </div>
 
             <!-- Push Token Display -->
             <div v-if="form.type === 'push'" class="form-group md:col-span-2">
               <label class="input-label">Push URL</label>
-              <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-sm text-gray-700 dark:text-gray-300 font-mono">
+              <div class="bg-elevated rounded-lg p-3 text-sm text-default font-mono">
                 Push URL will be generated after creation
               </div>
-              <p class="text-xs text-gray-500 mt-1">Send a GET or POST request to this URL to report a heartbeat</p>
+              <p class="text-xs text-muted mt-1">Send a GET or POST request to this URL to report a heartbeat</p>
             </div>
           </div>
         </div>
@@ -94,15 +94,15 @@
             </div>
 
             <div v-if="form.type === 'keyword'" class="form-group md:col-span-2">
-              <label class="input-label">Expected Keyword <span class="text-red-400">*</span></label>
+              <label class="input-label">Expected Keyword <span class="text-down-fg">*</span></label>
               <input v-model="form.keyword" type="text" class="input-field" placeholder="OK" required />
-              <p class="text-xs text-gray-500 mt-1">The keyword to search for in the response body</p>
+              <p class="text-xs text-muted mt-1">The keyword to search for in the response body</p>
             </div>
 
             <div v-if="form.type === 'json-query'" class="form-group md:col-span-2">
-              <label class="input-label">JSON Query <span class="text-red-400">*</span></label>
+              <label class="input-label">JSON Query <span class="text-down-fg">*</span></label>
               <input v-model="form.jsonPath" type="text" class="input-field" placeholder="$.status" required />
-              <p class="text-xs text-gray-500 mt-1">JSONata expression to evaluate</p>
+              <p class="text-xs text-muted mt-1">JSONata expression to evaluate</p>
             </div>
 
             <div v-if="form.type === 'json-query'" class="form-group md:col-span-2">
@@ -121,7 +121,7 @@
           <div class="mt-4">
             <div class="flex items-center justify-between mb-2">
               <label class="input-label">HTTP Headers</label>
-              <button type="button" @click="addHeader" class="text-sm text-emerald-400 hover:text-emerald-300">
+              <button type="button" @click="addHeader" class="text-sm text-up-fg hover:text-up">
                 + Add Header
               </button>
             </div>
@@ -138,11 +138,11 @@
           <div class="mt-4 space-y-3">
             <label class="flex items-center gap-2">
               <input type="checkbox" v-model="form.ignoreTls" class="checkbox" />
-              <span class="text-gray-700 dark:text-gray-300">Ignore TLS/SSL Certificate Errors</span>
+              <span class="text-default">Ignore TLS/SSL Certificate Errors</span>
             </label>
             <label v-if="form.type === 'keyword'" class="flex items-center gap-2">
               <input type="checkbox" v-model="form.invertKeyword" class="checkbox" />
-              <span class="text-gray-700 dark:text-gray-300">Invert Keyword (alert if found)</span>
+              <span class="text-default">Invert Keyword (alert if found)</span>
             </label>
           </div>
         </div>
@@ -151,13 +151,13 @@
         <div v-if="isHttpType" class="section-card">
           <div class="flex items-center justify-between cursor-pointer" @click="showTlsSection = !showTlsSection">
             <h2 class="section-title !mb-0">TLS/SSL Certificate</h2>
-            <UIcon :name="showTlsSection ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-5 h-5 text-gray-400" />
+            <UIcon :name="showTlsSection ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-5 h-5 text-dimmed" />
           </div>
           
           <div v-show="showTlsSection" class="mt-4 space-y-4">
             <label class="flex items-center gap-2">
               <input type="checkbox" v-model="form.expiryNotification" class="checkbox" />
-              <span class="text-gray-700 dark:text-gray-300">Enable Certificate Expiry Notification</span>
+              <span class="text-default">Enable Certificate Expiry Notification</span>
             </label>
 
             <div v-if="form.expiryNotification" class="form-group">
@@ -167,13 +167,13 @@
                   v-for="days in [7, 14, 21, 30, 60, 90]" 
                   :key="days"
                   class="flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-all"
-                  :class="tlsExpiryDays.includes(days) ? 'bg-emerald-600/30 border border-emerald-500' : 'bg-gray-700 hover:bg-gray-600 border border-transparent'"
+                  :class="tlsExpiryDays.includes(days) ? 'bg-up/30 border border-up/40' : 'bg-elevated hover:bg-accented border border-transparent'"
                 >
                   <input type="checkbox" :value="days" v-model="tlsExpiryDays" class="hidden" />
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ days }} days</span>
+                  <span class="text-sm text-default">{{ days }} days</span>
                 </label>
               </div>
-              <p class="text-xs text-gray-500 mt-2">Select which days before expiry you want to be notified</p>
+              <p class="text-xs text-muted mt-2">Select which days before expiry you want to be notified</p>
             </div>
           </div>
         </div>
@@ -182,7 +182,7 @@
         <div v-if="isHttpType" class="section-card">
           <div class="flex items-center justify-between cursor-pointer" @click="showAuthSection = !showAuthSection">
             <h2 class="section-title !mb-0">Authentication</h2>
-            <UIcon :name="showAuthSection ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-5 h-5 text-gray-400" />
+            <UIcon :name="showAuthSection ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-5 h-5 text-dimmed" />
           </div>
           
           <div v-show="showAuthSection" class="mt-4 grid gap-4 md:grid-cols-2">
@@ -245,7 +245,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="input-label">Container Name/ID <span class="text-red-400">*</span></label>
+              <label class="input-label">Container Name/ID <span class="text-down-fg">*</span></label>
               <input v-model="form.dockerContainer" type="text" class="input-field" placeholder="my-container" required />
             </div>
           </div>
@@ -285,7 +285,7 @@
             <div class="form-group">
               <label class="input-label">Check Interval (seconds)</label>
               <input v-model.number="form.interval" type="number" class="input-field" min="20" />
-              <p class="text-xs text-gray-500 mt-1">Minimum: 20 seconds</p>
+              <p class="text-xs text-muted mt-1">Minimum: 20 seconds</p>
             </div>
 
             <div class="form-group">
@@ -301,7 +301,7 @@
             <div class="form-group">
               <label class="input-label">Max Retries</label>
               <input v-model.number="form.maxretries" type="number" class="input-field" min="0" />
-              <p class="text-xs text-gray-500 mt-1">Number of retries before marking as DOWN</p>
+              <p class="text-xs text-muted mt-1">Number of retries before marking as DOWN</p>
             </div>
           </div>
         </div>
@@ -310,18 +310,18 @@
         <div class="section-card">
           <div class="flex items-center justify-between cursor-pointer" @click="showAdvanced = !showAdvanced">
             <h2 class="section-title !mb-0">Advanced Options</h2>
-            <UIcon :name="showAdvanced ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-5 h-5 text-gray-400" />
+            <UIcon :name="showAdvanced ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-5 h-5 text-dimmed" />
           </div>
           
           <div v-show="showAdvanced" class="mt-4">
             <div class="space-y-3 mb-4">
               <label class="flex items-center gap-2">
                 <input type="checkbox" v-model="form.upsideDown" class="checkbox" />
-                <span class="text-gray-700 dark:text-gray-300">Upside Down Mode (alert when UP)</span>
+                <span class="text-default">Upside Down Mode (alert when UP)</span>
               </label>
               <label class="flex items-center gap-2">
                 <input type="checkbox" v-model="form.active" class="checkbox" />
-                <span class="text-gray-700 dark:text-gray-300">Active (start monitoring immediately)</span>
+                <span class="text-default">Active (start monitoring immediately)</span>
               </label>
             </div>
 
@@ -349,11 +349,11 @@
                   v-for="tag in availableTags" 
                   :key="tag.id" 
                   class="flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-all"
-                  :class="selectedTags.includes(tag.id) ? 'bg-gray-200 dark:bg-gray-600' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'"
+                  :class="selectedTags.includes(tag.id) ? 'bg-accented' : 'bg-elevated hover:bg-accented'"
                 >
                   <input type="checkbox" :value="tag.id" v-model="selectedTags" class="hidden" />
                   <span class="w-3 h-3 rounded" :style="{ backgroundColor: tag.color }"></span>
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ tag.name }}</span>
+                  <span class="text-sm text-default">{{ tag.name }}</span>
                 </label>
               </div>
             </div>
@@ -365,11 +365,11 @@
                 <label 
                   v-for="notif in notifications" 
                   :key="notif.id" 
-                  class="flex items-center gap-2 p-2 rounded bg-gray-100 dark:bg-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+                  class="flex items-center gap-2 p-2 rounded bg-elevated cursor-pointer hover:bg-accented"
                 >
                   <input type="checkbox" :value="notif.id" v-model="selectedNotifications" class="checkbox" />
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ notif.name }}</span>
-                  <span class="text-xs text-gray-500">({{ notif.type }})</span>
+                  <span class="text-sm text-default">{{ notif.name }}</span>
+                  <span class="text-xs text-muted">({{ notif.type }})</span>
                 </label>
               </div>
             </div>

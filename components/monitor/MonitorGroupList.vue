@@ -10,7 +10,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="!groups.length" class="text-center py-8 text-gray-500">
+    <div v-if="!groups.length" class="text-center py-8 text-muted">
       <UIcon name="i-heroicons-folder" class="w-12 h-12 mx-auto mb-2" />
       <p>{{ $t('No groups yet') }}</p>
       <p class="text-sm">{{ $t('Create groups to organize your monitors') }}</p>
@@ -18,7 +18,7 @@
 
     <!-- Ungrouped Monitors -->
     <div v-if="ungroupedMonitors.length" class="mb-6">
-      <div class="flex items-center gap-2 mb-2 text-gray-500">
+      <div class="flex items-center gap-2 mb-2 text-muted">
         <UIcon name="i-heroicons-inbox" class="w-4 h-4" />
         <span class="text-sm font-medium">{{ $t('Ungrouped') }}</span>
         <UBadge variant="subtle" size="xs">{{ ungroupedMonitors.length }}</UBadge>
@@ -28,7 +28,7 @@
         <div
           v-for="monitor in ungroupedMonitors"
           :key="monitor.id"
-          class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+          class="flex items-center justify-between p-2 bg-muted rounded"
           draggable="true"
           @dragstart="onDragStart($event, monitor)"
         >
@@ -36,7 +36,7 @@
             <Status :status="getMonitorStatus(monitor)" size="xs" />
             <span class="text-sm">{{ monitor.name }}</span>
           </div>
-          <UIcon name="i-heroicons-bars-2" class="w-4 h-4 text-gray-400 cursor-grab" />
+          <UIcon name="i-heroicons-bars-2" class="w-4 h-4 text-dimmed cursor-grab" />
         </div>
       </div>
     </div>
@@ -45,13 +45,13 @@
     <div
       v-for="group in groups"
       :key="group.id"
-      class="group-item border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+      class="group-item border border-default rounded-lg overflow-hidden"
       @dragover.prevent
       @drop="onDrop($event, group.id)"
     >
       <!-- Group Header -->
       <div 
-        class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 cursor-pointer"
+        class="flex items-center justify-between p-3 bg-muted cursor-pointer"
         @click="toggleGroup(group.id)"
       >
         <div class="flex items-center gap-2">
@@ -67,13 +67,13 @@
           <div class="flex items-center gap-1 ml-2">
             <span 
               v-if="getGroupUpCount(group) > 0"
-              class="text-xs text-green-500"
+              class="text-xs text-up-fg"
             >
               {{ getGroupUpCount(group) }} up
             </span>
             <span 
               v-if="getGroupDownCount(group) > 0"
-              class="text-xs text-red-500"
+              class="text-xs text-down-fg"
             >
               {{ getGroupDownCount(group) }} down
             </span>
@@ -105,14 +105,14 @@
         leave-to-class="opacity-0 max-h-0"
       >
         <div v-if="expandedGroups.has(group.id)" class="p-2">
-          <div v-if="!group.monitors.length" class="text-center py-4 text-gray-500 text-sm">
+          <div v-if="!group.monitors.length" class="text-center py-4 text-muted text-sm">
             {{ $t('Drag monitors here') }}
           </div>
           
           <div
             v-for="monitor in group.monitors"
             :key="monitor.id"
-            class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
+            class="flex items-center justify-between p-2 hover:bg-muted rounded"
             draggable="true"
             @dragstart="onDragStart($event, monitor)"
           >
@@ -121,7 +121,7 @@
               <span class="text-sm">{{ monitor.name }}</span>
             </div>
             <div class="flex items-center gap-2">
-              <span v-if="monitor.ping" class="text-xs text-gray-500 font-mono">
+              <span v-if="monitor.ping" class="text-xs text-muted font-mono">
                 {{ monitor.ping }}ms
               </span>
               <UButton

@@ -29,15 +29,15 @@
           </template>
         </UFormField>
 
-        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div class="p-4 bg-muted rounded-lg">
           <h4 class="font-medium mb-2 flex items-center gap-2">
             <UIcon name="i-heroicons-information-circle" />
             Remote Browser Services
           </h4>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p class="text-sm text-toned mb-2">
             Supported remote browser services:
           </p>
-          <ul class="text-sm text-gray-600 dark:text-gray-400 list-disc list-inside space-y-1">
+          <ul class="text-sm text-toned list-disc list-inside space-y-1">
             <li><strong>Browserless</strong> - ws://browserless:3000</li>
             <li><strong>Playwright Server</strong> - ws://playwright:3000</li>
             <li><strong>Chrome DevTools Protocol</strong> - ws://chrome:9222</li>

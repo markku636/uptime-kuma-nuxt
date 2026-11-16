@@ -141,17 +141,9 @@ const resumeSelected = async () => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.dark .shadow-box {
-  background: #21262d;
-}
-
 .list-header {
   padding: 12px;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.dark .list-header {
-  border-color: #30363d;
+  border-bottom: 1px solid var(--uk-border);
 }
 
 .header-top {
@@ -173,23 +165,13 @@ const resumeSelected = async () => {
 
 .btn-outline {
   background: transparent;
-  border: 1px solid #dee2e6;
-  color: #212529;
-}
-
-.dark .btn-outline {
-  border-color: #30363d;
-  color: #c9d1d9;
+  border: 1px solid var(--uk-border);
+  color: var(--uk-text);
 }
 
 .btn-outline:hover,
 .btn-outline.active {
   background: rgba(0, 0, 0, 0.05);
-}
-
-.dark .btn-outline:hover,
-.dark .btn-outline.active {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .btn-sm {
@@ -207,7 +189,7 @@ const resumeSelected = async () => {
 .search-icon {
   position: absolute;
   left: 10px;
-  color: #6c757d;
+  color: var(--uk-text-muted);
   width: 16px;
   height: 16px;
 }
@@ -215,22 +197,16 @@ const resumeSelected = async () => {
 .search-input {
   width: 100%;
   padding: 8px 32px 8px 32px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--uk-border);
   border-radius: 6px;
   font-size: 0.875rem;
   background: white;
-  color: #212529;
-}
-
-.dark .search-input {
-  background: #21262d;
-  border-color: #30363d;
-  color: #c9d1d9;
+  color: var(--uk-text);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #5cdd8b;
+  border-color: var(--uk-status-up);
 }
 
 .clear-btn {
@@ -238,7 +214,7 @@ const resumeSelected = async () => {
   right: 8px;
   background: transparent;
   border: none;
-  color: #6c757d;
+  color: var(--uk-text-muted);
   cursor: pointer;
   padding: 4px;
 }
@@ -249,11 +225,7 @@ const resumeSelected = async () => {
   gap: 8px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #dee2e6;
-}
-
-.dark .selection-controls {
-  border-color: #30363d;
+  border-top: 1px solid var(--uk-border);
 }
 
 .form-check-input {
@@ -264,7 +236,7 @@ const resumeSelected = async () => {
 
 .selected-count {
   font-size: 0.875rem;
-  color: #6c757d;
+  color: var(--uk-text-muted);
 }
 
 .monitor-list {
@@ -282,18 +254,18 @@ const resumeSelected = async () => {
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--uk-border-strong);
   border-radius: 4px;
 }
 
 .empty-state {
   text-align: center;
   padding: 40px 20px;
-  color: #6c757d;
+  color: var(--uk-text-muted);
 }
 
 .empty-state a {
-  color: #5cdd8b;
+  color: var(--uk-status-up-fg);
   text-decoration: none;
 }
 </style>

@@ -1,12 +1,13 @@
+import { prisma } from '../utils/prisma'
 // server/services/socket.ts
 // WebSocket service for real-time communication
 import { Server as HTTPServer } from 'http'
 import { Server as SocketServer, Socket } from 'socket.io'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import crypto from 'crypto'
 import { getMonitorTypeListForClient } from './monitor/types'
 
-const prisma = new PrismaClient()
+
 
 let io: SocketServer | null = null
 
@@ -21,6 +22,24 @@ function generateId(length: number = 32): string {
 }
 
 // Socket event handlers
+
+type MaintenanceService = typeof import('./maintenance/service')
+
+async function runMaintenanceSocket(
+  socket: AuthenticatedSocket,
+  callback: Function,
+  fn: (svc: MaintenanceService, userId: number) => Promise<Record<string, unknown>>,
+) {
+  if (typeof callback !== 'function') return
+  if (!socket.userId) return callback({ ok: false, msg: 'Not authenticated' })
+  try {
+    const svc = await import('./maintenance/service')
+    callback({ ok: true, ...(await fn(svc, socket.userId)) })
+  } catch (error: any) {
+    callback({ ok: false, msg: error?.message || 'Unknown error' })
+  }
+}
+
 const socketHandlers = {
   // Monitor events
   async getMonitorList(socket: AuthenticatedSocket, callback: Function) {
@@ -284,275 +303,49 @@ const socketHandlers = {
     }
   },
 
-  // Maintenance events
+  // Maintenance events (all logic lives in services/maintenance/service.ts)
   async getMaintenanceList(socket: AuthenticatedSocket, callback: Function) {
-    if (!socket.userId) {
-      return callback({ ok: false, msg: 'Not authenticated' })
-    }
-
-    try {
-      const maintenances = await prisma.maintenance.findMany({
-        where: { userId: socket.userId },
-        orderBy: { createdAt: 'desc' }
-      })
-
-      callback({ ok: true, maintenances })
-    } catch (error: any) {
-      callback({ ok: false, msg: error.message })
-    }
+    await runMaintenanceSocket(socket, callback, async (svc, userId) => ({
+      maintenances: await svc.listMaintenances(userId),
+    }))
   },
 
-  // =====================
-  // Maintenance CRUD Events
-  // =====================
   async getMaintenance(socket: AuthenticatedSocket, maintenanceId: number, callback: Function) {
-    if (!socket.userId) {
-      return callback({ ok: false, msg: 'Not authenticated' })
-    }
-
-    try {
-      const maintenance = await prisma.maintenance.findFirst({
-        where: { id: maintenanceId, userId: socket.userId },
-        include: {
-          monitors: { include: { monitor: true } },
-          statusPages: { include: { statusPage: true } }
-        }
-      })
-
-      if (!maintenance) {
-        return callback({ ok: false, msg: 'Maintenance not found' })
-      }
-
-      callback({ ok: true, maintenance })
-    } catch (error: any) {
-      callback({ ok: false, msg: error.message })
-    }
+    await runMaintenanceSocket(socket, callback, async (svc, userId) => ({
+      maintenance: await svc.getMaintenance(userId, Number(maintenanceId)),
+    }))
   },
 
   async addMaintenance(socket: AuthenticatedSocket, maintenance: any, callback: Function) {
-    if (!socket.userId) {
-      return callback({ ok: false, msg: 'Not authenticated' })
-    }
-
-    try {
-      const newMaintenance = await prisma.maintenance.create({
-        data: {
-          userId: socket.userId,
-          title: maintenance.title,
-          description: maintenance.description || null,
-          strategy: maintenance.strategy || 'manual',
-          active: maintenance.active ?? true,
-          dateRange: maintenance.dateRange ? JSON.stringify(maintenance.dateRange) : null,
-          intervalDay: maintenance.intervalDay || 1,
-          weekdays: maintenance.weekdays ? JSON.stringify(maintenance.weekdays) : null,
-          daysOfMonth: maintenance.daysOfMonth ? JSON.stringify(maintenance.daysOfMonth) : null,
-          timeRange: maintenance.timeRange ? JSON.stringify(maintenance.timeRange) : null,
-          cron: maintenance.cron || null,
-          duration: maintenance.duration || 60,
-          timezoneOption: maintenance.timezoneOption || null,
-          timezoneOffset: maintenance.timezoneOffset || null
-        }
-      })
-
-      // Add monitor associations
-      if (maintenance.monitors && maintenance.monitors.length > 0) {
-        await prisma.maintenanceMonitor.createMany({
-          data: maintenance.monitors.map((monitorId: number) => ({
-            maintenanceId: newMaintenance.id,
-            monitorId
-          }))
-        })
-      }
-
-      // Add status page associations
-      if (maintenance.statusPages && maintenance.statusPages.length > 0) {
-        await prisma.maintenanceStatusPage.createMany({
-          data: maintenance.statusPages.map((statusPageId: number) => ({
-            maintenanceId: newMaintenance.id,
-            statusPageId
-          }))
-        })
-      }
-
-      // Start the maintenance scheduler job
-      const { startMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
-      await startMaintenanceJob(newMaintenance)
-
-      const maintenanceWithStatus = await maintenanceToPublicJSON(newMaintenance)
-      callback({ ok: true, maintenance: maintenanceWithStatus })
-
-      // Broadcast to user's sockets
-      broadcastMaintenanceAdded(socket.userId, maintenanceWithStatus)
-    } catch (error: any) {
-      callback({ ok: false, msg: error.message })
-    }
+    await runMaintenanceSocket(socket, callback, async (svc, userId) => {
+      const created = await svc.createMaintenance(userId, maintenance)
+      return { maintenance: created, maintenanceID: created.id }
+    })
   },
 
   async editMaintenance(socket: AuthenticatedSocket, maintenance: any, callback: Function) {
-    if (!socket.userId) {
-      return callback({ ok: false, msg: 'Not authenticated' })
-    }
-
-    try {
-      // Check ownership
-      const existing = await prisma.maintenance.findFirst({
-        where: { id: maintenance.id, userId: socket.userId }
-      })
-
-      if (!existing) {
-        return callback({ ok: false, msg: 'Maintenance not found' })
-      }
-
-      const updated = await prisma.maintenance.update({
-        where: { id: maintenance.id },
-        data: {
-          title: maintenance.title,
-          description: maintenance.description || null,
-          strategy: maintenance.strategy || 'manual',
-          active: maintenance.active ?? true,
-          dateRange: maintenance.dateRange ? JSON.stringify(maintenance.dateRange) : null,
-          intervalDay: maintenance.intervalDay || 1,
-          weekdays: maintenance.weekdays ? JSON.stringify(maintenance.weekdays) : null,
-          daysOfMonth: maintenance.daysOfMonth ? JSON.stringify(maintenance.daysOfMonth) : null,
-          timeRange: maintenance.timeRange ? JSON.stringify(maintenance.timeRange) : null,
-          cron: maintenance.cron || null,
-          duration: maintenance.duration || 60,
-          timezoneOption: maintenance.timezoneOption || null,
-          timezoneOffset: maintenance.timezoneOffset || null
-        }
-      })
-
-      // Update monitor associations
-      await prisma.maintenanceMonitor.deleteMany({ where: { maintenanceId: maintenance.id } })
-      if (maintenance.monitors && maintenance.monitors.length > 0) {
-        await prisma.maintenanceMonitor.createMany({
-          data: maintenance.monitors.map((monitorId: number) => ({
-            maintenanceId: maintenance.id,
-            monitorId
-          }))
-        })
-      }
-
-      // Update status page associations
-      await prisma.maintenanceStatusPage.deleteMany({ where: { maintenanceId: maintenance.id } })
-      if (maintenance.statusPages && maintenance.statusPages.length > 0) {
-        await prisma.maintenanceStatusPage.createMany({
-          data: maintenance.statusPages.map((statusPageId: number) => ({
-            maintenanceId: maintenance.id,
-            statusPageId
-          }))
-        })
-      }
-
-      // Restart the maintenance scheduler job with updated settings
-      const { startMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
-      await startMaintenanceJob(updated)
-
-      const maintenanceWithStatus = await maintenanceToPublicJSON(updated)
-      callback({ ok: true, maintenance: maintenanceWithStatus })
-
-      // Broadcast update
-      broadcastMaintenanceUpdated(socket.userId, maintenanceWithStatus)
-    } catch (error: any) {
-      callback({ ok: false, msg: error.message })
-    }
+    await runMaintenanceSocket(socket, callback, async (svc, userId) => ({
+      maintenance: await svc.updateMaintenance(userId, Number(maintenance?.id), maintenance),
+    }))
   },
 
   async deleteMaintenance(socket: AuthenticatedSocket, maintenanceId: number, callback: Function) {
-    if (!socket.userId) {
-      return callback({ ok: false, msg: 'Not authenticated' })
-    }
-
-    try {
-      // Check ownership
-      const existing = await prisma.maintenance.findFirst({
-        where: { id: maintenanceId, userId: socket.userId }
-      })
-
-      if (!existing) {
-        return callback({ ok: false, msg: 'Maintenance not found' })
-      }
-
-      // Stop the maintenance scheduler job
-      const { stopMaintenanceJob } = await import('./maintenance/scheduler')
-      stopMaintenanceJob(maintenanceId)
-
-      // Delete associations first
-      await prisma.maintenanceMonitor.deleteMany({ where: { maintenanceId } })
-      await prisma.maintenanceStatusPage.deleteMany({ where: { maintenanceId } })
-      
-      // Delete maintenance
-      await prisma.maintenance.delete({ where: { id: maintenanceId } })
-
-      callback({ ok: true })
-
-      // Broadcast deletion
-      broadcastMaintenanceDeleted(socket.userId, maintenanceId)
-    } catch (error: any) {
-      callback({ ok: false, msg: error.message })
-    }
+    await runMaintenanceSocket(socket, callback, async (svc, userId) => {
+      await svc.deleteMaintenance(userId, Number(maintenanceId))
+      return {}
+    })
   },
 
   async pauseMaintenance(socket: AuthenticatedSocket, maintenanceId: number, callback: Function) {
-    if (!socket.userId) {
-      return callback({ ok: false, msg: 'Not authenticated' })
-    }
-
-    try {
-      const existing = await prisma.maintenance.findFirst({
-        where: { id: maintenanceId, userId: socket.userId }
-      })
-
-      if (!existing) {
-        return callback({ ok: false, msg: 'Maintenance not found' })
-      }
-
-      const updated = await prisma.maintenance.update({
-        where: { id: maintenanceId },
-        data: { active: false }
-      })
-
-      // Stop the maintenance scheduler job
-      const { stopMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
-      stopMaintenanceJob(maintenanceId)
-
-      const maintenanceWithStatus = await maintenanceToPublicJSON(updated)
-      callback({ ok: true, maintenance: maintenanceWithStatus })
-      broadcastMaintenanceUpdated(socket.userId, maintenanceWithStatus)
-    } catch (error: any) {
-      callback({ ok: false, msg: error.message })
-    }
+    await runMaintenanceSocket(socket, callback, async (svc, userId) => ({
+      maintenance: await svc.setMaintenanceActive(userId, Number(maintenanceId), false),
+    }))
   },
 
   async resumeMaintenance(socket: AuthenticatedSocket, maintenanceId: number, callback: Function) {
-    if (!socket.userId) {
-      return callback({ ok: false, msg: 'Not authenticated' })
-    }
-
-    try {
-      const existing = await prisma.maintenance.findFirst({
-        where: { id: maintenanceId, userId: socket.userId }
-      })
-
-      if (!existing) {
-        return callback({ ok: false, msg: 'Maintenance not found' })
-      }
-
-      const updated = await prisma.maintenance.update({
-        where: { id: maintenanceId },
-        data: { active: true }
-      })
-
-      // Restart the maintenance scheduler job
-      const { startMaintenanceJob, maintenanceToPublicJSON } = await import('./maintenance/scheduler')
-      await startMaintenanceJob(updated)
-
-      const maintenanceWithStatus = await maintenanceToPublicJSON(updated)
-      callback({ ok: true, maintenance: maintenanceWithStatus })
-      broadcastMaintenanceUpdated(socket.userId, maintenanceWithStatus)
-    } catch (error: any) {
-      callback({ ok: false, msg: error.message })
-    }
+    await runMaintenanceSocket(socket, callback, async (svc, userId) => ({
+      maintenance: await svc.setMaintenanceActive(userId, Number(maintenanceId), true),
+    }))
   },
 
   // =====================
@@ -2611,18 +2404,10 @@ export async function broadcastMaintenanceList(userId: number) {
   if (!io) return
   
   try {
-    const maintenances = await prisma.maintenance.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
-    })
-    
     // Import dynamically to avoid circular dependency
-    const { maintenanceToPublicJSON } = await import('./maintenance/scheduler')
-    
-    const maintenanceList = await Promise.all(
-      maintenances.map(m => maintenanceToPublicJSON(m))
-    )
-    
+    const { listMaintenances } = await import('./maintenance/service')
+    const maintenanceList = await listMaintenances(userId)
+
     io.sockets.sockets.forEach((socket: AuthenticatedSocket) => {
       if (socket.userId === userId) {
         socket.emit('maintenanceList', maintenanceList)

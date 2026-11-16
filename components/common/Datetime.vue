@@ -51,7 +51,7 @@ const relativeFormat = computed(() => {
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+  <span class="inline-flex items-center gap-1.5 text-toned">
     <template v-if="format === 'relative'">
       <span :title="absoluteFormat">{{ relativeFormat }}</span>
     </template>
@@ -60,7 +60,7 @@ const relativeFormat = computed(() => {
     </template>
     <template v-else>
       <span>{{ absoluteFormat }}</span>
-      <span class="text-gray-400 dark:text-gray-500">({{ relativeFormat }})</span>
+      <span class="text-dimmed">({{ relativeFormat }})</span>
     </template>
   </span>
 </template>

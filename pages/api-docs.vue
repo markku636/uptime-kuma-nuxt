@@ -1,7 +1,7 @@
 <template>
   <div class="api-docs-container">
     <div class="header-bar">
-      <h1 class="text-xl font-bold text-gray-900 dark:text-white">API Documentation</h1>
+      <h1 class="text-xl font-bold text-highlighted">API Documentation</h1>
       <div class="flex items-center gap-4">
         <a 
           :href="swaggerJsonUrl" 
@@ -125,17 +125,17 @@ onUnmounted(() => {
 }
 
 :deep(.swagger-ui .info .title) {
-  color: #10b981;
+  color: var(--uk-status-up-fg);
 }
 
 :deep(.swagger-ui .btn.authorize) {
-  background-color: #10b981;
-  border-color: #10b981;
+  background-color: var(--uk-status-up);
+  border-color: var(--uk-status-up);
   color: white;
 }
 
 :deep(.swagger-ui .btn.authorize:hover) {
-  background-color: #059669;
-  border-color: #059669;
+  background-color: var(--uk-status-up);
+  border-color: var(--uk-status-up);
 }
 </style>

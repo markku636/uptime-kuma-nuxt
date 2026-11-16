@@ -11,7 +11,7 @@
       </UButton>
     </div>
 
-    <div v-if="conditions.length === 0" class="text-center py-4 text-gray-500">
+    <div v-if="conditions.length === 0" class="text-center py-4 text-muted">
       No conditions defined. Monitor will use default status detection.
     </div>
 
@@ -19,7 +19,7 @@
       <div
         v-for="(condition, index) in conditions"
         :key="index"
-        class="flex items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
+        class="flex items-center gap-2 p-3 border border-default rounded-lg"
       >
         <!-- Variable -->
         <USelectMenu
@@ -69,7 +69,7 @@
       </div>
     </div>
 
-    <div class="text-sm text-gray-500 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <div class="text-sm text-muted p-3 bg-muted rounded-lg">
       <p class="font-medium mb-1">How conditions work:</p>
       <ul class="list-disc list-inside space-y-1">
         <li>Conditions are evaluated in order</li>

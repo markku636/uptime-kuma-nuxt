@@ -30,7 +30,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Get your access token from 
           <a href="https://www.pushbullet.com/#settings/account" target="_blank" class="text-primary-500 hover:underline">
             Pushbullet Settings
@@ -45,7 +45,7 @@ const localConfig = computed({
         placeholder="Leave empty to send to all devices"
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Optional: Specific device to send notifications to
         </span>
       </template>

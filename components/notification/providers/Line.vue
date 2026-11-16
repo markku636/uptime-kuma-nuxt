@@ -30,7 +30,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           前往 <b>Messaging API</b> 設定頁面取得
         </p>
       </template>
@@ -44,7 +44,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           前往 <b>Basic Settings</b> 取得你的 User ID
         </p>
       </template>

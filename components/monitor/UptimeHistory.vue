@@ -2,7 +2,7 @@
   <div class="uptime-history">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
-      <h3 class="font-medium text-gray-900 dark:text-gray-100">
+      <h3 class="font-medium text-highlighted">
         {{ $t('Uptime History') }}
       </h3>
       <USelect
@@ -21,7 +21,7 @@
       <div
         v-for="day in dayLabels"
         :key="day"
-        class="text-center text-xs text-gray-500 pb-1"
+        class="text-center text-xs text-muted pb-1"
       >
         {{ day }}
       </div>
@@ -43,32 +43,32 @@
     <!-- Legend -->
     <div class="flex items-center justify-center gap-4 mt-4 text-xs">
       <div class="flex items-center gap-1">
-        <div class="w-3 h-3 rounded-sm bg-green-500" />
+        <div class="w-3 h-3 rounded-sm bg-up" />
         <span>{{ $t('No downtime') }}</span>
       </div>
       <div class="flex items-center gap-1">
-        <div class="w-3 h-3 rounded-sm bg-yellow-500" />
+        <div class="w-3 h-3 rounded-sm bg-pending" />
         <span>{{ $t('Some downtime') }}</span>
       </div>
       <div class="flex items-center gap-1">
-        <div class="w-3 h-3 rounded-sm bg-red-500" />
+        <div class="w-3 h-3 rounded-sm bg-down" />
         <span>{{ $t('Major downtime') }}</span>
       </div>
     </div>
 
     <!-- Summary -->
     <div v-if="showSummary" class="mt-4 grid grid-cols-3 gap-4 text-center">
-      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
-        <p class="text-lg font-bold text-green-500">{{ summary.uptimeDays }}</p>
-        <p class="text-xs text-gray-500">{{ $t('Days 100%') }}</p>
+      <div class="p-2 bg-muted rounded">
+        <p class="text-lg font-bold text-up-fg">{{ summary.uptimeDays }}</p>
+        <p class="text-xs text-muted">{{ $t('Days 100%') }}</p>
       </div>
-      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
-        <p class="text-lg font-bold text-yellow-500">{{ summary.partialDays }}</p>
-        <p class="text-xs text-gray-500">{{ $t('Partial Days') }}</p>
+      <div class="p-2 bg-muted rounded">
+        <p class="text-lg font-bold text-pending-fg">{{ summary.partialDays }}</p>
+        <p class="text-xs text-muted">{{ $t('Partial Days') }}</p>
       </div>
-      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
-        <p class="text-lg font-bold text-red-500">{{ summary.downtimeDays }}</p>
-        <p class="text-xs text-gray-500">{{ $t('Outage Days') }}</p>
+      <div class="p-2 bg-muted rounded">
+        <p class="text-lg font-bold text-down-fg">{{ summary.downtimeDays }}</p>
+        <p class="text-xs text-muted">{{ $t('Outage Days') }}</p>
       </div>
     </div>
   </div>
@@ -161,21 +161,21 @@ function getDayClass(day: DayData): string {
   }
   
   if (day.uptime === undefined) {
-    return 'bg-gray-200 dark:bg-gray-700'
+    return 'bg-accented'
   }
   
   if (day.uptime === 100) {
-    return 'bg-green-500 text-white'
+    return 'bg-up text-white'
   } else if (day.uptime >= 90) {
-    return 'bg-green-400 text-white'
+    return 'bg-up text-white'
   } else if (day.uptime >= 75) {
-    return 'bg-yellow-400 text-white'
+    return 'bg-pending text-white'
   } else if (day.uptime >= 50) {
     return 'bg-orange-500 text-white'
   } else if (day.uptime > 0) {
-    return 'bg-red-400 text-white'
+    return 'bg-down text-white'
   } else {
-    return 'bg-red-600 text-white'
+    return 'bg-down text-white'
   }
 }
 

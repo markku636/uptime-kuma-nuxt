@@ -28,7 +28,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Create a webhook in Pumble → Settings → Incoming Webhooks
         </span>
       </template>

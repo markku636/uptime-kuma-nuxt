@@ -205,7 +205,7 @@ function formatNumber(num: number): string {
 async function shrinkDatabase() {
   isShrinking.value = true
   try {
-    await $fetch('/api/v1/maintenance/shrink-database', { method: 'POST' })
+    await $fetch('/api/v1/database/shrink-database', { method: 'POST' })
     // Refresh db info
     const info = await $fetch<DbInfo>('/api/v1/settings/database-info')
     dbInfo.value = info
@@ -274,7 +274,7 @@ async function clearHeartbeats() {
   if (clearHeartbeatsConfirm.value !== 'DELETE') return
   
   try {
-    await $fetch('/api/v1/maintenance/clear-heartbeats', { method: 'POST' })
+    await $fetch('/api/v1/database/clear-heartbeats', { method: 'POST' })
     clearHeartbeatsConfirm.value = ''
     // Refresh db info
     const info = await $fetch<DbInfo>('/api/v1/settings/database-info')
@@ -288,7 +288,7 @@ async function clearStatistics() {
   if (clearStatsConfirm.value !== 'DELETE') return
   
   try {
-    await $fetch('/api/v1/maintenance/clear-statistics', { method: 'POST' })
+    await $fetch('/api/v1/database/clear-statistics', { method: 'POST' })
     clearStatsConfirm.value = ''
   } catch (e) {
     console.error('Failed to clear statistics:', e)
@@ -302,7 +302,7 @@ async function clearAllData() {
   if (!confirmed) return
   
   try {
-    await $fetch('/api/v1/maintenance/clear-all', { method: 'POST' })
+    await $fetch('/api/v1/database/clear-all', { method: 'POST' })
     clearAllConfirm.value = ''
     window.location.reload()
   } catch (e) {
@@ -319,47 +319,26 @@ async function clearAllData() {
   padding: 20px;
 }
 
-.dark .shadow-box {
-  background: #212529;
-}
-
 .info-box {
-  background: #f8f9fa;
+  background: var(--uk-bg-sunken);
   border-radius: 8px;
   padding: 15px;
 }
 
-.dark .info-box {
-  background: #2d3238;
-}
-
 .danger-zone {
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--uk-border);
   padding-top: 20px;
   margin-top: 20px;
 }
 
-.dark .danger-zone {
-  border-color: #373d45;
-}
-
 .danger-item {
-  background: #fff5f5;
-  border: 1px solid #feb2b2;
+  background: color-mix(in srgb, var(--uk-status-down) var(--uk-subtle-mix), transparent);
+  border: 1px solid color-mix(in srgb, var(--uk-status-down) 40%, transparent);
   border-radius: 8px;
   padding: 15px;
 }
 
-.dark .danger-item {
-  background: rgba(220, 53, 69, 0.1);
-  border-color: rgba(220, 53, 69, 0.3);
-}
-
 .danger-critical {
-  background: #fef2f2;
-}
-
-.dark .danger-critical {
-  background: rgba(220, 53, 69, 0.15);
+  background: color-mix(in srgb, var(--uk-status-down) var(--uk-subtle-mix), transparent);
 }
 </style>

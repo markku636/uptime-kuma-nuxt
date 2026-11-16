@@ -1,33 +1,9 @@
-// server/api/v1/maintenances/[id]/pause.post.ts
-import { prisma } from '~/server/utils/prisma'
+// POST /api/v1/maintenances/:id/pause
+import { handleMaintenanceRequest, getMaintenanceIdParam, setMaintenanceActive } from '~/server/services/maintenance/service'
 
-export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
-  
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  const id = parseInt(getRouterParam(event, 'id') || '0')
-  
-  if (!id) {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid maintenance ID'
-    })
-  }
-
-  // Update maintenance to inactive
-  const maintenance = await prisma.maintenance.update({
-    where: { id },
-    data: { active: false }
-  })
-
-  return {
+export default defineEventHandler(event =>
+  handleMaintenanceRequest(event, async userId => ({
     ok: true,
-    data: maintenance
-  }
-})
+    data: await setMaintenanceActive(userId, getMaintenanceIdParam(event), false),
+  })),
+)

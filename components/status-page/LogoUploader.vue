@@ -177,10 +177,6 @@ function confirmCrop() {
   justify-content: center;
 }
 
-.dark .logo-preview {
-  background: var(--color-bg-secondary, #374151);
-}
-
 .logo-preview.editable {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -238,7 +234,7 @@ function confirmCrop() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  border-bottom: 1px solid var(--color-border, var(--uk-border));
 }
 
 .crop-header h3 {
@@ -284,7 +280,7 @@ function confirmCrop() {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
-  border-top: 1px solid var(--color-border, #e5e7eb);
+  border-top: 1px solid var(--color-border, var(--uk-border));
 }
 
 .btn {
@@ -309,7 +305,7 @@ function confirmCrop() {
 
 .btn-outline {
   background: transparent;
-  border: 1px solid var(--color-border, #d1d5db);
+  border: 1px solid var(--color-border, var(--uk-border-strong));
   color: var(--color-text-primary);
 }
 

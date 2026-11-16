@@ -1,9 +1,9 @@
+import { prisma } from './prisma'
 // server/utils/node-initializer.ts
 // 節點初始化工具 - 在啟動時根據環境變數自動註冊節點到資料庫
 
-import { PrismaClient } from "@prisma/client"
 
-const prisma = new PrismaClient()
+
 
 interface NodeConfig {
   nodeId: string

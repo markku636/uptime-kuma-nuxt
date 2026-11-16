@@ -7,7 +7,7 @@
         <UIcon
           v-if="editMode"
           name="i-heroicons-bars-3"
-          class="drag-handle text-gray-400 cursor-grab"
+          class="drag-handle text-dimmed cursor-grab"
         />
         
         <!-- Remove button (edit mode) -->
@@ -171,14 +171,9 @@ const certExpiryText = computed(() => {
 <style scoped>
 .status-monitor-card {
   padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--uk-border);
   transition: background-color 0.15s;
-  color: #0f172a;
-}
-
-.dark .status-monitor-card {
-  border-bottom-color: #374151;
-  color: #e5e7eb;
+  color: var(--uk-text);
 }
 
 .status-monitor-card:last-child {
@@ -186,19 +181,11 @@ const certExpiryText = computed(() => {
 }
 
 .status-monitor-card:hover {
-  background-color: #f1f5f9;
-}
-
-.dark .status-monitor-card:hover {
-  background-color: #1f2937;
+  background-color: var(--uk-bg-sunken);
 }
 
 .status-monitor-card.edit-mode:hover {
-  background-color: #eff6ff;
-}
-
-.dark .status-monitor-card.edit-mode:hover {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: color-mix(in srgb, var(--uk-status-maintenance) var(--uk-subtle-mix), transparent);
 }
 
 .monitor-row {
@@ -235,19 +222,15 @@ const certExpiryText = computed(() => {
 
 .monitor-name {
   font-weight: 500;
-  color: #1e293b;
+  color: var(--uk-text);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.dark .monitor-name {
-  color: #e2e8f0;
-}
-
 a.monitor-name:hover {
-  color: #12b06a;
+  color: var(--uk-status-up-fg);
 }
 
 .monitor-details {

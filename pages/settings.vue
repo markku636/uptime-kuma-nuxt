@@ -2,7 +2,7 @@
   <div class="settings-page">
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-primary">Settings</h1>
+      <h1 class="text-2xl font-bold text-highlighted">Settings</h1>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-6">
@@ -29,7 +29,7 @@
         <div class="settings-content">
           <!-- Content Header -->
           <div v-if="currentPageTitle" class="settings-content-header">
-            <h2 class="text-xl font-semibold text-primary">{{ currentPageTitle }}</h2>
+            <h2 class="text-xl font-semibold text-highlighted">{{ currentPageTitle }}</h2>
           </div>
           
           <!-- Content Body -->

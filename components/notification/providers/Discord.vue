@@ -46,7 +46,7 @@ const channelTypeOptions = [
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+        <p class="text-sm text-muted">
           前往 Discord 伺服器設定 → 整合 → Webhooks → 新增 Webhook，複製 Webhook URL
           <a 
             href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" 
@@ -74,7 +74,7 @@ const channelTypeOptions = [
         placeholder="Hello @everyone is..."
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           可使用 @everyone, @here 或 &lt;@USER_ID&gt; 標記用戶
         </p>
       </template>
@@ -98,7 +98,7 @@ const channelTypeOptions = [
         placeholder="Monitor Alert"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           如果論壇帖子已存在，新訊息將發送到該帖子
         </p>
       </template>
@@ -114,7 +114,7 @@ const channelTypeOptions = [
         placeholder="e.g. 1177566663751782411"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           在 Discord 中右鍵點擊訊息串/帖子，選擇「複製 ID」
           <a 
             href="https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-" 
@@ -134,7 +134,7 @@ const channelTypeOptions = [
         label="Disable URL in Notification"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           勾選後通知訊息將不包含監控的 URL
         </p>
       </template>

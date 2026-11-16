@@ -16,7 +16,7 @@
             <UIcon
               v-if="localGroups.length >= 2"
               name="i-heroicons-bars-3"
-              class="group-drag-handle text-gray-400 cursor-grab mr-3"
+              class="group-drag-handle text-dimmed cursor-grab mr-3"
             />
             <UButton
               icon="i-heroicons-x-mark"
@@ -37,7 +37,7 @@
           
           <div class="monitor-list-container shadow-box">
             <!-- Empty state for this group -->
-            <div v-if="!group.monitorList?.length" class="empty-state text-center py-4 text-gray-500">
+            <div v-if="!group.monitorList?.length" class="empty-state text-center py-4 text-muted">
               No Monitors
             </div>
             
@@ -240,42 +240,25 @@ function onGroupDragChange(event: any) {
   margin-bottom: 16px;
   display: flex;
   align-items: center;
-  color: #0f172a;
-}
-
-.dark .group-title {
-  color: #f1f5f9;
+  color: var(--uk-text);
 }
 
 .monitor-list-container {
-  background: #ffffff;
+  background: var(--uk-bg-surface);
   border-radius: 8px;
   overflow: hidden;
   min-height: 46px;
-  border: 1px solid #d6deea;
-}
-
-.dark .monitor-list-container {
-  background: #161b22;
-  border-color: #1d2634;
+  border: 1px solid var(--uk-border);
 }
 
 .shadow-box {
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
-.dark .shadow-box {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
-}
-
 .empty-state {
   text-align: center;
   padding: 20px;
-  color: #64748b;
-}
-
-.dark .empty-state {
-  color: #9ca3af;
+  color: var(--uk-text-muted);
 }
 
 .group-drag-handle {
@@ -296,7 +279,7 @@ function onGroupDragChange(event: any) {
 }
 
 .group-name-input:focus {
-  outline: 2px solid #22c55e;
+  outline: 2px solid var(--uk-status-up);
   border-color: transparent;
 }
 </style>

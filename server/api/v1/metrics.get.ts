@@ -1,8 +1,8 @@
 // API endpoint for Prometheus metrics export
 import { defineEventHandler, createError, setHeader } from 'h3'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
+
 
 export default defineEventHandler(async (event) => {
   try {

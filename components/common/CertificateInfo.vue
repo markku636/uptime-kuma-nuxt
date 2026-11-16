@@ -19,10 +19,10 @@ const expiryStatus = computed(() => {
   if (!props.certificate) return null
   
   const days = props.certificate.daysRemaining
-  if (days < 0) return { label: 'Expired', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' }
-  if (days <= 7) return { label: `Expires in ${days} days`, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' }
-  if (days <= 30) return { label: `Expires in ${days} days`, color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900/30' }
-  return { label: `${days} days remaining`, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' }
+  if (days < 0) return { label: 'Expired', color: 'text-down-fg', bg: 'bg-down-subtle' }
+  if (days <= 7) return { label: `Expires in ${days} days`, color: 'text-down-fg', bg: 'bg-down-subtle' }
+  if (days <= 30) return { label: `Expires in ${days} days`, color: 'text-pending-fg', bg: 'bg-pending-subtle' }
+  return { label: `${days} days remaining`, color: 'text-up-fg', bg: 'bg-up-subtle' }
 })
 
 function formatDate(dateString: string) {
@@ -56,39 +56,39 @@ function formatDate(dateString: string) {
     <div class="grid gap-3">
       <!-- Subject -->
       <div class="flex items-start gap-3">
-        <div class="w-32 text-sm text-gray-500 dark:text-gray-400">Subject</div>
+        <div class="w-32 text-sm text-muted">Subject</div>
         <div class="flex-1 font-mono text-sm break-all">{{ certificate.subject }}</div>
       </div>
 
       <!-- Issuer -->
       <div class="flex items-start gap-3">
-        <div class="w-32 text-sm text-gray-500 dark:text-gray-400">Issuer</div>
+        <div class="w-32 text-sm text-muted">Issuer</div>
         <div class="flex-1 font-mono text-sm break-all">{{ certificate.issuer }}</div>
       </div>
 
       <!-- Valid From -->
       <div class="flex items-start gap-3">
-        <div class="w-32 text-sm text-gray-500 dark:text-gray-400">Valid From</div>
+        <div class="w-32 text-sm text-muted">Valid From</div>
         <div class="flex-1 text-sm">{{ formatDate(certificate.validFrom) }}</div>
       </div>
 
       <!-- Valid To -->
       <div class="flex items-start gap-3">
-        <div class="w-32 text-sm text-gray-500 dark:text-gray-400">Valid To</div>
+        <div class="w-32 text-sm text-muted">Valid To</div>
         <div class="flex-1 text-sm">{{ formatDate(certificate.validTo) }}</div>
       </div>
 
       <!-- Fingerprint -->
       <div v-if="certificate.fingerprint" class="flex items-start gap-3">
-        <div class="w-32 text-sm text-gray-500 dark:text-gray-400">Fingerprint</div>
-        <div class="flex-1 font-mono text-xs break-all text-gray-600 dark:text-gray-400">
+        <div class="w-32 text-sm text-muted">Fingerprint</div>
+        <div class="flex-1 font-mono text-xs break-all text-toned">
           {{ certificate.fingerprint }}
         </div>
       </div>
     </div>
   </div>
 
-  <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+  <div v-else class="text-center py-8 text-muted">
     <UIcon name="i-heroicons-shield-exclamation" class="w-12 h-12 mx-auto mb-2 opacity-50" />
     <p>No certificate information available</p>
   </div>

@@ -1,4 +1,4 @@
-// server/api/v1/maintenance/clear-heartbeats.post.ts
+// server/api/v1/database/clear-heartbeats.post.ts
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {

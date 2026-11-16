@@ -13,7 +13,7 @@
       <div class="flex items-center gap-2">
         <span>Setup 2FA</span>
         <span v-if="twoFAStatus === true" class="badge badge-success text-xs">Active</span>
-        <span v-if="twoFAStatus === false" class="badge bg-gray-600 text-xs">Inactive</span>
+        <span v-if="twoFAStatus === false" class="badge badge-secondary text-xs">Inactive</span>
       </div>
     </template>
 
@@ -22,10 +22,10 @@
       <div class="space-y-4">
         <!-- QR Code for setup -->
         <div v-if="uri && !twoFAStatus" class="text-center">
-          <div class="bg-white p-4 rounded-lg inline-block mb-4">
+          <div class="bg-default p-4 rounded-lg inline-block mb-4">
             <img :src="qrCodeUrl" alt="2FA QR Code" class="w-48 h-48" />
           </div>
-          <p class="text-sm text-gray-400 mb-2">Scan this QR code with your authenticator app</p>
+          <p class="text-sm text-dimmed mb-2">Scan this QR code with your authenticator app</p>
           <button 
             v-if="!showUri" 
             @click="showUri = true" 
@@ -33,14 +33,14 @@
           >
             Show setup key
           </button>
-          <p v-if="showUri" class="text-xs text-gray-500 break-all bg-gray-800 p-2 rounded mt-2">
+          <p v-if="showUri" class="text-xs text-muted break-all bg-sunken p-2 rounded mt-2">
             {{ uri }}
           </p>
         </div>
 
         <!-- Password input (for enable/disable) -->
         <div v-if="!uri || twoFAStatus">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">Current Password</label>
           <input 
             v-model="currentPassword" 
             type="password" 
@@ -76,8 +76,8 @@
 
         <!-- Token verification -->
         <div v-if="uri && !twoFAStatus" class="mt-6">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Verify Token</label>
-          <p class="text-xs text-gray-500 mb-2">Enter the 6-digit code from your authenticator app</p>
+          <label class="block text-sm font-medium text-dimmed mb-2">Verify Token</label>
+          <p class="text-xs text-muted mb-2">Enter the 6-digit code from your authenticator app</p>
           <div class="flex gap-2">
             <input 
               v-model="token" 
@@ -91,7 +91,7 @@
               Verify
             </UButton>
           </div>
-          <p v-if="tokenValid" class="text-sm text-emerald-400 mt-2">
+          <p v-if="tokenValid" class="text-sm text-up-fg mt-2">
             <UIcon name="i-heroicons-check-circle" class="w-4 h-4 inline" />
             Token verified successfully!
           </p>

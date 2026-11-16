@@ -78,7 +78,7 @@
 
         <!-- Preview -->
         <UFormField :label="$t('Preview')">
-          <div class="flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <div class="flex items-center justify-center p-4 bg-elevated rounded-lg">
             <img :src="previewUrl" :alt="$t('Badge Preview')" class="h-8" />
           </div>
         </UFormField>

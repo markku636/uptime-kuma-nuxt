@@ -67,7 +67,7 @@
     </div>
 
     <!-- Sort Options -->
-    <div class="flex items-center gap-2 text-sm text-gray-500">
+    <div class="flex items-center gap-2 text-sm text-muted">
       <span>{{ $t('Sort by') }}:</span>
       <UButtonGroup>
         <UButton
@@ -88,7 +88,7 @@
     </div>
 
     <!-- Results count -->
-    <div v-if="totalCount !== undefined" class="text-sm text-gray-500">
+    <div v-if="totalCount !== undefined" class="text-sm text-muted">
       {{ $t('{count} monitors', { count: filteredCount ?? totalCount }) }}
       <span v-if="filteredCount !== undefined && filteredCount !== totalCount">
         ({{ $t('filtered from {total}', { total: totalCount }) }})

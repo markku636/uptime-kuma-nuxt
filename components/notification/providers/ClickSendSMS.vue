@@ -54,7 +54,7 @@ const localConfig = computed({
         placeholder="Uptime Kuma"
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Your sender ID or phone number (subject to carrier limitations)
         </span>
       </template>

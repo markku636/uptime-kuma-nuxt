@@ -19,7 +19,7 @@
       </div>
       
       <div v-if="showLastUpdated" class="text-right">
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('Last updated') }}</p>
+        <p class="text-xs text-muted">{{ $t('Last updated') }}</p>
         <p class="text-sm font-mono">{{ formattedLastUpdate }}</p>
       </div>
     </div>
@@ -27,16 +27,16 @@
     <!-- Optional details -->
     <div v-if="showDetails && stats" class="mt-4 grid grid-cols-3 gap-4">
       <div class="text-center">
-        <p class="text-2xl font-bold text-green-500">{{ stats.up }}</p>
-        <p class="text-xs text-gray-500">{{ $t('Operational') }}</p>
+        <p class="text-2xl font-bold text-up-fg">{{ stats.up }}</p>
+        <p class="text-xs text-muted">{{ $t('Operational') }}</p>
       </div>
       <div class="text-center">
-        <p class="text-2xl font-bold text-yellow-500">{{ stats.degraded }}</p>
-        <p class="text-xs text-gray-500">{{ $t('Degraded') }}</p>
+        <p class="text-2xl font-bold text-pending-fg">{{ stats.degraded }}</p>
+        <p class="text-xs text-muted">{{ $t('Degraded') }}</p>
       </div>
       <div class="text-center">
-        <p class="text-2xl font-bold text-red-500">{{ stats.down }}</p>
-        <p class="text-xs text-gray-500">{{ $t('Outage') }}</p>
+        <p class="text-2xl font-bold text-down-fg">{{ stats.down }}</p>
+        <p class="text-xs text-muted">{{ $t('Outage') }}</p>
       </div>
     </div>
   </div>
@@ -104,15 +104,15 @@ const statusStyles = computed(() => {
   switch (props.status) {
     case 'operational':
       return {
-        bg: 'bg-green-50 dark:bg-green-900/20',
-        icon: 'bg-green-100 dark:bg-green-900/50 text-green-600',
-        text: 'text-green-800 dark:text-green-200'
+        bg: 'bg-up-subtle',
+        icon: 'bg-up-subtle text-up-fg',
+        text: 'text-up-fg'
       }
     case 'degraded':
       return {
-        bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-        icon: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600',
-        text: 'text-yellow-800 dark:text-yellow-200'
+        bg: 'bg-pending-subtle',
+        icon: 'bg-pending-subtle text-pending-fg',
+        text: 'text-pending-fg'
       }
     case 'partial-outage':
       return {
@@ -122,21 +122,21 @@ const statusStyles = computed(() => {
       }
     case 'major-outage':
       return {
-        bg: 'bg-red-50 dark:bg-red-900/20',
-        icon: 'bg-red-100 dark:bg-red-900/50 text-red-600',
-        text: 'text-red-800 dark:text-red-200'
+        bg: 'bg-down-subtle',
+        icon: 'bg-down-subtle text-down-fg',
+        text: 'text-down-fg'
       }
     case 'maintenance':
       return {
-        bg: 'bg-blue-50 dark:bg-blue-900/20',
-        icon: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600',
-        text: 'text-blue-800 dark:text-blue-200'
+        bg: 'bg-maintenance-subtle',
+        icon: 'bg-maintenance-subtle text-maintenance-fg',
+        text: 'text-maintenance-fg'
       }
     default:
       return {
-        bg: 'bg-gray-50 dark:bg-gray-800',
-        icon: 'bg-gray-100 dark:bg-gray-700 text-gray-600',
-        text: 'text-gray-800 dark:text-gray-200'
+        bg: 'bg-muted',
+        icon: 'bg-elevated text-toned',
+        text: 'text-highlighted'
       }
   }
 })

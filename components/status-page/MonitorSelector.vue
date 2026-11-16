@@ -194,7 +194,7 @@ function removeMonitor(id: number) {
   width: 100%;
   padding: 10px 12px 10px 36px;
   font-size: 0.875rem;
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--color-border, var(--uk-border));
   border-radius: 8px;
   background: var(--color-bg-secondary, #f9fafb);
   color: var(--color-text, #374151);
@@ -215,7 +215,7 @@ function removeMonitor(id: number) {
   max-height: 240px;
   overflow-y: auto;
   background: var(--color-bg, white);
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--color-border, var(--uk-border));
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 50;
@@ -258,20 +258,10 @@ function removeMonitor(id: number) {
   font-size: 0.875rem;
   color: var(--color-text-secondary, #6b7280);
   background: var(--color-bg, white);
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--color-border, var(--uk-border));
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 50;
 }
 
-/* Dark mode */
-:root.dark .monitor-selector {
-  --color-text: #f9fafb;
-  --color-text-secondary: #9ca3af;
-  --color-bg: #1f2937;
-  --color-bg-secondary: #374151;
-  --color-bg-hover: #374151;
-  --color-border: #4b5563;
-  --color-primary-light: rgba(16, 185, 129, 0.2);
-}
 </style>

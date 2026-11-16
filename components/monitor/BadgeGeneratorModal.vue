@@ -15,7 +15,7 @@
       <!-- Badge Type -->
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Badge Type</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">Badge Type</label>
           <select v-model="badge.type" class="input w-full">
             <option value="status">Status</option>
             <option value="uptime">Uptime</option>
@@ -28,19 +28,19 @@
 
         <!-- Duration (for uptime, ping, avg-response) -->
         <div v-if="showDuration">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Duration (hours)</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">Duration (hours)</label>
           <input v-model.number="badge.duration" type="number" min="1" placeholder="24" class="input w-full" />
         </div>
 
         <!-- Label -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Custom Label</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">Custom Label</label>
           <input v-model="badge.label" type="text" placeholder="Monitor Name" class="input w-full" />
         </div>
 
         <!-- Style -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Style</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">Style</label>
           <select v-model="badge.style" class="input w-full">
             <option value="flat">Flat</option>
             <option value="plastic">Plastic</option>
@@ -52,43 +52,43 @@
 
         <!-- Colors (collapsible) -->
         <details class="group">
-          <summary class="cursor-pointer text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+          <summary class="cursor-pointer text-sm font-medium text-dimmed mb-2 flex items-center gap-2">
             <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 transition-transform group-open:rotate-90" />
             Custom Colors
           </summary>
           <div class="grid grid-cols-2 gap-4 mt-4 pl-6">
             <div>
-              <label class="block text-xs text-gray-400 mb-1">Up Color</label>
+              <label class="block text-xs text-dimmed mb-1">Up Color</label>
               <input v-model="badge.upColor" type="text" placeholder="#3BB143" class="input w-full text-sm" />
             </div>
             <div>
-              <label class="block text-xs text-gray-400 mb-1">Down Color</label>
+              <label class="block text-xs text-dimmed mb-1">Down Color</label>
               <input v-model="badge.downColor" type="text" placeholder="#DC3545" class="input w-full text-sm" />
             </div>
             <div>
-              <label class="block text-xs text-gray-400 mb-1">Pending Color</label>
+              <label class="block text-xs text-dimmed mb-1">Pending Color</label>
               <input v-model="badge.pendingColor" type="text" placeholder="#F0AD4E" class="input w-full text-sm" />
             </div>
             <div>
-              <label class="block text-xs text-gray-400 mb-1">Maintenance Color</label>
+              <label class="block text-xs text-dimmed mb-1">Maintenance Color</label>
               <input v-model="badge.maintenanceColor" type="text" placeholder="#5BC0DE" class="input w-full text-sm" />
             </div>
             <div>
-              <label class="block text-xs text-gray-400 mb-1">Label Color</label>
+              <label class="block text-xs text-dimmed mb-1">Label Color</label>
               <input v-model="badge.labelColor" type="text" placeholder="#555" class="input w-full text-sm" />
             </div>
           </div>
         </details>
 
         <!-- Badge Preview -->
-        <div class="mt-6 p-4 bg-gray-800 rounded-lg text-center">
-          <p class="text-sm text-gray-400 mb-3">Preview</p>
+        <div class="mt-6 p-4 bg-sunken rounded-lg text-center">
+          <p class="text-sm text-dimmed mb-3">Preview</p>
           <img :src="badgeUrl" :alt="'Badge for ' + monitorName" class="inline-block" />
         </div>
 
         <!-- Badge URL -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Badge URL</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">Badge URL</label>
           <div class="flex gap-2">
             <input :value="badgeUrl" type="text" readonly class="input w-full text-xs" />
             <button @click="copyUrl" class="btn btn-secondary shrink-0">
@@ -99,7 +99,7 @@
 
         <!-- Markdown -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Markdown</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">Markdown</label>
           <div class="flex gap-2">
             <input :value="markdownCode" type="text" readonly class="input w-full text-xs" />
             <button @click="copyMarkdown" class="btn btn-secondary shrink-0">
@@ -110,7 +110,7 @@
 
         <!-- HTML -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">HTML</label>
+          <label class="block text-sm font-medium text-dimmed mb-2">HTML</label>
           <div class="flex gap-2">
             <input :value="htmlCode" type="text" readonly class="input w-full text-xs" />
             <button @click="copyHtml" class="btn btn-secondary shrink-0">

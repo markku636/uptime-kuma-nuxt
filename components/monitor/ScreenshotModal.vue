@@ -16,8 +16,8 @@
       </div>
 
       <div v-else-if="error" class="text-center py-20">
-        <UIcon name="i-heroicons-exclamation-triangle" class="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <p class="text-gray-600 dark:text-gray-400">{{ error }}</p>
+        <UIcon name="i-heroicons-exclamation-triangle" class="w-16 h-16 text-down-fg mx-auto mb-4" />
+        <p class="text-toned">{{ error }}</p>
         <UButton @click="loadScreenshot" color="primary" class="mt-4">Retry</UButton>
       </div>
 
@@ -41,7 +41,7 @@
     </template>
 
     <template #footer="{ close }">
-      <span v-if="timestamp" class="text-sm text-gray-500">
+      <span v-if="timestamp" class="text-sm text-muted">
         Captured: {{ formatDateTime(timestamp) }}
       </span>
       <div class="flex gap-2">

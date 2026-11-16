@@ -65,7 +65,7 @@ const priorityHelpText = computed(() => {
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           ntfy 主題名稱，建議使用難以猜測的名稱以避免收到垃圾訊息
         </p>
       </template>
@@ -80,7 +80,7 @@ const priorityHelpText = computed(() => {
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           ntfy 伺服器 URL（不要包含 topic）。預設為公開的 ntfy.sh
         </p>
       </template>
@@ -109,10 +109,10 @@ const priorityHelpText = computed(() => {
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           {{ priorityHelpText }}
         </p>
-        <p class="text-xs text-gray-400 mt-1">
+        <p class="text-xs text-dimmed mt-1">
           1 = 最低, 5 = 最高/緊急
         </p>
       </template>
@@ -164,7 +164,7 @@ const priorityHelpText = computed(() => {
         placeholder="https://example.com/icon.png"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           自訂通知圖示 URL（可選）
         </p>
       </template>

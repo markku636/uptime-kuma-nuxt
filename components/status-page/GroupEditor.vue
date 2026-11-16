@@ -21,14 +21,14 @@
       <div
         v-for="(group, groupIndex) in localGroups"
         :key="group.id || groupIndex"
-        class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+        class="border border-default rounded-lg overflow-hidden"
         draggable="true"
         @dragstart="handleGroupDragStart(groupIndex)"
         @dragend="handleDragEnd"
       >
         <!-- Group Header -->
-        <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800">
-          <UIcon name="i-heroicons-bars-3" class="cursor-move text-gray-400" />
+        <div class="flex items-center gap-3 p-3 bg-muted">
+          <UIcon name="i-heroicons-bars-3" class="cursor-move text-dimmed" />
           
           <UInput 
             v-model="group.name" 
@@ -56,11 +56,11 @@
             <div
               v-for="(monitorId, monitorIndex) in group.monitorList"
               :key="monitorId"
-              class="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-700 rounded"
+              class="flex items-center gap-2 p-2 bg-elevated rounded"
               draggable="true"
               @dragstart="handleMonitorDragStart(groupIndex, monitorIndex)"
             >
-              <UIcon name="i-heroicons-bars-2" class="cursor-move text-gray-400" />
+              <UIcon name="i-heroicons-bars-2" class="cursor-move text-dimmed" />
               <span>{{ getMonitorName(monitorId) }}</span>
               <UButton 
                 icon="i-heroicons-x-mark" 
@@ -71,13 +71,13 @@
               />
             </div>
           </div>
-          <div v-else class="text-center text-gray-400 py-2">
+          <div v-else class="text-center text-dimmed py-2">
             Drag monitors here
           </div>
         </div>
 
         <!-- Add Monitor -->
-        <div class="p-3 border-t border-gray-200 dark:border-gray-700">
+        <div class="p-3 border-t border-default">
           <USelectMenu
             :model-value="null"
             :items="availableMonitors(groupIndex)"
@@ -91,7 +91,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="localGroups.length === 0" class="text-center py-8 text-gray-500">
+    <div v-if="localGroups.length === 0" class="text-center py-8 text-muted">
       <UIcon name="i-heroicons-squares-2x2" class="w-12 h-12 mx-auto mb-3" />
       <p>No groups yet</p>
       <p class="text-sm">Click "Add Group" to create your first group</p>

@@ -27,14 +27,14 @@
             :disabled="isConnecting"
           />
           <template #hint>
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-muted">
               {{ $t('WebSocket URL for the remote browser (e.g., Playwright, Puppeteer)') }}
             </span>
           </template>
         </UFormField>
 
         <!-- Connection Status -->
-        <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div class="flex items-center gap-3 p-3 bg-muted rounded-lg">
           <div 
             class="w-3 h-3 rounded-full"
             :class="connectionStatusColor"
@@ -43,7 +43,7 @@
             {{ connectionStatusText }}
           </span>
           
-          <span v-if="lastCheckTime" class="text-xs text-gray-500 ml-auto">
+          <span v-if="lastCheckTime" class="text-xs text-muted ml-auto">
             {{ $t('Last checked') }}: {{ formatTime(lastCheckTime) }}
           </span>
         </div>
@@ -94,19 +94,19 @@
 
       <div class="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span class="text-gray-500">{{ $t('Browser') }}:</span>
+          <span class="text-muted">{{ $t('Browser') }}:</span>
           <span class="ml-2 font-medium">{{ browserInfo.browser }}</span>
         </div>
         <div>
-          <span class="text-gray-500">{{ $t('Version') }}:</span>
+          <span class="text-muted">{{ $t('Version') }}:</span>
           <span class="ml-2 font-medium">{{ browserInfo.version }}</span>
         </div>
         <div>
-          <span class="text-gray-500">{{ $t('Platform') }}:</span>
+          <span class="text-muted">{{ $t('Platform') }}:</span>
           <span class="ml-2 font-medium">{{ browserInfo.platform }}</span>
         </div>
         <div>
-          <span class="text-gray-500">{{ $t('Protocol Version') }}:</span>
+          <span class="text-muted">{{ $t('Protocol Version') }}:</span>
           <span class="ml-2 font-medium">{{ browserInfo.protocolVersion }}</span>
         </div>
       </div>
@@ -121,17 +121,17 @@
       <div class="space-y-4 text-sm">
         <p>{{ $t('To use Real Browser monitors, you need to set up a remote browser:') }}</p>
         
-        <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded font-mono text-xs">
+        <div class="p-3 bg-elevated rounded font-mono text-xs">
           # {{ $t('Using Docker') }}<br>
           docker run -d --name playwright-browser -p 3000:3000 browserless/chrome
         </div>
 
-        <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded font-mono text-xs">
+        <div class="p-3 bg-elevated rounded font-mono text-xs">
           # {{ $t('Using Playwright server') }}<br>
           npx playwright run-server --port 3000
         </div>
 
-        <p class="text-gray-500">
+        <p class="text-muted">
           {{ $t('See the documentation for more setup options.') }}
         </p>
       </div>
@@ -169,13 +169,13 @@ const connectionStatus = ref<ConnectionStatus>('disconnected')
 const connectionStatusColor = computed(() => {
   switch (connectionStatus.value) {
     case 'connected':
-      return 'bg-green-500'
+      return 'bg-up'
     case 'connecting':
-      return 'bg-yellow-500 animate-pulse'
+      return 'bg-pending animate-pulse'
     case 'error':
-      return 'bg-red-500'
+      return 'bg-down'
     default:
-      return 'bg-gray-400'
+      return 'bg-unknown'
   }
 })
 

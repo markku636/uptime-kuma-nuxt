@@ -31,22 +31,22 @@ const props = withDefaults(defineProps<Props>(), {
 
 const statusClass = computed(() => {
   const classes = {
-    up: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-    down: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-    pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-    maintenance: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-    unknown: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+    up: 'bg-up-subtle text-up-fg',
+    down: 'bg-down-subtle text-down-fg',
+    pending: 'bg-pending-subtle text-pending-fg',
+    maintenance: 'bg-maintenance-subtle text-maintenance-fg',
+    unknown: 'bg-elevated text-default'
   }
   return classes[props.status]
 })
 
 const dotClass = computed(() => {
   const classes = {
-    up: 'bg-green-500',
-    down: 'bg-red-500',
-    pending: 'bg-yellow-500',
-    maintenance: 'bg-blue-500',
-    unknown: 'bg-gray-500'
+    up: 'bg-up',
+    down: 'bg-down',
+    pending: 'bg-pending',
+    maintenance: 'bg-maintenance',
+    unknown: 'bg-unknown'
   }
   return classes[props.status]
 })

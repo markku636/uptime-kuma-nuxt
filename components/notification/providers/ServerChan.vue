@@ -30,7 +30,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           從 Server 醬官網取得你的 SendKey
         </p>
       </template>
@@ -59,7 +59,7 @@ const config = computed({
               使用微信掃碼登入
             </li>
             <li>在「Key & API」頁面取得 SendKey</li>
-            <li>SendKey 格式通常為 <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded text-xs">SCT...</code> 或 <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded text-xs">sctpXXXtXXX...</code></li>
+            <li>SendKey 格式通常為 <code class="bg-elevated px-1 rounded text-xs">SCT...</code> 或 <code class="bg-elevated px-1 rounded text-xs">sctpXXXtXXX...</code></li>
           </ol>
         </div>
       </template>

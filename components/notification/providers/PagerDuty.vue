@@ -56,7 +56,7 @@ const autoResolveOptions = [
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           查看 
           <a 
             href="https://support.pagerduty.com/docs/services-and-integrations" 
@@ -78,7 +78,7 @@ const autoResolveOptions = [
         placeholder="https://events.pagerduty.com/v2/enqueue"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           通常不需要修改，除非使用自訂的 PagerDuty 端點
         </p>
       </template>
@@ -91,7 +91,7 @@ const autoResolveOptions = [
         :items="priorityOptions"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           設定事件的嚴重性等級
         </p>
       </template>
@@ -104,7 +104,7 @@ const autoResolveOptions = [
         :items="autoResolveOptions"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           當監控恢復正常時，自動解除或確認事件
         </p>
       </template>

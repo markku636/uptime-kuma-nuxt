@@ -37,7 +37,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Get your API key from Free Mobile account settings
         </span>
       </template>

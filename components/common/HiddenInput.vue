@@ -15,7 +15,7 @@
     >
       <UIcon 
         :name="revealed ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" 
-        class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+        class="w-5 h-5 text-dimmed hover:text-toned"
       />
     </button>
   </div>

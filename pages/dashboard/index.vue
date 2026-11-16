@@ -9,40 +9,40 @@
       <div class="flex items-center gap-2 text-sm">
         <span 
           class="w-2 h-2 rounded-full" 
-          :class="socketConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'"
+          :class="socketConnected ? 'bg-up animate-pulse' : 'bg-down'"
         ></span>
-        <span class="text-secondary">{{ socketConnected ? 'Live' : 'Offline' }}</span>
+        <span class="text-toned">{{ socketConnected ? 'Live' : 'Offline' }}</span>
       </div>
     </div>
 
     <!-- Quick Stats -->
     <h2 class="section-title">Quick Stats</h2>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-emerald-500/50" @click="filterByStatus('up')">
+      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-up/50" @click="filterByStatus('up')">
         <div class="stat-label">Up</div>
-        <div class="stat-value" :class="stats.up > 0 ? 'text-emerald-500' : 'text-tertiary'">
+        <div class="stat-value" :class="stats.up > 0 ? 'text-up-fg' : 'text-muted'">
           {{ stats.up }}
         </div>
       </div>
-      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-red-500/50" @click="filterByStatus('down')">
+      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-down/50" @click="filterByStatus('down')">
         <div class="stat-label">Down</div>
-        <div class="stat-value" :class="stats.down > 0 ? 'text-red-500' : 'text-tertiary'">
+        <div class="stat-value" :class="stats.down > 0 ? 'text-down-fg' : 'text-muted'">
           {{ stats.down }}
         </div>
       </div>
-      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-blue-500/50" @click="filterByStatus('maintenance')">
+      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-maintenance/50" @click="filterByStatus('maintenance')">
         <div class="stat-label">Maintenance</div>
-        <div class="stat-value" :class="stats.maintenance > 0 ? 'text-blue-500' : 'text-tertiary'">
+        <div class="stat-value" :class="stats.maintenance > 0 ? 'text-maintenance-fg' : 'text-muted'">
           {{ stats.maintenance }}
         </div>
       </div>
-      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-gray-500/50" @click="filterByStatus('unknown')">
+      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-unknown/50" @click="filterByStatus('unknown')">
         <div class="stat-label">Unknown</div>
-        <div class="stat-value text-tertiary">{{ stats.unknown }}</div>
+        <div class="stat-value text-muted">{{ stats.unknown }}</div>
       </div>
-      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-gray-500/50" @click="filterByStatus('paused')">
+      <div class="stat-card cursor-pointer hover:ring-2 hover:ring-unknown/50" @click="filterByStatus('paused')">
         <div class="stat-label">Paused</div>
-        <div class="stat-value text-tertiary">{{ stats.paused }}</div>
+        <div class="stat-value text-muted">{{ stats.paused }}</div>
       </div>
     </div>
 
@@ -50,7 +50,7 @@
     <div class="card card-body mb-6">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
-          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-tertiary" />
+          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
           <input 
             v-model="searchQuery" 
             type="text" 
@@ -83,8 +83,8 @@
     <!-- Important Events -->
     <div class="card mb-6">
       <div class="p-4 border-b border-default flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-primary">Important Events</h3>
-        <span class="text-sm text-secondary">{{ importantHeartbeats.length }} events</span>
+        <h3 class="text-lg font-semibold text-highlighted">Important Events</h3>
+        <span class="text-sm text-toned">{{ importantHeartbeats.length }} events</span>
       </div>
       <div class="overflow-x-auto">
         <table class="table">
@@ -108,12 +108,12 @@
                   {{ getStatusText(beat.status) }}
                 </span>
               </td>
-              <td class="text-secondary">{{ formatDateTime(beat.time) }}</td>
-              <td class="text-secondary max-w-xs truncate">{{ beat.msg || '-' }}</td>
+              <td class="text-toned">{{ formatDateTime(beat.time) }}</td>
+              <td class="text-toned max-w-xs truncate">{{ beat.msg || '-' }}</td>
             </tr>
             <tr v-if="importantHeartbeats.length === 0">
-              <td colspan="4" class="text-center text-tertiary py-8">
-                <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+              <td colspan="4" class="text-center text-muted py-8">
+                <UIcon name="i-heroicons-check-circle" class="w-8 h-8 mx-auto mb-2 text-up-fg" />
                 <p>No important events - all systems operational</p>
               </td>
             </tr>
@@ -145,9 +145,9 @@
 
     <div v-if="pending" class="text-center py-8">
       <div class="spinner w-8 h-8 mx-auto"></div>
-      <p class="text-secondary mt-2">Loading monitors...</p>
+      <p class="text-toned mt-2">Loading monitors...</p>
     </div>
-    <div v-else-if="filteredMonitors.length === 0" class="card card-body text-center text-secondary py-8">
+    <div v-else-if="filteredMonitors.length === 0" class="card card-body text-center text-toned py-8">
       <template v-if="monitors.length === 0">
         No monitors yet. Click "Add New Monitor" to create one.
       </template>
@@ -166,17 +166,17 @@
         class="card card-body card-interactive cursor-pointer group"
       >
         <div class="flex items-center justify-between mb-2">
-          <span class="font-semibold text-primary group-hover:text-emerald-500 transition-colors">{{ monitor.name }}</span>
+          <span class="font-semibold text-highlighted group-hover:text-up-fg transition-colors">{{ monitor.name }}</span>
           <span :class="getMonitorStatusClass(monitor)" class="badge">
             {{ getMonitorStatusText(monitor) }}
           </span>
         </div>
-        <div class="text-sm text-secondary mb-1">
+        <div class="text-sm text-toned mb-1">
           <span class="uppercase font-medium">{{ monitor.type }}</span>
           <span v-if="monitor.url" class="ml-2 truncate block">{{ monitor.url }}</span>
           <span v-else-if="monitor.hostname" class="ml-2">{{ monitor.hostname }}{{ monitor.port ? `:${monitor.port}` : '' }}</span>
         </div>
-        <div v-if="getLatestPing(monitor)" class="text-xs text-tertiary mb-2">
+        <div v-if="getLatestPing(monitor)" class="text-xs text-muted mb-2">
           Response: {{ getLatestPing(monitor) }}ms
         </div>
         <div class="mt-auto flex items-center gap-0.5">
@@ -217,11 +217,11 @@
                 {{ monitor.name }}
               </NuxtLink>
             </td>
-            <td class="text-secondary uppercase text-sm">{{ monitor.type }}</td>
-            <td class="text-secondary text-sm max-w-xs truncate">
+            <td class="text-toned uppercase text-sm">{{ monitor.type }}</td>
+            <td class="text-toned text-sm max-w-xs truncate">
               {{ monitor.url || monitor.hostname || '-' }}
             </td>
-            <td class="text-secondary">
+            <td class="text-toned">
               {{ getLatestPing(monitor) ? `${getLatestPing(monitor)}ms` : '-' }}
             </td>
             <td>
@@ -411,13 +411,13 @@ const getStatusText = (status: number) => {
 }
 
 const getMonitorStatusClass = (monitor: any) => {
-  if (!monitor.active) return 'bg-gray-700 text-gray-400'
+  if (!monitor.active) return 'bg-unknown-subtle text-unknown-fg'
   const status = getLatestStatus(monitor)
   switch (status) {
     case 1: return 'badge-success'
     case 0: return 'badge-danger'
     case 3: return 'badge-info'
-    default: return 'bg-gray-700 text-gray-400'
+    default: return 'bg-unknown-subtle text-unknown-fg'
   }
 }
 
@@ -442,12 +442,12 @@ const getRecentHeartbeats = (monitor: any, count: number = 20) => {
 }
 
 const getHeartbeatClass = (beat: any) => {
-  if (!beat) return 'bg-gray-700'
+  if (!beat) return 'bg-unknown'
   switch (beat.status) {
-    case 1: return 'bg-emerald-500'
-    case 0: return 'bg-red-500'
-    case 3: return 'bg-blue-500'
-    default: return 'bg-gray-500'
+    case 1: return 'bg-up'
+    case 0: return 'bg-down'
+    case 3: return 'bg-maintenance'
+    default: return 'bg-unknown'
   }
 }
 

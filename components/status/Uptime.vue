@@ -117,42 +117,42 @@ const title = computed(() => {
 }
 
 .text-primary {
-  color: #5cdd8b !important;
+  color: var(--uk-status-up-fg) !important;
 }
 
 .text-warning {
-  color: #f8a306 !important;
+  color: var(--uk-status-pending-fg) !important;
 }
 
 .text-danger {
-  color: #dc3545 !important;
+  color: var(--uk-status-down-fg) !important;
 }
 
 .text-secondary {
-  color: #6c757d !important;
+  color: var(--uk-text-muted) !important;
 }
 
 .text-maintenance {
-  color: #1747f5 !important;
+  color: var(--uk-status-maintenance-fg) !important;
 }
 
 .bg-primary {
-  background-color: #5cdd8b !important;
+  background-color: var(--uk-status-up) !important;
 }
 
 .bg-warning {
-  background-color: #f8a306 !important;
+  background-color: var(--uk-status-pending) !important;
 }
 
 .bg-danger {
-  background-color: #dc3545 !important;
+  background-color: var(--uk-status-down) !important;
 }
 
 .bg-secondary {
-  background-color: #6c757d !important;
+  background-color: var(--uk-status-unknown) !important;
 }
 
 .bg-maintenance {
-  background-color: #1747f5 !important;
+  background-color: var(--uk-status-maintenance) !important;
 }
 </style>

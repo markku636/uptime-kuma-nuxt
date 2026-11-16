@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
+
 
 // Prometheus metrics endpoint
 export default defineEventHandler(async (event) => {

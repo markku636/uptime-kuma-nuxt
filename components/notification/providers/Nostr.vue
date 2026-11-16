@@ -31,7 +31,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Your Nostr private key in nsec format
         </span>
       </template>
@@ -45,7 +45,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           One relay URL per line
         </span>
       </template>
@@ -58,7 +58,7 @@ const localConfig = computed({
         :rows="3"
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Optional: Recipients' public keys (one per line). Leave empty for public posts.
         </span>
       </template>

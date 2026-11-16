@@ -1,4 +1,4 @@
-// server/api/v1/maintenance/clear-statistics.post.ts
+// server/api/v1/database/clear-statistics.post.ts
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {

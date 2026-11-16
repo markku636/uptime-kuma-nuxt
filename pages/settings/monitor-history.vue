@@ -36,11 +36,11 @@ async function clearAllHistory() {
 <template>
   <div class="space-y-6">
     <div class="section-card">
-      <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monitor History</h5>
-      <p class="text-gray-600 dark:text-gray-400 mb-6">Manage your monitor heartbeat history data.</p>
+      <h5 class="text-lg font-semibold text-highlighted mb-4">Monitor History</h5>
+      <p class="text-toned mb-6">Manage your monitor heartbeat history data.</p>
 
       <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Clear history older than (days)</label>
+        <label class="block text-sm font-medium text-default mb-2">Clear history older than (days)</label>
         <div class="flex gap-4">
           <input v-model.number="retentionDays" type="number" class="input-field w-32" min="1" />
           <button class="btn btn-primary" :disabled="clearing" @click="clearHistory">
@@ -49,9 +49,9 @@ async function clearAllHistory() {
         </div>
       </div>
 
-      <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-        <h6 class="text-red-600 dark:text-red-400 font-medium mb-2">Danger Zone</h6>
-        <p class="text-gray-600 dark:text-gray-400 mb-4">Clear all heartbeat history data. This cannot be undone.</p>
+      <div class="pt-6 border-t border-default">
+        <h6 class="text-down-fg font-medium mb-2">Danger Zone</h6>
+        <p class="text-toned mb-4">Clear all heartbeat history data. This cannot be undone.</p>
         <button class="btn btn-danger" :disabled="clearing" @click="clearAllHistory">
           Clear All History
         </button>

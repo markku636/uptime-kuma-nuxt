@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import type { Maintenance } from '~/types'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+import type { Maintenance } from '~/composables/useMaintenances'
+import { errorMessage } from '~/composables/useMaintenances'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 definePageMeta({
   middleware: ['auth']
@@ -8,295 +15,225 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { t } = useI18n()
+const { renderMarkdown } = useMarkdown()
+const { getMaintenance, setActive, deleteMaintenance } = useMaintenances({ autoFetch: false, live: false })
 
-const maintenanceId = computed(() => Number(route.params.id))
+const id = computed(() => Number(route.params.id))
+const maintenance = ref<Maintenance | null>(null)
+const monitorNames = ref<Record<number, string>>({})
+const statusPageNames = ref<Record<number, string>>({})
+const loading = ref(true)
+const loadError = ref<string | null>(null)
+const busy = ref(false)
+const confirm = ref<'pause' | 'delete' | null>(null)
 
-const { data: maintenance, pending, error, refresh } = useFetch<Maintenance>(
-  () => `/api/v1/maintenance/${maintenanceId.value}`
-)
-
-const showDeleteConfirm = ref(false)
-const deleting = ref(false)
-
-const statusConfig = computed(() => {
-  if (!maintenance.value) return null
-  
-  if (maintenance.value.active) {
-    return {
-      label: 'Active',
-      color: 'bg-green-500',
-      textColor: 'text-green-600 dark:text-green-400'
-    }
-  }
-  return {
-    label: 'Inactive',
-    color: 'bg-gray-400',
-    textColor: 'text-gray-600 dark:text-gray-400'
-  }
+const confirmOpen = computed({
+  get: () => confirm.value !== null,
+  set: (v: boolean) => { if (!v) confirm.value = null },
 })
+
+async function load() {
+  loadError.value = null
+  try {
+    const [m, monitors, pages] = await Promise.all([
+      getMaintenance(id.value),
+      $fetch<{ data: { id: number; name: string }[] }>('/api/v1/monitors'),
+      $fetch<{ data: { id: number; title: string }[] }>('/api/v1/status-pages'),
+    ])
+    maintenance.value = m
+    monitorNames.value = Object.fromEntries((monitors.data || []).map(x => [x.id, x.name]))
+    statusPageNames.value = Object.fromEntries((pages.data || []).map(x => [x.id, x.title]))
+  } catch (e) {
+    loadError.value = errorMessage(e, 'Failed to load maintenance')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(load)
 
 const strategyLabel = computed(() => {
-  if (!maintenance.value) return ''
-  
-  const labels: Record<string, string> = {
-    'manual': 'Manual',
-    'single': 'Single Time Window',
-    'recurring-interval': 'Recurring (Every N Days)',
-    'recurring-weekday': 'Recurring (Weekdays)',
-    'recurring-day-of-month': 'Recurring (Days of Month)',
-    'status-page': 'Status Page Controlled'
+  const m = maintenance.value
+  if (!m) return ''
+  switch (m.strategy) {
+    case 'manual': return t('strategyManual')
+    case 'single': return t('Single Maintenance Window')
+    case 'cron': return `${t('cronExpression')}: ${m.cron}`
+    case 'recurring-interval': return `${t('Recurring')} - ${t('recurringIntervalMessage', m.intervalDay, [m.intervalDay])}`
+    case 'recurring-weekday': return `${t('Recurring')} - ${t('dayOfWeek')}`
+    case 'recurring-day-of-month': return `${t('Recurring')} - ${t('dayOfMonth')}`
+    default: return m.strategy
   }
-  
-  return labels[maintenance.value.strategy] || maintenance.value.strategy
 })
 
-async function toggleStatus() {
-  if (!maintenance.value) return
-  
-  try {
-    await $fetch(`/api/v1/maintenance/${maintenanceId.value}`, {
-      method: 'PUT',
-      body: { active: !maintenance.value.active }
-    })
-    refresh()
-    toast.add({
-      title: 'Success',
-      description: `Maintenance ${maintenance.value.active ? 'deactivated' : 'activated'}`,
-      color: 'green'
-    })
-  } catch (error: any) {
-    toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to update maintenance',
-      color: 'red'
-    })
-  }
+const weekdayKeys = ['weekdayShortSun', 'weekdayShortMon', 'weekdayShortTue', 'weekdayShortWed', 'weekdayShortThu', 'weekdayShortFri', 'weekdayShortSat']
+const pad = (n: number) => String(n).padStart(2, '0')
+
+const scheduleDetail = computed(() => {
+  const m = maintenance.value
+  if (!m) return ''
+  const window = m.timeRange ? `${pad(m.timeRange[0].hours)}:${pad(m.timeRange[0].minutes)} → ${pad(m.timeRange[1].hours)}:${pad(m.timeRange[1].minutes)}` : ''
+  if (m.strategy === 'recurring-weekday') return `${m.weekdays.map(d => t(weekdayKeys[d % 7])).join(', ')} · ${window}`
+  if (m.strategy === 'recurring-day-of-month') return `${m.daysOfMonth.map(d => (d === 'lastDay1' ? t('lastDay1') : d)).join(', ')} · ${window}`
+  if (m.strategy === 'recurring-interval') return window
+  if (m.strategy === 'cron') return t('minuteShort', m.durationMinutes, { n: m.durationMinutes })
+  return ''
+})
+
+const dateRangeText = computed(() => {
+  const [start, end] = maintenance.value?.dateRange || []
+  if (!start && !end) return ''
+  return `${start || '…'} → ${end || '…'}`
+})
+
+function fmt(iso: string) {
+  return maintenance.value ? dayjs(iso).tz(maintenance.value.timezone).format('YYYY-MM-DD HH:mm') : iso
 }
 
-async function deleteMaintenance() {
-  deleting.value = true
+async function resume() {
+  busy.value = true
   try {
-    await $fetch(`/api/v1/maintenance/${maintenanceId.value}`, {
-      method: 'DELETE'
-    })
-    toast.add({
-      title: 'Deleted',
-      description: 'Maintenance deleted successfully',
-      color: 'green'
-    })
-    router.push('/maintenance')
-  } catch (error: any) {
-    toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to delete maintenance',
-      color: 'red'
-    })
+    maintenance.value = await setActive(id.value, true)
+  } catch (e) {
+    toast.add({ title: errorMessage(e, 'Failed to resume'), color: 'error' })
   } finally {
-    deleting.value = false
-    showDeleteConfirm.value = false
+    busy.value = false
   }
 }
 
-function formatTime(time: string) {
-  return time || 'N/A'
-}
-
-function formatWeekdays(weekdays: number[]) {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  return weekdays.map(d => dayNames[d]).join(', ')
+async function confirmAction() {
+  busy.value = true
+  try {
+    if (confirm.value === 'pause') {
+      maintenance.value = await setActive(id.value, false)
+    } else if (confirm.value === 'delete') {
+      await deleteMaintenance(id.value)
+      toast.add({ title: t('maintenanceDeleted'), color: 'success' })
+      router.push('/maintenance')
+    }
+    confirm.value = null
+  } catch (e) {
+    toast.add({ title: errorMessage(e, 'Request failed'), color: 'error' })
+  } finally {
+    busy.value = false
+  }
 }
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
-    <!-- Header -->
-    <div class="mb-6">
-      <NuxtLink
-        to="/maintenance"
-        class="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-      >
-        <UIcon name="i-heroicons-arrow-left" class="w-4 h-4" />
-        Back to Maintenance
-      </NuxtLink>
+  <div class="mx-auto w-full max-w-4xl px-4 py-6">
+    <NuxtLink to="/maintenance" class="inline-flex items-center gap-1 text-sm text-muted hover:text-default">
+      <UIcon name="i-heroicons-arrow-left" class="size-4" />
+      {{ t('Maintenance') }}
+    </NuxtLink>
+
+    <div v-if="loading" class="flex justify-center py-16">
+      <div class="spinner size-8" />
     </div>
 
-    <!-- Loading -->
-    <div v-if="pending" class="flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
-    </div>
+    <UAlert v-else-if="loadError" class="mt-4" color="error" variant="subtle" :title="loadError" icon="i-heroicons-exclamation-triangle" />
 
-    <!-- Error -->
-    <div v-else-if="error" class="text-center py-12">
-      <UIcon name="i-heroicons-exclamation-triangle" class="w-12 h-12 mx-auto mb-4 text-red-500" />
-      <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Error Loading Maintenance</h2>
-      <p class="text-gray-600 dark:text-gray-400">{{ error.message }}</p>
-    </div>
-
-    <!-- Content -->
-    <div v-else-if="maintenance" class="space-y-6">
-      <!-- Title Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div class="flex items-start justify-between">
-          <div class="flex items-start gap-4">
-            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <UIcon name="i-heroicons-wrench-screwdriver" class="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                {{ maintenance.title }}
-              </h1>
-              <div class="mt-2 flex items-center gap-3">
-                <span
-                  v-if="statusConfig"
-                  class="inline-flex items-center gap-1.5"
-                >
-                  <span :class="['w-2 h-2 rounded-full', statusConfig.color]" />
-                  <span :class="['text-sm font-medium', statusConfig.textColor]">
-                    {{ statusConfig.label }}
-                  </span>
-                </span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ strategyLabel }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <UButton
-              :variant="maintenance.active ? 'outline' : 'solid'"
-              :color="maintenance.active ? 'gray' : 'green'"
-              @click="toggleStatus"
-            >
-              {{ maintenance.active ? 'Deactivate' : 'Activate' }}
-            </UButton>
-            <UButton
-              variant="outline"
-              icon="i-heroicons-pencil"
-              @click="router.push(`/maintenance/${maintenanceId}/edit`)"
-            >
-              Edit
-            </UButton>
-            <UButton
-              variant="outline"
-              color="red"
-              icon="i-heroicons-trash"
-              @click="showDeleteConfirm = true"
-            />
+    <div v-else-if="maintenance" class="mt-2 space-y-6">
+      <!-- Header -->
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0 space-y-2">
+          <h1 class="text-2xl font-semibold break-words text-highlighted">{{ maintenance.title }}</h1>
+          <div class="flex flex-wrap items-center gap-2">
+            <MaintenanceStatusBadge :status="maintenance.status" />
+            <span class="text-sm text-muted">{{ strategyLabel }}</span>
           </div>
         </div>
-
-        <p v-if="maintenance.description" class="mt-4 text-gray-600 dark:text-gray-400">
-          {{ maintenance.description }}
-        </p>
-      </div>
-
-      <!-- Schedule Details -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Schedule Details
-        </h2>
-
-        <div class="space-y-4">
-          <!-- Strategy-specific details -->
-          <div v-if="maintenance.strategy === 'single' && maintenance.timeslotList?.length" class="space-y-2">
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Time Slots</h3>
-            <div
-              v-for="(slot, index) in maintenance.timeslotList"
-              :key="index"
-              class="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
-            >
-              <span class="text-gray-900 dark:text-white">
-                {{ new Date(slot.startDate).toLocaleString() }}
-              </span>
-              <span class="text-gray-500 mx-2">→</span>
-              <span class="text-gray-900 dark:text-white">
-                {{ new Date(slot.endDate).toLocaleString() }}
-              </span>
-            </div>
-          </div>
-
-          <div v-if="maintenance.strategy === 'recurring-interval'" class="grid grid-cols-2 gap-4">
-            <div>
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Interval</h3>
-              <p class="text-gray-900 dark:text-white">Every {{ maintenance.intervalDay }} day(s)</p>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Time Range</h3>
-              <p class="text-gray-900 dark:text-white">
-                {{ formatTime(maintenance.timeRange?.start) }} - {{ formatTime(maintenance.timeRange?.end) }}
-              </p>
-            </div>
-          </div>
-
-          <div v-if="maintenance.strategy === 'recurring-weekday'" class="grid grid-cols-2 gap-4">
-            <div>
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Weekdays</h3>
-              <p class="text-gray-900 dark:text-white">
-                {{ formatWeekdays(maintenance.weekdays || []) || 'None selected' }}
-              </p>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Time Range</h3>
-              <p class="text-gray-900 dark:text-white">
-                {{ formatTime(maintenance.timeRange?.start) }} - {{ formatTime(maintenance.timeRange?.end) }}
-              </p>
-            </div>
-          </div>
-
-          <div v-if="maintenance.strategy === 'recurring-day-of-month'" class="grid grid-cols-2 gap-4">
-            <div>
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Days of Month</h3>
-              <p class="text-gray-900 dark:text-white">
-                {{ (maintenance.daysOfMonth || []).join(', ') || 'None selected' }}
-              </p>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Time Range</h3>
-              <p class="text-gray-900 dark:text-white">
-                {{ formatTime(maintenance.timeRange?.start) }} - {{ formatTime(maintenance.timeRange?.end) }}
-              </p>
-            </div>
-          </div>
-
-          <div v-if="maintenance.strategy === 'manual'" class="text-gray-600 dark:text-gray-400">
-            This maintenance window is controlled manually. Activate or deactivate it using the buttons above.
-          </div>
+        <div class="flex shrink-0 flex-wrap gap-1.5">
+          <UButton v-if="maintenance.active" color="neutral" variant="outline" icon="i-heroicons-pause" :loading="busy" @click="confirm = 'pause'">
+            {{ t('Pause') }}
+          </UButton>
+          <UButton v-else icon="i-heroicons-play" :loading="busy" @click="resume">{{ t('Resume') }}</UButton>
+          <UButton color="neutral" variant="outline" icon="i-heroicons-document-duplicate" :to="`/maintenance/add?cloneId=${id}`">{{ t('Clone') }}</UButton>
+          <UButton color="neutral" variant="outline" icon="i-heroicons-pencil-square" :to="`/maintenance/${id}/edit`">{{ t('Edit') }}</UButton>
+          <UButton color="error" variant="soft" icon="i-heroicons-trash" @click="confirm = 'delete'">{{ t('Delete') }}</UButton>
         </div>
       </div>
 
-      <!-- Affected Monitors -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Affected Monitors
-        </h2>
+      <!-- Description -->
+      <div
+        v-if="maintenance.description"
+        class="card card-body prose prose-sm max-w-none dark:prose-invert"
+        v-html="renderMarkdown(maintenance.description)"
+      />
 
-        <div v-if="maintenance.monitors?.length" class="space-y-2">
-          <NuxtLink
-            v-for="monitor in maintenance.monitors"
-            :key="monitor.id"
-            :to="`/monitors/${monitor.id}`"
-            class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      <!-- Schedule -->
+      <section class="card card-body space-y-3">
+        <h2 class="font-semibold text-highlighted">{{ t('Strategy') }}</h2>
+        <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+          <template v-if="scheduleDetail">
+            <dt class="text-muted">{{ t('Maintenance Time Window of a Day') }}</dt>
+            <dd class="text-default">{{ scheduleDetail }}</dd>
+          </template>
+          <template v-if="dateRangeText">
+            <dt class="text-muted">{{ maintenance.strategy === 'single' ? t('Date and Time') : t('Effective Date Range') }}</dt>
+            <dd class="font-mono text-default">{{ dateRangeText }}</dd>
+          </template>
+          <template v-if="maintenance.strategy !== 'manual'">
+            <dt class="text-muted">{{ t('Timezone') }}</dt>
+            <dd class="text-default">{{ maintenance.timezone }} (UTC{{ maintenance.timezoneOffset }})</dd>
+          </template>
+        </dl>
+
+        <ul v-if="maintenance.timeslotList.length" class="space-y-1.5 pt-1">
+          <li
+            v-for="(slot, i) in maintenance.timeslotList"
+            :key="slot.startDate"
+            class="flex flex-wrap items-center gap-2 rounded-md px-3 py-2 text-sm"
+            :class="i === 0 && maintenance.status === 'under-maintenance' ? 'bg-maintenance-subtle text-maintenance-fg' : 'bg-sunken text-toned'"
           >
-            <UIcon name="i-heroicons-server" class="w-5 h-5 text-gray-500" />
-            <span class="text-gray-900 dark:text-white">{{ monitor.name }}</span>
+            <span class="font-medium">
+              {{ i === 0 && maintenance.status === 'under-maintenance' ? t('maintenanceCurrentWindow') : t('maintenanceNextWindow') }}
+            </span>
+            <span class="font-mono">{{ fmt(slot.startDate) }} → {{ fmt(slot.endDate) }}</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Affected -->
+      <section class="card card-body space-y-4">
+        <h2 class="font-semibold text-highlighted">{{ t('Affected Monitors') }}</h2>
+        <p v-if="!maintenance.monitors?.length" class="text-sm text-muted">{{ t('maintenanceNoAffectedMonitors') }}</p>
+        <div v-else class="flex flex-wrap gap-2">
+          <NuxtLink
+            v-for="monitorId in maintenance.monitors"
+            :key="monitorId"
+            :to="`/monitors/${monitorId}`"
+            class="rounded-full border border-default bg-sunken px-3 py-1 text-sm text-default hover:border-accented"
+          >
+            {{ monitorNames[monitorId] || `#${monitorId}` }}
           </NuxtLink>
         </div>
-        <p v-else class="text-gray-500 dark:text-gray-400">
-          No monitors are affected by this maintenance.
-        </p>
-      </div>
+
+        <template v-if="maintenance.statusPages?.length">
+          <h3 class="pt-2 text-sm font-medium text-toned">{{ t('affectedStatusPages') }}</h3>
+          <div class="flex flex-wrap gap-2">
+            <span
+              v-for="pageId in maintenance.statusPages"
+              :key="pageId"
+              class="rounded-full border border-default bg-sunken px-3 py-1 text-sm text-default"
+            >
+              {{ statusPageNames[pageId] || `#${pageId}` }}
+            </span>
+          </div>
+        </template>
+      </section>
     </div>
 
-    <!-- Delete Confirmation -->
     <CommonConfirmDialog
-      v-model:open="showDeleteConfirm"
-      title="Delete Maintenance"
-      message="Are you sure you want to delete this maintenance? This action cannot be undone."
-      confirm-text="Delete"
-      type="danger"
-      :loading="deleting"
-      @confirm="deleteMaintenance"
+      v-model:open="confirmOpen"
+      :title="maintenance?.title"
+      :message="confirm === 'delete' ? t('deleteMaintenanceMsg') : t('pauseMaintenanceMsg')"
+      :type="confirm === 'delete' ? 'danger' : 'warning'"
+      :confirm-text="t('Yes')"
+      :cancel-text="t('No')"
+      :loading="busy"
+      @confirm="confirmAction"
     />
   </div>
 </template>

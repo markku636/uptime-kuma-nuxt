@@ -1,8 +1,7 @@
 // API endpoint to clear all data (dangerous!)
 import { defineEventHandler, createError } from 'h3'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {

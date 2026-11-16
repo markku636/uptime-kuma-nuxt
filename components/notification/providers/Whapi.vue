@@ -45,7 +45,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Phone number in international format or group ID
         </span>
       </template>

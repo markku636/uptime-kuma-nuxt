@@ -2,7 +2,7 @@
   <div
     class="monitor-list-item group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors"
     :class="[
-      isSelected ? 'bg-primary-100 dark:bg-primary-900' : 'hover:bg-gray-100 dark:hover:bg-gray-800',
+      isSelected ? 'bg-primary-100 dark:bg-primary-900' : 'hover:bg-elevated',
       { 'opacity-50': monitor.active === false }
     ]"
     @click="$emit('select', monitor)"
@@ -14,7 +14,7 @@
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
         <!-- Monitor Name -->
-        <span class="font-medium truncate text-gray-900 dark:text-gray-100">
+        <span class="font-medium truncate text-highlighted">
           {{ monitor.name }}
         </span>
         
@@ -30,7 +30,7 @@
       </div>
       
       <!-- URL or Description -->
-      <p v-if="monitor.url || monitor.hostname" class="text-xs text-gray-500 dark:text-gray-400 truncate">
+      <p v-if="monitor.url || monitor.hostname" class="text-xs text-muted truncate">
         {{ monitor.url || monitor.hostname }}
       </p>
     </div>
@@ -143,11 +143,11 @@ const hiddenTagsCount = computed(() => {
 // Ping color based on response time
 const pingColor = computed(() => {
   const ping = props.latestPing
-  if (ping === null) return 'text-gray-400'
-  if (ping < 100) return 'text-green-500'
-  if (ping < 500) return 'text-yellow-500'
+  if (ping === null) return 'text-dimmed'
+  if (ping < 100) return 'text-up-fg'
+  if (ping < 500) return 'text-pending-fg'
   if (ping < 1000) return 'text-orange-500'
-  return 'text-red-500'
+  return 'text-down-fg'
 })
 
 // Action dropdown items

@@ -37,7 +37,7 @@ const localConfig = computed({
         placeholder="https://api2.pushdeer.com (default)"
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Optional: Self-hosted PushDeer server URL
         </span>
       </template>

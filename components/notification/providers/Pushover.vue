@@ -66,7 +66,7 @@ const soundItems = soundOptions.map(s => ({ label: s, value: s }))
         placeholder="Leave empty for all devices"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           指定接收通知的設備名稱，留空則發送到所有設備
         </p>
       </template>
@@ -87,7 +87,7 @@ const soundItems = soundOptions.map(s => ({ label: s, value: s }))
         :items="priorityOptions"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           優先級 2 (Emergency) 會持續通知直到用戶確認
         </p>
       </template>
@@ -118,7 +118,7 @@ const soundItems = soundOptions.map(s => ({ label: s, value: s }))
         placeholder="3600"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           訊息的生存時間（秒）。留空或 0 表示永不過期
         </p>
       </template>
@@ -148,7 +148,7 @@ const soundItems = soundOptions.map(s => ({ label: s, value: s }))
             <li>在首頁找到你的 User Key</li>
             <li>建立一個 Application 取得 API Token</li>
           </ol>
-          <p class="text-xs text-gray-400 mt-2">
+          <p class="text-xs text-dimmed mt-2">
             提示：Priority 2 (Emergency) 需要設定 Retry 和 Expire 參數
           </p>
         </div>

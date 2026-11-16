@@ -222,39 +222,39 @@ function dateFromNow(date: string) {
 
 /* Incident Styles */
 .incident-info {
-  background: #dbeafe;
-  border: 1px solid #93c5fd;
-  color: #1e40af;
+  background: color-mix(in srgb, var(--uk-status-maintenance) var(--uk-subtle-mix), transparent);
+  border: 1px solid color-mix(in srgb, var(--uk-status-maintenance) 40%, transparent);
+  color: var(--uk-status-maintenance-fg);
 }
 
 .incident-warning {
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-  color: #92400e;
+  background: color-mix(in srgb, var(--uk-status-pending) var(--uk-subtle-mix), transparent);
+  border: 1px solid color-mix(in srgb, var(--uk-status-pending) 40%, transparent);
+  color: var(--uk-status-pending-fg);
 }
 
 .incident-danger {
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-  color: #991b1b;
+  background: color-mix(in srgb, var(--uk-status-down) var(--uk-subtle-mix), transparent);
+  border: 1px solid color-mix(in srgb, var(--uk-status-down) 40%, transparent);
+  color: var(--uk-status-down-fg);
 }
 
 .incident-primary {
-  background: #d1fae5;
-  border: 1px solid #6ee7b7;
-  color: #065f46;
+  background: color-mix(in srgb, var(--uk-status-up) var(--uk-subtle-mix), transparent);
+  border: 1px solid color-mix(in srgb, var(--uk-status-up) 40%, transparent);
+  color: var(--uk-status-up-fg);
 }
 
 .incident-light {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  color: #374151;
+  background: var(--uk-bg-sunken);
+  border: 1px solid var(--uk-border);
+  color: var(--uk-text-secondary);
 }
 
 .incident-dark {
-  background: #1f2937;
-  border: 1px solid #374151;
-  color: #f9fafb;
+  background: var(--uk-bg-surface);
+  border: 1px solid var(--uk-border);
+  color: var(--uk-text);
 }
 
 .incident-title {
@@ -338,33 +338,33 @@ function dateFromNow(date: string) {
 }
 
 .btn-info {
-  background: #dbeafe;
-  color: #1e40af;
+  background: color-mix(in srgb, var(--uk-status-maintenance) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-maintenance-fg);
 }
 
 .btn-warning {
-  background: #fef3c7;
-  color: #92400e;
+  background: color-mix(in srgb, var(--uk-status-pending) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-pending-fg);
 }
 
 .btn-danger {
-  background: #fee2e2;
-  color: #991b1b;
+  background: color-mix(in srgb, var(--uk-status-down) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-down-fg);
 }
 
 .btn-primary {
-  background: #d1fae5;
-  color: #065f46;
+  background: color-mix(in srgb, var(--uk-status-up) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-up-fg);
 }
 
 .btn-light {
-  background: #f9fafb;
-  color: #374151;
+  background: var(--uk-bg-sunken);
+  color: var(--uk-text-secondary);
 }
 
 .btn-dark {
-  background: #1f2937;
-  color: #f9fafb;
+  background: var(--uk-bg-surface);
+  color: var(--uk-text);
 }
 
 .btn {

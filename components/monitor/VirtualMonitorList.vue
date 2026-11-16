@@ -79,25 +79,25 @@ defineExpose({
       <div
         v-for="i in 8"
         :key="i"
-        class="h-16 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"
+        class="h-16 bg-elevated rounded-lg animate-pulse"
       ></div>
     </div>
 
     <!-- Empty State -->
     <div
       v-else-if="monitors.length === 0"
-      class="text-center py-12 text-gray-500"
+      class="text-center py-12 text-muted"
     >
-      <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto mb-4 text-gray-300" />
+      <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto mb-4 text-dimmed" />
       <p>No monitors found</p>
     </div>
 
     <!-- Virtual List -->
     <template v-else>
       <!-- 列表統計 -->
-      <div class="flex items-center justify-between px-3 py-2 text-sm text-secondary border-b border-default">
+      <div class="flex items-center justify-between px-3 py-2 text-sm text-toned border-b border-default">
         <span>{{ monitors.length }} monitors</span>
-        <span class="text-xs text-tertiary">Virtual scroll enabled</span>
+        <span class="text-xs text-muted">Virtual scroll enabled</span>
       </div>
 
       <!-- 虛擬捲軸容器 -->
@@ -115,7 +115,7 @@ defineExpose({
               'flex items-center gap-3 px-3 cursor-pointer transition-colors border-b border-default',
               selectedId === monitor.id
                 ? 'bg-primary-50 dark:bg-primary-900/20'
-                : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                : 'hover:bg-muted'
             ]"
             @click="handleSelect(monitor)"
           >
@@ -123,15 +123,15 @@ defineExpose({
             <span
               :class="[
                 'w-3 h-3 rounded-full flex-shrink-0',
-                getStatusColor(monitor) === 'green' ? 'bg-green-500' :
-                getStatusColor(monitor) === 'red' ? 'bg-red-500' : 'bg-gray-400'
+                getStatusColor(monitor) === 'green' ? 'bg-up' :
+                getStatusColor(monitor) === 'red' ? 'bg-down' : 'bg-unknown'
               ]"
             ></span>
 
             <!-- Monitor Info -->
             <div class="flex-1 min-w-0">
-              <p class="font-medium truncate text-primary">{{ monitor.name }}</p>
-              <p class="text-xs text-tertiary truncate">
+              <p class="font-medium truncate text-highlighted">{{ monitor.name }}</p>
+              <p class="text-xs text-muted truncate">
                 <span class="uppercase font-medium mr-2">{{ monitor.type }}</span>
                 {{ monitor.url || monitor.hostname || monitor.keyword }}
               </p>

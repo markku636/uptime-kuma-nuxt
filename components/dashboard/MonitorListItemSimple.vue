@@ -73,20 +73,12 @@ const uptimeClass = computed(() => {
   display: flex;
   align-items: center;
   padding: 8px 4px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--uk-border);
   transition: background 0.15s;
-}
-
-.dark .monitor-item {
-  border-color: #30363d;
 }
 
 .monitor-item:hover {
   background: rgba(0, 0, 0, 0.02);
-}
-
-.dark .monitor-item:hover {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .monitor-item.disabled {
@@ -131,20 +123,16 @@ const uptimeClass = computed(() => {
   white-space: nowrap;
 }
 
-.bg-success { background: #28a745; }
-.bg-warning { background: #ffc107; color: #212529; }
-.bg-danger { background: #dc3545; }
+.bg-success { background: var(--uk-status-up); }
+.bg-warning { background: var(--uk-status-pending); color: var(--uk-text); }
+.bg-danger { background: var(--uk-status-down); }
 
 .monitor-name {
   font-size: 0.875rem;
-  color: #212529;
+  color: var(--uk-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.dark .monitor-name {
-  color: #c9d1d9;
 }
 
 .tags {

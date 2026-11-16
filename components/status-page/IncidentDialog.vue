@@ -41,7 +41,7 @@
                 'p-3 rounded-lg border-2 transition-colors text-center',
                 formData.style === style.value 
                   ? 'border-primary-500' 
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                  : 'border-default hover:border-accented'
               ]"
               @click="formData.style = style.value"
             >
@@ -106,8 +106,8 @@ const isEdit = computed(() => !!props.incident?.id)
 
 const styles = [
   { value: 'info', label: 'Info', icon: 'i-heroicons-information-circle', color: 'text-blue-500' },
-  { value: 'warning', label: 'Warning', icon: 'i-heroicons-exclamation-triangle', color: 'text-yellow-500' },
-  { value: 'danger', label: 'Danger', icon: 'i-heroicons-x-circle', color: 'text-red-500' },
+  { value: 'warning', label: 'Warning', icon: 'i-heroicons-exclamation-triangle', color: 'text-pending-fg' },
+  { value: 'danger', label: 'Danger', icon: 'i-heroicons-x-circle', color: 'text-down-fg' },
   { value: 'primary', label: 'Primary', icon: 'i-heroicons-check-circle', color: 'text-primary-500' }
 ]
 

@@ -40,7 +40,7 @@
             placeholder="/var/run/docker.sock"
           />
           <template #hint>
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-muted">
               {{ $t('Unix socket path to Docker daemon') }}
             </span>
           </template>
@@ -58,7 +58,7 @@
             placeholder="tcp://192.168.1.100:2375"
           />
           <template #hint>
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-muted">
               {{ $t('TCP endpoint for Docker daemon (e.g., tcp://host:2375)') }}
             </span>
           </template>
@@ -110,7 +110,7 @@
             {{ $t('Test Connection') }}
           </UButton>
           
-          <span v-if="testResult" class="text-sm" :class="testResult.success ? 'text-green-500' : 'text-red-500'">
+          <span v-if="testResult" class="text-sm" :class="testResult.success ? 'text-up-fg' : 'text-down-fg'">
             {{ testResult.message }}
           </span>
         </div>

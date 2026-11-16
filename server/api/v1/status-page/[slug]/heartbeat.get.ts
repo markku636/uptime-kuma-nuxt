@@ -1,8 +1,8 @@
 // API endpoint for status page heartbeat (public endpoint for push monitoring)
 import { defineEventHandler, getRouterParam, readBody, createError } from 'h3'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
+
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')

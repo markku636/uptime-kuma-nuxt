@@ -1,8 +1,8 @@
 // API endpoint for importing backup data
 import { defineEventHandler, readMultipartFormData, createError } from 'h3'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
+
 
 interface ImportData {
   version: string

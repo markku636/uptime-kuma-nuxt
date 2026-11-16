@@ -30,7 +30,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           <a 
             href="https://developers.google.com/chat/how-tos/webhooks" 
             target="_blank"

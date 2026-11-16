@@ -30,7 +30,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           查看
           <a 
             href="https://www.feishu.cn/hc/zh-CN/articles/360024984973" 

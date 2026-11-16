@@ -1,5 +1,5 @@
 <template>
-  <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-[calc(100vh-4rem)]">
+  <aside class="w-64 bg-default border-r border-default min-h-[calc(100vh-4rem)]">
     <nav class="p-4 space-y-2">
       <NuxtLink
         v-for="item in navItems"
@@ -9,7 +9,7 @@
         :class="[
           isActive(item.to) 
             ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' 
-            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            : 'text-toned hover:bg-elevated'
         ]"
       >
         <UIcon :name="item.icon" class="w-5 h-5" />
@@ -17,7 +17,7 @@
       </NuxtLink>
 
       <!-- Add Monitor Button -->
-      <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div class="pt-4 border-t border-default">
         <UButton
           to="/monitors/add"
           icon="i-heroicons-plus"

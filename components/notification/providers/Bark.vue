@@ -58,7 +58,7 @@ const soundOptions = [
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           從 Bark App 取得你的推送地址。
           <a 
             href="https://github.com/Finb/Bark" 
@@ -78,7 +78,7 @@ const soundOptions = [
         placeholder="uptime-kuma"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           通知分組名稱，相同群組的通知會歸類在一起
         </p>
       </template>
@@ -107,7 +107,7 @@ const soundOptions = [
             <li>打開 App 後會顯示你的專屬推送地址</li>
             <li>複製推送地址填入上方「Bark Endpoint」欄位</li>
           </ol>
-          <p class="mt-2 text-xs text-gray-400">
+          <p class="mt-2 text-xs text-dimmed">
             你也可以自架 Bark Server 以獲得更好的隱私控制
           </p>
         </div>

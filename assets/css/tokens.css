@@ -1,0 +1,219 @@
+/*
+ * Uptime Kuma design tokens
+ * ------------------------------------------------------------------
+ * Three layers (see THEME_AND_MAINTENANCE_PLAN.md):
+ *   1. Primitive  --uk-<hue>-<step>     raw palette, never used in components
+ *   2. Semantic   --uk-bg-*, --uk-text-*, --uk-status-* …   what components use
+ *   3. Component  --uk-beat-*, --uk-chart-* …              only where needed
+ *
+ * Light values live on :root, dark values on .dark. Components should not
+ * need `dark:` variants; they use the Tailwind utilities exposed in main.css
+ * (bg-app, bg-default, text-muted, text-down-fg, bg-up-subtle …).
+ *
+ * Brand and status colours follow upstream uptime-kuma src/assets/vars.scss.
+ */
+
+/* ========== 1. Primitives ========== */
+:root {
+  /* Brand green — 400 is upstream $primary, 300 $highlight, 50 $highlight-white */
+  --uk-green-50: #e7faec;
+  --uk-green-100: #c9f4d6;
+  --uk-green-200: #a3ecbd;
+  --uk-green-300: #7ce8a4;
+  --uk-green-400: #5cdd8b;
+  --uk-green-500: #34c472;
+  --uk-green-600: #1fa35b;
+  --uk-green-700: #0f7d48;
+  --uk-green-800: #12693f;
+  --uk-green-900: #115634;
+  --uk-green-950: #04301b;
+
+  --uk-red-300: #f0616d;
+  --uk-red-500: #dc3545;   /* upstream $danger */
+  --uk-red-700: #b02a37;
+
+  --uk-amber-400: #f8a306; /* upstream $warning */
+  --uk-amber-700: #a35f00;
+
+  --uk-blue-300: #8aa4fb;
+  --uk-blue-600: #1747f5;  /* upstream $maintenance */
+
+  /* Light neutrals (slate) */
+  --uk-slate-50: #f8fafc;
+  --uk-slate-100: #f1f5f9;
+  --uk-slate-200: #e2e8f0;
+  --uk-slate-300: #cbd5e1;
+  --uk-slate-400: #94a3b8;
+  --uk-slate-500: #64748b;
+  --uk-slate-600: #475569;
+  --uk-slate-700: #334155;
+  --uk-slate-800: #1e293b;
+  --uk-slate-900: #0f172a;
+
+  /* Dark neutrals (upstream dark theme) */
+  --uk-ink-950: #070a10;   /* $dark-bg2 */
+  --uk-ink-900: #090c10;   /* body */
+  --uk-ink-850: #0d1117;   /* $dark-bg */
+  --uk-ink-800: #161b22;   /* $dark-header-bg */
+  --uk-ink-750: #1d2634;   /* $dark-border-color */
+  --uk-ink-700: #232f3b;   /* hover / active */
+  --uk-ink-600: #30363d;
+  --uk-ink-500: #535864;
+  --uk-ink-400: #8b949e;
+  --uk-ink-300: #b1b8c0;   /* $dark-font-color */
+  --uk-ink-200: #d1d5db;
+  --uk-ink-on-primary: #020b05; /* $dark-font-color2 */
+}
+
+/* ========== 2. Semantic — light ========== */
+:root {
+  /* Surfaces */
+  --uk-bg-app: #f7f9fc;
+  --uk-bg-surface: #ffffff;
+  --uk-bg-raised: #ffffff;
+  --uk-bg-sunken: var(--uk-slate-100);
+  --uk-bg-hover: rgba(15, 23, 42, 0.04);
+  --uk-bg-active: var(--uk-green-50);
+  --uk-bg-overlay: rgba(15, 23, 42, 0.45);
+
+  /* Text */
+  --uk-text: var(--uk-slate-900);
+  --uk-text-secondary: var(--uk-slate-600);
+  --uk-text-muted: #5b6a7f;
+  --uk-text-disabled: var(--uk-slate-400);
+  --uk-text-on-primary: var(--uk-ink-on-primary);
+  --uk-text-link: var(--uk-primary-fg);
+
+  /* Borders & focus */
+  --uk-border: #d6deea;
+  --uk-border-muted: var(--uk-slate-200);
+  --uk-border-strong: var(--uk-slate-300);
+
+  /* Brand — overridable from Appearance settings via app.config ui.colors.primary */
+  --uk-primary: var(--ui-color-primary-400, var(--uk-green-400));
+  --uk-primary-hover: var(--ui-color-primary-300, var(--uk-green-300));
+  --uk-primary-fg: var(--ui-color-primary-700, var(--uk-green-700));
+  --uk-ring: color-mix(in srgb, var(--uk-primary) 40%, transparent);
+
+  /* Status: solid (fills, bars), fg (text/icons on surface), subtle (tinted bg) */
+  --uk-status-up: var(--uk-green-400);
+  --uk-status-up-fg: var(--uk-green-700);
+  --uk-status-down: var(--uk-red-500);
+  --uk-status-down-fg: var(--uk-red-700);
+  --uk-status-pending: var(--uk-amber-400);
+  --uk-status-pending-fg: var(--uk-amber-700);
+  --uk-status-maintenance: var(--uk-blue-600);
+  --uk-status-maintenance-fg: var(--uk-blue-600);
+  --uk-status-unknown: var(--uk-slate-400);
+  --uk-status-unknown-fg: var(--uk-slate-600);
+  --uk-subtle-mix: 12%;
+
+  /* Elevation */
+  --uk-shadow-card: 0 12px 24px -12px rgba(15, 23, 42, 0.08);
+  --uk-shadow-popover: 0 10px 30px -10px rgba(15, 23, 42, 0.25);
+
+  /* Component */
+  --uk-beat-empty: var(--uk-slate-200);
+  --uk-chart-grid: var(--uk-border-muted);
+  --uk-chart-axis: var(--uk-text-muted);
+  --uk-chart-line: var(--uk-status-up);
+  --uk-input-bg: var(--uk-bg-surface);
+  --uk-sidebar-bg: var(--uk-bg-surface);
+}
+
+/* ========== 2. Semantic — dark ========== */
+.dark {
+  --uk-bg-app: var(--uk-ink-900);
+  --uk-bg-surface: var(--uk-ink-850);
+  --uk-bg-raised: var(--uk-ink-800);
+  --uk-bg-sunken: var(--uk-ink-950);
+  --uk-bg-hover: var(--uk-ink-800);
+  --uk-bg-active: var(--uk-ink-700);
+  --uk-bg-overlay: rgba(0, 0, 0, 0.6);
+
+  --uk-text: var(--uk-ink-200);
+  --uk-text-secondary: var(--uk-ink-300);
+  --uk-text-muted: var(--uk-ink-400);
+  --uk-text-disabled: #6e7681;
+  --uk-text-link: var(--uk-primary);
+
+  --uk-border: var(--uk-ink-750);
+  --uk-border-muted: var(--uk-ink-750);
+  --uk-border-strong: var(--uk-ink-600);
+
+  --uk-primary-fg: var(--uk-primary);
+
+  --uk-status-up-fg: var(--uk-green-400);
+  --uk-status-down-fg: var(--uk-red-300);
+  --uk-status-pending-fg: var(--uk-amber-400);
+  --uk-status-maintenance-fg: var(--uk-blue-300);
+  --uk-status-unknown: var(--uk-ink-500);
+  --uk-status-unknown-fg: var(--uk-ink-400);
+  --uk-subtle-mix: 18%;
+
+  /* Shadows are invisible on near-black; use a hairline instead */
+  --uk-shadow-card: 0 0 0 1px var(--uk-border);
+  --uk-shadow-popover: 0 0 0 1px var(--uk-border-strong), 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+
+  --uk-beat-empty: var(--uk-ink-600);
+  --uk-input-bg: var(--uk-bg-sunken);
+}
+
+/* ========== Non-colour tokens ========== */
+:root {
+  --uk-radius-sm: 6px;
+  --uk-radius-md: 8px;
+  --uk-radius-lg: 12px;
+  --uk-radius-pill: 50rem;
+
+  --uk-ease-in: cubic-bezier(0.54, 0.78, 0.55, 0.97);
+  --uk-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --uk-ease-in-out: cubic-bezier(0.79, 0.14, 0.15, 0.86);
+  --uk-duration-fast: 0.15s;
+  --uk-duration-base: 0.2s;
+  --uk-duration-slow: 0.3s;
+
+  --uk-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --uk-z-sidebar: 30;
+  --uk-z-header: 40;
+  --uk-z-dropdown: 50;
+  --uk-z-modal: 60;
+  --uk-z-toast: 70;
+
+  --uk-beat-width: 6px;
+  --uk-beat-height: 28px;
+  --uk-beat-gap: 2px;
+}
+
+/* ========== 3. Nuxt UI bridge ==========
+ * Nuxt UI components read --ui-*; point them at our semantic tokens.
+ * Unlayered, so this wins over @nuxt/ui's @layer theme defaults.
+ */
+:root,
+.dark {
+  --ui-bg: var(--uk-bg-surface);
+  --ui-bg-muted: var(--uk-bg-sunken);
+  --ui-bg-accented: var(--uk-bg-active);
+  --ui-text: var(--uk-text);
+  --ui-text-toned: var(--uk-text-secondary);
+  --ui-text-muted: var(--uk-text-muted);
+  --ui-text-dimmed: var(--uk-text-disabled);
+  --ui-text-highlighted: var(--uk-text);
+  --ui-border: var(--uk-border);
+  --ui-border-muted: var(--uk-border-muted);
+  --ui-border-accented: var(--uk-border-strong);
+  --ui-primary: var(--uk-primary);
+  --ui-error: var(--uk-status-down);
+  --ui-warning: var(--uk-status-pending);
+  --ui-success: var(--uk-status-up);
+  --ui-radius: 0.375rem;
+}
+
+:root {
+  --ui-bg-elevated: var(--uk-slate-100);
+}
+
+.dark {
+  --ui-bg-elevated: var(--uk-ink-800);
+}

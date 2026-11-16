@@ -5,7 +5,7 @@
         <!-- Logo -->
         <div class="text-center">
           <img src="/icon.svg" alt="Uptime Kuma" width="64" height="64" class="mx-auto" />
-          <h1 class="text-2xl font-bold text-primary mt-3">Uptime Kuma</h1>
+          <h1 class="text-2xl font-bold text-highlighted mt-3">Uptime Kuma</h1>
           <p class="text-muted mt-2">Create your admin account</p>
         </div>
 
@@ -149,10 +149,10 @@ const handleSetup = async () => {
 }
 
 .alert-success {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: color-mix(in srgb, var(--uk-status-up) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-up-fg);
   padding: 0.75rem 1rem;
   border-radius: 0.375rem;
-  border: 1px solid #c3e6cb;
+  border: 1px solid color-mix(in srgb, var(--uk-status-up) 35%, transparent);
 }
 </style>

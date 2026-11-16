@@ -47,7 +47,7 @@ async function copyToClipboard() {
 
 <template>
   <div class="space-y-1">
-    <label v-if="label" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label v-if="label" class="text-sm font-medium text-default">
       {{ label }}
     </label>
     <div class="flex items-center gap-2">
@@ -56,7 +56,7 @@ async function copyToClipboard() {
           type="text"
           :value="displayValue"
           readonly
-          class="w-full px-3 py-2 pr-20 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono text-gray-900 dark:text-gray-100"
+          class="w-full px-3 py-2 pr-20 bg-muted border border-accented rounded-lg text-sm font-mono text-highlighted"
         />
         <div class="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <UButton
@@ -70,7 +70,7 @@ async function copyToClipboard() {
             variant="ghost"
             size="xs"
             :icon="copied ? 'i-heroicons-check' : 'i-heroicons-clipboard'"
-            :class="copied && 'text-green-500'"
+            :class="copied && 'text-up-fg'"
             @click="copyToClipboard"
           />
         </div>

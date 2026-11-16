@@ -37,7 +37,7 @@ const severityOptions = [
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Get the integration key from FlashDuty service settings
         </span>
       </template>

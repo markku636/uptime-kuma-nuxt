@@ -39,7 +39,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           以 ! 開頭的內部房間 ID，可在房間設定中找到
         </p>
       </template>
@@ -67,12 +67,12 @@ const config = computed({
         <div class="text-sm space-y-2 mt-2">
           <p>建議使用獨立的 Bot 帳號而非你的主帳號。</p>
           <p>取得 Access Token 的方法：</p>
-          <div class="bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
+          <div class="bg-elevated p-2 rounded overflow-x-auto">
             <code class="text-xs whitespace-pre-wrap">
 curl -XPOST -d '{"type": "m.login.password", "identifier": {"user": "botusername", "type": "m.id.user"}, "password": "passwordforuser"}' "https://home.server/_matrix/client/v3/login"
             </code>
           </div>
-          <p class="text-xs text-gray-400 mt-2">
+          <p class="text-xs text-dimmed mt-2">
             將 home.server 替換為你的 Homeserver 地址
           </p>
         </div>

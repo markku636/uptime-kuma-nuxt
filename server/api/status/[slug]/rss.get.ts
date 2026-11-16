@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import RSS from 'rss'
 
-const prisma = new PrismaClient()
+
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')

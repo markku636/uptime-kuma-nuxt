@@ -17,17 +17,17 @@ const formattedValue = computed(() => {
 })
 
 const colorClass = computed(() => {
-  if (props.value >= 99) return 'text-green-600 dark:text-green-400'
-  if (props.value >= 95) return 'text-yellow-600 dark:text-yellow-400'
+  if (props.value >= 99) return 'text-up-fg'
+  if (props.value >= 95) return 'text-pending-fg'
   if (props.value >= 90) return 'text-orange-600 dark:text-orange-400'
-  return 'text-red-600 dark:text-red-400'
+  return 'text-down-fg'
 })
 
 const bgColorClass = computed(() => {
-  if (props.value >= 99) return 'bg-green-500'
-  if (props.value >= 95) return 'bg-yellow-500'
+  if (props.value >= 99) return 'bg-up'
+  if (props.value >= 95) return 'bg-pending'
   if (props.value >= 90) return 'bg-orange-500'
-  return 'bg-red-500'
+  return 'bg-down'
 })
 </script>
 
@@ -37,11 +37,11 @@ const bgColorClass = computed(() => {
       <span :class="['text-lg font-bold tabular-nums', colorClass]">
         {{ formattedValue }}%
       </span>
-      <span v-if="showLabel" class="text-xs text-gray-500 dark:text-gray-400">
+      <span v-if="showLabel" class="text-xs text-muted">
         {{ duration }}
       </span>
     </div>
-    <div class="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div class="h-1.5 w-full bg-accented rounded-full overflow-hidden">
       <div
         :class="['h-full rounded-full transition-all duration-300', bgColorClass]"
         :style="{ width: `${Math.min(value, 100)}%` }"

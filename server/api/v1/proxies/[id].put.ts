@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { z } from 'zod'
 
-const prisma = new PrismaClient()
+
 
 const updateProxySchema = z.object({
   protocol: z.enum(['http', 'https', 'socks', 'socks5']).optional(),

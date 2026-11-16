@@ -28,7 +28,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Get the webhook URL from Squadcast service → Integrations → Uptime Kuma
         </span>
       </template>

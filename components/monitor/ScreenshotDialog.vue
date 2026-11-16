@@ -13,7 +13,7 @@
       <div class="space-y-4">
         <!-- Loading state -->
         <div v-if="loading" class="flex items-center justify-center py-12">
-          <UIcon name="i-heroicons-arrow-path" class="animate-spin w-8 h-8 text-gray-400" />
+          <UIcon name="i-heroicons-arrow-path" class="animate-spin w-8 h-8 text-dimmed" />
         </div>
 
         <!-- Screenshot -->
@@ -21,7 +21,7 @@
           <img 
             :src="screenshotUrl" 
             :alt="`Screenshot of ${monitorName}`"
-            class="w-full rounded-lg border border-gray-200 dark:border-gray-700"
+            class="w-full rounded-lg border border-default"
           />
           <div class="absolute bottom-2 right-2 flex gap-2">
             <UButton 
@@ -45,14 +45,14 @@
         </div>
 
         <!-- No screenshot available -->
-        <div v-else class="flex flex-col items-center justify-center py-12 text-gray-500">
+        <div v-else class="flex flex-col items-center justify-center py-12 text-muted">
           <UIcon name="i-heroicons-photo" class="w-16 h-16 mb-4" />
           <p>No screenshot available</p>
           <p class="text-sm mt-1">Screenshots are only available for Real Browser monitors</p>
         </div>
 
         <!-- Screenshot info -->
-        <div v-if="screenshotTime" class="text-sm text-gray-500 text-center">
+        <div v-if="screenshotTime" class="text-sm text-muted text-center">
           Captured at: {{ formatDateTime(screenshotTime) }}
         </div>
       </div>

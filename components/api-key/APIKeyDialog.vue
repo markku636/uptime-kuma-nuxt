@@ -29,16 +29,16 @@
           </template>
         </UFormField>
 
-        <div v-if="createdKey" class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+        <div v-if="createdKey" class="mt-4 p-4 bg-up-subtle rounded-lg border border-up/40">
           <div class="flex items-center gap-2 mb-2">
-            <UIcon name="i-heroicons-check-circle" class="text-green-500" />
-            <span class="font-medium text-green-700 dark:text-green-300">API Key Created Successfully</span>
+            <UIcon name="i-heroicons-check-circle" class="text-up-fg" />
+            <span class="font-medium text-up-fg">API Key Created Successfully</span>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p class="text-sm text-toned mb-2">
             Make sure to copy your API key now. You won't be able to see it again!
           </p>
           <div class="flex items-center gap-2">
-            <code class="flex-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm font-mono break-all">
+            <code class="flex-1 p-2 bg-elevated rounded text-sm font-mono break-all">
               {{ createdKey }}
             </code>
             <UButton 

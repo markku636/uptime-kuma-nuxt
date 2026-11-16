@@ -1,19 +1,19 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-900">
+  <div class="min-h-screen flex items-center justify-center bg-app">
     <div class="text-center">
       <div class="mb-8">
-        <UIcon name="i-heroicons-exclamation-triangle" class="w-24 h-24 mx-auto text-yellow-500" />
+        <UIcon name="i-heroicons-exclamation-triangle" class="w-24 h-24 mx-auto text-pending-fg" />
       </div>
       
-      <h1 class="text-6xl font-bold text-white mb-4">
+      <h1 class="text-6xl font-bold text-highlighted mb-4">
         {{ error?.statusCode || 404 }}
       </h1>
       
-      <h2 class="text-2xl font-semibold text-gray-300 mb-4">
+      <h2 class="text-2xl font-semibold text-toned mb-4">
         {{ errorTitle }}
       </h2>
       
-      <p class="text-gray-400 mb-8 max-w-md mx-auto">
+      <p class="text-muted mb-8 max-w-md mx-auto">
         {{ errorMessage }}
       </p>
       
@@ -39,9 +39,9 @@
       
       <!-- Debug info in development -->
       <div v-if="isDev && error?.stack" class="mt-8 text-left max-w-2xl mx-auto">
-        <details class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-          <summary class="text-gray-600 dark:text-gray-400 cursor-pointer">Stack Trace</summary>
-          <pre class="mt-4 text-xs text-red-400 overflow-auto">{{ error.stack }}</pre>
+        <details class="bg-elevated rounded-lg p-4">
+          <summary class="text-toned cursor-pointer">Stack Trace</summary>
+          <pre class="mt-4 text-xs text-down-fg overflow-auto">{{ error.stack }}</pre>
         </details>
       </div>
     </div>

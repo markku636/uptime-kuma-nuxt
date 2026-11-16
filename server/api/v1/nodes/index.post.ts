@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '~/server/utils/prisma'
 import { z } from "zod";
 
-const prisma = new PrismaClient();
+
 
 const nodeSchema = z.object({
     nodeId: z.string().min(1, "Node ID is required"),

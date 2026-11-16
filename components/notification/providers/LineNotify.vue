@@ -29,7 +29,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Get your access token from 
           <a href="https://notify-bot.line.me/my/" target="_blank" class="text-primary-500 hover:underline">
             LINE Notify

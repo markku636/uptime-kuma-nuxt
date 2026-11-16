@@ -83,7 +83,7 @@
           @blur="emitUpdate"
         />
       </UFormField>
-      <p class="text-sm text-gray-500">
+      <p class="text-sm text-muted">
         You can also provide PEM certificates:
       </p>
       <UFormField label="CA Certificate (PEM)">

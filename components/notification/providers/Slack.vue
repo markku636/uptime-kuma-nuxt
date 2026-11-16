@@ -30,7 +30,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           <a 
             href="https://api.slack.com/messaging/webhooks" 
             target="_blank"
@@ -49,7 +49,7 @@ const config = computed({
         placeholder="Uptime Kuma"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           留空則使用 Webhook 預設的顯示名稱
         </p>
       </template>
@@ -62,7 +62,7 @@ const config = computed({
         placeholder=":rocket:"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           使用 Slack Emoji 格式，例如 :white_check_mark: 或 :x:
           <a 
             href="https://www.webfx.com/tools/emoji-cheat-sheet/" 
@@ -82,7 +82,7 @@ const config = computed({
         placeholder="#alerts"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           留空則使用 Webhook 預設的頻道。輸入 #channel 或 @user
         </p>
       </template>
@@ -95,7 +95,7 @@ const config = computed({
         label="Send rich messages"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           開啟後將發送帶有附件格式的訊息，包含顏色指示和更多詳細資訊
         </p>
       </template>
@@ -108,7 +108,7 @@ const config = computed({
         label="Notify Channel (@channel)"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           開啟後會使用 @channel 通知頻道中的所有人
         </p>
       </template>

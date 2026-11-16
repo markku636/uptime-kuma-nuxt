@@ -15,7 +15,7 @@
       <div
         v-for="(code, index) in codes"
         :key="index"
-        class="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg"
+        class="flex items-center gap-1 px-2 py-1 bg-elevated rounded-lg"
       >
         <UInput 
           v-model="codes[index]"
@@ -45,7 +45,7 @@
       </UButton>
     </div>
 
-    <p class="text-sm text-gray-500">
+    <p class="text-sm text-muted">
       Use single codes (200) or ranges (200-299). Status codes outside this list will mark the monitor as down.
     </p>
   </div>

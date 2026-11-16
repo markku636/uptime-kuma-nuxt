@@ -62,7 +62,7 @@ const regionOptions = [
         placeholder="3"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           1-5，數字越高優先級越高
         </p>
       </template>

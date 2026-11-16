@@ -64,14 +64,14 @@ async function deleteProxy(id: number) {
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Proxies</h4>
+      <h4 class="text-lg font-semibold text-highlighted">Proxies</h4>
       <button class="btn btn-primary" @click="openAddForm">Add Proxy</button>
     </div>
 
-    <div v-if="loading" class="text-center py-8 text-gray-600 dark:text-gray-400">Loading...</div>
+    <div v-if="loading" class="text-center py-8 text-toned">Loading...</div>
 
     <div v-else-if="proxies.length === 0" class="section-card text-center py-8">
-      <p class="text-gray-600 dark:text-gray-400 mb-4">No proxies configured yet.</p>
+      <p class="text-toned mb-4">No proxies configured yet.</p>
       <button class="btn btn-primary" @click="openAddForm">Add Your First Proxy</button>
     </div>
 
@@ -94,11 +94,11 @@ async function deleteProxy(id: number) {
     </div>
 
     <div v-if="showForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ editingProxy ? 'Edit' : 'Add' }} Proxy</h3>
+      <div class="bg-default rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-highlighted mb-4">{{ editingProxy ? 'Edit' : 'Add' }} Proxy</h3>
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Protocol</label>
+            <label class="block text-sm font-medium text-default mb-2">Protocol</label>
             <select v-model="form.protocol" class="select-field">
               <option value="http">HTTP</option>
               <option value="https">HTTPS</option>
@@ -107,30 +107,30 @@ async function deleteProxy(id: number) {
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Host</label>
+            <label class="block text-sm font-medium text-default mb-2">Host</label>
             <input v-model="form.host" type="text" class="input-field" placeholder="proxy.example.com" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Port</label>
+            <label class="block text-sm font-medium text-default mb-2">Port</label>
             <input v-model.number="form.port" type="number" class="input-field" />
           </div>
           <label class="flex items-center gap-2 cursor-pointer">
             <input v-model="form.auth" type="checkbox" />
-            <span class="text-gray-700 dark:text-gray-300">Requires authentication</span>
+            <span class="text-default">Requires authentication</span>
           </label>
           <template v-if="form.auth">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
+              <label class="block text-sm font-medium text-default mb-2">Username</label>
               <input v-model="form.username" type="text" class="input-field" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+              <label class="block text-sm font-medium text-default mb-2">Password</label>
               <input v-model="form.password" type="password" class="input-field" />
             </div>
           </template>
           <label class="flex items-center gap-2 cursor-pointer">
             <input v-model="form.active" type="checkbox" />
-            <span class="text-gray-700 dark:text-gray-300">Active</span>
+            <span class="text-default">Active</span>
           </label>
           <div class="flex gap-3 pt-4">
             <button type="button" class="btn btn-secondary flex-1" @click="showForm = false">Cancel</button>

@@ -1,17 +1,17 @@
 <template>
   <div class="space-y-2">
     <div class="flex items-center justify-between">
-      <span class="text-sm text-gray-600 dark:text-gray-400">{{ label }}</span>
+      <span class="text-sm text-toned">{{ label }}</span>
       <span class="text-sm font-medium">{{ displayValue }}%</span>
     </div>
-    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div class="w-full h-2 bg-accented rounded-full overflow-hidden">
       <div 
         class="h-full transition-all duration-300 rounded-full"
         :class="barColorClass"
         :style="{ width: `${clampedValue}%` }"
       />
     </div>
-    <div v-if="showRange" class="flex justify-between text-xs text-gray-500">
+    <div v-if="showRange" class="flex justify-between text-xs text-muted">
       <span>{{ min }}%</span>
       <span>{{ max }}%</span>
     </div>
@@ -52,9 +52,9 @@ const displayValue = computed(() => {
 const barColorClass = computed(() => {
   if (props.colorMode !== 'auto') {
     const colors = {
-      success: 'bg-green-500',
-      warning: 'bg-yellow-500',
-      danger: 'bg-red-500',
+      success: 'bg-up',
+      warning: 'bg-pending',
+      danger: 'bg-down',
       primary: 'bg-primary-500'
     }
     return colors[props.colorMode]
@@ -62,10 +62,10 @@ const barColorClass = computed(() => {
 
   // Auto mode - color based on thresholds
   if (clampedValue.value >= props.thresholds.danger) {
-    return 'bg-red-500'
+    return 'bg-down'
   } else if (clampedValue.value >= props.thresholds.warning) {
-    return 'bg-yellow-500'
+    return 'bg-pending'
   }
-  return 'bg-green-500'
+  return 'bg-up'
 })
 </script>

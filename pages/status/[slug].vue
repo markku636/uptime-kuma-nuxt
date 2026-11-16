@@ -110,6 +110,22 @@ const hasLoaded = computed(() => !loading.value)
 
 // Markdown rendering for description and footer
 const { renderMarkdown } = useMarkdown()
+
+// A status page can force light or dark regardless of the visitor's preference.
+// Toggle the class directly (instead of colorMode.preference) so the admin's
+// saved preference is left untouched.
+const colorMode = useColorMode()
+function applyStatusPageTheme() {
+  if (!import.meta.client) return
+  const theme = statusPage.value?.theme
+  const dark = theme === 'dark' || (theme !== 'light' && colorMode.value === 'dark')
+  document.documentElement.classList.toggle('dark', dark)
+}
+watch(() => [statusPage.value?.theme, colorMode.value], applyStatusPageTheme)
+onMounted(applyStatusPageTheme)
+onBeforeUnmount(() => {
+  if (import.meta.client) document.documentElement.classList.toggle('dark', colorMode.value === 'dark')
+})
 const descriptionHtml = computed(() => renderMarkdown(statusPage.value?.description))
 const footerHtml = computed(() => renderMarkdown(statusPage.value?.footerText))
 
@@ -194,35 +210,35 @@ const overallStatusConfig = computed(() => {
       return { 
         text: 'All Systems Operational', 
         icon: '✓',
-        bgClass: 'bg-green-500',
+        bgClass: 'bg-up',
         textClass: 'text-white'
       }
     case 'partial-outage':
       return { 
         text: 'Partial System Outage', 
         icon: '⚠',
-        bgClass: 'bg-yellow-500',
+        bgClass: 'bg-pending',
         textClass: 'text-white'
       }
     case 'major-outage':
       return { 
         text: 'Major System Outage', 
         icon: '✕',
-        bgClass: 'bg-red-500',
+        bgClass: 'bg-down',
         textClass: 'text-white'
       }
     case 'maintenance':
       return { 
         text: 'Scheduled Maintenance', 
         icon: '🔧',
-        bgClass: 'bg-blue-500',
+        bgClass: 'bg-maintenance',
         textClass: 'text-white'
       }
     default:
       return { 
         text: 'Status Unknown', 
         icon: '?',
-        bgClass: 'bg-gray-500',
+        bgClass: 'bg-unknown',
         textClass: 'text-white'
       }
   }
@@ -573,15 +589,15 @@ function formatLastUpdated(date: Date | null) {
       <div v-if="loading" class="flex items-center justify-center min-h-screen">
         <div class="text-center">
           <div class="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p class="text-gray-500 dark:text-gray-400">Loading status page...</p>
+          <p class="text-muted">Loading status page...</p>
         </div>
       </div>
 
       <!-- Error State -->
       <div v-else-if="error" class="flex items-center justify-center min-h-screen">
         <div class="text-center px-4">
-          <h1 class="text-6xl font-bold text-gray-300 dark:text-gray-700 mb-4">404</h1>
-          <p class="text-xl text-gray-500 dark:text-gray-400 mb-8">{{ error }}</p>
+          <h1 class="text-6xl font-bold text-dimmed mb-4">404</h1>
+          <p class="text-xl text-muted mb-8">{{ error }}</p>
           <NuxtLink 
             to="/" 
             class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
@@ -601,13 +617,13 @@ function formatLastUpdated(date: Date | null) {
         <button
           v-if="editMode"
           @click="exitEditMode"
-          class="px-4 py-2 bg-gray-500 text-white rounded-lg shadow-lg hover:bg-gray-600 transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-unknown text-white rounded-lg shadow-lg hover:bg-unknown/90 transition-colors flex items-center gap-2"
         >
           <span>✕ Exit Edit</span>
         </button>
         <button
           @click="toggleEditMode"
-          class="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-default rounded-lg shadow-lg border border-default hover:bg-muted transition-colors flex items-center gap-2"
         >
           <span v-if="editMode && showEditSidebar">👁️ Hide Sidebar</span>
           <span v-else-if="editMode">⚙️ Show Sidebar</span>
@@ -638,20 +654,20 @@ function formatLastUpdated(date: Date | null) {
           <!-- Description with Markdown support -->
           <div 
             v-if="statusPage?.description" 
-            class="text-lg text-gray-600 dark:text-gray-400 status-page-description max-w-2xl mx-auto prose dark:prose-invert"
+            class="text-lg text-toned status-page-description max-w-2xl mx-auto prose dark:prose-invert"
             v-html="descriptionHtml"
           />
           
           <!-- Real-time indicator -->
-          <div class="mt-6 flex items-center justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+          <div class="mt-6 flex items-center justify-center gap-4 text-sm text-muted">
             <div class="flex items-center gap-2">
               <span 
                 class="w-2.5 h-2.5 rounded-full"
-                :class="connected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'"
+                :class="connected ? 'bg-up animate-pulse' : 'bg-unknown'"
               ></span>
               <span>{{ connected ? 'Live' : 'Offline' }}</span>
             </div>
-            <span class="text-gray-300 dark:text-gray-600">•</span>
+            <span class="text-dimmed">•</span>
             <span v-if="lastUpdated">
               Updated: {{ formatLastUpdated(lastUpdated) }}
             </span>
@@ -676,20 +692,21 @@ function formatLastUpdated(date: Date | null) {
         <div
           v-for="maintenance in maintenanceList"
           :key="maintenance.id"
-          class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4"
+          class="mb-4 rounded-lg border border-maintenance/40 bg-maintenance-subtle p-4"
+          role="status"
         >
           <div class="flex items-start gap-3">
-            <span class="text-blue-500 text-xl">🔧</span>
-            <div>
-              <h3 class="font-semibold text-blue-800 dark:text-blue-200">
+            <UIcon name="i-heroicons-wrench-screwdriver" class="mt-0.5 size-5 shrink-0 text-maintenance-fg" />
+            <div class="min-w-0">
+              <h3 class="font-semibold text-maintenance-fg">
                 {{ maintenance.title }}
               </h3>
-              <p class="text-sm text-blue-600 dark:text-blue-300 mt-1">
-                {{ maintenance.description }}
-              </p>
-              <p class="text-xs text-blue-500 dark:text-blue-400 mt-2">
-                {{ maintenance.startTime }} - {{ maintenance.endTime }}
-              </p>
+              <div
+                v-if="maintenance.description"
+                class="prose prose-sm mt-1 max-w-none text-default dark:prose-invert"
+                v-html="renderMarkdown(maintenance.description)"
+              />
+              <MaintenanceTime class="mt-2" :maintenance="maintenance" />
             </div>
           </div>
         </div>
@@ -773,7 +790,7 @@ function formatLastUpdated(date: Date | null) {
           </div>
 
           <!-- No monitors available message -->
-          <div v-if="allMonitors.length === 0" class="mt-4 text-center text-gray-500 dark:text-gray-400">
+          <div v-if="allMonitors.length === 0" class="mt-4 text-center text-muted">
             No monitors available. 
             <NuxtLink to="/monitors/add" class="text-primary-500 hover:underline">Add one</NuxtLink>
           </div>
@@ -784,7 +801,7 @@ function formatLastUpdated(date: Date | null) {
           v-if="!editMode && groupTabs.length > 1" 
           class="mb-6"
         >
-          <div class="flex gap-2 overflow-x-auto pb-2 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex gap-2 overflow-x-auto pb-2 border-b border-default">
             <button
               v-for="tab in groupTabs"
               :key="tab.id"
@@ -792,12 +809,12 @@ function formatLastUpdated(date: Date | null) {
               :class="[
                 'px-4 py-2 rounded-t-lg text-sm font-medium transition-colors whitespace-nowrap',
                 activeGroupId === tab.id
-                  ? 'bg-white dark:bg-gray-800 text-primary-600 border-b-2 border-primary-500'
-                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'bg-default text-primary-600 border-b-2 border-primary-500'
+                  : 'text-muted hover:text-default'
               ]"
             >
               {{ tab.name }}
-              <span class="ml-2 text-xs text-gray-400">
+              <span class="ml-2 text-xs text-dimmed">
                 ({{ tab.count || 0 }})
               </span>
             </button>
@@ -846,7 +863,7 @@ function formatLastUpdated(date: Date | null) {
             
             <!-- Page number buttons -->
             <template v-for="pageNum in visiblePageNumbers" :key="pageNum">
-              <span v-if="pageNum === '...'" class="px-2 py-2 text-sm text-gray-400 dark:text-gray-500">...</span>
+              <span v-if="pageNum === '...'" class="px-2 py-2 text-sm text-dimmed">...</span>
               <button
                 v-else
                 class="pagination-btn pagination-btn-number"
@@ -886,8 +903,8 @@ function formatLastUpdated(date: Date | null) {
           v-if="!editMode && countdown" 
           class="mt-6 flex justify-center"
         >
-          <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          <div class="text-sm text-muted flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-up animate-pulse"></span>
             <span>Auto refresh in {{ countdown }}</span>
           </div>
         </div>
@@ -907,11 +924,11 @@ function formatLastUpdated(date: Date | null) {
         </div>
 
         <!-- Footer -->
-        <footer class="text-center mt-16 text-sm text-gray-500 dark:text-gray-400 status-page-footer">
+        <footer class="text-center mt-16 text-sm text-muted status-page-footer">
           <!-- Footer with Markdown support -->
           <div 
             v-if="statusPage?.footerText" 
-            class="mb-3 text-gray-600 dark:text-gray-300 prose dark:prose-invert prose-sm mx-auto"
+            class="mb-3 text-toned prose dark:prose-invert prose-sm mx-auto"
             v-html="footerHtml"
           />
           <p v-if="statusPage?.showPoweredBy !== false" class="flex items-center justify-center gap-1">
@@ -996,68 +1013,12 @@ function formatLastUpdated(date: Date | null) {
   opacity: 0;
 }
 
-/* Status page theme variants */
-.status-page-light {
-  background-color: #f7f9fc;
-  color: #0f172a;
-}
-
-.status-page-dark {
-  background-color: #0d1117;
-  color: #e5e7eb;
-}
-
-.status-page-auto {
-  background-color: #f7f9fc;
-  color: #0f172a;
-}
-
-.dark .status-page-auto {
-  background-color: #0d1117;
-  color: #e5e7eb;
-}
-
-/* Light mode text overrides for status page */
-.status-page-light .text-gray-600,
-.status-page-auto .text-gray-600 {
-  color: #475569 !important;
-}
-
-.status-page-light .text-gray-500,
-.status-page-auto .text-gray-500 {
-  color: #64748b !important;
-}
-
-.status-page-light .text-gray-400,
-.status-page-auto .text-gray-400 {
-  color: #94a3b8 !important;
-}
-
-/* Edit mode controls light styling */
-.status-page-light .bg-white,
-.status-page-auto .bg-white {
-  background-color: #ffffff !important;
-  border: 1px solid #d6deea;
-}
-
-.status-page-light .border-gray-200,
-.status-page-auto .border-gray-200 {
-  border-color: #d6deea !important;
-}
-
-/* Form select styling for light mode */
-.status-page-light .form-select,
-.status-page-auto .form-select {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #0f172a;
-}
-
-.status-page-light .form-select:focus,
-.status-page-auto .form-select:focus {
-  border-color: #12b06a;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(18, 176, 106, 0.25);
+/* Theme: colours come from tokens. The page's own theme (light/dark/auto)
+   is applied by toggling the .dark class in <script>. Class names are kept
+   because custom CSS written by users may target them. */
+.status-page {
+  background-color: var(--uk-bg-app);
+  color: var(--uk-text);
 }
 
 /* Custom scrollbar for sidebar */
@@ -1070,78 +1031,47 @@ function formatLastUpdated(date: Date | null) {
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--uk-bg-active);
   border-radius: 3px;
-}
-
-.dark .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #475569;
 }
 
 /* Edit mode controls styling */
 .edit-mode-controls {
-  background-color: #ffffff;
+  background-color: var(--uk-bg-surface);
   border-radius: 0.5rem;
   padding: 1.5rem;
-  border: 1px solid #d6deea;
+  border: 1px solid var(--uk-border);
   box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
 }
 
-.dark .edit-mode-controls {
-  background-color: #1f2937;
-  border-color: #374151;
-}
-
 .edit-mode-label {
-  color: #1f2937;
-}
-
-.dark .edit-mode-label {
-  color: #d1d5db;
+  color: var(--uk-text);
 }
 
 /* Empty state card */
 .empty-state-card {
-  background-color: #ffffff;
+  background-color: var(--uk-bg-surface);
   border-radius: 0.5rem;
   padding: 3rem;
   text-align: center;
-  border: 1px solid #d6deea;
+  border: 1px solid var(--uk-border);
   box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
 }
 
-.dark .empty-state-card {
-  background-color: #1f2937;
-  border-color: #374151;
-}
-
 .empty-state-title {
-  color: #334155;
-}
-
-.dark .empty-state-title {
-  color: #d1d5db;
+  color: var(--uk-text-secondary);
 }
 
 .empty-state-text {
-  color: #64748b;
-}
-
-.dark .empty-state-text {
-  color: #9ca3af;
+  color: var(--uk-text-muted);
 }
 
 /* Add monitor section styling */
 .add-monitor-section {
   padding: 1rem;
-  background-color: #f8fafc;
+  background-color: var(--uk-bg-sunken);
   border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-.dark .add-monitor-section {
-  background-color: #1f2937;
-  border-color: #374151;
+  border: 1px solid var(--uk-border);
 }
 
 .monitor-select :deep(.select-button) {
@@ -1168,12 +1098,12 @@ function formatLastUpdated(date: Date | null) {
 }
 
 .btn-primary {
-  background-color: #22c55e;
+  background-color: var(--uk-status-up);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #16a34a;
+  background-color: var(--uk-status-up);
 }
 
 .btn-primary:disabled {
@@ -1189,8 +1119,8 @@ function formatLastUpdated(date: Date | null) {
   padding: 0.625rem 1.25rem;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: var(--uk-text-on-primary);
+  background: linear-gradient(135deg, var(--uk-status-up) 0%, var(--uk-status-up) 100%);
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -1199,7 +1129,7 @@ function formatLastUpdated(date: Date | null) {
 }
 
 .btn-add-group:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: linear-gradient(135deg, var(--uk-status-up) 0%, var(--uk-green-700) 100%);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.45);
   transform: translateY(-1px);
 }
@@ -1214,9 +1144,9 @@ function formatLastUpdated(date: Date | null) {
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   font-size: 0.875rem;
   border-radius: 0.5rem;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #0f172a;
+  background-color: var(--uk-bg-surface);
+  border: 1px solid var(--uk-border-strong);
+  color: var(--uk-text);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
@@ -1225,14 +1155,11 @@ function formatLastUpdated(date: Date | null) {
 }
 
 .dark .form-select {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .form-select:focus {
-  border-color: #22c55e;
+  border-color: var(--uk-status-up);
   outline: none;
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
 }
@@ -1247,69 +1174,42 @@ function formatLastUpdated(date: Date | null) {
   padding: 0 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
+  color: var(--uk-text-secondary);
+  background-color: var(--uk-bg-surface);
+  border: 1px solid var(--uk-border-strong);
   border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: var(--uk-bg-sunken);
+  border-color: var(--uk-border-strong);
 }
 
 .pagination-btn-number {
   min-width: 40px;
 }
 
-/* Active page - Uptime Kuma green (#5cdd8b) */
+/* Active page - brand primary */
 .pagination-btn-active {
-  color: #ffffff;
-  background-color: #5cdd8b;
-  border-color: #5cdd8b;
+  color: var(--uk-text-on-primary);
+  background-color: var(--uk-status-up);
+  border-color: var(--uk-status-up);
 }
 
 .pagination-btn-active:hover:not(:disabled) {
-  background-color: #7ce8a4;
-  border-color: #7ce8a4;
+  background-color: var(--uk-primary-hover);
+  border-color: var(--uk-primary-hover);
 }
 
 /* Disabled state */
 .pagination-btn-disabled {
-  color: #9ca3af;
-  background-color: #f9fafb;
-  border-color: #e5e7eb;
+  color: var(--uk-text-muted);
+  background-color: var(--uk-bg-sunken);
+  border-color: var(--uk-border);
   cursor: not-allowed;
 }
 
 /* Dark mode */
-.dark .pagination-btn {
-  color: #d1d5db;
-  background-color: #0d1117;
-  border-color: #1d2634;
-}
-
-.dark .pagination-btn:hover:not(:disabled) {
-  background-color: #161b22;
-  border-color: #30363d;
-}
-
-.dark .pagination-btn-active {
-  color: #020b05;
-  background-color: #5cdd8b;
-  border-color: #5cdd8b;
-}
-
-.dark .pagination-btn-active:hover:not(:disabled) {
-  background-color: #7ce8a4;
-  border-color: #7ce8a4;
-}
-
-.dark .pagination-btn-disabled {
-  color: #484f58;
-  background-color: #0d1117;
-  border-color: #1d2634;
-}
 </style>

@@ -30,7 +30,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           查看 
           <a 
             href="https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook" 
@@ -69,7 +69,7 @@ const config = computed({
             <li>設定名稱後，複製 Webhook URL</li>
           </ol>
 
-          <p class="text-xs text-gray-400 mt-2">
+          <p class="text-xs text-dimmed mt-2">
             注意：Microsoft 計劃於 2024 年底棄用 Office 365 Connectors，建議改用 Workflows
           </p>
         </div>

@@ -9,7 +9,9 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "test": "vitest run",
+    "lint:colors": "node scripts/check-colors.mjs"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.11.0",
@@ -26,6 +28,7 @@
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "croner": "^8.0.0",
+    "cronstrue": "^2.59.0",
     "dayjs": "^1.11.19",
     "dockerode": "^4.0.9",
     "dompurify": "^3.3.1",
@@ -69,6 +72,7 @@
     "@types/qrcode": "^1.5.0",
     "prisma": "^6.0.0",
     "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
     "vue-tsc": "^3.2.1"
   }
 }

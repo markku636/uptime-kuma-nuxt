@@ -8,7 +8,7 @@
       class="w-16"
       @update:model-value="handleInput"
     />
-    <span class="text-sm text-gray-500">/ {{ totalPages }}</span>
+    <span class="text-sm text-muted">/ {{ totalPages }}</span>
     <div class="flex gap-1">
       <UButton 
         icon="i-heroicons-chevron-double-left" 

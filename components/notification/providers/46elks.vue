@@ -47,7 +47,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Your 46elks number or a custom alphanumeric sender ID
         </span>
       </template>

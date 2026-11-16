@@ -9,7 +9,7 @@
     >
       <span 
         class="w-2 h-2 rounded-full mr-2" 
-        :class="currentNodeOnline ? 'bg-emerald-500' : 'bg-gray-500'"
+        :class="currentNodeOnline ? 'bg-up' : 'bg-unknown'"
       ></span>
       <span class="text-sm">Node: {{ currentNodeDisplay }}</span>
     </UButton>
@@ -60,7 +60,7 @@
                 <p class="text-[var(--text-secondary)] mt-2">No nodes configured</p>
                 <NuxtLink 
                   to="/settings/nodes" 
-                  class="text-sm text-emerald-500 hover:underline" 
+                  class="text-sm text-up-fg hover:underline" 
                   @click="showModal = false"
                 >
                   Add nodes in Settings
@@ -73,14 +73,14 @@
                   :key="node.id"
                   class="w-full flex items-center gap-3 p-3 rounded-lg border transition-all"
                   :class="selectedNodeId === node.nodeId 
-                    ? 'border-emerald-500 bg-emerald-500/10' 
-                    : 'border-[var(--border-color)] hover:border-emerald-500/50 hover:bg-[var(--hover-bg)]'"
+                    ? 'border-up/40 bg-up/10' 
+                    : 'border-[var(--border-color)] hover:border-up/40 hover:bg-[var(--hover-bg)]'"
                   @click="selectNode(node)"
                 >
                   <!-- Status Indicator -->
                   <span 
                     class="w-3 h-3 rounded-full flex-shrink-0" 
-                    :class="node.status === 'online' ? 'bg-emerald-500' : 'bg-gray-500'"
+                    :class="node.status === 'online' ? 'bg-up' : 'bg-unknown'"
                   ></span>
                   
                   <!-- Node Info -->
@@ -94,7 +94,7 @@
                   <!-- Current Badge -->
                   <span 
                     v-if="selectedNodeId === node.nodeId" 
-                    class="px-2 py-1 text-xs rounded bg-emerald-500 text-white"
+                    class="px-2 py-1 text-xs rounded bg-up text-white"
                   >
                     Current
                   </span>

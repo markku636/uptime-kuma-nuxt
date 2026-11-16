@@ -559,8 +559,8 @@ function handleSubmit() {
     </div>
 
     <!-- Dynamic Provider Component or Fallback Config Fields -->
-    <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+    <div class="space-y-4 pt-4 border-t border-default">
+      <h3 class="text-sm font-medium text-default">
         {{ notificationTypes.find(t => t.value === form.type)?.label }} Settings
       </h3>
       
@@ -617,7 +617,7 @@ function handleSubmit() {
     </div>
 
     <!-- Options -->
-    <div class="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+    <div class="space-y-3 pt-4 border-t border-default">
       <UCheckbox
         v-model="form.isDefault"
         label="Default enabled (Apply to all new monitors)"

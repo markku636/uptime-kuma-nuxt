@@ -66,13 +66,13 @@ const customBodyPlaceholder = `{
         required
       />
       <template #help>
-        <div class="text-sm text-gray-500">
+        <div class="text-sm text-muted">
           <p v-if="config.webhookContentType === 'json'">
-            以 <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">application/json</code> 格式發送 JSON 數據
+            以 <code class="bg-elevated px-1 rounded">application/json</code> 格式發送 JSON 數據
           </p>
           <p v-else-if="config.webhookContentType === 'form-data'">
-            以 <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">multipart/form-data</code> 格式發送，
-            可在 PHP 中使用 <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">json_decode($_POST['data'])</code> 解析
+            以 <code class="bg-elevated px-1 rounded">multipart/form-data</code> 格式發送，
+            可在 PHP 中使用 <code class="bg-elevated px-1 rounded">json_decode($_POST['data'])</code> 解析
           </p>
           <p v-else>
             自訂請求 Body 內容，支援 Jinja2 模板語法
@@ -95,7 +95,7 @@ const customBodyPlaceholder = `{
         class="font-mono text-sm"
       />
       <template #help>
-        <div class="text-sm text-gray-500">
+        <div class="text-sm text-muted">
           <p class="mb-2">可用變數：</p>
           <ul class="list-disc list-inside space-y-1 text-xs">
             <li><code v-pre>{{ msg }}</code> - 通知訊息</li>
@@ -113,7 +113,7 @@ const customBodyPlaceholder = `{
         label="Add Additional Headers"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           添加自訂 HTTP Headers（例如 Authorization）
         </p>
       </template>
@@ -132,7 +132,7 @@ const customBodyPlaceholder = `{
         class="font-mono text-sm"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           以 JSON 格式輸入 Headers
         </p>
       </template>
@@ -148,7 +148,7 @@ const customBodyPlaceholder = `{
       <template #description>
         <div class="text-sm space-y-2">
           <p>Webhook 將發送以下 JSON 結構：</p>
-          <pre class="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs overflow-x-auto">{
+          <pre class="bg-elevated p-2 rounded text-xs overflow-x-auto">{
   "heartbeat": { "status": 1, "time": "2024-01-01T00:00:00Z", "ping": 123 },
   "monitor": { "id": 1, "name": "My Monitor", "url": "https://..." },
   "msg": "Monitor is UP"

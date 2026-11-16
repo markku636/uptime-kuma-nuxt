@@ -77,30 +77,26 @@ const getTooltip = (beat: Heartbeat) => {
 }
 
 .beat.empty {
-  background: #e9ecef;
-}
-
-.dark .beat.empty {
-  background: #30363d;
+  background: var(--uk-bg-active);
 }
 
 .beat.up {
-  background: #28a745;
+  background: var(--uk-status-up);
 }
 
 .beat.down {
-  background: #dc3545;
+  background: var(--uk-status-down);
 }
 
 .beat.pending {
-  background: #ffc107;
+  background: var(--uk-status-pending);
 }
 
 .beat.maintenance {
-  background: #1e90ff;
+  background: var(--uk-status-maintenance);
 }
 
 .beat.unknown {
-  background: #6c757d;
+  background: var(--uk-status-unknown);
 }
 </style>

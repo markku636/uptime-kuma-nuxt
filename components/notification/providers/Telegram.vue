@@ -88,7 +88,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           從 
           <a 
             href="https://t.me/BotFather" 
@@ -121,15 +121,15 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
         </UButton>
       </div>
       <template #help>
-        <div class="text-sm text-gray-500 space-y-2">
+        <div class="text-sm text-muted space-y-2">
           <p>支援個人、群組或頻道 Chat ID</p>
           <p>
             如何取得 Chat ID：先發送任意訊息給 Bot，然後訪問:
           </p>
-          <p class="break-all text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded">
+          <p class="break-all text-xs font-mono bg-elevated p-2 rounded">
             {{ getUpdatesUrl }}
           </p>
-          <p v-if="autoGetError" class="text-red-500">{{ autoGetError }}</p>
+          <p v-if="autoGetError" class="text-down-fg">{{ autoGetError }}</p>
         </div>
       </template>
     </UFormField>
@@ -141,7 +141,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
         placeholder="12345"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           用於超級群組的主題功能，留空則發送到一般聊天
         </p>
       </template>
@@ -154,7 +154,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
         placeholder="https://api.telegram.org"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           如果使用自架 Telegram Bot API Server，請填入。
           <a 
             href="https://core.telegram.org/bots/api#using-a-local-bot-api-server" 
@@ -174,7 +174,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
         label="Use custom message template"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           使用 Jinja2 模板語法自訂通知訊息
         </p>
       </template>
@@ -188,7 +188,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
           :items="parseModesOptions"
         />
         <template #help>
-          <p class="text-sm text-gray-500">
+          <p class="text-sm text-muted">
             <a 
               href="https://core.telegram.org/bots/api#formatting-options" 
               target="_blank"
@@ -217,7 +217,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
         label="Send Silently"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           訊息將不會發出通知音效
         </p>
       </template>
@@ -230,7 +230,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
         label="Protect Content"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           防止訊息被轉發或儲存
         </p>
       </template>

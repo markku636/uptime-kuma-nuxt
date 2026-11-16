@@ -38,7 +38,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Create a Generic API integration key in GoAlert
         </span>
       </template>

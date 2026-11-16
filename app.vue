@@ -7,44 +7,21 @@
 </template>
 
 <script setup lang="ts">
-// App entry point
+// The `dark` class on <html> is managed by @nuxtjs/color-mode (classSuffix: '').
 const colorMode = useColorMode()
 
-// Compute if dark mode is active
-const isDark = computed(() => {
-  return colorMode.value === 'dark'
-})
+// Browser chrome colour follows the page background (tokens: --uk-bg-app)
+const themeColor = computed(() => (colorMode.value === 'dark' ? '#090c10' : '#f7f9fc'))
 
-// Apply dark class to html element when color mode changes
-watch(isDark, (dark) => {
-  if (import.meta.client) {
-    if (dark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
-}, { immediate: true })
-
-// Also apply on mount
-onMounted(() => {
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-})
-
-// PWA meta tags
 useHead({
   title: 'Uptime Kuma',
   meta: [
     { name: 'description', content: 'A fancy self-hosted monitoring tool' },
-    { name: 'theme-color', content: '#10b981' },
+    { name: 'theme-color', content: themeColor },
     { name: 'apple-mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
     { name: 'apple-mobile-web-app-title', content: 'Uptime Kuma' },
-    { name: 'msapplication-TileColor', content: '#10b981' },
+    { name: 'msapplication-TileColor', content: '#5cdd8b' },
     { name: 'msapplication-config', content: '/browserconfig.xml' }
   ],
   link: [

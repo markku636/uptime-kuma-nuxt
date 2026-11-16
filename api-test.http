@@ -591,13 +591,13 @@ Content-Type: application/json
 ### ===============================================
 
 ### 清除所有心跳資料
-POST {{baseUrl}}/api/v1/maintenance/clear-heartbeats
+POST {{baseUrl}}/api/v1/database/clear-heartbeats
 
 ### 清除統計資料
-POST {{baseUrl}}/api/v1/maintenance/clear-statistics
+POST {{baseUrl}}/api/v1/database/clear-statistics
 
 ### 壓縮資料庫
-POST {{baseUrl}}/api/v1/maintenance/shrink-database
+POST {{baseUrl}}/api/v1/database/shrink-database
 
 ### ===============================================
 ### 備份/還原 API | Backup/Restore APIs

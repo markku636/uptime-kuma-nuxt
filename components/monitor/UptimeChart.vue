@@ -64,11 +64,11 @@ function getBarHeight(ping: number): number {
 
 // Get bar color based on uptime
 function getBarColor(uptime: number, hasData: boolean): string {
-  if (!hasData) return 'bg-gray-200 dark:bg-gray-700'
-  if (uptime === 100) return 'bg-green-500'
-  if (uptime >= 99) return 'bg-green-400'
-  if (uptime >= 95) return 'bg-yellow-500'
-  return 'bg-red-500'
+  if (!hasData) return 'bg-accented'
+  if (uptime === 100) return 'bg-up'
+  if (uptime >= 99) return 'bg-up'
+  if (uptime >= 95) return 'bg-pending'
+  return 'bg-down'
 }
 </script>
 
@@ -82,7 +82,7 @@ function getBarColor(uptime: number, hasData: boolean): string {
       <!-- Y-axis labels -->
       <div
         v-if="showLabels"
-        class="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500 pr-2"
+        class="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-muted pr-2"
       >
         <span>{{ maxPing }}ms</span>
         <span>{{ Math.round(maxPing / 2) }}ms</span>
@@ -112,7 +112,7 @@ function getBarColor(uptime: number, hasData: boolean): string {
           <div
             class="absolute bottom-full mb-2 hidden group-hover:block z-10"
           >
-            <div class="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+            <div class="bg-inverted text-inverted text-xs rounded px-2 py-1 whitespace-nowrap">
               <p class="font-medium">{{ data.label }}</p>
               <p>Uptime: {{ data.uptime }}%</p>
               <p v-if="data.avgPing > 0">Avg Ping: {{ data.avgPing }}ms</p>
@@ -125,7 +125,7 @@ function getBarColor(uptime: number, hasData: boolean): string {
     <!-- X-axis labels -->
     <div
       v-if="showLabels"
-      class="flex justify-between text-xs text-gray-500 mt-2"
+      class="flex justify-between text-xs text-muted mt-2"
       :class="{ 'ml-14': showLabels }"
     >
       <span>24h ago</span>

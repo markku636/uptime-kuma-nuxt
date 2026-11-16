@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
-          <NuxtLink to="/dashboard" class="flex items-center gap-2 text-primary hover:text-emerald-500 transition-colors">
+          <NuxtLink to="/dashboard" class="flex items-center gap-2 text-highlighted hover:text-up-fg transition-colors">
             <img src="/icon.svg" alt="Uptime Kuma" class="h-8 w-8" />
             <span class="text-xl font-bold">Uptime Kuma</span>
           </NuxtLink>

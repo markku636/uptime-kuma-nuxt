@@ -47,7 +47,7 @@ onMounted(() => {
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           在 Gotify Web UI 中建立 Application 取得 Token
         </p>
       </template>
@@ -64,7 +64,7 @@ onMounted(() => {
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           0-10，數字越高優先級越高。預設為 8
         </p>
       </template>

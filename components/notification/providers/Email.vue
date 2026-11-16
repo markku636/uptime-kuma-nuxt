@@ -49,8 +49,8 @@ const showDkim = ref(false)
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
-          輸入 SMTP 伺服器地址，或使用 <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">localhost</code> 
+        <p class="text-sm text-muted">
+          輸入 SMTP 伺服器地址，或使用 <code class="text-xs bg-elevated px-1 rounded">localhost</code> 
           連接本地 
           <a href="https://wikipedia.org/wiki/Mail_Transfer_Agent" target="_blank" class="text-primary-500 hover:underline">
             MTA (郵件傳輸代理)
@@ -86,7 +86,7 @@ const showDkim = ref(false)
         label="Ignore TLS Error"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           忽略憑證錯誤（不建議在生產環境使用）
         </p>
       </template>
@@ -110,7 +110,7 @@ const showDkim = ref(false)
         autocomplete="new-password"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           如使用 Gmail，請使用「應用程式密碼」而非帳號密碼
         </p>
       </template>
@@ -126,7 +126,7 @@ const showDkim = ref(false)
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           可以使用 "顯示名稱" &lt;email@example.com&gt; 格式
         </p>
       </template>
@@ -140,7 +140,7 @@ const showDkim = ref(false)
         :required="!hasRecipient"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           多個收件人請用逗號分隔
         </p>
       </template>
@@ -171,7 +171,7 @@ const showDkim = ref(false)
         placeholder="[Uptime Kuma] {{ monitorJSON.name }} is {{ msg }}"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           留空使用預設標題。支援 Jinja2 模板變數
         </p>
       </template>
@@ -185,7 +185,7 @@ const showDkim = ref(false)
         placeholder="Monitor: {{ monitorJSON.name }}&#10;Status: {{ msg }}&#10;Time: {{ heartbeatJSON.time }}"
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           留空使用預設內容。支援 Jinja2 模板變數
         </p>
       </template>
@@ -211,8 +211,8 @@ const showDkim = ref(false)
       <UIcon :name="showDkim ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" />
     </UButton>
 
-    <div v-if="showDkim" class="space-y-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
-      <p class="text-sm text-gray-500">
+    <div v-if="showDkim" class="space-y-4 pl-4 border-l-2 border-default">
+      <p class="text-sm text-muted">
         DKIM (DomainKeys Identified Mail) 用於郵件簽名驗證。
         <a 
           href="https://nodemailer.com/dkim/" 

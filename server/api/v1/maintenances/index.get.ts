@@ -1,22 +1,6 @@
-// server/api/v1/maintenances/index.get.ts
-import { prisma } from '~/server/utils/prisma'
+// GET /api/v1/maintenances
+import { handleMaintenanceRequest, listMaintenances } from '~/server/services/maintenance/service'
 
-export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
-  
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  const maintenances = await prisma.maintenance.findMany({
-    orderBy: { id: 'desc' }
-  })
-
-  return {
-    ok: true,
-    data: maintenances
-  }
-})
+export default defineEventHandler(event =>
+  handleMaintenanceRequest(event, async userId => ({ ok: true, data: await listMaintenances(userId) })),
+)

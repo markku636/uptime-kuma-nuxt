@@ -64,7 +64,7 @@ async function deleteBrowser(id: number) {
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Remote Browsers</h4>
+      <h4 class="text-lg font-semibold text-highlighted">Remote Browsers</h4>
       <button class="btn btn-primary" @click="openAddForm">Add Browser</button>
     </div>
 
@@ -72,10 +72,10 @@ async function deleteBrowser(id: number) {
       Remote browsers allow you to monitor websites using a headless Chrome browser for more accurate monitoring.
     </div>
 
-    <div v-if="loading" class="text-center py-8 text-gray-600 dark:text-gray-400">Loading...</div>
+    <div v-if="loading" class="text-center py-8 text-toned">Loading...</div>
 
     <div v-else-if="browsers.length === 0" class="section-card text-center py-8">
-      <p class="text-gray-600 dark:text-gray-400 mb-4">No remote browsers configured yet.</p>
+      <p class="text-toned mb-4">No remote browsers configured yet.</p>
       <button class="btn btn-primary" @click="openAddForm">Add Your First Browser</button>
     </div>
 
@@ -96,15 +96,15 @@ async function deleteBrowser(id: number) {
     </div>
 
     <div v-if="showForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ editingBrowser ? 'Edit' : 'Add' }} Remote Browser</h3>
+      <div class="bg-default rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-highlighted mb-4">{{ editingBrowser ? 'Edit' : 'Add' }} Remote Browser</h3>
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+            <label class="block text-sm font-medium text-default mb-2">Name</label>
             <input v-model="form.name" type="text" class="input-field" placeholder="My Browser" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">WebSocket URL</label>
+            <label class="block text-sm font-medium text-default mb-2">WebSocket URL</label>
             <input v-model="form.url" type="text" class="input-field" placeholder="ws://localhost:3000" />
           </div>
           <div class="flex gap-3 pt-4">

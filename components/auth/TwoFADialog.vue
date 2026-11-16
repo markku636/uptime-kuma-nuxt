@@ -10,7 +10,7 @@
         />
 
         <!-- QR Code -->
-        <div class="flex justify-center p-4 bg-white rounded-lg">
+        <div class="flex justify-center p-4 bg-default rounded-lg">
           <img
             v-if="qrCodeDataUrl"
             :src="qrCodeDataUrl"
@@ -18,7 +18,7 @@
             class="w-48 h-48"
           />
           <div v-else class="w-48 h-48 flex items-center justify-center">
-            <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
+            <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-dimmed" />
           </div>
         </div>
 
@@ -51,7 +51,7 @@
             @keyup.enter="handleSetup"
           />
           <template #hint>
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-muted">
               {{ $t('Enter the 6-digit code from your authenticator app') }}
             </span>
           </template>
@@ -67,7 +67,7 @@
 
       <!-- Verify Mode -->
       <div v-else-if="mode === 'verify'" class="space-y-4">
-        <p class="text-gray-600 dark:text-gray-400">
+        <p class="text-toned">
           {{ $t('Enter your 2FA code to continue') }}
         </p>
 
@@ -153,11 +153,11 @@
           :description="$t('Each code can only be used once. Store them securely.')"
         />
 
-        <div class="grid grid-cols-2 gap-2 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg font-mono text-sm">
+        <div class="grid grid-cols-2 gap-2 p-4 bg-elevated rounded-lg font-mono text-sm">
           <div
             v-for="code in recoveryCodes"
             :key="code"
-            class="p-2 bg-white dark:bg-gray-700 rounded text-center"
+            class="p-2 bg-default rounded text-center"
           >
             {{ code }}
           </div>

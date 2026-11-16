@@ -3,17 +3,17 @@ const router = useRouter()
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+  <div class="min-h-screen flex items-center justify-center bg-muted px-4">
     <div class="text-center">
       <div class="mb-8">
-        <span class="text-9xl font-bold text-gray-200 dark:text-gray-800">404</span>
+        <span class="text-9xl font-bold text-dimmed">404</span>
       </div>
       
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      <h1 class="text-3xl font-bold text-highlighted mb-4">
         Page Not Found
       </h1>
       
-      <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+      <p class="text-lg text-toned mb-8 max-w-md mx-auto">
         Oops! The page you're looking for doesn't exist or has been moved.
       </p>
       

@@ -31,7 +31,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           URL of your Signal CLI REST API server
         </span>
       </template>
@@ -44,7 +44,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Your registered Signal phone number (with country code)
         </span>
       </template>
@@ -58,7 +58,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Comma-separated list of recipient phone numbers
         </span>
       </template>

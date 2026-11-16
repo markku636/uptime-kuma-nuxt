@@ -29,7 +29,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Create a webhook in Bitrix24 → Applications → Webhooks
         </span>
       </template>
@@ -41,7 +41,7 @@ const localConfig = computed({
         placeholder="Target user ID"
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Leave empty to send to all users with access
         </span>
       </template>

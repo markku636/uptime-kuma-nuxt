@@ -3,7 +3,7 @@
     <!-- Group Header -->
     <button
       type="button"
-      class="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      class="w-full flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-elevated transition-colors"
       @click="isExpanded = !isExpanded"
     >
       <div class="flex items-center gap-3">
@@ -13,7 +13,7 @@
           :class="groupStatusColor"
         />
         
-        <h3 class="font-medium text-gray-900 dark:text-gray-100">
+        <h3 class="font-medium text-highlighted">
           {{ group.name }}
         </h3>
         
@@ -24,14 +24,14 @@
 
       <div class="flex items-center gap-3">
         <!-- Uptime Summary -->
-        <div v-if="showUptime" class="text-sm text-gray-500">
+        <div v-if="showUptime" class="text-sm text-muted">
           <span class="font-mono">{{ groupUptime.toFixed(2) }}%</span>
         </div>
 
         <!-- Expand Chevron -->
         <UIcon
           name="i-heroicons-chevron-down"
-          class="w-5 h-5 text-gray-400 transition-transform duration-200"
+          class="w-5 h-5 text-dimmed transition-transform duration-200"
           :class="{ 'rotate-180': isExpanded }"
         />
       </div>
@@ -48,7 +48,7 @@
         <div
           v-for="monitor in group.monitors"
           :key="monitor.id"
-          class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+          class="flex items-center justify-between p-3 bg-default rounded-lg border border-default"
         >
           <div class="flex items-center gap-3">
             <!-- Monitor Status -->
@@ -56,10 +56,10 @@
             
             <!-- Monitor Name -->
             <div>
-              <p class="font-medium text-gray-900 dark:text-gray-100">
+              <p class="font-medium text-highlighted">
                 {{ monitor.name }}
               </p>
-              <p v-if="monitor.description" class="text-xs text-gray-500">
+              <p v-if="monitor.description" class="text-xs text-muted">
                 {{ monitor.description }}
               </p>
             </div>
@@ -134,15 +134,15 @@ const groupStatus = computed(() => {
 const groupStatusColor = computed(() => {
   switch (groupStatus.value) {
     case 'up':
-      return 'bg-green-500'
+      return 'bg-up'
     case 'down':
-      return 'bg-red-500'
+      return 'bg-down'
     case 'pending':
-      return 'bg-yellow-500'
+      return 'bg-pending'
     case 'maintenance':
-      return 'bg-blue-500'
+      return 'bg-maintenance'
     default:
-      return 'bg-gray-400'
+      return 'bg-unknown'
   }
 })
 

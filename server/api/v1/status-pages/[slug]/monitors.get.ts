@@ -1,4 +1,5 @@
 // server/api/v1/status-pages/[slug]/monitors.get.ts
+import { listActiveMaintenancesForStatusPage } from '~/server/services/maintenance/service'
 import { prisma } from '~/server/utils/prisma'
 
 /**
@@ -113,6 +114,7 @@ export default defineEventHandler(async (event) => {
       data: {
         config: formatConfig(statusPage),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        maintenanceList: await listActiveMaintenancesForStatusPage(statusPage.id),
         publicGroupList,
         groupTabs,
         pagination: null
@@ -129,6 +131,7 @@ export default defineEventHandler(async (event) => {
       data: {
         config: formatConfig(statusPage),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        maintenanceList: await listActiveMaintenancesForStatusPage(statusPage.id),
         publicGroupList: [],
         groupTabs,
         pagination: {
@@ -151,6 +154,7 @@ export default defineEventHandler(async (event) => {
       data: {
         config: formatConfig(statusPage),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        maintenanceList: await listActiveMaintenancesForStatusPage(statusPage.id),
         publicGroupList: [],
         groupTabs,
         pagination: {
@@ -197,6 +201,7 @@ export default defineEventHandler(async (event) => {
     data: {
       config: formatConfig(statusPage),
       incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+      maintenanceList: await listActiveMaintenancesForStatusPage(statusPage.id),
       publicGroupList,
       groupTabs,
       pagination: {

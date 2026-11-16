@@ -47,7 +47,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Recipient phone number with country code
         </span>
       </template>
@@ -60,7 +60,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Your Twilio phone number
         </span>
       </template>

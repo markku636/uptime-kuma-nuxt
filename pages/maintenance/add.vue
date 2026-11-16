@@ -2,8 +2,12 @@
 definePageMeta({
   middleware: ['auth']
 })
+
+// /maintenance/add?cloneId=3 prefills from an existing maintenance
+const route = useRoute()
+const cloneId = computed(() => Number(route.query.cloneId) || undefined)
 </script>
 
 <template>
-  <MaintenanceEdit />
+  <MaintenanceForm :key="cloneId ?? 'new'" :clone-id="cloneId" />
 </template>

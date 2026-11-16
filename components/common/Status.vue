@@ -17,37 +17,37 @@ const statusConfig = computed(() => {
     case 'up':
       return {
         label: 'Up',
-        color: 'bg-green-500',
-        ringColor: 'ring-green-500/30',
-        textColor: 'text-green-600 dark:text-green-400'
+        color: 'bg-up',
+        ringColor: 'ring-up/30',
+        textColor: 'text-up-fg'
       }
     case 'down':
       return {
         label: 'Down',
-        color: 'bg-red-500',
-        ringColor: 'ring-red-500/30',
-        textColor: 'text-red-600 dark:text-red-400'
+        color: 'bg-down',
+        ringColor: 'ring-down/30',
+        textColor: 'text-down-fg'
       }
     case 'pending':
       return {
         label: 'Pending',
-        color: 'bg-yellow-500',
-        ringColor: 'ring-yellow-500/30',
-        textColor: 'text-yellow-600 dark:text-yellow-400'
+        color: 'bg-pending',
+        ringColor: 'ring-pending/30',
+        textColor: 'text-pending-fg'
       }
     case 'maintenance':
       return {
         label: 'Maintenance',
-        color: 'bg-blue-500',
-        ringColor: 'ring-blue-500/30',
-        textColor: 'text-blue-600 dark:text-blue-400'
+        color: 'bg-maintenance',
+        ringColor: 'ring-maintenance/30',
+        textColor: 'text-maintenance-fg'
       }
     default:
       return {
         label: 'Unknown',
-        color: 'bg-gray-400',
-        ringColor: 'ring-gray-400/30',
-        textColor: 'text-gray-600 dark:text-gray-400'
+        color: 'bg-unknown',
+        ringColor: 'ring-unknown/30',
+        textColor: 'text-toned'
       }
   }
 })

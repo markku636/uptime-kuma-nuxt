@@ -6,8 +6,8 @@
       class="w-full flex items-center justify-between p-3 rounded-lg transition-colors"
       :class="[
         isOpen 
-          ? 'bg-gray-100 dark:bg-gray-800' 
-          : 'hover:bg-gray-50 dark:hover:bg-gray-800/50',
+          ? 'bg-elevated' 
+          : 'hover:bg-muted',
         { 'cursor-not-allowed opacity-50': disabled }
       ]"
       :disabled="disabled"
@@ -17,13 +17,13 @@
         <UIcon
           v-if="icon"
           :name="icon"
-          class="w-5 h-5 text-gray-500"
+          class="w-5 h-5 text-muted"
         />
         <div class="text-left">
-          <h3 class="font-medium text-gray-900 dark:text-gray-100">
+          <h3 class="font-medium text-highlighted">
             {{ title }}
           </h3>
-          <p v-if="subtitle" class="text-sm text-gray-500">
+          <p v-if="subtitle" class="text-sm text-muted">
             {{ subtitle }}
           </p>
         </div>
@@ -38,7 +38,7 @@
         <!-- Chevron -->
         <UIcon
           name="i-heroicons-chevron-down"
-          class="w-5 h-5 text-gray-400 transition-transform duration-200"
+          class="w-5 h-5 text-dimmed transition-transform duration-200"
           :class="{ 'rotate-180': isOpen }"
         />
       </div>
@@ -53,7 +53,7 @@
     >
       <div v-if="isOpen" class="pt-3">
         <div 
-          class="pl-4 border-l-2 border-gray-200 dark:border-gray-700"
+          class="pl-4 border-l-2 border-default"
           :class="contentClass"
         >
           <slot />

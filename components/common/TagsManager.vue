@@ -108,7 +108,7 @@ const predefinedColors = [
               <div
                 v-for="tag in availableTagsFiltered"
                 :key="tag.id"
-                class="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                class="flex items-center gap-2 p-2 rounded hover:bg-elevated cursor-pointer"
                 @click="addTag(tag)"
               >
                 <span
@@ -152,7 +152,7 @@ const predefinedColors = [
               v-for="color in predefinedColors"
               :key="color"
               class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
-              :class="newTagColor === color ? 'border-gray-900 dark:border-white' : 'border-transparent'"
+              :class="newTagColor === color ? 'border-inverted' : 'border-transparent'"
               :style="{ backgroundColor: color }"
               @click="newTagColor = color"
             />

@@ -191,53 +191,33 @@ function dateFromNow(date?: string) {
 
 /* Style variants */
 .incident-info {
-  background-color: #cfe2ff;
-  color: #084298;
+  background-color: color-mix(in srgb, var(--uk-status-maintenance) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-maintenance-fg);
 }
 
 .incident-warning {
-  background-color: #fff3cd;
-  color: #664d03;
+  background-color: color-mix(in srgb, var(--uk-status-pending) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-pending-fg);
 }
 
 .incident-danger {
-  background-color: #f8d7da;
-  color: #842029;
+  background-color: color-mix(in srgb, var(--uk-status-down) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-down-fg);
 }
 
 .incident-primary {
-  background-color: #d1e7dd;
-  color: #0f5132;
+  background-color: color-mix(in srgb, var(--uk-status-up) var(--uk-subtle-mix), transparent);
+  color: var(--uk-status-up-fg);
 }
 
 .incident-light {
-  background-color: #f8f9fa;
-  color: #41464b;
+  background-color: var(--uk-bg-sunken);
+  color: var(--uk-text-secondary);
 }
 
 .incident-dark {
-  background-color: #343a40;
-  color: #f8f9fa;
-}
-
-.dark .incident-info {
-  background-color: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
-}
-
-.dark .incident-warning {
-  background-color: rgba(245, 158, 11, 0.2);
-  color: #fcd34d;
-}
-
-.dark .incident-danger {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-}
-
-.dark .incident-primary {
-  background-color: rgba(34, 197, 94, 0.2);
-  color: #86efac;
+  background-color: var(--uk-bg-raised);
+  color: var(--uk-text);
 }
 
 .incident-title {

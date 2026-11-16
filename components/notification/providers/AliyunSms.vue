@@ -48,7 +48,7 @@ const config = computed({
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           多個號碼請用逗號分隔，格式為中國大陸手機號
         </p>
       </template>
@@ -82,7 +82,7 @@ const config = computed({
       <template #description>
         <div class="text-sm space-y-2 mt-2">
           <p>短信模板必須包含以下變數：</p>
-          <code class="block bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs">
+          <code class="block bg-elevated p-2 rounded text-xs">
             ${name} ${time} ${status} ${msg}
           </code>
           <p class="mt-2">

@@ -11,7 +11,7 @@
       </UButton>
     </div>
 
-    <div v-if="headers.length === 0" class="text-center py-4 text-gray-500">
+    <div v-if="headers.length === 0" class="text-center py-4 text-muted">
       No custom headers defined
     </div>
 
@@ -27,7 +27,7 @@
           class="flex-1"
           @blur="emitUpdate"
         />
-        <span class="text-gray-600 dark:text-gray-400">:</span>
+        <span class="text-toned">:</span>
         <UInput 
           v-model="header.value"
           placeholder="Header value"

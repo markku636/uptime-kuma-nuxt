@@ -31,7 +31,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Your Apprise API server endpoint
         </span>
       </template>
@@ -45,7 +45,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           One Apprise URL per line. See 
           <a href="https://github.com/caronc/apprise/wiki" target="_blank" class="text-primary-500 hover:underline">
             Apprise Wiki

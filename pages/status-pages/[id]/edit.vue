@@ -138,16 +138,16 @@ const previewUrl = computed(() => {
     <div class="mb-6">
       <NuxtLink
         to="/status-pages"
-        class="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+        class="inline-flex items-center gap-1 text-sm text-toned hover:text-highlighted"
       >
         <UIcon name="i-heroicons-arrow-left" class="w-4 h-4" />
         Back to Status Pages
       </NuxtLink>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-      <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+    <div class="bg-default rounded-lg shadow-sm border border-default">
+      <div class="p-6 border-b border-default flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-highlighted">
           {{ isEdit ? 'Edit Status Page' : 'New Status Page' }}
         </h1>
         <UButton
@@ -170,7 +170,7 @@ const previewUrl = computed(() => {
 
           <UFormField label="Slug (URL)" required>
             <div class="flex items-center gap-2">
-              <span class="text-gray-500 dark:text-gray-400">/status/</span>
+              <span class="text-muted">/status/</span>
               <UInput
                 v-model="form.slug"
                 placeholder="my-status-page"
@@ -197,8 +197,8 @@ const previewUrl = computed(() => {
         </div>
 
         <!-- Monitors -->
-        <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Monitors</h3>
+        <div class="space-y-4 pt-4 border-t border-default">
+          <h3 class="text-lg font-medium text-highlighted">Monitors</h3>
           
           <UFormField label="Select Monitors to Display">
             <USelectMenu
@@ -213,8 +213,8 @@ const previewUrl = computed(() => {
         </div>
 
         <!-- Appearance -->
-        <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Appearance</h3>
+        <div class="space-y-4 pt-4 border-t border-default">
+          <h3 class="text-lg font-medium text-highlighted">Appearance</h3>
           
           <UFormField label="Theme">
             <USelect
@@ -243,8 +243,8 @@ const previewUrl = computed(() => {
         </div>
 
         <!-- Custom Domains -->
-        <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Custom Domains</h3>
+        <div class="space-y-4 pt-4 border-t border-default">
+          <h3 class="text-lg font-medium text-highlighted">Custom Domains</h3>
           
           <div class="flex items-center gap-2">
             <UInput
@@ -260,9 +260,9 @@ const previewUrl = computed(() => {
             <div
               v-for="(domain, index) in form.domainNameList"
               :key="index"
-              class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
+              class="flex items-center justify-between p-3 bg-muted rounded-lg"
             >
-              <span class="text-gray-900 dark:text-white">{{ domain }}</span>
+              <span class="text-highlighted">{{ domain }}</span>
               <UButton
                 variant="ghost"
                 color="red"
@@ -275,8 +275,8 @@ const previewUrl = computed(() => {
         </div>
 
         <!-- Analytics -->
-        <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Analytics</h3>
+        <div class="space-y-4 pt-4 border-t border-default">
+          <h3 class="text-lg font-medium text-highlighted">Analytics</h3>
           
           <UFormField label="Google Analytics ID">
             <UInput
@@ -287,12 +287,12 @@ const previewUrl = computed(() => {
         </div>
 
         <!-- Publishing -->
-        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="pt-4 border-t border-default">
           <UCheckbox v-model="form.published" label="Publish this status page" />
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex justify-end gap-3 pt-4 border-t border-default">
           <UButton variant="ghost" @click="router.push('/status-pages')">
             Cancel
           </UButton>

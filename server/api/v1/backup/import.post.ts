@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { z } from 'zod'
 
-const prisma = new PrismaClient()
+
 
 const importOptionsSchema = z.object({
   overwrite: z.boolean().default(false),

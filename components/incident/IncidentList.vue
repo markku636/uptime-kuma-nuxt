@@ -1,8 +1,8 @@
 <template>
   <div class="incident-list space-y-3">
     <!-- Empty State -->
-    <div v-if="!incidents.length" class="text-center py-8 text-gray-500">
-      <UIcon name="i-heroicons-check-circle" class="w-12 h-12 mx-auto mb-2 text-green-500" />
+    <div v-if="!incidents.length" class="text-center py-8 text-muted">
+      <UIcon name="i-heroicons-check-circle" class="w-12 h-12 mx-auto mb-2 text-up-fg" />
       <p>{{ $t('No incidents recorded') }}</p>
     </div>
 
@@ -10,7 +10,7 @@
     <div
       v-for="incident in incidents"
       :key="incident.id"
-      class="incident-item p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border-l-4"
+      class="incident-item p-4 bg-default rounded-lg shadow-sm border-l-4"
       :class="getBorderColor(incident.status)"
     >
       <div class="flex items-start justify-between gap-4">
@@ -22,24 +22,24 @@
               class="w-5 h-5"
               :class="getStatusColor(incident.status)"
             />
-            <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">
+            <h4 class="font-medium text-highlighted truncate">
               {{ incident.title }}
             </h4>
           </div>
 
           <!-- Description -->
-          <p v-if="incident.description" class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p v-if="incident.description" class="text-sm text-toned mb-2">
             {{ incident.description }}
           </p>
 
           <!-- Monitor Info -->
-          <div v-if="incident.monitor" class="flex items-center gap-2 text-sm text-gray-500">
+          <div v-if="incident.monitor" class="flex items-center gap-2 text-sm text-muted">
             <UIcon name="i-heroicons-server" class="w-4 h-4" />
             <span>{{ incident.monitor.name }}</span>
           </div>
 
           <!-- Duration -->
-          <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+          <div class="flex items-center gap-4 mt-2 text-xs text-muted">
             <span>
               <UIcon name="i-heroicons-clock" class="w-3 h-3 inline mr-1" />
               {{ formatDuration(incident.startTime, incident.endTime) }}
@@ -47,7 +47,7 @@
             <span v-if="incident.endTime">
               {{ $t('Resolved') }}: {{ formatDateTime(incident.endTime) }}
             </span>
-            <span v-else class="text-yellow-500 font-medium">
+            <span v-else class="text-pending-fg font-medium">
               {{ $t('Ongoing') }}
             </span>
           </div>
@@ -120,15 +120,15 @@ const { t } = useI18n()
 function getBorderColor(status: string): string {
   switch (status) {
     case 'investigating':
-      return 'border-red-500'
+      return 'border-down/40'
     case 'identified':
       return 'border-orange-500'
     case 'monitoring':
-      return 'border-yellow-500'
+      return 'border-pending/40'
     case 'resolved':
-      return 'border-green-500'
+      return 'border-up/40'
     default:
-      return 'border-gray-300'
+      return 'border-accented'
   }
 }
 
@@ -150,15 +150,15 @@ function getStatusIcon(status: string): string {
 function getStatusColor(status: string): string {
   switch (status) {
     case 'investigating':
-      return 'text-red-500'
+      return 'text-down-fg'
     case 'identified':
       return 'text-orange-500'
     case 'monitoring':
-      return 'text-yellow-500'
+      return 'text-pending-fg'
     case 'resolved':
-      return 'text-green-500'
+      return 'text-up-fg'
     default:
-      return 'text-gray-500'
+      return 'text-muted'
   }
 }
 

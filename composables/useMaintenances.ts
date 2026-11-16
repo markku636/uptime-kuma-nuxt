@@ -1,213 +1,190 @@
-// Maintenance composable for managing scheduled maintenance
-import type { Ref } from 'vue'
+// Maintenance windows: REST access + live updates over Socket.IO.
+// Status and timeslots are computed by the server (services/maintenance/schedule.ts).
 
-interface Monitor {
-  id: number
-  name: string
+export type MaintenanceStrategy =
+  | 'manual'
+  | 'single'
+  | 'cron'
+  | 'recurring-interval'
+  | 'recurring-weekday'
+  | 'recurring-day-of-month'
+
+export type MaintenanceStatus = 'inactive' | 'scheduled' | 'under-maintenance' | 'ended' | 'unknown'
+
+export interface TimeOfDay {
+  hours: number
+  minutes: number
 }
 
-interface Maintenance {
+export interface Maintenance {
   id: number
   title: string
-  description?: string
-  strategy: 'single' | 'recurring' | 'manual'
+  description: string
+  strategy: MaintenanceStrategy
   active: boolean
-  startDate?: string
-  endDate?: string
-  intervalDay?: number
-  weekdays?: string[]
-  daysOfMonth?: number[]
-  timeRange?: { start: string; end: string }[]
-  monitors?: Monitor[]
-  createdAt?: string
-  updatedAt?: string
+  intervalDay: number
+  /** Wall-clock "YYYY-MM-DD HH:mm" strings in the maintenance timezone */
+  dateRange: (string | null)[]
+  timeRange: [TimeOfDay, TimeOfDay]
+  weekdays: number[]
+  daysOfMonth: (number | string)[]
+  timeslotList: { startDate: string; endDate: string }[]
+  cron: string
+  duration: number
+  durationMinutes: number
+  timezone: string
+  timezoneOption: string
+  timezoneOffset: string
+  status: MaintenanceStatus
+  monitors?: number[]
+  statusPages?: number[]
 }
 
-interface UseMaintenancesOptions {
-  autoFetch?: boolean
+export interface MaintenanceInput {
+  title: string
+  description: string
+  strategy: MaintenanceStrategy
+  intervalDay: number
+  dateRange: (string | null)[]
+  timeRange: [TimeOfDay, TimeOfDay]
+  weekdays: number[]
+  daysOfMonth: (number | string)[]
+  cron: string
+  durationMinutes: number
+  timezoneOption: string
+  monitors: number[]
+  statusPages: number[]
 }
 
-export function useMaintenances(options: UseMaintenancesOptions = {}) {
-  const { autoFetch = true } = options
+/** Display order on the list page, same as upstream ManageMaintenance.vue */
+export const MAINTENANCE_STATUS_ORDER: Record<MaintenanceStatus, number> = {
+  'under-maintenance': 0,
+  scheduled: 1,
+  inactive: 2,
+  ended: 3,
+  unknown: 4,
+}
 
-  // State
-  const maintenances: Ref<Maintenance[]> = ref([])
-  const selectedMaintenance: Ref<Maintenance | null> = ref(null)
+/** Semantic colour (tokens) per status */
+export const MAINTENANCE_STATUS_TONE: Record<MaintenanceStatus, 'maintenance' | 'pending' | 'unknown' | 'up'> = {
+  'under-maintenance': 'maintenance',
+  scheduled: 'pending',
+  inactive: 'unknown',
+  ended: 'unknown',
+  unknown: 'unknown',
+}
+
+export function sortMaintenances(list: Maintenance[]): Maintenance[] {
+  return [...list].sort((a, b) => {
+    const diff = MAINTENANCE_STATUS_ORDER[a.status] - MAINTENANCE_STATUS_ORDER[b.status]
+    if (diff !== 0) return diff
+    return a.title.localeCompare(b.title)
+  })
+}
+
+export function errorMessage(e: any, fallback: string): string {
+  return e?.data?.message || e?.statusMessage || e?.message || fallback
+}
+
+const API = '/api/v1/maintenances'
+
+export function useMaintenances(options: { autoFetch?: boolean; live?: boolean } = {}) {
+  const { autoFetch = true, live = true } = options
+
+  const maintenances = useState<Maintenance[]>('maintenance-list', () => [])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Computed
-  const activeMaintenances = computed(() => 
-    maintenances.value.filter(m => isMaintenanceActive(m))
-  )
+  const sortedMaintenances = computed(() => sortMaintenances(maintenances.value))
+  const activeCount = computed(() => maintenances.value.filter(m => m.status === 'under-maintenance').length)
 
-  const scheduledMaintenances = computed(() => 
-    maintenances.value.filter(m => !isMaintenanceActive(m) && !isMaintenanceEnded(m))
-  )
-
-  const endedMaintenances = computed(() => 
-    maintenances.value.filter(m => isMaintenanceEnded(m))
-  )
-
-  // Methods
-  function isMaintenanceActive(m: Maintenance): boolean {
-    if (!m.active) return false
-    if (m.strategy === 'manual') return m.active
-    
-    const now = new Date()
-    const start = m.startDate ? new Date(m.startDate) : null
-    const end = m.endDate ? new Date(m.endDate) : null
-    
-    if (!start) return false
-    return start <= now && (!end || end >= now)
-  }
-
-  function isMaintenanceEnded(m: Maintenance): boolean {
-    if (!m.endDate) return false
-    return new Date(m.endDate) < new Date()
+  function upsert(item: Maintenance) {
+    const index = maintenances.value.findIndex(m => m.id === item.id)
+    if (index >= 0) maintenances.value.splice(index, 1, item)
+    else maintenances.value.unshift(item)
   }
 
   async function fetchMaintenances() {
+    isLoading.value = true
+    error.value = null
     try {
-      isLoading.value = true
-      error.value = null
-      
-      const response = await $fetch<{ ok: boolean; data: Maintenance[] }>('/api/v1/maintenance')
-      maintenances.value = response.data || []
-    } catch (e: any) {
-      error.value = e.message || 'Failed to fetch maintenances'
-      console.error('Failed to fetch maintenances:', e)
+      const res = await $fetch<{ data: Maintenance[] }>(API)
+      maintenances.value = res.data
+    } catch (e) {
+      error.value = errorMessage(e, 'Failed to load maintenances')
     } finally {
       isLoading.value = false
     }
   }
 
-  async function fetchMaintenance(id: number) {
-    try {
-      isLoading.value = true
-      const data = await $fetch<Maintenance>(`/api/v1/maintenance/${id}`)
-      
-      // Update in list
-      const index = maintenances.value.findIndex(m => m.id === id)
-      if (index !== -1) {
-        maintenances.value[index] = data
-      } else {
-        maintenances.value.push(data)
-      }
-      
-      return data
-    } catch (e: any) {
-      error.value = e.message || 'Failed to fetch maintenance'
-      throw e
-    } finally {
-      isLoading.value = false
-    }
+  async function getMaintenance(id: number) {
+    const res = await $fetch<{ data: Maintenance }>(`${API}/${id}`)
+    return res.data
   }
 
-  async function createMaintenance(maintenanceData: Partial<Maintenance>) {
-    try {
-      isLoading.value = true
-      const data = await $fetch<Maintenance>('/api/v1/maintenance', {
-        method: 'POST',
-        body: maintenanceData
-      })
-      
-      maintenances.value.push(data)
-      return data
-    } catch (e: any) {
-      error.value = e.message || 'Failed to create maintenance'
-      throw e
-    } finally {
-      isLoading.value = false
-    }
+  async function createMaintenance(input: MaintenanceInput) {
+    const res = await $fetch<{ data: Maintenance }>(API, { method: 'POST', body: input })
+    upsert(res.data)
+    return res.data
   }
 
-  async function updateMaintenance(id: number, maintenanceData: Partial<Maintenance>) {
-    try {
-      isLoading.value = true
-      const data = await $fetch<Maintenance>(`/api/v1/maintenance/${id}`, {
-        method: 'PUT',
-        body: maintenanceData
-      })
-      
-      // Update in list
-      const index = maintenances.value.findIndex(m => m.id === id)
-      if (index !== -1) {
-        maintenances.value[index] = data
-      }
-      
-      return data
-    } catch (e: any) {
-      error.value = e.message || 'Failed to update maintenance'
-      throw e
-    } finally {
-      isLoading.value = false
-    }
+  async function updateMaintenance(id: number, input: MaintenanceInput) {
+    const res = await $fetch<{ data: Maintenance }>(`${API}/${id}`, { method: 'PUT', body: input })
+    upsert(res.data)
+    return res.data
+  }
+
+  async function setActive(id: number, active: boolean) {
+    const res = await $fetch<{ data: Maintenance }>(`${API}/${id}/${active ? 'resume' : 'pause'}`, { method: 'POST' })
+    upsert(res.data)
+    return res.data
   }
 
   async function deleteMaintenance(id: number) {
-    try {
-      isLoading.value = true
-      await $fetch(`/api/v1/maintenance/${id}`, {
-        method: 'DELETE'
-      })
-      
-      // Remove from list
-      maintenances.value = maintenances.value.filter(m => m.id !== id)
-      
-      if (selectedMaintenance.value?.id === id) {
-        selectedMaintenance.value = null
-      }
-    } catch (e: any) {
-      error.value = e.message || 'Failed to delete maintenance'
-      throw e
-    } finally {
-      isLoading.value = false
+    await $fetch(`${API}/${id}`, { method: 'DELETE' })
+    maintenances.value = maintenances.value.filter(m => m.id !== id)
+  }
+
+  // Live updates when an authenticated socket is already open (server pushes
+  // maintenanceList when a window opens/closes). Status is also refreshed
+  // periodically so the list stays correct without a socket.
+  if (import.meta.client && live) {
+    const { $socket } = useNuxtApp() as any
+    const socket = $socket?.getSocket?.()
+    const onList = (list: Maintenance[]) => { maintenances.value = list }
+    const onUpsert = (item: Maintenance) => upsert(item)
+    const onDelete = (id: number) => { maintenances.value = maintenances.value.filter(m => m.id !== id) }
+    if (socket) {
+      socket.on('maintenanceList', onList)
+      socket.on('maintenanceAdded', onUpsert)
+      socket.on('maintenanceUpdated', onUpsert)
+      socket.on('maintenanceDeleted', onDelete)
     }
-  }
-
-  async function pauseMaintenance(id: number) {
-    return updateMaintenance(id, { active: false })
-  }
-
-  async function resumeMaintenance(id: number) {
-    return updateMaintenance(id, { active: true })
-  }
-
-  function getAffectedMonitors(maintenanceId: number): Monitor[] {
-    const maintenance = maintenances.value.find(m => m.id === maintenanceId)
-    return maintenance?.monitors || []
-  }
-
-  // Auto fetch on mount
-  if (autoFetch) {
-    onMounted(() => {
-      fetchMaintenances()
+    const timer = setInterval(() => { if (!document.hidden) fetchMaintenances() }, 60_000)
+    onScopeDispose(() => {
+      clearInterval(timer)
+      socket?.off('maintenanceList', onList)
+      socket?.off('maintenanceAdded', onUpsert)
+      socket?.off('maintenanceUpdated', onUpsert)
+      socket?.off('maintenanceDeleted', onDelete)
     })
   }
 
+  if (autoFetch) {
+    onMounted(fetchMaintenances)
+  }
+
   return {
-    // State
     maintenances,
-    selectedMaintenance,
+    sortedMaintenances,
+    activeCount,
     isLoading,
     error,
-
-    // Computed
-    activeMaintenances,
-    scheduledMaintenances,
-    endedMaintenances,
-
-    // Methods
     fetchMaintenances,
-    fetchMaintenance,
+    getMaintenance,
     createMaintenance,
     updateMaintenance,
+    setActive,
     deleteMaintenance,
-    pauseMaintenance,
-    resumeMaintenance,
-    isMaintenanceActive,
-    isMaintenanceEnded,
-    getAffectedMonitors,
   }
 }

@@ -244,27 +244,23 @@ onUnmounted(() => {
 }
 
 .beat.up {
-  background-color: #5cdd8b;
+  background-color: var(--uk-status-up);
 }
 
 .beat.down {
-  background-color: #dc3545;
+  background-color: var(--uk-status-down);
 }
 
 .beat.pending {
-  background-color: #f8a306;
+  background-color: var(--uk-status-pending);
 }
 
 .beat.maintenance {
-  background-color: #1747f5;
+  background-color: var(--uk-status-maintenance);
 }
 
 .beat.empty {
-  background-color: #e9ecef;
-}
-
-.dark .beat.empty {
-  background-color: #4a4a4a;
+  background-color: var(--uk-bg-active);
 }
 
 .time-indicators {
@@ -272,18 +268,14 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
-  color: #6c757d;
+  color: var(--uk-text-muted);
   margin-top: 4px;
 }
 
 .connecting-line {
   flex-grow: 1;
   height: 1px;
-  background-color: #ededed;
+  background-color: var(--uk-bg-active);
   margin: 0 10px;
-}
-
-.dark .connecting-line {
-  background-color: #333;
 }
 </style>

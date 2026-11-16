@@ -2,8 +2,8 @@
   <div class="loading-container">
     <div class="text-center">
       <img src="/icon.svg" alt="Uptime Kuma" width="64" height="64" class="mb-3" />
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+      <div class="spinner mx-auto size-8" role="status">
+        <span class="sr-only">Loading...</span>
       </div>
       <p class="mt-3 text-muted">Loading...</p>
     </div>
@@ -58,11 +58,7 @@ async function checkEntryPage() {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #f8f9fa;
-}
-
-.dark .loading-container {
-  background: #161b22;
+  background: var(--uk-bg-sunken);
 }
 
 .spinner-border {
@@ -71,6 +67,6 @@ async function checkEntryPage() {
 }
 
 .text-primary {
-  color: #5cdd8b !important;
+  color: var(--uk-status-up-fg) !important;
 }
 </style>

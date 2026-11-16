@@ -72,12 +72,12 @@
         </UFormField>
 
         <!-- Apply Existing -->
-        <div v-if="isEditing" class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg space-y-2">
+        <div v-if="isEditing" class="p-3 bg-elevated rounded-lg space-y-2">
           <UCheckbox
             v-model="applyExisting"
             :label="$t('Apply to all existing monitors')"
           />
-          <p class="text-xs text-gray-500">
+          <p class="text-xs text-muted">
             {{ $t('This will update all monitors currently using this proxy.') }}
           </p>
         </div>

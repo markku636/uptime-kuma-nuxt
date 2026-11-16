@@ -29,7 +29,7 @@ const localConfig = computed({
         required
       />
       <template #hint>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Get this from PagerTree → Integrations → Add Integration → Uptime Kuma
         </span>
       </template>

@@ -75,7 +75,7 @@ async function handleSubmit(formData: any) {
 
     <UCard v-if="loading">
       <div class="flex items-center justify-center py-12">
-        <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
+        <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-dimmed" />
       </div>
     </UCard>
 

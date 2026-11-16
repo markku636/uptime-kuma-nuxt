@@ -148,26 +148,26 @@ onMounted(() => {
         <template v-else-if="debugData">
           <!-- Server Info -->
           <div>
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Server Information</h3>
-            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-2">
+            <h3 class="text-sm font-medium text-toned mb-3">Server Information</h3>
+            <div class="bg-elevated rounded-lg p-4 space-y-2">
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Version</span>
+                <span class="text-toned">Version</span>
                 <span class="font-mono">{{ debugData.version }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Latest Version</span>
+                <span class="text-toned">Latest Version</span>
                 <span class="font-mono">{{ debugData.latestVersion || 'Unable to check' }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Is Container</span>
+                <span class="text-toned">Is Container</span>
                 <span>{{ debugData.isContainer ? 'Yes' : 'No' }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Primary Base URL</span>
+                <span class="text-toned">Primary Base URL</span>
                 <span class="font-mono text-sm truncate max-w-[200px]">{{ debugData.primaryBaseURL }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Runtime</span>
+                <span class="text-toned">Runtime</span>
                 <span class="font-mono">{{ debugData.nodeVersion }}</span>
               </div>
             </div>
@@ -175,18 +175,18 @@ onMounted(() => {
           
           <!-- Database Info -->
           <div>
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Database Information</h3>
-            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-2">
+            <h3 class="text-sm font-medium text-toned mb-3">Database Information</h3>
+            <div class="bg-elevated rounded-lg p-4 space-y-2">
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Type</span>
+                <span class="text-toned">Type</span>
                 <span>{{ debugData.databaseType }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Version</span>
+                <span class="text-toned">Version</span>
                 <span class="font-mono">{{ debugData.databaseVersion }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Timezone</span>
+                <span class="text-toned">Timezone</span>
                 <span>{{ debugData.serverTimezone }} ({{ debugData.serverTimezoneOffset }})</span>
               </div>
             </div>
@@ -194,22 +194,22 @@ onMounted(() => {
           
           <!-- Browser Info -->
           <div>
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Browser Information</h3>
-            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-2">
+            <h3 class="text-sm font-medium text-toned mb-3">Browser Information</h3>
+            <div class="bg-elevated rounded-lg p-4 space-y-2">
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Browser</span>
+                <span class="text-toned">Browser</span>
                 <span>{{ browserInfo }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Platform</span>
+                <span class="text-toned">Platform</span>
                 <span>{{ platformInfo }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Screen</span>
+                <span class="text-toned">Screen</span>
                 <span class="font-mono text-sm">{{ screenInfo }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Language</span>
+                <span class="text-toned">Language</span>
                 <span>{{ languageInfo }}</span>
               </div>
             </div>

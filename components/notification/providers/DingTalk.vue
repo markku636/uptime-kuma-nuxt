@@ -52,7 +52,7 @@ const mentioningOptions = [
         required
       />
       <template #help>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted">
           為安全起見，必須使用加簽方式驗證
         </p>
       </template>

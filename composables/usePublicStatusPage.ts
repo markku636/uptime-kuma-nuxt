@@ -80,12 +80,7 @@ interface Pagination {
   hasPrevPage: boolean
 }
 
-interface Maintenance {
-  id: number
-  title: string
-  description?: string
-  // TODO: Add more fields as needed
-}
+type Maintenance = Omit<import('~/composables/useMaintenances').Maintenance, 'monitors' | 'statusPages'>
 
 // Overall status constants
 const STATUS_PAGE_ALL_UP = 0
@@ -194,6 +189,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
       if (response.ok && response.data) {
         config.value = response.data.config
         incident.value = response.data.incident
+        maintenanceList.value = response.data.maintenanceList || []
         groups.value = response.data.publicGroupList || []
         groupTabs.value = response.data.groupTabs || []
         pagination.value = response.data.pagination

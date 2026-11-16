@@ -15,7 +15,8 @@ export default defineNuxtConfig({
   ],
 
   i18n: {
-    vueI18n: './i18n.config.ts',
+    // Resolved relative to <rootDir>/i18n
+    vueI18n: '../i18n.config.ts',
     locales: [
       { code: 'ab', name: 'Аԥсуа бызшәа' },
       { code: 'af', name: 'Afrikaans' },

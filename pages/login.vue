@@ -5,7 +5,7 @@
         <!-- Logo -->
         <div class="text-center">
           <img src="/icon.svg" alt="Uptime Kuma" width="64" height="64" class="mx-auto" />
-          <h1 class="text-2xl font-bold text-primary mt-3">Uptime Kuma</h1>
+          <h1 class="text-2xl font-bold text-highlighted mt-3">Uptime Kuma</h1>
         </div>
 
         <!-- Username -->

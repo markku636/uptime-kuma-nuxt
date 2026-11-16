@@ -35,7 +35,7 @@
     </div>
 
     <!-- Description -->
-    <p v-if="description" class="mt-1 text-sm text-gray-500">
+    <p v-if="description" class="mt-1 text-sm text-muted">
       {{ description }}
     </p>
   </div>

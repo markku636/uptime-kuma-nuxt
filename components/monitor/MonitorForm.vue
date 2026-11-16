@@ -6,7 +6,7 @@
       
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group md:col-span-2">
-          <label class="input-label">Monitor Type <span class="text-red-400">*</span></label>
+          <label class="input-label">Monitor Type <span class="text-down-fg">*</span></label>
           <select v-model="form.type" class="select-field" :disabled="loading">
             <option v-for="type in monitorTypes" :key="type.value" :value="type.value">
               {{ type.label }}
@@ -15,7 +15,7 @@
         </div>
 
         <div class="form-group md:col-span-2">
-          <label class="input-label">Friendly Name <span class="text-red-400">*</span></label>
+          <label class="input-label">Friendly Name <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.name" 
             type="text" 
@@ -27,7 +27,7 @@
 
         <!-- URL for HTTP monitors -->
         <div v-if="showUrlField" class="form-group md:col-span-2">
-          <label class="input-label">URL <span class="text-red-400">*</span></label>
+          <label class="input-label">URL <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.url" 
             type="text" 
@@ -39,7 +39,7 @@
 
         <!-- Hostname for TCP/Ping/DNS monitors -->
         <div v-if="showHostnameField" class="form-group" :class="showPortField ? '' : 'md:col-span-2'">
-          <label class="input-label">Hostname <span class="text-red-400">*</span></label>
+          <label class="input-label">Hostname <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.hostname" 
             type="text" 
@@ -51,7 +51,7 @@
 
         <!-- Port for TCP/Game monitors -->
         <div v-if="showPortField" class="form-group">
-          <label class="input-label">Port <span class="text-red-400">*</span></label>
+          <label class="input-label">Port <span class="text-down-fg">*</span></label>
           <input 
             v-model.number="form.port" 
             type="number" 
@@ -97,7 +97,7 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-700 dark:text-gray-300">Invert Keyword (alert if found)</span>
+          <span class="text-default">Invert Keyword (alert if found)</span>
         </label>
 
         <label class="flex items-center gap-2 cursor-pointer">
@@ -107,7 +107,7 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-700 dark:text-gray-300">Ignore TLS/SSL Certificate</span>
+          <span class="text-default">Ignore TLS/SSL Certificate</span>
         </label>
 
         <label class="flex items-center gap-2 cursor-pointer">
@@ -117,7 +117,7 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-700 dark:text-gray-300">Cache Bust (add random query string)</span>
+          <span class="text-default">Cache Bust (add random query string)</span>
         </label>
       </div>
 
@@ -130,9 +130,9 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-700 dark:text-gray-300">Use Remote Browser</span>
+          <span class="text-default">Use Remote Browser</span>
         </label>
-        <p class="text-xs text-gray-400 mb-2">Use a Chromium-based browser to render JavaScript content before checking for keyword</p>
+        <p class="text-xs text-dimmed mb-2">Use a Chromium-based browser to render JavaScript content before checking for keyword</p>
         
         <div v-if="form.useRemoteBrowser" class="mt-2">
           <label class="input-label">Remote Browser</label>
@@ -142,8 +142,8 @@
               {{ browser.name }}
             </option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">
-            <NuxtLink to="/settings/remote-browsers" class="text-green-400 hover:underline">Manage Remote Browsers</NuxtLink>
+          <p class="text-xs text-dimmed mt-1">
+            <NuxtLink to="/settings/remote-browsers" class="text-up-fg hover:underline">Manage Remote Browsers</NuxtLink>
           </p>
         </div>
       </div>
@@ -158,8 +158,8 @@
             <span v-if="proxy.isDefault">(Default)</span>
           </option>
         </select>
-        <p class="text-xs text-gray-400 mt-1">
-          <NuxtLink to="/settings/proxies" class="text-green-400 hover:underline">Manage Proxies</NuxtLink>
+        <p class="text-xs text-dimmed mt-1">
+          <NuxtLink to="/settings/proxies" class="text-up-fg hover:underline">Manage Proxies</NuxtLink>
         </p>
       </div>
 
@@ -173,7 +173,7 @@
           placeholder="200-299"
           :disabled="loading"
         />
-        <p class="text-xs text-gray-400 mt-1">Select status codes which are considered as a successful response. Use comma to separate multiple codes (e.g., 200-299, 301, 302)</p>
+        <p class="text-xs text-dimmed mt-1">Select status codes which are considered as a successful response. Use comma to separate multiple codes (e.g., 200-299, 301, 302)</p>
       </div>
 
       <!-- Max Redirects -->
@@ -187,7 +187,7 @@
           max="100"
           :disabled="loading"
         />
-        <p class="text-xs text-gray-400 mt-1">Maximum number of redirects to follow. Set to 0 to disable.</p>
+        <p class="text-xs text-dimmed mt-1">Maximum number of redirects to follow. Set to 0 to disable.</p>
       </div>
 
       <!-- HTTP Headers -->
@@ -215,7 +215,7 @@
             />
             <button 
               type="button" 
-              class="btn btn-outline text-red-400 hover:bg-red-500/20"
+              class="btn btn-outline text-down-fg hover:bg-down/20"
               @click="removeHeader(index)"
               :disabled="loading"
             >
@@ -244,7 +244,7 @@
           placeholder='{"key": "value"}'
           :disabled="loading"
         ></textarea>
-        <p class="text-xs text-gray-400 mt-1">JSON format for the request body</p>
+        <p class="text-xs text-dimmed mt-1">JSON format for the request body</p>
       </div>
 
       <!-- Authentication Method -->
@@ -302,7 +302,7 @@
       <!-- OAuth2 Client Credentials -->
       <div v-if="form.authMethod === 'oauth2-cc'" class="mt-4 grid gap-4 md:grid-cols-2">
         <div class="form-group md:col-span-2">
-          <label class="input-label">Token URL <span class="text-red-400">*</span></label>
+          <label class="input-label">Token URL <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.oauthTokenUrl" 
             type="text" 
@@ -312,7 +312,7 @@
           />
         </div>
         <div class="form-group">
-          <label class="input-label">Client ID <span class="text-red-400">*</span></label>
+          <label class="input-label">Client ID <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.oauthClientId" 
             type="text" 
@@ -321,7 +321,7 @@
           />
         </div>
         <div class="form-group">
-          <label class="input-label">Client Secret <span class="text-red-400">*</span></label>
+          <label class="input-label">Client Secret <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.oauthClientSecret" 
             type="password" 
@@ -353,7 +353,7 @@
       <!-- mTLS -->
       <div v-if="form.authMethod === 'mtls'" class="mt-4 space-y-4">
         <div class="form-group">
-          <label class="input-label">Client Certificate <span class="text-red-400">*</span></label>
+          <label class="input-label">Client Certificate <span class="text-down-fg">*</span></label>
           <textarea 
             v-model="form.tlsCert" 
             class="input-field" 
@@ -363,7 +363,7 @@
           ></textarea>
         </div>
         <div class="form-group">
-          <label class="input-label">Client Key <span class="text-red-400">*</span></label>
+          <label class="input-label">Client Key <span class="text-down-fg">*</span></label>
           <textarea 
             v-model="form.tlsKey" 
             class="input-field" 
@@ -391,7 +391,7 @@
       
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group md:col-span-2">
-          <label class="input-label">JSON Path <span class="text-red-400">*</span></label>
+          <label class="input-label">JSON Path <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.jsonPath" 
             type="text" 
@@ -399,7 +399,7 @@
             placeholder="$.data.status"
             :disabled="loading"
           />
-          <p class="text-xs text-gray-500 mt-1">Use JSONPath syntax (e.g., $.data.status)</p>
+          <p class="text-xs text-muted mt-1">Use JSONPath syntax (e.g., $.data.status)</p>
         </div>
 
         <div class="form-group md:col-span-2">
@@ -421,7 +421,7 @@
       
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group md:col-span-2">
-          <label class="input-label">gRPC URL <span class="text-red-400">*</span></label>
+          <label class="input-label">gRPC URL <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.grpcUrl" 
             type="text" 
@@ -432,7 +432,7 @@
         </div>
 
         <div class="form-group">
-          <label class="input-label">Service Name <span class="text-red-400">*</span></label>
+          <label class="input-label">Service Name <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.grpcServiceName" 
             type="text" 
@@ -443,7 +443,7 @@
         </div>
 
         <div class="form-group">
-          <label class="input-label">Method <span class="text-red-400">*</span></label>
+          <label class="input-label">Method <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.grpcMethod" 
             type="text" 
@@ -484,7 +484,7 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-700 dark:text-gray-300">Enable TLS</span>
+          <span class="text-default">Enable TLS</span>
         </label>
       </div>
     </div>
@@ -495,7 +495,7 @@
       
       <div class="grid gap-4">
         <div class="form-group">
-          <label class="input-label">Connection String <span class="text-red-400">*</span></label>
+          <label class="input-label">Connection String <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.databaseConnectionString" 
             type="text" 
@@ -514,7 +514,7 @@
             placeholder="SELECT 1"
             :disabled="loading"
           ></textarea>
-          <p class="text-xs text-gray-500 mt-1">Optional query to execute for health check</p>
+          <p class="text-xs text-muted mt-1">Optional query to execute for health check</p>
         </div>
       </div>
     </div>
@@ -525,7 +525,7 @@
       
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group md:col-span-2">
-          <label class="input-label">Container Name/ID <span class="text-red-400">*</span></label>
+          <label class="input-label">Container Name/ID <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.dockerContainer" 
             type="text" 
@@ -650,7 +650,7 @@
       <h2 class="section-title">Game Server Settings</h2>
       
       <div class="form-group">
-        <label class="input-label">Game <span class="text-red-400">*</span></label>
+        <label class="input-label">Game <span class="text-down-fg">*</span></label>
         <select v-model="form.game" class="select-field" :disabled="loading">
           <option v-for="game in gameTypes" :key="game.value" :value="game.value">
             {{ game.label }}
@@ -665,7 +665,7 @@
       
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group md:col-span-2">
-          <label class="input-label">Community String <span class="text-red-400">*</span></label>
+          <label class="input-label">Community String <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.snmpCommunity" 
             type="password" 
@@ -676,7 +676,7 @@
         </div>
 
         <div class="form-group md:col-span-2">
-          <label class="input-label">OID <span class="text-red-400">*</span></label>
+          <label class="input-label">OID <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.snmpOid" 
             type="text" 
@@ -685,7 +685,7 @@
             pattern="^([0-2])((\.0)|(\.[1-9][0-9]*))*$"
             :disabled="loading"
           />
-          <p class="text-xs text-gray-400 mt-1">Object Identifier (e.g., 1.3.6.1.4.1.9.6.1.101)</p>
+          <p class="text-xs text-dimmed mt-1">Object Identifier (e.g., 1.3.6.1.4.1.9.6.1.101)</p>
         </div>
 
         <div class="form-group">
@@ -715,7 +715,7 @@
       
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group">
-          <label class="input-label">DNS Server <span class="text-red-400">*</span></label>
+          <label class="input-label">DNS Server <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.dnsResolveServer" 
             type="text" 
@@ -762,7 +762,7 @@
       
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group">
-          <label class="input-label">Username <span class="text-red-400">*</span></label>
+          <label class="input-label">Username <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.radiusUsername" 
             type="text" 
@@ -772,7 +772,7 @@
         </div>
 
         <div class="form-group">
-          <label class="input-label">Password <span class="text-red-400">*</span></label>
+          <label class="input-label">Password <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.radiusPassword" 
             type="password" 
@@ -782,7 +782,7 @@
         </div>
 
         <div class="form-group md:col-span-2">
-          <label class="input-label">Shared Secret <span class="text-red-400">*</span></label>
+          <label class="input-label">Shared Secret <span class="text-down-fg">*</span></label>
           <input 
             v-model="form.radiusSecret" 
             type="password" 
@@ -849,7 +849,7 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-700 dark:text-gray-300">Use Numeric Output (no DNS lookup)</span>
+          <span class="text-default">Use Numeric Output (no DNS lookup)</span>
         </label>
       </div>
     </div>
@@ -857,7 +857,7 @@
     <!-- Monitor Conditions (for supported monitor types) -->
     <div v-if="supportsConditions" class="section-card">
       <h2 class="section-title">Monitor Conditions</h2>
-      <p class="text-sm text-gray-400 mb-4">Define custom conditions to determine monitor status based on response data</p>
+      <p class="text-sm text-dimmed mb-4">Define custom conditions to determine monitor status based on response data</p>
       <MonitorConditions
         v-model="form.conditions"
         :monitor-type="form.type"
@@ -920,7 +920,7 @@
           class="checkbox"
           :disabled="loading"
         />
-        <span class="text-gray-700 dark:text-gray-300">Upside Down Mode (alert when UP)</span>
+        <span class="text-default">Upside Down Mode (alert when UP)</span>
       </label>
 
       <!-- Certificate Expiry Notification (for HTTP monitors) -->
@@ -931,7 +931,7 @@
           class="checkbox"
           :disabled="loading"
         />
-        <span class="text-gray-700 dark:text-gray-300">Certificate Expiry Notification</span>
+        <span class="text-default">Certificate Expiry Notification</span>
       </label>
 
       <!-- Resend Notification Interval -->
@@ -944,7 +944,7 @@
           min="0"
           :disabled="loading"
         />
-        <p class="text-xs text-gray-400 mt-1">Set to 0 to resend every time</p>
+        <p class="text-xs text-dimmed mt-1">Set to 0 to resend every time</p>
       </div>
     </div>
 
@@ -952,16 +952,16 @@
     <div class="section-card">
       <h2 class="section-title">Notifications</h2>
       
-      <p v-if="!notifications || notifications.length === 0" class="text-gray-600 dark:text-gray-400">
+      <p v-if="!notifications || notifications.length === 0" class="text-toned">
         No notifications configured. 
-        <NuxtLink to="/settings/notifications" class="text-green-400 hover:underline">Setup Notification</NuxtLink>
+        <NuxtLink to="/settings/notifications" class="text-up-fg hover:underline">Setup Notification</NuxtLink>
       </p>
 
       <div v-else class="space-y-3">
         <label 
           v-for="notification in notifications" 
           :key="notification.id" 
-          class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50"
+          class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-elevated"
         >
           <input 
             type="checkbox"
@@ -970,8 +970,8 @@
             class="checkbox"
             :disabled="loading"
           />
-          <span class="text-gray-300 flex-1">{{ notification.name }}</span>
-          <span v-if="notification.isDefault" class="px-2 py-0.5 text-xs bg-green-600 rounded">Default</span>
+          <span class="text-dimmed flex-1">{{ notification.name }}</span>
+          <span v-if="notification.isDefault" class="px-2 py-0.5 text-xs bg-up rounded">Default</span>
         </label>
       </div>
 
@@ -990,9 +990,9 @@
     <div class="section-card">
       <h2 class="section-title">Tags</h2>
       
-      <div v-if="!tags || tags.length === 0" class="text-gray-600 dark:text-gray-400">
+      <div v-if="!tags || tags.length === 0" class="text-toned">
         No tags available. 
-        <NuxtLink to="/settings/tags" class="text-green-400 hover:underline">Create Tags</NuxtLink>
+        <NuxtLink to="/settings/tags" class="text-up-fg hover:underline">Create Tags</NuxtLink>
       </div>
 
       <div v-else class="flex flex-wrap gap-2">
@@ -1000,7 +1000,7 @@
           v-for="tag in tags" 
           :key="tag.id" 
           class="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-full border transition-colors"
-          :class="isTagSelected(tag.id) ? 'border-green-500 bg-green-500/20' : 'border-gray-600 hover:border-gray-500'"
+          :class="isTagSelected(tag.id) ? 'border-up/40 bg-up/20' : 'border-accented hover:border-inverted'"
         >
           <input 
             type="checkbox"
@@ -1013,7 +1013,7 @@
             class="w-3 h-3 rounded-full" 
             :style="{ backgroundColor: tag.color || '#6b7280' }"
           ></span>
-          <span class="text-sm text-gray-300">{{ tag.name }}</span>
+          <span class="text-sm text-dimmed">{{ tag.name }}</span>
         </label>
       </div>
     </div>
@@ -1032,7 +1032,7 @@
           {{ group.name }}
         </option>
       </select>
-      <p class="text-xs text-gray-400 mt-1">Assign this monitor to a group</p>
+      <p class="text-xs text-dimmed mt-1">Assign this monitor to a group</p>
     </div>
 
     <!-- Node Assignment (Cluster Mode) -->
@@ -1052,7 +1052,7 @@
               {{ node.name || node.id }}
             </option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">The node where this monitor will be executed</p>
+          <p class="text-xs text-dimmed mt-1">The node where this monitor will be executed</p>
         </div>
 
         <div class="form-group">
@@ -1067,7 +1067,7 @@
               {{ node.name || node.id }}
             </option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">Override for failover/load balancing</p>
+          <p class="text-xs text-dimmed mt-1">Override for failover/load balancing</p>
         </div>
       </div>
     </div>
