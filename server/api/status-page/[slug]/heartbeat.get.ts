@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
             }
           }
         },
-        orderBy: { weight: 'asc' }
+        orderBy: [{ weight: 'asc' }, { id: 'asc' }]
       }
     }
   })

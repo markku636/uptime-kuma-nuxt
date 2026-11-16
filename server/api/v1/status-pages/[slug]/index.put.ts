@@ -9,7 +9,7 @@ const groupMonitorSchema = z.object({
 const groupSchema = z.object({
   id: z.number(),
   name: z.string(),
-  // Omitted by the editor: the position in the list is the order
+  // Accepted for compatibility; the position in the list is the order
   weight: z.number().optional(),
   monitorList: z.array(groupMonitorSchema)
 })
@@ -137,7 +137,9 @@ export default defineEventHandler(async (event) => {
       // Create or update groups
       for (let i = 0; i < publicGroupList.length; i++) {
         const group = publicGroupList[i]
-        const weight = group.weight ?? i + 1
+        // The list is in display order: its position is the order (a weight sent
+        // back from an earlier load would keep stale or tied values)
+        const weight = i + 1
         
         let groupId: number
         

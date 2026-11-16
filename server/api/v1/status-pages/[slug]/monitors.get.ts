@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
   // Get all groups with monitor counts (lightweight query for tabs)
   const groupsWithCounts = await prisma.statusPageGroup.findMany({
     where: { statusPageId: statusPage.id },
-    orderBy: { weight: 'asc' },
+    orderBy: [{ weight: 'asc' }, { id: 'asc' }],
     select: {
       id: true,
       name: true,
@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
   if (noPagination) {
     const allGroups = await prisma.statusPageGroup.findMany({
       where: { statusPageId: statusPage.id },
-      orderBy: { weight: 'asc' },
+      orderBy: [{ weight: 'asc' }, { id: 'asc' }],
       include: {
         monitors: {
           include: {
