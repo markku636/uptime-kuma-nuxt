@@ -55,6 +55,10 @@
               <UIcon name="i-heroicons-document-duplicate" class="w-4 h-4 mr-1" />
               {{ cloning ? "Cloning..." : "Clone" }}
             </button>
+            <NuxtLink :to="`/maintenance/add?monitorId=${monitorId}`" class="btn btn-secondary">
+              <UIcon name="i-heroicons-wrench-screwdriver" class="w-4 h-4 mr-1" />
+              {{ $t('scheduleMaintenanceForMonitor') }}
+            </NuxtLink>
             <!-- Badge Generator -->
             <button @click="showBadgeGenerator = true" class="btn btn-secondary">
               <UIcon name="i-heroicons-rectangle-stack" class="w-4 h-4 mr-1" />
@@ -72,6 +76,9 @@
           </div>
         </div>
       </div>
+
+      <!-- Maintenance covering this monitor -->
+      <MaintenanceMonitorNotice :monitor-id="monitorId" :parent-id="monitor.parent" />
 
       <!-- Tags -->
       <Transition name="fade">

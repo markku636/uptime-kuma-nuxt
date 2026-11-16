@@ -9,6 +9,8 @@ const props = defineProps<{
   id?: number
   /** Prefill from this maintenance and create a new one */
   cloneId?: number
+  /** Preselect this monitor (new maintenance from a monitor page) */
+  monitorId?: number
 }>()
 
 const { t, locale } = useI18n()
@@ -171,6 +173,7 @@ onMounted(async () => {
     monitorOptions.value = buildMonitorOptions(monitorsRes.data || [])
     statusPageOptions.value = (statusPagesRes.data || []).map(p => ({ label: `${p.title} (/${p.slug})`, value: p.id }))
     if (source) fillFrom(source)
+    else if (props.monitorId && monitorOptions.value.some(o => o.value === props.monitorId)) form.monitors = [props.monitorId]
   } catch (e) {
     loadError.value = errorMessage(e, 'Failed to load maintenance')
   } finally {

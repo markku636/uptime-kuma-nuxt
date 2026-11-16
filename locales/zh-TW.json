@@ -1197,5 +1197,9 @@
     "brunoNoRequests": "所選檔案中沒有 HTTP 請求",
     "brunoSkippedFiles": "略過 {n} 個檔案（過大或數量過多）",
     "brunoPickOther": "改選其他檔案",
-    "brunoImportedHint": "已從 Bruno 匯入，請確認欄位後再建立監控。"
+    "brunoImportedHint": "已從 Bruno 匯入，請確認欄位後再建立監控。",
+    "maintenanceMonitorActive": "維護中：{title}",
+    "maintenanceMonitorActiveHint": "此期間暫停檢查並記錄為維護，不會發送通知。",
+    "maintenanceMonitorUpcoming": "即將進行的維護",
+    "scheduleMaintenanceForMonitor": "排程維護"
 }

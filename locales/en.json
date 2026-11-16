@@ -1185,5 +1185,9 @@
     "brunoNoRequests": "No HTTP requests found in the selected files",
     "brunoSkippedFiles": "{n} file(s) skipped (too large or too many)",
     "brunoPickOther": "Choose other files",
-    "brunoImportedHint": "Imported from Bruno. Review the fields, then create the monitor."
+    "brunoImportedHint": "Imported from Bruno. Review the fields, then create the monitor.",
+    "maintenanceMonitorActive": "Under maintenance: {title}",
+    "maintenanceMonitorActiveHint": "Checks are paused and recorded as maintenance; no notifications are sent.",
+    "maintenanceMonitorUpcoming": "Upcoming maintenance",
+    "scheduleMaintenanceForMonitor": "Schedule maintenance"
 }
