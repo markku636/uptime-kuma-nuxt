@@ -20,7 +20,7 @@
     <WorkspaceSwitcher class="mb-4" />
 
     <div class="card card-body">
-      <div v-if="pending || !loaded" class="text-center py-12">
+      <div v-if="(pending && !data) || !loaded" class="text-center py-12">
         <div class="spinner w-8 h-8 mx-auto"></div>
         <p class="text-toned mt-2">Loading monitors...</p>
       </div>
@@ -144,6 +144,15 @@ const { data, pending, refresh } = await useFetch('/api/v1/monitors', {
 })
 
 const monitors = computed<any[]>(() => data.value?.data || [])
+
+// Keep statuses current while the page is open (background refresh, no spinner)
+const visibility = useDocumentVisibility()
+useIntervalFn(() => {
+  if (visibility.value === 'visible') refresh()
+}, 30_000)
+watch(visibility, (state) => {
+  if (state === 'visible') refresh()
+})
 
 // ---------- Sections: one per group of the selected workspace, then ungrouped ----------
 type StatusKey = 'up' | 'down' | 'maintenance' | 'pending' | 'paused'
