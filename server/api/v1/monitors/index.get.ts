@@ -3,6 +3,8 @@
 // monitor. Pages that only need the current status ask for 1 (or 0), which
 // keeps the response small when there are many monitors.
 
+import type { Heartbeat } from '@prisma/client'
+
 const DEFAULT_HEARTBEATS = 50
 const MAX_HEARTBEATS = 100
 
@@ -36,7 +38,7 @@ export default defineEventHandler(async (event) => {
   // Convert BigInt to string for JSON serialization; always return an array
   const serializedMonitors = monitors.map(monitor => ({
     ...monitor,
-    heartbeats: ((monitor as { heartbeats?: { id: bigint }[] }).heartbeats ?? []).map(hb => ({
+    heartbeats: ((monitor as { heartbeats?: Heartbeat[] }).heartbeats ?? []).map(hb => ({
       ...hb,
       id: hb.id.toString()
     }))

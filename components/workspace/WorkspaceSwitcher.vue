@@ -8,7 +8,8 @@ const props = withDefaults(defineProps<{
   /** Show the shortcut to the management page */
   manage?: boolean
   /** Monitors the page already loaded; used to flag workspaces with monitors down */
-  monitors?: { type: string; active: boolean; workspaceId?: number | null; heartbeats?: { status: number }[] }[]
+  // Loose on purpose: callers pass serialized API rows (useFetch types)
+  monitors?: readonly { type?: string; active?: boolean; workspaceId?: number | null; heartbeats?: readonly { status?: number }[] }[]
 }>(), { manage: true, monitors: () => [] })
 
 const { t } = useI18n()
