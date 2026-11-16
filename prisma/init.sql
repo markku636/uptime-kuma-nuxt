@@ -631,3 +631,30 @@ END $$;
 
 -- Which group pause paused a monitor (resuming the group only resumes those)
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "paused_by_group" INTEGER;
+
+-- Variables monitors can use as {{name}} (global, or per workspace)
+CREATE TABLE IF NOT EXISTS "variables" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "value" TEXT NOT NULL DEFAULT '',
+    "secret" BOOLEAN NOT NULL DEFAULT false,
+    "workspace_id" INTEGER,
+    "user_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "variables_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "variables_user_id_idx" ON "variables"("user_id");
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'variables_user_id_fkey') THEN
+        ALTER TABLE "variables" ADD CONSTRAINT "variables_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'variables_workspace_id_fkey') THEN
+        ALTER TABLE "variables" ADD CONSTRAINT "variables_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;

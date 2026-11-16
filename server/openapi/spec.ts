@@ -62,6 +62,7 @@ export const API_TAGS: { name: string, description: string }[] = [
   { name: 'Auth', description: 'Login, session, profile and 2FA' },
   { name: 'Monitors', description: 'Monitor management' },
   { name: 'Workspaces', description: 'Workspaces that monitors are organised into' },
+  { name: 'Variables', description: 'Variables monitors reference by name in double braces (global or per workspace)' },
   { name: 'Groups', description: 'Monitor groups (folders) inside a workspace' },
   { name: 'Tags', description: 'Tag management' },
   { name: 'Notifications', description: 'Notification channels' },
@@ -87,6 +88,7 @@ export const DEFAULT_VARS: Record<string, string> = {
   monitorId: '1',
   workspaceId: '1',
   groupId: '1',
+  variableId: '1',
   tagId: '1',
   notificationId: '1',
   statusPageSlug: 'my-service-status',
@@ -275,6 +277,29 @@ export const ENDPOINTS: Endpoint[] = [
     description: '`ids`: every workspace id in the new order, first to last.',
     body: { ids: [2, 1] },
   },
+
+  // ─────────────────────────── Variables ───────────────────────────
+  {
+    method: 'get', path: '/api/v1/variables', tag: 'Variables', summary: 'List variables', zh: '取得所有變數',
+    description: 'Global variables have `workspaceId: null`. Secret values are never returned (`value` is empty, `hasValue` tells whether one is set).',
+  },
+  {
+    method: 'post', path: '/api/v1/variables', tag: 'Variables', summary: 'Create variable', zh: '建立變數',
+    description: 'Monitors reference it by name in double braces in URL, hostname, headers, body, auth and keyword; a workspace variable overrides a global one with the same name.',
+    body: { name: 'baseUrl', value: 'https://api.example.com', secret: false, workspaceId: null },
+    capture: { var: 'variableId', field: 'id' },
+  },
+  {
+    method: 'post', path: '/api/v1/variables/bulk', tag: 'Variables', summary: 'Create or update variables by name', zh: '批次建立或更新變數',
+    description: 'Upserts by name within one scope. An empty value never overwrites a stored one.',
+    body: { workspaceId: null, variables: [{ name: 'baseUrl', value: 'https://api.example.com' }, { name: 'token', value: 'secret', secret: true }] },
+  },
+  {
+    method: 'put', path: '/api/v1/variables/{id}', tag: 'Variables', summary: 'Update variable', zh: '更新變數', params: { id: 'variableId' },
+    description: 'Omit `value` to keep the current one (e.g. a secret).',
+    body: { value: 'https://staging.example.com' },
+  },
+  { method: 'delete', path: '/api/v1/variables/{id}', tag: 'Variables', summary: 'Delete variable', zh: '刪除變數', params: { id: 'variableId' }, destructive: true },
   ...crud('Groups', '/api/v1/groups', 'group', '群組', 'groupId',
     { name: 'Web servers', description: 'Front-end hosts', workspaceId: null },
     { name: 'Web servers (renamed)' }),

@@ -23,6 +23,7 @@ model User {
   notifications Notification[]
   apiKeys       ApiKey[]
   workspaces    Workspace[]
+  variables     Variable[]
 
   @@map("users")
 }
@@ -165,11 +166,30 @@ model Workspace {
   userId      Int      @map("user_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  monitors Monitor[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitors  Monitor[]
+  variables Variable[]
 
   @@index([userId])
   @@map("workspaces")
+}
+
+// Values monitors can use as {{name}} (URL, headers, body, auth, keyword),
+// resolved at check time. Workspace variables override global ones.
+model Variable {
+  id          Int      @id @default(autoincrement())
+  name        String
+  value       String   @default("")
+  secret      Boolean  @default(false)
+  workspaceId Int?     @map("workspace_id")
+  userId      Int      @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("variables")
 }
 
 model Heartbeat {

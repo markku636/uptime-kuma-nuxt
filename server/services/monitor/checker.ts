@@ -24,6 +24,8 @@ import {
 } from './checkers'
 import { prisma } from '../../utils/prisma'
 import { aggregateGroupStatus } from '../workspace/tree'
+import { applyVariables, usesVariables } from '../variables/resolve'
+import { variablesForMonitor } from '../variables/service'
 
 export interface CheckResult {
   status: number // 0: DOWN, 1: UP, 2: PENDING, 3: MAINTENANCE
@@ -33,6 +35,17 @@ export interface CheckResult {
 
 export async function checkMonitor(monitor: any): Promise<CheckResult> {
   const startTime = Date.now()
+
+  // {{name}} placeholders take their values from the user's variables now,
+  // so editing a variable changes every monitor that uses it
+  if (usesVariables(monitor)) {
+    const vars = await variablesForMonitor(monitor.userId, monitor.workspaceId ?? null)
+    const filled = applyVariables(monitor, vars)
+    if (filled.missing.length) {
+      return { status: 0, ping: 0, msg: `Unknown variable${filled.missing.length > 1 ? 's' : ''}: ${filled.missing.join(', ')}` }
+    }
+    monitor = filled.monitor
+  }
 
   try {
     switch (monitor.type) {
