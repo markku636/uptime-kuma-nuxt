@@ -169,7 +169,8 @@ const { t } = useI18n()
 const { workspaces, groups, current, loaded, defaultWorkspaceId, setGroupActive } = useWorkspaces()
 const toast = useToast()
 
-const { data, pending, refresh } = await useFetch('/api/v1/monitors', {
+// Only the current status is shown here
+const { data, pending, refresh } = await useFetch('/api/v1/monitors?heartbeats=1', {
   headers: useRequestHeaders(['cookie'])
 })
 

@@ -38,7 +38,7 @@ async function load() {
   try {
     const [m, monitors, pages] = await Promise.all([
       getMaintenance(id.value),
-      $fetch<{ data: { id: number; name: string }[] }>('/api/v1/monitors'),
+      $fetch<{ data: { id: number; name: string }[] }>('/api/v1/monitors?heartbeats=0'),
       $fetch<{ data: { id: number; title: string }[] }>('/api/v1/status-pages'),
     ])
     maintenance.value = m

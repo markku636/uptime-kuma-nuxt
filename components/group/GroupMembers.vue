@@ -8,7 +8,7 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
-const { data, pending } = useFetch<{ data: any[] }>('/api/v1/monitors', {
+const { data, pending } = useFetch<{ data: any[] }>('/api/v1/monitors?heartbeats=1', {
   key: `group-members-${props.groupId}`,
   headers: useRequestHeaders(['cookie']),
 })

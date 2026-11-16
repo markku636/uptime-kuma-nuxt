@@ -22,7 +22,7 @@ const busy = ref(false)
 
 async function fetchMonitors() {
   try {
-    const res = await $fetch<{ data: any[] }>('/api/v1/monitors')
+    const res = await $fetch<{ data: any[] }>('/api/v1/monitors?heartbeats=1')
     monitors.value = res.data || []
   } catch (e) {
     toast.add({ title: workspaceErrorMessage(e, t('Failed to load')), color: 'error' })

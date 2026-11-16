@@ -166,7 +166,7 @@ onMounted(async () => {
   try {
     const sourceId = props.id || props.cloneId
     const [monitorsRes, statusPagesRes, source] = await Promise.all([
-      $fetch<{ data: MonitorOption[] }>('/api/v1/monitors'),
+      $fetch<{ data: MonitorOption[] }>('/api/v1/monitors?heartbeats=0'),
       $fetch<{ data: { id: number; title: string; slug: string }[] }>('/api/v1/status-pages'),
       sourceId ? getMaintenance(sourceId) : Promise.resolve(null),
     ])

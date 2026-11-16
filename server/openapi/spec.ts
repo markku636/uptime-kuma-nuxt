@@ -187,7 +187,10 @@ export const ENDPOINTS: Endpoint[] = [
   { method: 'post', path: '/api/auth/logout', tag: 'Auth', summary: 'Logout', zh: '登出', destructive: true },
 
   // ─────────────────────────── Monitors ───────────────────────────
-  { method: 'get', path: '/api/v1/monitors', tag: 'Monitors', summary: 'List monitors', zh: '取得所有 Monitors' },
+  {
+    method: 'get', path: '/api/v1/monitors', tag: 'Monitors', summary: 'List monitors', zh: '取得所有 Monitors',
+    query: [{ name: 'heartbeats', type: 'integer', description: 'Recent heartbeats per monitor (0-100, default 50). Use 1 when only the current status is needed.', example: 1 }],
+  },
   {
     method: 'post', path: '/api/v1/monitors', tag: 'Monitors', summary: 'Create monitor', zh: '建立監控器',
     bodySchema: 'MonitorInput',
