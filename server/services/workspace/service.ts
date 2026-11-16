@@ -33,6 +33,8 @@ const groupInputSchema = z.object({
   workspaceId: idOrNull.optional(),
   // Parent group (nesting). A nested group always lives in its parent's workspace.
   parent: idOrNull.optional(),
+  // Notification channels used when the group's status changes; omitted = keep
+  notificationIds: z.array(z.number().int().positive()).max(100).optional(),
 })
 
 const organizeInputSchema = z
@@ -161,7 +163,26 @@ const groupSelect = {
   parent: true,
   workspaceId: true,
   weight: true,
+  monitorNotifications: { select: { notificationId: true } },
 } as const
+
+/** Replace the notification channels of a group (only the user's own channels) */
+async function setGroupNotifications(userId: number, groupId: number, ids: number[] | undefined) {
+  if (ids === undefined) return
+  const unique = [...new Set(ids)]
+  if (unique.length) {
+    const owned = await prisma.notification.count({ where: { id: { in: unique }, userId } })
+    if (owned !== unique.length) throw new WorkspaceError('Notification not found', 404)
+  }
+  await prisma.$transaction([
+    prisma.monitorNotification.deleteMany({ where: { monitorId: groupId } }),
+    prisma.monitorNotification.createMany({ data: unique.map(notificationId => ({ monitorId: groupId, notificationId })) }),
+  ])
+}
+
+const notificationIdsOf = async (groupId: number) =>
+  (await prisma.monitorNotification.findMany({ where: { monitorId: groupId }, select: { notificationId: true } }))
+    .map(n => n.notificationId)
 
 export async function listGroups(userId: number) {
   const [groups, members] = await Promise.all([
@@ -173,12 +194,20 @@ export async function listGroups(userId: number) {
     prisma.monitor.groupBy({ by: ['parent'], where: { userId, parent: { not: null } }, _count: { _all: true } }),
   ])
   const memberCount = new Map(members.map(m => [m.parent, m._count._all]))
-  return groups.map(g => ({ ...g, monitorCount: memberCount.get(g.id) ?? 0 }))
+  return groups.map(({ monitorNotifications, ...g }) => ({
+    ...g,
+    notificationIds: monitorNotifications.map(n => n.notificationId),
+    monitorCount: memberCount.get(g.id) ?? 0,
+  }))
 }
 
 export async function createGroup(userId: number, body: unknown) {
   const input = parse(groupInputSchema, body)
   const placement = await resolvePlacement(userId, null, { parent: input.parent, workspaceId: input.workspaceId })
+  if (input.notificationIds?.length) {
+    const owned = await prisma.notification.count({ where: { id: { in: [...new Set(input.notificationIds)] }, userId } })
+    if (owned !== new Set(input.notificationIds).size) throw new WorkspaceError('Notification not found', 404)
+  }
 
   const group = await prisma.monitor.create({
     data: {
@@ -190,9 +219,10 @@ export async function createGroup(userId: number, body: unknown) {
       userId,
     },
   })
+  await setGroupNotifications(userId, group.id, input.notificationIds)
   startMonitorJob(group)
   scheduleGroupRecheck(placement.parent)
-  return { ...pick(group), monitorCount: 0 }
+  return { ...pick(group), notificationIds: await notificationIdsOf(group.id), monitorCount: 0 }
 }
 
 export async function updateGroup(userId: number, id: number, body: unknown) {
@@ -207,6 +237,7 @@ export async function updateGroup(userId: number, id: number, body: unknown) {
   }
   const placement = await resolvePlacement(userId, id, { parent: parentInput, workspaceId: input.workspaceId }, current)
 
+  await setGroupNotifications(userId, id, input.notificationIds)
   const group = await prisma.monitor.update({
     where: { id },
     data: { name: input.name, description: input.description || null, ...placement },
@@ -218,7 +249,7 @@ export async function updateGroup(userId: number, id: number, body: unknown) {
   startMonitorJob(group)
 
   const monitorCount = await prisma.monitor.count({ where: { userId, parent: id } })
-  return { ...pick(group), monitorCount }
+  return { ...pick(group), notificationIds: await notificationIdsOf(id), monitorCount }
 }
 
 /** Pause or resume a group together with everything inside it (subgroups included) */

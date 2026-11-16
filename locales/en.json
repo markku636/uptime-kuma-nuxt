@@ -1286,5 +1286,6 @@
     "Group paused": "Group and its monitors paused",
     "Group resumed": "Group and its monitors resumed",
     "workspaceContains": "It contains {groups} group(s) and {monitors} monitor(s).",
-    "groupContains": "It contains {count} item(s), {subgroups} of them subgroups."
+    "groupContains": "It contains {count} item(s), {subgroups} of them subgroups.",
+    "groupNotificationsHint": "Sent when the group changes status, e.g. one alert when any member goes down instead of one per monitor. Default channels are always used."
 }

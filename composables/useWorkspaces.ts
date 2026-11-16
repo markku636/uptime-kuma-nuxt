@@ -22,6 +22,8 @@ export interface MonitorGroup {
   workspaceId: number | null
   weight: number
   monitorCount: number
+  /** Notification channels used when the group's status changes */
+  notificationIds?: number[]
 }
 
 /** 'all': no filter, 'none': monitors without a workspace, number: that workspace */
@@ -39,6 +41,7 @@ export interface GroupInput {
   workspaceId?: number | null
   /** Parent group (nesting); null = top level */
   parent?: number | null
+  notificationIds?: number[]
 }
 
 export const WORKSPACE_COLORS = ['#5cdd8b', '#3b82f6', '#8b5cf6', '#ef4444', '#f97316', '#ec4899', '#14b8a6', '#6b7280']

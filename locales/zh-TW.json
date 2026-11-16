@@ -1298,5 +1298,6 @@
     "Group paused": "已暫停群組與其成員",
     "Group resumed": "已恢復群組與其成員",
     "workspaceContains": "此工作區有 {groups} 個群組、{monitors} 個監控項目。",
-    "groupContains": "此群組有 {count} 個成員（其中 {subgroups} 個是子群組）。"
+    "groupContains": "此群組有 {count} 個成員（其中 {subgroups} 個是子群組）。",
+    "groupNotificationsHint": "群組狀態改變時發送，例如任一成員離線時只收到一則群組通知，而不是每個監控各一則。預設通知管道一律會使用。"
 }
