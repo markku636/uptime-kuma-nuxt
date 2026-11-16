@@ -24,7 +24,7 @@ import {
 } from './checkers'
 import { prisma } from '../../utils/prisma'
 import { aggregateGroupStatus } from '../workspace/tree'
-import { applyVariables, usesVariables } from '../variables/resolve'
+import { applyVariables, maskSecrets, usesVariables } from '../variables/resolve'
 import { variablesForMonitor } from '../variables/service'
 
 export interface CheckResult {
@@ -38,14 +38,29 @@ export async function checkMonitor(monitor: any): Promise<CheckResult> {
 
   // {{name}} placeholders take their values from the user's variables now,
   // so editing a variable changes every monitor that uses it
+  let secrets: string[] = []
   if (usesVariables(monitor)) {
-    const vars = await variablesForMonitor(monitor.userId, monitor.workspaceId ?? null)
-    const filled = applyVariables(monitor, vars)
-    if (filled.missing.length) {
-      return { status: 0, ping: 0, msg: `Unknown variable${filled.missing.length > 1 ? 's' : ''}: ${filled.missing.join(', ')}` }
+    try {
+      const resolved = await variablesForMonitor(monitor.userId, monitor.workspaceId ?? null)
+      const filled = applyVariables(monitor, resolved.vars)
+      if (filled.missing.length) {
+        return { status: 0, ping: 0, msg: `Unknown variable${filled.missing.length > 1 ? 's' : ''}: ${filled.missing.join(', ')}` }
+      }
+      monitor = filled.monitor
+      secrets = resolved.secrets
+    } catch (error: any) {
+      return { status: 0, ping: 0, msg: `Variables: ${error?.message || 'could not be filled in'}` }
     }
-    monitor = filled.monitor
   }
+  // Checkers may echo URLs, hosts or expected values: never show a secret
+  if (secrets.length) {
+    const result = await runChecker(monitor, startTime)
+    return { ...result, msg: maskSecrets(result.msg ?? '', secrets) }
+  }
+  return runChecker(monitor, startTime)
+}
+
+async function runChecker(monitor: any, startTime: number): Promise<CheckResult> {
 
   try {
     switch (monitor.type) {

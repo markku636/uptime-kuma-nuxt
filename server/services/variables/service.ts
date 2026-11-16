@@ -4,7 +4,7 @@
 
 import { z } from 'zod'
 import { prisma } from '../../utils/prisma'
-import { VARIABLE_NAME, variablesForWorkspace, type ScopedVariable } from './resolve'
+import { applyVariables, VARIABLE_NAME, variablesForWorkspace, type ScopedVariable } from './resolve'
 
 export class VariableError extends Error {
   constructor(message: string, public statusCode = 400) {
@@ -43,23 +43,43 @@ function parse<T extends z.ZodTypeAny>(schema: T, body: unknown): z.output<T> {
 
 // ---------- Values for checks (cached briefly; cleared on every change) ----------
 const CACHE_MS = 10_000
-const cache = new Map<number, { at: number; vars: ScopedVariable[] }>()
+const cache = new Map<number, { at: number; vars: (ScopedVariable & { secret: boolean })[] }>()
 
 export function invalidateVariables(userId: number) {
   cache.delete(userId)
 }
 
-async function scopedVariables(userId: number): Promise<ScopedVariable[]> {
+async function scopedVariables(userId: number): Promise<(ScopedVariable & { secret: boolean })[]> {
   const hit = cache.get(userId)
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.vars
-  const vars = await prisma.variable.findMany({ where: { userId }, select: { name: true, value: true, workspaceId: true } })
+  const vars = await prisma.variable.findMany({ where: { userId }, select: { name: true, value: true, workspaceId: true, secret: true } })
   cache.set(userId, { at: Date.now(), vars })
   return vars
 }
 
-/** Effective variables for a monitor of `userId` in `workspaceId` */
+/**
+ * Effective variables for a monitor of `userId` in `workspaceId`, plus the
+ * secret values in effect so messages can be masked
+ */
 export async function variablesForMonitor(userId: number, workspaceId: number | null) {
-  return variablesForWorkspace(await scopedVariables(userId), workspaceId)
+  const all = await scopedVariables(userId)
+  const vars = variablesForWorkspace(all, workspaceId)
+  const secretNames = new Set(all.filter(v => v.secret && (v.workspaceId == null || v.workspaceId === workspaceId)).map(v => v.name))
+  const secrets = [...secretNames].map(name => vars[name]).filter((v): v is string => !!v)
+  return { vars, secrets }
+}
+
+/** A monitor's URL with its variables filled in; null when it has none or one is unknown */
+export async function resolveMonitorUrl(monitor: { url?: string | null; userId: number; workspaceId?: number | null }): Promise<string | null> {
+  if (!monitor.url) return null
+  if (!monitor.url.includes('{{')) return monitor.url
+  try {
+    const { vars } = await variablesForMonitor(monitor.userId, monitor.workspaceId ?? null)
+    const filled = applyVariables({ url: monitor.url }, vars)
+    return filled.missing.length ? null : filled.monitor.url
+  } catch {
+    return null
+  }
 }
 
 // ---------- CRUD ----------
@@ -112,7 +132,10 @@ export async function updateVariable(userId: number, id: number, body: unknown) 
   const input = parse(updateSchema, body)
   const current = await findOwn(userId, id)
   if (input.name && input.name !== current.name) await assertUnique(userId, current.workspaceId, input.name, id)
-  const row = await prisma.variable.update({ where: { id }, data: input })
+  // Un-marking a secret must not reveal it: without a new value it is cleared
+  const data = { ...input }
+  if (current.secret && input.secret === false && input.value === undefined) data.value = ''
+  const row = await prisma.variable.update({ where: { id }, data })
   invalidateVariables(userId)
   return present(row)
 }

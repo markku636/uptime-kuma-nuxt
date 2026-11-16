@@ -1,6 +1,7 @@
 // server/api/v1/monitors/[id]/certificate.get.ts
 import { prisma } from '~/server/utils/prisma'
 import { getTLSInfo } from '~/server/services/monitor/checkers'
+import { resolveMonitorUrl } from '~/server/services/variables/service'
 
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
@@ -23,7 +24,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (!monitor.url || !monitor.url.startsWith('https://')) {
+  // The stored URL may use {{variables}}
+  const url = await resolveMonitorUrl(monitor)
+  if (!url || !url.startsWith('https://')) {
     return {
       hasCertificate: false,
       message: 'Monitor does not use HTTPS'
@@ -31,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const tlsInfo = await getTLSInfo(monitor.url, (monitor.timeout || 48) * 1000)
+    const tlsInfo = await getTLSInfo(url, (monitor.timeout || 48) * 1000)
 
     if (!tlsInfo) {
       return {

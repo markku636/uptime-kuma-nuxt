@@ -1,6 +1,7 @@
 // server/api/badge/[id]/cert-exp.get.ts
 import { generateBadge } from '../../../services/badge/generator'
 import tls from 'tls'
+import { resolveMonitorUrl } from '~/server/services/variables/service'
 
 // Get SSL certificate expiry for a monitor
 async function getCertificateInfo(hostname: string, port: number = 443): Promise<{ daysRemaining: number; validTo: Date } | null> {
@@ -61,15 +62,16 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Only HTTP(S) monitors with URLs can have certificates
-  if (!monitor.url) {
+  // Only HTTP(S) monitors with URLs can have certificates (the URL may use {{variables}})
+  const monitorUrl = await resolveMonitorUrl(monitor)
+  if (!monitorUrl) {
     const svg = generateBadge('Cert Exp', 'N/A', '#808080')
     setResponseHeader(event, 'Content-Type', 'image/svg+xml')
     return svg
   }
 
   try {
-    const url = new URL(monitor.url)
+    const url = new URL(monitorUrl)
     
     // Only HTTPS has certificates
     if (url.protocol !== 'https:') {

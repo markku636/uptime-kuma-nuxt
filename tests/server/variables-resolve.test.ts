@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyVariables, placeholders, usesVariables, VARIABLE_NAME, variablesForWorkspace } from '../../server/services/variables/resolve'
+import { applyVariables, maskSecrets, MAX_FILLED_LENGTH, placeholders, usesVariables, VARIABLE_NAME, variablesForWorkspace } from '../../server/services/variables/resolve'
 
 describe('variablesForWorkspace', () => {
   const all = [
@@ -41,10 +41,30 @@ describe('applyVariables', () => {
     expect(applyVariables({ headers: '{"X-Key":"{{token}}"}' }, vars).monitor.headers).toBe('{"X-Key":"s3cr3t"}')
   })
 
-  it('reports names without a value and leaves them in place', () => {
-    const { monitor, missing } = applyVariables({ url: '{{host}}/{{nope}}', keyword: '{{other}}' }, vars)
+  it('reports unknown names only where they cannot work (URL, host)', () => {
+    const { monitor, missing } = applyVariables({ url: '{{host}}/{{nope}}', keyword: '{{other}}', body: '{{ angular.binding }}' }, vars)
     expect(monitor.url).toBe('https://api.example.com/{{nope}}')
-    expect(missing.sort()).toEqual(['nope', 'other'])
+    expect(monitor.keyword).toBe('{{other}}')
+    expect(monitor.body).toBe('{{ angular.binding }}')
+    expect(missing).toEqual(['nope'])
+  })
+
+  it('never resolves Object built-ins', () => {
+    const scoped = variablesForWorkspace([{ name: 'host', value: 'h', workspaceId: null }], null)
+    const { missing } = applyVariables({ url: '{{constructor}}/{{toString}}' }, scoped)
+    expect(missing.sort()).toEqual(['constructor', 'toString'])
+    expect(VARIABLE_NAME.test('__proto__')).toBe(false)
+    expect(VARIABLE_NAME.test('constructor')).toBe(false)
+  })
+
+  it('stops nested expansion from blowing up', () => {
+    const big = { a: '{{b}}'.repeat(2000), b: 'x'.repeat(10_000) }
+    expect(() => applyVariables({ body: '{{a}}' }, big)).toThrow(/too long/)
+    expect(MAX_FILLED_LENGTH).toBeGreaterThan(1000)
+  })
+
+  it('masks secret values in messages', () => {
+    expect(maskSecrets('GET https://u:s3cr3t@h failed', ['s3cr3t', 'ab'])).toBe('GET https://u:••••••@h failed')
   })
 
   it('does not touch the original monitor', () => {
