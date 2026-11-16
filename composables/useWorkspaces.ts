@@ -120,6 +120,23 @@ export function useWorkspaces(options: { autoFetch?: boolean } = {}) {
     return res.data
   }
 
+  /** Move a workspace one place up (-1) or down (+1); the list updates right away */
+  async function moveWorkspace(id: number, direction: -1 | 1) {
+    const list = [...workspaces.value]
+    const index = list.findIndex(w => w.id === id)
+    const target = index + direction
+    if (index < 0 || target < 0 || target >= list.length) return
+    ;[list[index], list[target]] = [list[target], list[index]]
+    const previous = workspaces.value
+    workspaces.value = list
+    try {
+      await $fetch('/api/v1/workspaces/reorder', { method: 'POST', body: { ids: list.map(w => w.id) } })
+    } catch (e) {
+      workspaces.value = previous
+      throw e
+    }
+  }
+
   async function deleteWorkspace(id: number) {
     await $fetch(`/api/v1/workspaces/${id}`, { method: 'DELETE' })
     if (current.value === id) current.value = 'all'
@@ -170,6 +187,7 @@ export function useWorkspaces(options: { autoFetch?: boolean } = {}) {
     fetchAll,
     createWorkspace,
     updateWorkspace,
+    moveWorkspace,
     deleteWorkspace,
     createGroup,
     updateGroup,

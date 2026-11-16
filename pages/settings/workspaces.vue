@@ -11,7 +11,7 @@ const { t } = useI18n()
 const toast = useToast()
 const {
   workspaces, groups, unassigned, loaded, error, current, currentWorkspace, defaultWorkspaceId,
-  fetchAll, deleteWorkspace, deleteGroup, organize,
+  fetchAll, moveWorkspace, deleteWorkspace, deleteGroup, organize,
 } = useWorkspaces({ autoFetch: false })
 
 // ---------- Data ----------
@@ -85,6 +85,15 @@ const targets = computed<MonitorGroup[]>(() =>
       : g
   )),
 )
+
+// ---------- Workspace order ----------
+async function reorder(id: number, direction: -1 | 1) {
+  try {
+    await moveWorkspace(id, direction)
+  } catch (e) {
+    toast.add({ title: workspaceErrorMessage(e, t('Failed to save')), color: 'error' })
+  }
+}
 
 // ---------- Workspace dialogs ----------
 const workspaceDialogOpen = ref(false)
@@ -203,10 +212,10 @@ const select = (value: WorkspaceFilter) => { current.value = value }
               <span class="ws-count">{{ totalMonitors }}</span>
             </button>
           </li>
-          <li v-for="workspace in workspaces" :key="workspace.id" class="group/ws relative">
+          <li v-for="(workspace, index) in workspaces" :key="workspace.id" class="group/ws relative">
             <button
               type="button"
-              class="ws-item pr-16"
+              class="ws-item pr-28"
               :class="{ 'ws-item-active': current === workspace.id }"
               :aria-current="current === workspace.id || undefined"
               @click="select(workspace.id)"
@@ -216,6 +225,26 @@ const select = (value: WorkspaceFilter) => { current.value = value }
               <span class="ws-count group-hover/ws:invisible group-focus-within/ws:invisible">{{ workspace.monitorCount }}</span>
             </button>
             <div class="absolute inset-y-0 right-1 flex items-center opacity-0 transition-opacity group-hover/ws:opacity-100 group-focus-within/ws:opacity-100">
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                icon="i-heroicons-chevron-up"
+                :disabled="index === 0"
+                :aria-label="`${t('Move up')}: ${workspace.name}`"
+                :title="t('Move up')"
+                @click="reorder(workspace.id, -1)"
+              />
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                icon="i-heroicons-chevron-down"
+                :disabled="index === workspaces.length - 1"
+                :aria-label="`${t('Move down')}: ${workspace.name}`"
+                :title="t('Move down')"
+                @click="reorder(workspace.id, 1)"
+              />
               <UButton
                 variant="ghost"
                 color="neutral"

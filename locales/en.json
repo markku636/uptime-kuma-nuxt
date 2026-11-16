@@ -1274,5 +1274,7 @@
     "Subject Alternative Names": "Subject Alternative Names",
     "Important Events": "Important Events",
     "Delete Monitor": "Delete Monitor",
-    "Group members": "Group members"
+    "Group members": "Group members",
+    "Move up": "Move up",
+    "Move down": "Move down"
 }

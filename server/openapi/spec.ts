@@ -267,6 +267,11 @@ export const ENDPOINTS: Endpoint[] = [
   ...crud('Workspaces', '/api/v1/workspaces', 'workspace', '工作區', 'workspaceId',
     { name: 'Production', description: 'Customer-facing services', color: '#5CDD8B' },
     { name: 'Production (renamed)', color: '#4CAF50' }),
+  {
+    method: 'post', path: '/api/v1/workspaces/reorder', tag: 'Workspaces', summary: 'Reorder workspaces', zh: '調整工作區順序',
+    description: '`ids`: every workspace id in the new order, first to last.',
+    body: { ids: [2, 1] },
+  },
   ...crud('Groups', '/api/v1/groups', 'group', '群組', 'groupId',
     { name: 'Web servers', description: 'Front-end hosts', workspaceId: null },
     { name: 'Web servers (renamed)' }),

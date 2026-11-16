@@ -128,6 +128,21 @@ export async function updateWorkspace(userId: number, id: number, body: unknown)
   })
 }
 
+const reorderSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1, 'Nothing to reorder').max(1000),
+})
+
+/** Set the display order of workspaces: `ids` from first to last */
+export async function reorderWorkspaces(userId: number, body: unknown) {
+  const ids = [...new Set(parse(reorderSchema, body).ids)]
+  const owned = await prisma.workspace.count({ where: { id: { in: ids }, userId } })
+  if (owned !== ids.length) throw new WorkspaceError('Workspace not found', 404)
+  await prisma.$transaction(ids.map((id, index) =>
+    prisma.workspace.update({ where: { id }, data: { weight: (index + 1) * 1000 } }),
+  ))
+  return { reordered: ids.length }
+}
+
 /** Monitors and groups inside the workspace are kept and become unassigned */
 export async function deleteWorkspace(userId: number, id: number) {
   await assertWorkspace(userId, id)
