@@ -331,3 +331,18 @@ describe('Bruno compatibility', () => {
     expect(result.secretVars).toEqual(['key'])
   })
 })
+
+describe('environments picked on their own', () => {
+  it('reads a lone environment .bru and an exported environment JSON', () => {
+    const result = parseBrunoInput([
+      { path: 'Staging.bru', text: 'vars {\n  host: https://staging\n}\nvars:secret [\n  token\n]\n' },
+      { path: 'prod-env.json', text: JSON.stringify({ name: 'Prod', variables: [{ name: 'host', value: 'https://prod', enabled: true }, { name: 'token', value: '', enabled: true, secret: true }, { name: 'off', value: 'x', enabled: false }] }) },
+      { path: 'ping.bru', text: 'get {\n  url: {{host}}/ping\n}\n' },
+    ])
+    expect(result.requests.map(r => r.name)).toEqual(['ping'])
+    expect(result.environments.map(e => [e.name, e.variables.host])).toEqual([['Staging', 'https://staging'], ['Prod', 'https://prod']])
+    expect(result.environments[1].variables).not.toHaveProperty('off')
+    expect(result.secretVars).toEqual(['token'])
+    expect(result.errors).toEqual([])
+  })
+})

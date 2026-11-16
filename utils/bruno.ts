@@ -377,7 +377,14 @@ export function parseBruFiles(files: BrunoFile[]): BrunoImport {
         folders.set(dir, inheritedFromBlocks(parseBruBlocks(file.text)))
       } else if (base.endsWith('.bru')) {
         const req = parseBruRequest(file.text, path)
-        if (req) result.requests.push(req)
+        if (req) {
+          result.requests.push(req)
+        } else if (/^vars(:secret)?\s*[{[]/m.test(file.text)) {
+          // An environment file picked on its own (outside environments/)
+          const env = parseBruEnvironment(file.text, base.replace(/\.bru$/, ''))
+          result.environments.push(env)
+          result.secretVars.push(...env.secrets)
+        }
       }
     } catch (e: any) {
       result.errors.push(`${path}: ${e?.message || 'parse error'}`)
@@ -422,6 +429,18 @@ function inheritedFromJson(root: any): Inherited {
     auth: request?.auth ? authFromJson(request.auth) : { mode: 'inherit' },
     vars: toVars(enabled(request?.vars?.req)),
   }
+}
+
+/** An environment as Bruno exports it: { name, variables: [{ name, value, enabled, secret }] } */
+export function environmentFromJson(env: any, fallbackName: string): BrunoEnvironment {
+  const variables: Record<string, string> = {}
+  const secrets: string[] = []
+  for (const v of env?.variables || []) {
+    if (v?.enabled === false || !v?.name) continue
+    variables[v.name] = String(v.value ?? '')
+    if (v.secret) secrets.push(v.name)
+  }
+  return { name: env?.name || fallbackName, variables, secrets }
 }
 
 export function parseBrunoCollectionJson(json: any): BrunoImport {
@@ -485,15 +504,9 @@ export function parseBrunoCollectionJson(json: any): BrunoImport {
   for (const req of result.requests) applyInheritance(req, collection, folders)
 
   for (const env of json.environments || []) {
-    const variables: Record<string, string> = {}
-    const secrets: string[] = []
-    for (const v of env.variables || []) {
-      if (v?.enabled === false || !v?.name) continue
-      variables[v.name] = String(v.value ?? '')
-      if (v.secret) secrets.push(v.name)
-    }
-    result.environments.push({ name: env.name || 'Environment', variables, secrets })
-    result.secretVars.push(...secrets)
+    const parsedEnv = environmentFromJson(env, 'Environment')
+    result.environments.push(parsedEnv)
+    result.secretVars.push(...parsedEnv.secrets)
   }
   result.secretVars = [...new Set(result.secretVars)]
   return result
@@ -506,7 +519,15 @@ export function parseBrunoInput(files: BrunoFile[]): BrunoImport {
   const merged = parseBruFiles(bru)
   for (const file of exports) {
     try {
-      const part = parseBrunoCollectionJson(JSON.parse(file.text))
+      const json = JSON.parse(file.text)
+      // "Export environment" writes { name, variables: [...] } on its own
+      if (!Array.isArray(json?.items) && Array.isArray(json?.variables)) {
+        const env = environmentFromJson(json, file.path.split('/').pop()?.replace(/\.json$/, '') || 'Environment')
+        merged.environments.push(env)
+        merged.secretVars = [...new Set([...merged.secretVars, ...env.secrets])]
+        continue
+      }
+      const part = parseBrunoCollectionJson(json)
       merged.requests.push(...part.requests.map(r => ({ ...r, id: `${file.path}${r.id}` })))
       merged.environments.push(...part.environments)
       Object.assign(merged.collectionVars, part.collectionVars)
