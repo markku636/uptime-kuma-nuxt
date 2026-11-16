@@ -612,3 +612,19 @@ ALTER TABLE "status_pages" ADD COLUMN IF NOT EXISTS "auto_refresh_interval" INTE
 CREATE INDEX IF NOT EXISTS "monitors_node_id_idx" ON "monitors"("node_id");
 CREATE INDEX IF NOT EXISTS "monitors_assigned_node_idx" ON "monitors"("assigned_node");
 CREATE INDEX IF NOT EXISTS "nodes_node_id_idx" ON "nodes"("node_id");
+
+-- Maintenance links follow their monitor / status page (no dangling ids after a delete)
+DELETE FROM "maintenance_monitors" mm WHERE NOT EXISTS (SELECT 1 FROM "monitors" m WHERE m."id" = mm."monitor_id");
+DELETE FROM "maintenance_status_pages" ms WHERE NOT EXISTS (SELECT 1 FROM "status_pages" s WHERE s."id" = ms."status_page_id");
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'maintenance_monitors_monitor_id_fkey') THEN
+        ALTER TABLE "maintenance_monitors" ADD CONSTRAINT "maintenance_monitors_monitor_id_fkey" FOREIGN KEY ("monitor_id") REFERENCES "monitors"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'maintenance_status_pages_status_page_id_fkey') THEN
+        ALTER TABLE "maintenance_status_pages" ADD CONSTRAINT "maintenance_status_pages_status_page_id_fkey" FOREIGN KEY ("status_page_id") REFERENCES "status_pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;

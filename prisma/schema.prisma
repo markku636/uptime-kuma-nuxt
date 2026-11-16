@@ -142,6 +142,7 @@ model Monitor {
   tags                 MonitorTag[]
   statusPageMonitors   StatusPageMonitor[]
   monitorNotifications MonitorNotification[]
+  maintenanceMonitors  MaintenanceMonitor[]
 
   @@index([userId])
   @@index([active])
@@ -231,6 +232,7 @@ model StatusPage {
   createdAt             DateTime  @default(now()) @map("created_at")
 
   groups    StatusPageGroup[]
+  maintenanceStatusPages MaintenanceStatusPage[]
   incidents Incident[]
 
   @@index([userId])
@@ -367,6 +369,7 @@ model MaintenanceMonitor {
   monitorId     Int @map("monitor_id")
 
   maintenance Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  monitor     Monitor     @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
   @@unique([maintenanceId, monitorId])
   @@map("maintenance_monitors")
@@ -378,6 +381,7 @@ model MaintenanceStatusPage {
   statusPageId  Int @map("status_page_id")
 
   maintenance Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  statusPage  StatusPage  @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
 
   @@unique([maintenanceId, statusPageId])
   @@map("maintenance_status_pages")
