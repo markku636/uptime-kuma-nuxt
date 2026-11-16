@@ -334,7 +334,7 @@ npm run bruno:generate
 - **整個 collection**：可指定工作區，並依資料夾建立群組（collection → 資料夾 → 子資料夾）。重複匯入會沿用既有群組；已存在的監控（同名稱、方法、URL）會標示出來並預設不勾選。
 - **保留變數**：開啟後，監控保留 `{{變數}}`，用到的值會存成該工作區（或全域）的環境變數。之後要切換環境或更換 token，只需修改變數即可。
 - 請求的 `docs` 會成為監控的描述。由腳本在執行時設定的變數（`bru.setVar`、`vars:post-response`）匯入時沒有值，面板會特別標示，請自行填入。
-- **匯出為 Bruno**：監控列表的「匯出為 Bruno」會把目前工作區的 HTTP 監控下載成 Bruno collection JSON（在 Bruno 選 *Import Collection → Bruno Collection*）。群組會成為資料夾，接受的狀態碼與關鍵字會成為 assertion，描述會寫回 docs，變數會成為一個環境（不含機密值）。
+- **匯出為 Bruno**：監控列表的「匯出為 Bruno」會把目前工作區的 HTTP 監控下載成 Bruno collection JSON（在 Bruno 選 *Import Collection → Bruno Collection*）。群組會成為資料夾，接受的狀態碼、關鍵字與自訂的逾時（`res.responseTime`）會成為 assertion，描述會寫回 docs，變數會成為一個環境（不含機密值）。
 - 目前不支援：OAuth2、Digest、NTLM、AWS 等驗證方式與 multipart body（匯入時會提示），也不會執行請求腳本。
 
 ### 環境變數

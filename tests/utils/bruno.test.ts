@@ -456,3 +456,18 @@ describe('response time assertions', () => {
     expect(toMonitorDraft(req)).not.toHaveProperty('timeout')
   })
 })
+
+describe('timeout export', () => {
+  it('round-trips a chosen timeout and skips the default one', () => {
+    const monitors = [
+      { id: 1, name: 'Fast', type: 'http', url: 'https://a.example', timeout: 5, interval: 60 },
+      { id: 2, name: 'Default', type: 'http', url: 'https://b.example', timeout: 48, interval: 60 },
+      { id: 3, name: 'Scaled', type: 'http', url: 'https://c.example', timeout: 24, interval: 30 },
+    ]
+    const parsed = parseBrunoCollectionJson(toBrunoCollection('Export', monitors, []))
+    const byName = Object.fromEntries(parsed.requests.map(r => [r.name, r]))
+    expect(byName.Fast.timeout).toBe(5)
+    expect(byName.Default.timeout).toBeUndefined()
+    expect(byName.Scaled.timeout).toBeUndefined()
+  })
+})

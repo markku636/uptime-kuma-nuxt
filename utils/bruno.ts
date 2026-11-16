@@ -758,6 +758,9 @@ export interface ExportMonitor {
   basicAuthUser?: string | null
   basicAuthPass?: string | null
   acceptedStatuscodes?: unknown
+  /** Seconds */
+  timeout?: number | null
+  interval?: number | null
   parent?: number | null
 }
 
@@ -833,6 +836,10 @@ export function toBrunoCollection(
     const headers = headerList(m.headers)
     const assertions = statusAssertions(m.acceptedStatuscodes)
     if (m.keyword && !m.invertKeyword) assertions.push({ name: 'res.body', value: `contains "${m.keyword}"`, enabled: true })
+    // Only a timeout someone chose: the default (48 s, or 80% of the interval) adds nothing
+    if (m.timeout && m.timeout > 0 && m.timeout !== 48 && m.timeout !== Math.round((m.interval ?? 60) * 0.8)) {
+      assertions.push({ name: 'res.responseTime', value: `lt ${Math.round(m.timeout * 1000)}`, enabled: true })
+    }
     const parent = m.parent != null && groupIds.has(m.parent) ? m.parent : null
     const item = {
       type: 'http-request',
