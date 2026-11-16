@@ -1,5 +1,6 @@
 // server/api/v1/monitors/[id].delete.ts
 import { stopMonitorJob } from '../../../services/monitor/scheduler'
+import { releaseChildren } from '../../../services/workspace/service'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -37,6 +38,9 @@ export default defineEventHandler(async (event) => {
 
   // Stop the monitor job first
   stopMonitorJob(id)
+
+  // Members of a deleted group are kept and move up one level
+  await releaseChildren(session.user.id, id, existingMonitor.parent)
 
   // Delete monitor (cascades to heartbeats, tags, etc.)
   await prisma.monitor.delete({

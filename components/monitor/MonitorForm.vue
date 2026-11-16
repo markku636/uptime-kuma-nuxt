@@ -1018,21 +1018,16 @@
       </div>
     </div>
 
-    <!-- Parent Group -->
+    <!-- Workspace & Group -->
     <div class="section-card">
-      <h2 class="section-title">Parent Group</h2>
-      
-      <select v-model="form.parent" class="select-field" :disabled="loading">
-        <option :value="null">No Parent (Root)</option>
-        <option 
-          v-for="group in availableGroups" 
-          :key="group.id" 
-          :value="group.id"
-        >
-          {{ group.name }}
-        </option>
-      </select>
-      <p class="text-xs text-dimmed mt-1">Assign this monitor to a group</p>
+      <h2 class="section-title">{{ $t('Workspace & Group') }}</h2>
+
+      <WorkspacePlacementFields
+        v-model:workspace-id="form.workspaceId"
+        v-model:parent="form.parent"
+        :monitor-id="initialData?.id"
+        :disabled="loading"
+      />
     </div>
 
     <!-- Node Assignment (Cluster Mode) -->
@@ -1210,7 +1205,8 @@ const form = reactive({
   // Resend notification interval
   resendInterval: props.initialData?.resendInterval || 0,
   // Parent group
-  parent: props.initialData?.parent || null,
+  parent: (props.initialData?.parent || null) as number | null,
+  workspaceId: (props.initialData?.workspaceId || null) as number | null,
   // HTTP Advanced
   proxyId: props.initialData?.proxyId || null,
   acceptedStatuscodes: props.initialData?.acceptedStatuscodes?.join(', ') || '200-299',
@@ -1413,13 +1409,6 @@ const addHeader = () => {
 const removeHeader = (index: number) => {
   form.headers.splice(index, 1)
 }
-
-// Available groups for parent selection
-const availableGroups = computed(() => {
-  // This would be populated from an API or parent component
-  // For now return empty array - groups can be fetched from monitors API
-  return []
-})
 
 // Cluster nodes for node assignment
 const clusterNodes = computed(() => {
@@ -1639,10 +1628,9 @@ const handleSubmit = () => {
   // Resend notification interval
   data.resendInterval = form.resendInterval || 0
 
-  // Parent group
-  if (form.parent) {
-    data.parent = form.parent
-  }
+  // Group and workspace (null = none, so a monitor can also be taken out again)
+  data.parent = form.parent
+  data.workspaceId = form.workspaceId
 
   // Node assignment (Cluster Mode)
   if (form.nodeId) {

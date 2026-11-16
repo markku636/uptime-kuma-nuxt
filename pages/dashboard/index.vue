@@ -15,6 +15,9 @@
       </div>
     </div>
 
+    <!-- Workspace -->
+    <WorkspaceSwitcher class="mb-6" />
+
     <!-- Quick Stats -->
     <h2 class="section-title">Quick Stats</h2>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
@@ -66,6 +69,11 @@
             <option value="maintenance">Maintenance</option>
             <option value="unknown">Unknown</option>
             <option value="paused">Paused</option>
+          </select>
+          <select v-if="groupOptions.length" v-model="groupFilter" class="select-field" :aria-label="t('Group')">
+            <option value="all">{{ t('All Groups') }}</option>
+            <option v-for="group in groupOptions" :key="group.id" :value="group.id">{{ group.name }}</option>
+            <option value="none">{{ t('Ungrouped') }}</option>
           </select>
           <select v-model="typeFilter" class="select-field">
             <option value="all">All Types</option>
@@ -270,6 +278,7 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { matchesWorkspace } from '~/composables/useWorkspaces'
 
 definePageMeta({
   middleware: ['auth']
@@ -285,6 +294,13 @@ const viewMode = ref<'grid' | 'list'>('grid')
 const searchQuery = ref('')
 const statusFilter = ref('all')
 const typeFilter = ref('all')
+const groupFilter = ref<number | 'all' | 'none'>('all')
+
+// Workspace shown (shared with the monitor list) and the groups inside it
+const { t } = useI18n()
+const { groups, current: currentWorkspace } = useWorkspaces()
+const groupOptions = computed(() => groups.value.filter(g => matchesWorkspace(g, currentWorkspace.value)))
+watch(currentWorkspace, () => { groupFilter.value = 'all' })
 
 // Fetch monitors
 const { data, pending, refresh } = await useFetch('/api/v1/monitors', {
@@ -294,9 +310,9 @@ const { data, pending, refresh } = await useFetch('/api/v1/monitors', {
 
 const monitors = computed(() => data.value?.data || [])
 
-// Merge real-time heartbeats with fetched data
+// Merge real-time heartbeats with fetched data (only the selected workspace)
 const monitorsWithLiveData = computed(() => {
-  return monitors.value.map((m: any) => ({
+  return monitors.value.filter((m: any) => matchesWorkspace(m, currentWorkspace.value)).map((m: any) => ({
     ...m,
     heartbeats: heartbeatsMap.value[m.id] || m.heartbeats || []
   }))
@@ -331,6 +347,12 @@ const filteredMonitors = computed(() => {
     })
   }
 
+  // Group filter
+  if (groupFilter.value !== 'all') {
+    const wanted = groupFilter.value === 'none' ? null : groupFilter.value
+    result = result.filter((m: any) => (m.parent ?? null) === wanted || m.id === wanted)
+  }
+
   // Type filter
   if (typeFilter.value !== 'all') {
     result = result.filter((m: any) => m.type === typeFilter.value)
@@ -358,6 +380,7 @@ const clearFilters = () => {
   searchQuery.value = ''
   statusFilter.value = 'all'
   typeFilter.value = 'all'
+  groupFilter.value = 'all'
 }
 
 const getLatestStatus = (monitor: any) => {

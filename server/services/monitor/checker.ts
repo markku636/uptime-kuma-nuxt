@@ -22,6 +22,8 @@ import {
   checkTailscalePing,
   checkSnmp
 } from './checkers'
+import { prisma } from '../../utils/prisma'
+import { aggregateGroupStatus } from '../workspace/tree'
 
 export interface CheckResult {
   status: number // 0: DOWN, 1: UP, 2: PENDING, 3: MAINTENANCE
@@ -121,14 +123,21 @@ export async function checkMonitor(monitor: any): Promise<CheckResult> {
 }
 
 async function checkGroup(monitor: any): Promise<CheckResult> {
-  // Group monitors derive their status from child monitors
-  // This requires fetching the latest heartbeats of child monitors
-  // For now, return pending status - actual implementation depends on DB access
-  return {
-    status: 2,
-    ping: 0,
-    msg: 'Group status aggregated from children'
-  }
+  // A group has no target of its own: its status is derived from the latest
+  // heartbeat of each member (see aggregateGroupStatus for the rules)
+  const members = await prisma.monitor.findMany({
+    where: { parent: monitor.id },
+    select: {
+      active: true,
+      heartbeats: { take: 1, orderBy: { time: 'desc' }, select: { status: true } }
+    }
+  })
+
+  const { status, msg } = aggregateGroupStatus(
+    members.map(m => ({ active: m.active, status: m.heartbeats[0]?.status ?? null }))
+  )
+
+  return { status, ping: 0, msg }
 }
 
 async function checkRealBrowser(monitor: any, startTime: number): Promise<CheckResult> {

@@ -6,8 +6,27 @@
         <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1" />
         Back to Dashboard
       </NuxtLink>
-      <h1 class="text-2xl font-bold text-highlighted">Add New Monitor</h1>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-2xl font-bold text-highlighted">Add New Monitor</h1>
+        <UButton color="neutral" variant="outline" icon="i-heroicons-arrow-down-tray" @click="showBrunoImport = true">
+          {{ t('brunoImport') }}
+        </UButton>
+      </div>
     </div>
+
+    <UAlert
+      v-if="importNotice"
+      class="mb-4"
+      color="info"
+      variant="subtle"
+      icon="i-heroicons-information-circle"
+      :title="t('brunoImportedHint')"
+      :description="importNotice.warnings.join(' · ') || undefined"
+      :close="true"
+      @update:open="importNotice = null"
+    />
+
+    <MonitorBrunoImportDialog v-model:open="showBrunoImport" @fill="applyDraft" @created="router.push('/dashboard')" />
 
     <!-- Form -->
     <div class="card card-body">
@@ -91,6 +110,12 @@
             <div class="form-group">
               <label class="input-label">Max Redirects</label>
               <input v-model.number="form.maxRedirects" type="number" class="input-field" min="0" max="10" />
+            </div>
+
+            <div class="form-group md:col-span-2">
+              <label class="input-label">{{ t('Accepted Status Codes') }}</label>
+              <input v-model="form.acceptedStatuscodes" type="text" class="input-field font-mono" placeholder="200-299, 301" />
+              <p class="text-xs text-muted mt-1">Comma separated codes or ranges, e.g. 200-299, 404</p>
             </div>
 
             <div v-if="form.type === 'keyword'" class="form-group md:col-span-2">
@@ -330,6 +355,13 @@
               <textarea v-model="form.description" class="input-field" rows="3" placeholder="Optional description"></textarea>
             </div>
 
+            <!-- Workspace & Group -->
+            <WorkspacePlacementFields
+              v-model:workspace-id="form.workspaceId"
+              v-model:parent="form.parent"
+              class="mt-4"
+            />
+
             <!-- Proxy -->
             <div v-if="proxies.length > 0" class="form-group mt-4">
               <label class="input-label">Proxy</label>
@@ -395,16 +427,47 @@
 </template>
 
 <script setup lang="ts">
+import type { MonitorDraft } from '~/utils/bruno'
+
 definePageMeta({
   middleware: ['auth']
 })
 
 const router = useRouter()
+const { t } = useI18n()
+const route = useRoute()
+const { defaultWorkspaceId } = useWorkspaces()
+
+function queryId(key: string): number | null {
+  const value = Number(route.query[key])
+  return Number.isInteger(value) && value > 0 ? value : null
+}
 const loading = ref(false)
 const error = ref('')
 const showAuthSection = ref(false)
 const showAdvanced = ref(false)
 const showTlsSection = ref(false)
+
+// Bruno import
+const showBrunoImport = ref(false)
+const importNotice = ref<{ warnings: string[] } | null>(null)
+
+function applyDraft(draft: MonitorDraft) {
+  form.type = draft.type
+  form.name = draft.name
+  form.url = draft.url
+  form.method = draft.method
+  form.body = draft.body
+  form.keyword = draft.keyword
+  form.acceptedStatuscodes = draft.acceptedStatuscodes.join(', ')
+  form.authMethod = draft.authMethod
+  form.basicAuthUser = draft.basicAuthUser
+  form.basicAuthPass = draft.basicAuthPass
+  httpHeaders.value = draft.headers.map(h => ({ ...h }))
+  showAuthSection.value = !!draft.authMethod
+  importNotice.value = { warnings: draft.warnings }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 // HTTP Headers management
 const httpHeaders = ref<{ key: string; value: string }[]>([])
@@ -433,6 +496,7 @@ const form = reactive({
   port: null as number | null,
   method: 'GET',
   maxRedirects: 10,
+  acceptedStatuscodes: '200-299',
   keyword: '',
   jsonPath: '',
   expectedValue: '',
@@ -463,6 +527,9 @@ const form = reactive({
   databaseQuery: '',
   // Proxy
   proxyId: null as number | null,
+  // Organization: pre-filled from ?group= / ?workspace= or the workspace currently shown
+  parent: queryId('group'),
+  workspaceId: queryId('workspace') ?? defaultWorkspaceId.value,
 })
 
 // Computed
@@ -517,6 +584,10 @@ const handleCreate = async () => {
     const body = {
       ...form,
       headers: Object.keys(headers).length > 0 ? headers : undefined,
+      acceptedStatuscodes: form.acceptedStatuscodes
+        .split(',')
+        .map(code => code.trim())
+        .filter(code => /^\d{3}(-\d{3})?$/.test(code)),
       tags: selectedTags.value,
       notifications: selectedNotifications.value,
       tlsExpiryDays: form.expiryNotification ? tlsExpiryDays.value : undefined,

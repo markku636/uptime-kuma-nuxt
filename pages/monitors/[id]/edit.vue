@@ -16,8 +16,9 @@ const saving = ref(false)
 // Fetch monitor data
 onMounted(async () => {
   try {
-    const data = await $fetch(`/api/v1/monitors/${monitorId.value}`)
-    monitor.value = data
+    // The API answers { ok, data }: the form needs the monitor itself
+    const res = await $fetch<any>(`/api/v1/monitors/${monitorId.value}`)
+    monitor.value = res?.data ?? res
   } catch (error: any) {
     toast.add({
       title: 'Error',

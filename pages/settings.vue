@@ -57,6 +57,7 @@ const settingsNav = [
   { label: 'Notifications', to: '/settings/notifications', icon: 'i-heroicons-bell' },
   { label: 'Reverse Proxy', to: '/settings/reverse-proxy', icon: 'i-heroicons-cloud' },
   { label: 'Security', to: '/settings/security', icon: 'i-heroicons-shield-check' },
+  { label: 'Workspaces & Groups', to: '/settings/workspaces', icon: 'i-heroicons-rectangle-group' },
   { label: 'Tags', to: '/settings/tags', icon: 'i-heroicons-tag' },
   { label: 'Monitor History', to: '/settings/monitor-history', icon: 'i-heroicons-clock' },
   { label: 'Nodes', to: '/settings/nodes', icon: 'i-heroicons-server-stack' },

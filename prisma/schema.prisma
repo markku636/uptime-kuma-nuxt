@@ -22,6 +22,7 @@ model User {
   monitors      Monitor[]
   notifications Notification[]
   apiKeys       ApiKey[]
+  workspaces    Workspace[]
 
   @@map("users")
 }
@@ -111,9 +112,12 @@ model Monitor {
   // Game server specific
   game            String?
   
-  // Group specific
+  // Group specific (a group is a monitor with type "group"; members point to it via parent)
   parent          Int?
   childrenIds     Json?     @map("children_ids")
+
+  // Workspace (top-level category: Workspace -> Group -> Monitor)
+  workspaceId     Int?      @map("workspace_id")
   
   // Real Browser specific
   remoteBrowserId Int?      @map("remote_browser_id")
@@ -133,6 +137,7 @@ model Monitor {
 
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   proxy                Proxy?                @relation(fields: [proxyId], references: [id])
+  workspace            Workspace?            @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   heartbeats           Heartbeat[]
   tags                 MonitorTag[]
   statusPageMonitors   StatusPageMonitor[]
@@ -142,7 +147,25 @@ model Monitor {
   @@index([active])
   @@index([nodeId])
   @@index([assignedNode])
+  @@index([workspaceId])
+  @@index([parent])
   @@map("monitors")
+}
+
+model Workspace {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  color       String   @default("#5cdd8b")
+  weight      Int      @default(1000)
+  userId      Int      @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitors Monitor[]
+
+  @@index([userId])
+  @@map("workspaces")
 }
 
 model Heartbeat {

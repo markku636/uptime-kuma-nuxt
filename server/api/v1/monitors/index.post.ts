@@ -2,6 +2,8 @@
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { startMonitorJob } from '../../../services/monitor/scheduler'
+import { normalizeMonitorPayload } from '../../../services/monitor/status-codes'
+import { WorkspaceError, resolvePlacement } from '../../../services/workspace/service'
 
 const createMonitorSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -15,7 +17,8 @@ const createMonitorSchema = z.object({
   maxretries: z.number().default(0),
   method: z.string().default('GET'),
   body: z.string().optional().nullable(),
-  headers: z.record(z.string()).optional().nullable(),
+  headers: z.record(z.string(), z.string()).optional().nullable(),
+  acceptedStatuscodes: z.array(z.string()).optional().nullable(),
   keyword: z.string().optional().nullable(),
   jsonPath: z.string().optional().nullable(),
   expectedValue: z.string().optional().nullable(),
@@ -43,6 +46,9 @@ const createMonitorSchema = z.object({
   databaseQuery: z.string().optional().nullable(),
   // Proxy
   proxyId: z.number().optional().nullable(),
+  // Organization: group (parent) and workspace
+  parent: z.number().int().positive().optional().nullable(),
+  workspaceId: z.number().int().positive().optional().nullable(),
   // Tags and notifications
   tags: z.array(z.number()).optional().nullable(),
   notifications: z.array(z.number()).optional().nullable(),
@@ -58,7 +64,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
+  // Accept both monitor forms' shapes (headers as JSON string, basic_auth_* keys, "200-299, 404")
+  const body = normalizeMonitorPayload(await readBody(event))
   
   // Validate input
   const result = createMonitorSchema.safeParse(body)
@@ -90,11 +97,18 @@ export default defineEventHandler(async (event) => {
   const pushToken = data.type === 'push' ? nanoid(32) : undefined
 
   // Extract tags and notifications for separate handling
-  const { tags, notifications, tlsExpiryDays, ...monitorData } = data
+  const { tags, notifications, tlsExpiryDays, parent, workspaceId, ...monitorData } = data
+
+  // A monitor inside a group always lives in the group's workspace
+  const placement = await resolvePlacement(session.user.id, null, { parent, workspaceId }).catch((e) => {
+    if (e instanceof WorkspaceError) throw createError({ statusCode: e.statusCode, message: e.message })
+    throw e
+  })
 
   const monitor = await prisma.monitor.create({
     data: {
       ...monitorData,
+      ...placement,
       userId: session.user.id,
       pushToken,
       headers: monitorData.headers ? monitorData.headers : undefined,

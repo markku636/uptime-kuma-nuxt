@@ -1,214 +1,304 @@
-<template>
-  <div class="monitor-group-list space-y-3">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-medium">{{ $t('Monitor Groups') }}</h3>
-      <UButton size="sm" @click="$emit('addGroup')">
-        <UIcon name="i-heroicons-plus" class="mr-1" />
-        {{ $t('Add Group') }}
-      </UButton>
-    </div>
-
-    <!-- Empty State -->
-    <div v-if="!groups.length" class="text-center py-8 text-muted">
-      <UIcon name="i-heroicons-folder" class="w-12 h-12 mx-auto mb-2" />
-      <p>{{ $t('No groups yet') }}</p>
-      <p class="text-sm">{{ $t('Create groups to organize your monitors') }}</p>
-    </div>
-
-    <!-- Ungrouped Monitors -->
-    <div v-if="ungroupedMonitors.length" class="mb-6">
-      <div class="flex items-center gap-2 mb-2 text-muted">
-        <UIcon name="i-heroicons-inbox" class="w-4 h-4" />
-        <span class="text-sm font-medium">{{ $t('Ungrouped') }}</span>
-        <UBadge variant="subtle" size="xs">{{ ungroupedMonitors.length }}</UBadge>
-      </div>
-      
-      <div class="grid grid-cols-1 gap-2 ml-6">
-        <div
-          v-for="monitor in ungroupedMonitors"
-          :key="monitor.id"
-          class="flex items-center justify-between p-2 bg-muted rounded"
-          draggable="true"
-          @dragstart="onDragStart($event, monitor)"
-        >
-          <div class="flex items-center gap-2">
-            <Status :status="getMonitorStatus(monitor)" size="xs" />
-            <span class="text-sm">{{ monitor.name }}</span>
-          </div>
-          <UIcon name="i-heroicons-bars-2" class="w-4 h-4 text-dimmed cursor-grab" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Groups -->
-    <div
-      v-for="group in groups"
-      :key="group.id"
-      class="group-item border border-default rounded-lg overflow-hidden"
-      @dragover.prevent
-      @drop="onDrop($event, group.id)"
-    >
-      <!-- Group Header -->
-      <div 
-        class="flex items-center justify-between p-3 bg-muted cursor-pointer"
-        @click="toggleGroup(group.id)"
-      >
-        <div class="flex items-center gap-2">
-          <UIcon 
-            name="i-heroicons-chevron-right" 
-            class="w-4 h-4 transition-transform"
-            :class="{ 'rotate-90': expandedGroups.has(group.id) }"
-          />
-          <span class="font-medium">{{ group.name }}</span>
-          <UBadge variant="subtle" size="xs">{{ group.monitors.length }}</UBadge>
-          
-          <!-- Group Status -->
-          <div class="flex items-center gap-1 ml-2">
-            <span 
-              v-if="getGroupUpCount(group) > 0"
-              class="text-xs text-up-fg"
-            >
-              {{ getGroupUpCount(group) }} up
-            </span>
-            <span 
-              v-if="getGroupDownCount(group) > 0"
-              class="text-xs text-down-fg"
-            >
-              {{ getGroupDownCount(group) }} down
-            </span>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2" @click.stop>
-          <UButton 
-            variant="ghost" 
-            size="xs" 
-            icon="i-heroicons-pencil"
-            @click="$emit('editGroup', group.id)"
-          />
-          <UButton 
-            variant="ghost" 
-            size="xs" 
-            icon="i-heroicons-trash"
-            color="error"
-            @click="$emit('deleteGroup', group.id)"
-          />
-        </div>
-      </div>
-
-      <!-- Group Monitors -->
-      <Transition
-        enter-active-class="transition-all duration-200"
-        leave-active-class="transition-all duration-200"
-        enter-from-class="opacity-0 max-h-0"
-        leave-to-class="opacity-0 max-h-0"
-      >
-        <div v-if="expandedGroups.has(group.id)" class="p-2">
-          <div v-if="!group.monitors.length" class="text-center py-4 text-muted text-sm">
-            {{ $t('Drag monitors here') }}
-          </div>
-          
-          <div
-            v-for="monitor in group.monitors"
-            :key="monitor.id"
-            class="flex items-center justify-between p-2 hover:bg-muted rounded"
-            draggable="true"
-            @dragstart="onDragStart($event, monitor)"
-          >
-            <div class="flex items-center gap-2">
-              <Status :status="getMonitorStatus(monitor)" size="xs" />
-              <span class="text-sm">{{ monitor.name }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span v-if="monitor.ping" class="text-xs text-muted font-mono">
-                {{ monitor.ping }}ms
-              </span>
-              <UButton
-                variant="ghost"
-                size="xs"
-                icon="i-heroicons-x-mark"
-                @click="$emit('removeFromGroup', group.id, monitor.id)"
-              />
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-interface Monitor {
+import type { MonitorGroup } from '~/composables/useWorkspaces'
+
+// Groups with their members, plus the monitors that are in no group.
+// Monitors can be moved by drag & drop, with the per-row menu, or in bulk
+// through the selection (v-model:selected).
+
+interface MonitorRow {
   id: number
   name: string
-  status?: number
-  ping?: number
-  groupId?: number | null
+  type: string
+  active: boolean
+  parent?: number | null
+  url?: string | null
+  hostname?: string | null
+  heartbeats?: { status: number }[]
 }
 
-interface MonitorGroup {
-  id: number
-  name: string
-  monitors: Monitor[]
+interface GroupSection {
+  group: MonitorGroup
+  monitors: MonitorRow[]
 }
 
 const props = defineProps<{
-  groups: MonitorGroup[]
-  ungroupedMonitors: Monitor[]
+  sections: GroupSection[]
+  ungrouped: MonitorRow[]
+  /** Every group a monitor can be moved to */
+  targets: MonitorGroup[]
+  /** True while a search filter hides part of the list */
+  filtered?: boolean
+  busy?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'addGroup'): void
-  (e: 'editGroup', groupId: number): void
-  (e: 'deleteGroup', groupId: number): void
-  (e: 'addToGroup', groupId: number, monitorId: number): void
-  (e: 'removeFromGroup', groupId: number, monitorId: number): void
+  addGroup: []
+  editGroup: [group: MonitorGroup]
+  deleteGroup: [group: MonitorGroup]
+  /** groupId null = remove from its group */
+  move: [monitorIds: number[], groupId: number | null]
 }>()
 
-const expandedGroups = ref(new Set<number>())
-let draggedMonitor: Monitor | null = null
+const selected = defineModel<number[]>('selected', { default: () => [] })
 
-function toggleGroup(groupId: number) {
-  if (expandedGroups.value.has(groupId)) {
-    expandedGroups.value.delete(groupId)
-  } else {
-    expandedGroups.value.add(groupId)
-  }
+const { t } = useI18n()
+
+// ---------- Expand / collapse ----------
+const collapsed = ref(new Set<number>())
+function toggle(groupId: number) {
+  const next = new Set(collapsed.value)
+  if (next.has(groupId)) next.delete(groupId)
+  else next.add(groupId)
+  collapsed.value = next
 }
+const isOpen = (groupId: number) => props.filtered || !collapsed.value.has(groupId)
 
-function getMonitorStatus(monitor: Monitor): string {
-  switch (monitor.status) {
+// ---------- Status ----------
+type Tone = 'up' | 'down' | 'maintenance' | 'pending' | 'unknown'
+function tone(monitor: MonitorRow): Tone {
+  if (!monitor.active) return 'unknown'
+  switch (monitor.heartbeats?.[0]?.status) {
     case 1: return 'up'
     case 0: return 'down'
     case 3: return 'maintenance'
     default: return 'pending'
   }
 }
+const dotClass: Record<Tone, string> = {
+  up: 'bg-up',
+  down: 'bg-down',
+  maintenance: 'bg-maintenance',
+  pending: 'bg-pending',
+  unknown: 'bg-unknown',
+}
+function toneLabel(monitor: MonitorRow) {
+  if (!monitor.active) return t('filterActivePaused')
+  return { up: t('Up'), down: t('Down'), maintenance: t('Maintenance'), pending: t('Pending'), unknown: t('Unknown') }[tone(monitor)]
+}
+const downCount = (monitors: MonitorRow[]) => monitors.filter(m => tone(m) === 'down').length
 
-function getGroupUpCount(group: MonitorGroup): number {
-  return group.monitors.filter(m => m.status === 1).length
+// ---------- Selection ----------
+function toggleSelected(id: number) {
+  selected.value = selected.value.includes(id) ? selected.value.filter(i => i !== id) : [...selected.value, id]
+}
+function sectionState(monitors: MonitorRow[]) {
+  const count = monitors.filter(m => selected.value.includes(m.id)).length
+  return { checked: monitors.length > 0 && count === monitors.length, partial: count > 0 && count < monitors.length }
+}
+function toggleSection(monitors: MonitorRow[]) {
+  const ids = monitors.map(m => m.id)
+  selected.value = sectionState(monitors).checked
+    ? selected.value.filter(id => !ids.includes(id))
+    : [...new Set([...selected.value, ...ids])]
 }
 
-function getGroupDownCount(group: MonitorGroup): number {
-  return group.monitors.filter(m => m.status === 0).length
-}
-
-function onDragStart(event: DragEvent, monitor: Monitor) {
-  draggedMonitor = monitor
-  event.dataTransfer?.setData('text/plain', monitor.id.toString())
-}
-
-function onDrop(event: DragEvent, groupId: number) {
-  event.preventDefault()
-  if (draggedMonitor) {
-    emit('addToGroup', groupId, draggedMonitor.id)
-    draggedMonitor = null
+// ---------- Move (menu + drag & drop) ----------
+function moveItems(monitor: MonitorRow) {
+  const others = props.targets.filter(g => g.id !== monitor.parent)
+  const items: any[][] = []
+  if (others.length) {
+    items.push(others.map(group => ({
+      label: group.name,
+      icon: 'i-heroicons-folder',
+      onSelect: () => emit('move', [monitor.id], group.id),
+    })))
   }
+  if (monitor.parent != null) {
+    items.push([{
+      label: t('Remove from group'),
+      icon: 'i-heroicons-arrow-up-on-square',
+      onSelect: () => emit('move', [monitor.id], null),
+    }])
+  }
+  return items
 }
 
-// Expand all groups initially
-onMounted(() => {
-  props.groups.forEach(g => expandedGroups.value.add(g.id))
-})
+const dragging = ref<number[]>([])
+const dropTarget = ref<number | 'ungrouped' | null>(null)
+
+function onDragStart(event: DragEvent, monitor: MonitorRow) {
+  // Dragging a selected row carries the whole selection
+  dragging.value = selected.value.includes(monitor.id) ? [...selected.value] : [monitor.id]
+  event.dataTransfer?.setData('text/plain', dragging.value.join(','))
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+}
+function onDragEnd() {
+  dragging.value = []
+  dropTarget.value = null
+}
+function onDragOver(event: DragEvent, target: number | 'ungrouped') {
+  if (!dragging.value.length) return
+  event.preventDefault()
+  dropTarget.value = target
+}
+function onDrop(target: number | 'ungrouped') {
+  const ids = dragging.value
+  onDragEnd()
+  if (ids.length) emit('move', ids, target === 'ungrouped' ? null : target)
+}
 </script>
+
+<template>
+  <div class="space-y-3" :class="{ 'pointer-events-none opacity-60': busy }" :aria-busy="busy">
+    <!-- Groups -->
+    <section
+      v-for="{ group, monitors } in sections"
+      :key="group.id"
+      class="overflow-hidden rounded-lg border transition-colors"
+      :class="dropTarget === group.id ? 'border-primary bg-primary/5' : 'border-default'"
+      @dragover="onDragOver($event, group.id)"
+      @dragleave="dropTarget = null"
+      @drop.prevent="onDrop(group.id)"
+    >
+      <header class="flex items-center gap-2 bg-muted px-3 py-2">
+        <input
+          type="checkbox"
+          class="checkbox"
+          :checked="sectionState(monitors).checked"
+          :indeterminate="sectionState(monitors).partial"
+          :disabled="!monitors.length"
+          :aria-label="t('Select all in', [group.name])"
+          @change="toggleSection(monitors)"
+        >
+        <button
+          type="button"
+          class="flex min-w-0 flex-1 items-center gap-2 text-left"
+          :aria-expanded="isOpen(group.id)"
+          @click="toggle(group.id)"
+        >
+          <UIcon
+            name="i-heroicons-chevron-right"
+            class="size-4 shrink-0 text-muted transition-transform"
+            :class="{ 'rotate-90': isOpen(group.id) }"
+          />
+          <UIcon name="i-heroicons-folder" class="size-4 shrink-0 text-muted" />
+          <span class="truncate font-medium text-highlighted">{{ group.name }}</span>
+          <UBadge variant="subtle" color="neutral" size="sm">{{ monitors.length }}</UBadge>
+          <UBadge v-if="downCount(monitors) > 0" variant="subtle" color="error" size="sm">
+            {{ downCount(monitors) }} {{ t('Down') }}
+          </UBadge>
+          <span v-if="group.description" class="hidden truncate text-sm text-muted md:inline">{{ group.description }}</span>
+        </button>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          icon="i-heroicons-pencil-square"
+          :aria-label="t('Edit Group')"
+          :title="t('Edit Group')"
+          @click="emit('editGroup', group)"
+        />
+        <UButton
+          variant="ghost"
+          color="error"
+          size="xs"
+          icon="i-heroicons-trash"
+          :aria-label="t('Delete Group')"
+          :title="t('Delete Group')"
+          @click="emit('deleteGroup', group)"
+        />
+      </header>
+
+      <div v-if="isOpen(group.id)">
+        <p v-if="!monitors.length" class="px-4 py-5 text-center text-sm text-muted">
+          {{ filtered ? t('No monitors match your search') : t('groupEmptyHint') }}
+        </p>
+        <ul v-else class="divide-y divide-(--uk-border)">
+          <li
+            v-for="monitor in monitors"
+            :key="monitor.id"
+            class="flex items-center gap-3 px-3 py-2 hover:bg-elevated"
+            :class="{ 'opacity-50': dragging.includes(monitor.id) }"
+            draggable="true"
+            @dragstart="onDragStart($event, monitor)"
+            @dragend="onDragEnd"
+          >
+            <input
+              type="checkbox"
+              class="checkbox"
+              :checked="selected.includes(monitor.id)"
+              :aria-label="monitor.name"
+              @change="toggleSelected(monitor.id)"
+            >
+            <span class="size-2.5 shrink-0 rounded-full" :class="dotClass[tone(monitor)]" :title="toneLabel(monitor)" />
+            <NuxtLink :to="`/monitors/${monitor.id}`" class="min-w-0 flex-1 truncate text-sm text-default hover:text-highlighted" draggable="false">
+              {{ monitor.name }}
+              <span class="sr-only">({{ toneLabel(monitor) }})</span>
+            </NuxtLink>
+            <span class="hidden text-xs uppercase text-muted sm:inline">{{ monitor.type }}</span>
+            <UDropdownMenu :items="moveItems(monitor)" :content="{ align: 'end' }">
+              <UButton variant="ghost" color="neutral" size="xs" icon="i-heroicons-arrows-right-left" :aria-label="t('Move to')" :title="t('Move to')" />
+            </UDropdownMenu>
+            <UIcon name="i-heroicons-bars-2" class="hidden size-4 cursor-grab text-dimmed sm:block" aria-hidden="true" />
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- No groups yet -->
+    <div v-if="!sections.length && !filtered" class="rounded-lg border border-dashed border-default px-6 py-8 text-center">
+      <UIcon name="i-heroicons-folder-plus" class="mx-auto size-10 text-dimmed" />
+      <p class="mt-2 font-medium text-highlighted">{{ t('No groups yet') }}</p>
+      <p class="mt-1 text-sm text-muted">{{ t('groupsIntro') }}</p>
+      <UButton class="mt-4" icon="i-heroicons-plus" @click="emit('addGroup')">{{ t('New Group') }}</UButton>
+    </div>
+
+    <!-- Monitors without a group (also the drop zone to take a monitor out of its group) -->
+    <section
+      v-if="ungrouped.length || sections.length"
+      class="overflow-hidden rounded-lg border border-dashed transition-colors"
+      :class="dropTarget === 'ungrouped' ? 'border-primary bg-primary/5' : 'border-default'"
+      @dragover="onDragOver($event, 'ungrouped')"
+      @dragleave="dropTarget = null"
+      @drop.prevent="onDrop('ungrouped')"
+    >
+      <header class="flex items-center gap-2 px-3 py-2">
+        <input
+          type="checkbox"
+          class="checkbox"
+          :checked="sectionState(ungrouped).checked"
+          :indeterminate="sectionState(ungrouped).partial"
+          :disabled="!ungrouped.length"
+          :aria-label="t('Select all in', [t('Ungrouped')])"
+          @change="toggleSection(ungrouped)"
+        >
+        <UIcon name="i-heroicons-inbox" class="size-4 text-muted" />
+        <span class="font-medium text-highlighted">{{ t('Ungrouped') }}</span>
+        <UBadge variant="subtle" color="neutral" size="sm">{{ ungrouped.length }}</UBadge>
+      </header>
+
+      <p v-if="!ungrouped.length" class="px-4 pb-4 text-center text-sm text-muted">
+        {{ filtered ? t('No monitors match your search') : t('ungroupedEmptyHint') }}
+      </p>
+      <ul v-else class="divide-y divide-(--uk-border) border-t border-default">
+        <li
+          v-for="monitor in ungrouped"
+          :key="monitor.id"
+          class="flex items-center gap-3 px-3 py-2 hover:bg-elevated"
+          :class="{ 'opacity-50': dragging.includes(monitor.id) }"
+          draggable="true"
+          @dragstart="onDragStart($event, monitor)"
+          @dragend="onDragEnd"
+        >
+          <input
+            type="checkbox"
+            class="checkbox"
+            :checked="selected.includes(monitor.id)"
+            :aria-label="monitor.name"
+            @change="toggleSelected(monitor.id)"
+          >
+          <span class="size-2.5 shrink-0 rounded-full" :class="dotClass[tone(monitor)]" :title="toneLabel(monitor)" />
+          <NuxtLink :to="`/monitors/${monitor.id}`" class="min-w-0 flex-1 truncate text-sm text-default hover:text-highlighted" draggable="false">
+            {{ monitor.name }}
+            <span class="sr-only">({{ toneLabel(monitor) }})</span>
+          </NuxtLink>
+          <span class="hidden text-xs uppercase text-muted sm:inline">{{ monitor.type }}</span>
+          <UDropdownMenu v-if="targets.length" :items="moveItems(monitor)" :content="{ align: 'end' }">
+            <UButton variant="ghost" color="neutral" size="xs" icon="i-heroicons-arrows-right-left" :aria-label="t('Move to')" :title="t('Move to')" />
+          </UDropdownMenu>
+          <UIcon name="i-heroicons-bars-2" class="hidden size-4 cursor-grab text-dimmed sm:block" aria-hidden="true" />
+        </li>
+      </ul>
+    </section>
+  </div>
+</template>

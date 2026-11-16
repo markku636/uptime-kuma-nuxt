@@ -1,6 +1,8 @@
 // server/api/v1/monitors/[id].put.ts
 import { z } from 'zod'
 import { startMonitorJob, stopMonitorJob } from '../../../services/monitor/scheduler'
+import { normalizeMonitorPayload } from '../../../services/monitor/status-codes'
+import { WorkspaceError, resolvePlacement, syncMembersAfterMove } from '../../../services/workspace/service'
 
 const updateMonitorSchema = z.object({
   name: z.string().min(1).optional(),
@@ -14,7 +16,8 @@ const updateMonitorSchema = z.object({
   maxretries: z.number().optional(),
   method: z.string().optional(),
   body: z.string().optional(),
-  headers: z.record(z.string()).optional(),
+  headers: z.record(z.string(), z.string()).nullable().optional(),
+  acceptedStatuscodes: z.array(z.string()).optional(),
   keyword: z.string().optional(),
   invertKeyword: z.boolean().optional(),
   ignoreTls: z.boolean().optional(),
@@ -25,6 +28,9 @@ const updateMonitorSchema = z.object({
   description: z.string().optional(),
   active: z.boolean().optional(),
   weight: z.number().optional(),
+  // Organization: group (parent) and workspace
+  parent: z.number().int().positive().nullable().optional(),
+  workspaceId: z.number().int().positive().nullable().optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -61,7 +67,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
+  // Accept both monitor forms' shapes (headers as JSON string, basic_auth_* keys, "200-299, 404")
+  const body = normalizeMonitorPayload(await readBody(event))
   
   // Validate input
   const result = updateMonitorSchema.safeParse(body)
@@ -74,16 +81,28 @@ export default defineEventHandler(async (event) => {
 
   const data = result.data
 
+  // A monitor inside a group always lives in the group's workspace
+  const current = { parent: existingMonitor.parent, workspaceId: existingMonitor.workspaceId }
+  const placement = await resolvePlacement(session.user.id, id, data, current).catch((e) => {
+    if (e instanceof WorkspaceError) throw createError({ statusCode: e.statusCode, message: e.message })
+    throw e
+  })
+
   const monitor = await prisma.monitor.update({
     where: { id },
     data: {
       ...data,
+      ...placement,
       headers: data.headers ? data.headers : undefined,
     },
     include: {
       tags: { include: { tag: true } }
     }
   })
+
+  if (placement.workspaceId !== current.workspaceId) {
+    await syncMembersAfterMove(session.user.id, monitor)
+  }
 
   // Restart the monitor job with new settings
   if (monitor.active) {

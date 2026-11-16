@@ -567,3 +567,38 @@ DO $$ BEGIN
         ALTER TABLE "monitors" ADD COLUMN "assigned_node" TEXT;
     END IF;
 END $$;
+
+-- Workspaces (top-level category: Workspace -> Group -> Monitor)
+CREATE TABLE IF NOT EXISTS "workspaces" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "color" TEXT NOT NULL DEFAULT '#5cdd8b',
+    "weight" INTEGER NOT NULL DEFAULT 1000,
+    "user_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "workspaces_pkey" PRIMARY KEY ("id")
+);
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'monitors' AND column_name = 'workspace_id') THEN
+        ALTER TABLE "monitors" ADD COLUMN "workspace_id" INTEGER;
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS "workspaces_user_id_idx" ON "workspaces"("user_id");
+CREATE INDEX IF NOT EXISTS "monitors_workspace_id_idx" ON "monitors"("workspace_id");
+CREATE INDEX IF NOT EXISTS "monitors_parent_idx" ON "monitors"("parent");
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'workspaces_user_id_fkey') THEN
+        ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'monitors_workspace_id_fkey') THEN
+        ALTER TABLE "monitors" ADD CONSTRAINT "monitors_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
