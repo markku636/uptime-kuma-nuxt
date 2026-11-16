@@ -51,7 +51,7 @@ const channelTypeOptions = [
           <a 
             href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" 
             target="_blank" 
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             了解更多
           </a>
@@ -119,7 +119,7 @@ const channelTypeOptions = [
           <a 
             href="https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             如何取得 ID
           </a>

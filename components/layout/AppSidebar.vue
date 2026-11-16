@@ -8,7 +8,7 @@
         class="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors"
         :class="[
           isActive(item.to) 
-            ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' 
+            ? 'bg-primary/10 text-link' 
             : 'text-toned hover:bg-elevated'
         ]"
       >

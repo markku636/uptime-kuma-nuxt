@@ -210,7 +210,7 @@ function formatDateTime(dateTime: string | null) {
                 </span>
                 <span 
                   v-if="node.isPrimary" 
-                  class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full"
+                  class="bg-info text-white text-xs px-2 py-0.5 rounded-full"
                 >
                   Primary
                 </span>

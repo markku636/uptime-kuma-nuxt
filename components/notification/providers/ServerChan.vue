@@ -52,7 +52,7 @@ const config = computed({
               <a 
                 href="https://sct.ftqq.com/" 
                 target="_blank"
-                class="text-primary-500 hover:underline"
+                class="text-link hover:underline"
               >
                 sct.ftqq.com
               </a>

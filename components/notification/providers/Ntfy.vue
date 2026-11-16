@@ -184,7 +184,7 @@ const priorityHelpText = computed(() => {
             <a 
               href="https://ntfy.sh" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               了解更多
             </a>

@@ -5,7 +5,7 @@
         <!-- Logo -->
         <div class="flex items-center">
           <NuxtLink to="/" class="flex items-center space-x-2">
-            <UIcon name="i-heroicons-chart-bar" class="w-8 h-8 text-primary-500" />
+            <UIcon name="i-heroicons-chart-bar" class="w-8 h-8 text-link" />
             <span class="text-xl font-bold text-highlighted">
               Uptime Kuma
             </span>

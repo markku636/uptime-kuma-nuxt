@@ -2,7 +2,7 @@
   <div
     class="monitor-list-item group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors"
     :class="[
-      isSelected ? 'bg-primary-100 dark:bg-primary-900' : 'hover:bg-elevated',
+      isSelected ? 'bg-primary/10' : 'hover:bg-elevated',
       { 'opacity-50': monitor.active === false }
     ]"
     @click="$emit('select', monitor)"

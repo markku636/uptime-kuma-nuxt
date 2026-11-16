@@ -136,7 +136,7 @@
         </div>
         <div class="stat-card card-interactive">
           <div class="stat-label text-sm text-toned mb-1">Avg Response</div>
-          <div class="stat-value text-2xl font-bold text-blue-400">
+          <div class="stat-value text-2xl font-bold text-info">
             <span class="tabular-nums">{{ avgPing }}</span><span class="text-lg">ms</span>
           </div>
           <div class="text-xs text-muted mt-1">24-hour</div>

@@ -87,7 +87,7 @@ const regionOptions = [
             <a 
               href="https://docs.opsgenie.com/docs/alert-api" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               查看 Opsgenie Alert API 文檔
             </a>

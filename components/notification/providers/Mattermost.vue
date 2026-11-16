@@ -59,7 +59,7 @@ const config = computed({
           <a 
             href="https://www.webfx.com/tools/emoji-cheat-sheet/" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             Emoji 速查表
           </a>
@@ -93,7 +93,7 @@ const config = computed({
             <a 
               href="https://developers.mattermost.com/integrate/webhooks/incoming/" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               查看 Mattermost Webhook 文檔
             </a>

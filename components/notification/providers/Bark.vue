@@ -63,7 +63,7 @@ const soundOptions = [
           <a 
             href="https://github.com/Finb/Bark" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             了解更多
           </a>

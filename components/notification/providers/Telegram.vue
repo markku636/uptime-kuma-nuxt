@@ -93,7 +93,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
           <a 
             href="https://t.me/BotFather" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             @BotFather
           </a>
@@ -159,7 +159,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
           <a 
             href="https://core.telegram.org/bots/api#using-a-local-bot-api-server" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             了解更多
           </a>
@@ -192,7 +192,7 @@ Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
             <a 
               href="https://core.telegram.org/bots/api#formatting-options" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               查看格式文檔
             </a>

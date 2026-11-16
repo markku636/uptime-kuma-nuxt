@@ -89,7 +89,7 @@ const config = computed({
             <a 
               href="https://help.aliyun.com/document_detail/101414.html" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               查看阿里雲短信 API 文檔
             </a>

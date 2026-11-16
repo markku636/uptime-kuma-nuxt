@@ -26,7 +26,7 @@
         <div class="text-center">
           <button 
             type="button"
-            class="text-sm text-primary-500 hover:text-primary-600"
+            class="text-sm text-link hover:text-link"
             @click="showManualEntry = !showManualEntry"
           >
             {{ $t("Can't scan? Enter code manually") }}
@@ -93,7 +93,7 @@
         <div class="text-center">
           <button
             type="button"
-            class="text-sm text-primary-500 hover:text-primary-600"
+            class="text-sm text-link hover:text-link"
             @click="useRecoveryCode = !useRecoveryCode"
           >
             {{ useRecoveryCode ? $t('Use authenticator code') : $t('Use recovery code instead') }}

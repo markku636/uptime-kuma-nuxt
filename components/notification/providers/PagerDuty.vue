@@ -61,7 +61,7 @@ const autoResolveOptions = [
           <a 
             href="https://support.pagerduty.com/docs/services-and-integrations" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             PagerDuty 文檔
           </a>

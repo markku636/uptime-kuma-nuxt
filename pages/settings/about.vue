@@ -206,7 +206,7 @@ function formatUptime(seconds: number): string {
         </a>
         <a href="https://github.com/louislam/uptime-kuma/wiki" target="_blank"
            class="flex items-center gap-3 p-3 bg-elevated rounded-lg hover:bg-accented transition-colors">
-          <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-blue-500 dark:text-blue-400" />
+          <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-info" />
           <span class="text-highlighted">Documentation</span>
         </a>
         <a href="https://github.com/louislam/uptime-kuma/issues" target="_blank"

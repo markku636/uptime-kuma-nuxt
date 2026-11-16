@@ -247,7 +247,7 @@ const initials = computed(() => {
           to="/settings/api-keys" 
           class="flex items-center gap-3 p-3 bg-elevated rounded-lg hover:bg-accented transition-colors"
         >
-          <UIcon name="i-heroicons-key" class="w-5 h-5 text-blue-500 dark:text-blue-400" />
+          <UIcon name="i-heroicons-key" class="w-5 h-5 text-info" />
           <div>
             <span class="text-highlighted block">API Keys</span>
             <span class="text-toned text-sm">Manage API access</span>

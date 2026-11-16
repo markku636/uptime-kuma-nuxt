@@ -36,11 +36,11 @@ const sizeClass = computed(() => {
 
 const colorClass = computed(() => {
   const colors = {
-    primary: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+    primary: 'bg-primary/10 text-link',
     success: 'bg-up-subtle text-up-fg',
     warning: 'bg-pending-subtle text-pending-fg',
     danger: 'bg-down-subtle text-down-fg',
-    info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    info: 'bg-info/10 text-info',
     gray: 'bg-elevated text-default'
   }
   return colors[props.color]

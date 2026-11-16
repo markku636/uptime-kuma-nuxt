@@ -35,7 +35,7 @@ const config = computed({
           <a 
             href="https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             Microsoft 官方文檔
           </a>

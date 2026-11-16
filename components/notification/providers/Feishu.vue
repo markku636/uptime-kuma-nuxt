@@ -35,7 +35,7 @@ const config = computed({
           <a 
             href="https://www.feishu.cn/hc/zh-CN/articles/360024984973" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             飛書官方文檔
           </a>

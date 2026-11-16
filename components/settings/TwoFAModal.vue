@@ -29,7 +29,7 @@
           <button 
             v-if="!showUri" 
             @click="showUri = true" 
-            class="text-sm text-blue-400 hover:text-blue-300"
+            class="text-sm text-info hover:underline"
           >
             Show setup key
           </button>

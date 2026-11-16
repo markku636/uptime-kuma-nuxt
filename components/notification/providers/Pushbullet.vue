@@ -32,7 +32,7 @@ const localConfig = computed({
       <template #hint>
         <span class="text-xs text-muted">
           Get your access token from 
-          <a href="https://www.pushbullet.com/#settings/account" target="_blank" class="text-primary-500 hover:underline">
+          <a href="https://www.pushbullet.com/#settings/account" target="_blank" class="text-link hover:underline">
             Pushbullet Settings
           </a>
         </span>

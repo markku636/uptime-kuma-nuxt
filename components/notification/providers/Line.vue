@@ -64,7 +64,7 @@ const config = computed({
             <a 
               href="https://developers.line.biz/console/" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               LINE Developers Console
             </a>

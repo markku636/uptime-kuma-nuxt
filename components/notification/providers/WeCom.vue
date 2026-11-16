@@ -55,7 +55,7 @@ const config = computed({
             <a 
               href="https://work.weixin.qq.com/api/doc/90000/90136/91770" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               查看官方文檔
             </a>

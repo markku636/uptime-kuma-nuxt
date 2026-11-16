@@ -114,7 +114,7 @@ defineExpose({
             :class="[
               'flex items-center gap-3 px-3 cursor-pointer transition-colors border-b border-default',
               selectedId === monitor.id
-                ? 'bg-primary-50 dark:bg-primary-900/20'
+                ? 'bg-primary/10'
                 : 'hover:bg-muted'
             ]"
             @click="handleSelect(monitor)"

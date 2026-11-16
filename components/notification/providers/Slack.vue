@@ -34,7 +34,7 @@ const config = computed({
           <a 
             href="https://api.slack.com/messaging/webhooks" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             如何建立 Slack Webhook
           </a>
@@ -67,7 +67,7 @@ const config = computed({
           <a 
             href="https://www.webfx.com/tools/emoji-cheat-sheet/" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             Emoji 速查表
           </a>

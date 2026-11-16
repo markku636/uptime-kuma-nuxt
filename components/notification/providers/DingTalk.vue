@@ -82,7 +82,7 @@ const mentioningOptions = [
               <a 
                 href="https://developers.dingtalk.com/document/robots/custom-robot-access" 
                 target="_blank"
-                class="text-primary-500 hover:underline"
+                class="text-link hover:underline"
               >
                 自定義機器人接入文檔
               </a>
@@ -91,7 +91,7 @@ const mentioningOptions = [
               <a 
                 href="https://open.dingtalk.com/document/robots/customize-robot-security-settings" 
                 target="_blank"
-                class="text-primary-500 hover:underline"
+                class="text-link hover:underline"
               >
                 機器人安全設置
               </a>

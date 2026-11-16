@@ -90,7 +90,7 @@ onMounted(() => {
             <a 
               href="https://gotify.net/" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               Gotify 官網
             </a>

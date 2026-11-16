@@ -34,7 +34,7 @@ const config = computed({
           <a 
             href="https://developers.google.com/chat/how-tos/webhooks" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             如何建立 Google Chat Webhook
           </a>

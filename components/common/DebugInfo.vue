@@ -132,7 +132,7 @@ onMounted(() => {
       <div class="space-y-6">
         <!-- Loading state -->
         <div v-if="loading" class="flex items-center justify-center py-8">
-          <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-primary-500" />
+          <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-link" />
           <span class="ml-2">Loading debug info...</span>
         </div>
         

@@ -50,7 +50,7 @@ const config = computed({
           <a 
             href="https://www.webfx.com/tools/emoji-cheat-sheet/" 
             target="_blank"
-            class="text-primary-500 hover:underline"
+            class="text-link hover:underline"
           >
             Emoji 速查表
           </a>
@@ -84,7 +84,7 @@ const config = computed({
             <a 
               href="https://docs.rocket.chat/guides/administration/administration/integrations" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               查看 Rocket.Chat Integration 文檔
             </a>

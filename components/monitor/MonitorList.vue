@@ -78,7 +78,7 @@ function getStatusText(monitor: Monitor): string {
             :class="[
               'flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors',
               selectedId === monitor.id
-                ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500'
+                ? 'bg-primary/10 border-2 border-primary'
                 : 'bg-default border-2 border-transparent hover:bg-muted'
             ]"
             @click="selectedId = monitor.id; emit('select', monitor)"

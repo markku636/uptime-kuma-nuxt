@@ -53,7 +53,7 @@ const serviceOptions = [
       <template #hint>
         <span class="text-xs text-muted">
           Get your API key from 
-          <a href="https://www.callmebot.com/" target="_blank" class="text-primary-500 hover:underline">
+          <a href="https://www.callmebot.com/" target="_blank" class="text-link hover:underline">
             CallMeBot
           </a>
         </span>

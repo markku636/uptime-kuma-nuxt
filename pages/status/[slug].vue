@@ -588,7 +588,7 @@ function formatLastUpdated(date: Date | null) {
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center min-h-screen">
         <div class="text-center">
-          <div class="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p class="text-muted">Loading status page...</p>
         </div>
       </div>
@@ -600,7 +600,7 @@ function formatLastUpdated(date: Date | null) {
           <p class="text-xl text-muted mb-8">{{ error }}</p>
           <NuxtLink 
             to="/" 
-            class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+            class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
             Go Home
           </NuxtLink>
@@ -792,7 +792,7 @@ function formatLastUpdated(date: Date | null) {
           <!-- No monitors available message -->
           <div v-if="allMonitors.length === 0" class="mt-4 text-center text-muted">
             No monitors available. 
-            <NuxtLink to="/monitors/add" class="text-primary-500 hover:underline">Add one</NuxtLink>
+            <NuxtLink to="/monitors/add" class="text-link hover:underline">Add one</NuxtLink>
           </div>
         </div>
 
@@ -809,7 +809,7 @@ function formatLastUpdated(date: Date | null) {
               :class="[
                 'px-4 py-2 rounded-t-lg text-sm font-medium transition-colors whitespace-nowrap',
                 activeGroupId === tab.id
-                  ? 'bg-default text-primary-600 border-b-2 border-primary-500'
+                  ? 'bg-default text-link border-b-2 border-primary'
                   : 'text-muted hover:text-default'
               ]"
             >
@@ -937,7 +937,7 @@ function formatLastUpdated(date: Date | null) {
               href="https://github.com/louislam/uptime-kuma" 
               target="_blank" 
               rel="noopener noreferrer"
-              class="text-primary-500 hover:text-primary-600 hover:underline inline-flex items-center gap-1"
+              class="text-link hover:text-link hover:underline inline-flex items-center gap-1"
             >
               Uptime Kuma
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

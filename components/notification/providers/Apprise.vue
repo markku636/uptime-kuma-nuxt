@@ -47,7 +47,7 @@ const localConfig = computed({
       <template #hint>
         <span class="text-xs text-muted">
           One Apprise URL per line. See 
-          <a href="https://github.com/caronc/apprise/wiki" target="_blank" class="text-primary-500 hover:underline">
+          <a href="https://github.com/caronc/apprise/wiki" target="_blank" class="text-link hover:underline">
             Apprise Wiki
           </a> for supported services
         </span>

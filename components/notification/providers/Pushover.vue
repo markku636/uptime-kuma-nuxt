@@ -138,13 +138,13 @@ const soundItems = soundOptions.map(s => ({ label: s, value: s }))
             <a 
               href="https://pushover.net/api" 
               target="_blank"
-              class="text-primary-500 hover:underline"
+              class="text-link hover:underline"
             >
               Pushover API 文檔
             </a>
           </p>
           <ol class="list-decimal list-inside space-y-1">
-            <li>登入 <a href="https://pushover.net/" target="_blank" class="text-primary-500 hover:underline">Pushover.net</a></li>
+            <li>登入 <a href="https://pushover.net/" target="_blank" class="text-link hover:underline">Pushover.net</a></li>
             <li>在首頁找到你的 User Key</li>
             <li>建立一個 Application 取得 API Token</li>
           </ol>

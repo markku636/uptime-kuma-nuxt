@@ -52,7 +52,7 @@ const showDkim = ref(false)
         <p class="text-sm text-muted">
           輸入 SMTP 伺服器地址，或使用 <code class="text-xs bg-elevated px-1 rounded">localhost</code> 
           連接本地 
-          <a href="https://wikipedia.org/wiki/Mail_Transfer_Agent" target="_blank" class="text-primary-500 hover:underline">
+          <a href="https://wikipedia.org/wiki/Mail_Transfer_Agent" target="_blank" class="text-link hover:underline">
             MTA (郵件傳輸代理)
           </a>
         </p>
@@ -217,7 +217,7 @@ const showDkim = ref(false)
         <a 
           href="https://nodemailer.com/dkim/" 
           target="_blank"
-          class="text-primary-500 hover:underline"
+          class="text-link hover:underline"
         >
           查看文檔
         </a>

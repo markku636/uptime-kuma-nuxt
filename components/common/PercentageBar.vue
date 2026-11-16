@@ -55,7 +55,7 @@ const barColorClass = computed(() => {
       success: 'bg-up',
       warning: 'bg-pending',
       danger: 'bg-down',
-      primary: 'bg-primary-500'
+      primary: 'bg-primary'
     }
     return colors[props.colorMode]
   }
