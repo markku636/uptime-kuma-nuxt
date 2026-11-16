@@ -467,6 +467,7 @@ function applyDraft(draft: MonitorDraft, workspaceId?: number | null) {
   form.method = draft.method
   form.body = draft.body
   form.keyword = draft.keyword
+  form.invertKeyword = !!draft.invertKeyword
   if (draft.description) form.description = draft.description
   form.acceptedStatuscodes = draft.acceptedStatuscodes.join(', ')
   if (draft.timeout) form.timeout = draft.timeout

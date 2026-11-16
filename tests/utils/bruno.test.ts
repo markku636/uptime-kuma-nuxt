@@ -471,3 +471,23 @@ describe('timeout export', () => {
     expect(byName.Scaled.timeout).toBeUndefined()
   })
 })
+
+describe('inverted keywords', () => {
+  it('read res.body notContains as an inverted keyword', () => {
+    const req = parseBruRequest('get {\n  url: https://example.com\n}\n\nassert {\n  res.body: notContains "error"\n}\n')!
+    expect(req).toMatchObject({ keyword: 'error', invertKeyword: true })
+    expect(toMonitorDraft(req)).toMatchObject({ type: 'keyword', keyword: 'error', invertKeyword: true })
+  })
+
+  it('prefer contains when both are asserted', () => {
+    const req = parseBruRequest('get {\n  url: https://example.com\n}\n\nassert {\n  res.body: notContains "error"\n  res.body: contains "ok"\n}\n')!
+    expect(req.keyword).toBe('ok')
+    expect(req.invertKeyword).toBeUndefined()
+  })
+
+  it('round-trip through export', () => {
+    const monitors = [{ id: 1, name: 'NoError', type: 'keyword', url: 'https://a.example', keyword: 'error', invertKeyword: true }]
+    const [req] = parseBrunoCollectionJson(toBrunoCollection('Export', monitors, [])).requests
+    expect(req).toMatchObject({ keyword: 'error', invertKeyword: true })
+  })
+})

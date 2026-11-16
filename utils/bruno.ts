@@ -45,6 +45,8 @@ export interface BrunoRequest {
   expectedStatus: string[]
   /** From `assert { res.body: contains … }` */
   keyword: string
+  /** From `res.body: notContains …`: the keyword must be absent */
+  invertKeyword?: boolean
   /** Seconds, from `assert { res.responseTime: lt 2000 }` */
   timeout?: number
   seq: number
@@ -164,10 +166,11 @@ function authFromBlocks(blocks: BruBlock[], mode: string): BrunoAuth {
 }
 
 /** Map assertions to accepted status codes and a keyword */
-export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]; keyword: string; timeout?: number } {
+export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]; keyword: string; invertKeyword?: boolean; timeout?: number } {
   const expectedStatus: string[] = []
   let keyword = ''
   let timeout: number | undefined
+  let invertKeyword = false
   for (const { key, value } of entries) {
     const [op, ...rest] = value.trim().split(/\s+/)
     const arg = rest.join(' ').replace(/^["']|["']$/g, '')
@@ -181,6 +184,10 @@ export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]
       }
     } else if (key === 'res.body' && op === 'contains' && arg) {
       keyword = arg
+      invertKeyword = false
+    } else if (key === 'res.body' && op === 'notContains' && arg && !keyword) {
+      keyword = arg
+      invertKeyword = true
     } else if (key === 'res.responseTime' && (op === 'lt' || op === 'lte')) {
       // A response-time limit (ms) becomes the monitor's timeout (s)
       const ms = Number(arg)
@@ -197,7 +204,12 @@ export function parseAssertions(entries: KeyValue[]): { expectedStatus: string[]
     plain.push(`${lo}-${hi}`)
   }
   const codes = plain.filter(s => /^\d{3}(-\d{3})?$/.test(s))
-  return timeout ? { expectedStatus: codes, keyword, timeout } : { expectedStatus: codes, keyword }
+  return {
+    expectedStatus: codes,
+    keyword,
+    ...(invertKeyword ? { invertKeyword } : {}),
+    ...(timeout ? { timeout } : {}),
+  }
 }
 
 function formEncode(entries: KeyValue[]): string {
@@ -661,6 +673,7 @@ export interface MonitorDraft {
   basicAuthUser: string
   basicAuthPass: string
   keyword: string
+  invertKeyword?: boolean
   acceptedStatuscodes: string[]
   /** Seconds, from a res.responseTime assertion */
   timeout?: number
@@ -726,6 +739,7 @@ export function toMonitorDraft(req: BrunoRequest): MonitorDraft {
     basicAuthUser,
     basicAuthPass,
     keyword: req.keyword,
+    ...(req.invertKeyword ? { invertKeyword: true } : {}),
     description: req.docs.slice(0, 2000),
     acceptedStatuscodes: req.expectedStatus.length ? req.expectedStatus : ['200-299'],
     ...(req.timeout ? { timeout: req.timeout } : {}),
@@ -835,7 +849,7 @@ export function toBrunoCollection(
     if (!HTTP_TYPES.has(m.type) || !m.url) continue
     const headers = headerList(m.headers)
     const assertions = statusAssertions(m.acceptedStatuscodes)
-    if (m.keyword && !m.invertKeyword) assertions.push({ name: 'res.body', value: `contains "${m.keyword}"`, enabled: true })
+    if (m.keyword) assertions.push({ name: 'res.body', value: `${m.invertKeyword ? 'notContains' : 'contains'} "${m.keyword}"`, enabled: true })
     // Only a timeout someone chose: the default (48 s, or 80% of the interval) adds nothing
     if (m.timeout && m.timeout > 0 && m.timeout !== 48 && m.timeout !== Math.round((m.interval ?? 60) * 0.8)) {
       assertions.push({ name: 'res.responseTime', value: `lt ${Math.round(m.timeout * 1000)}`, enabled: true })
