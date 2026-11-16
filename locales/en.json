@@ -1333,5 +1333,7 @@
     "monitorCountShort": "{0} monitor(s)",
     "deleteVariableMsg": "{0} monitor(s) use it; their checks will report \"Unknown variable\" unless a global value exists.",
     "brunoKeepVariables": "Keep {'{{'}variables{'}}'} and save their values as variables of {0}",
-    "brunoKeepVariablesHint": "The monitors keep the placeholders; edit the values later under Settings > Variables to switch environment or rotate a token."
+    "brunoKeepVariablesHint": "The monitors keep the placeholders; edit the values later under Settings > Variables to switch environment or rotate a token.",
+    "Uses variables": "Uses variables",
+    "urlVariablesHint": "You can use {'{{'}variables{'}}'} (e.g. {'{{'}baseUrl{'}}'}/health); they are filled in on every check."
 }

@@ -65,6 +65,7 @@
             <div v-if="showUrlField" class="form-group md:col-span-2">
               <label class="input-label">URL <span class="text-down-fg">*</span></label>
               <input v-model="form.url" type="text" class="input-field" placeholder="https://example.com" required />
+              <p class="mt-1 text-xs text-dimmed">{{ $t('urlVariablesHint') }} <NuxtLink to="/settings/variables" class="link">{{ $t('Variables') }}</NuxtLink></p>
             </div>
 
             <!-- Hostname/Port for TCP/Ping/DNS -->

@@ -35,6 +35,7 @@
             placeholder="https://example.com"
             :disabled="loading"
           />
+          <p class="mt-1 text-xs text-dimmed">{{ $t('urlVariablesHint') }} <NuxtLink to="/settings/variables" class="link">{{ $t('Variables') }}</NuxtLink></p>
         </div>
 
         <!-- Hostname for TCP/Ping/DNS monitors -->

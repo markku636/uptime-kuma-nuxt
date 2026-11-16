@@ -33,7 +33,12 @@
             <div class="flex items-center gap-2 mt-2 text-sm text-toned">
               <span class="uppercase font-medium text-default">{{ monitor.type }}</span>
               <span>|</span>
-              <a v-if="monitor.url" :href="monitor.url" target="_blank" class="link truncate max-w-md">
+              <!-- A URL with {{variables}} is filled at check time: show it as is, no link -->
+              <template v-if="monitor.url && monitor.url.includes('{{')">
+                <code class="truncate max-w-md text-default">{{ monitor.url }}</code>
+                <NuxtLink to="/settings/variables" class="badge badge-info">{{ $t('Uses variables') }}</NuxtLink>
+              </template>
+              <a v-else-if="monitor.url" :href="monitor.url" target="_blank" class="link truncate max-w-md">
                 {{ monitor.url }}
               </a>
               <span v-else-if="monitor.hostname">{{ monitor.hostname }}{{ monitor.port ? `:${monitor.port}` : '' }}</span>
