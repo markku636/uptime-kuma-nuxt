@@ -139,13 +139,27 @@ const confirmOpen = computed({
 })
 
 // Say what the delete touches: counts of what is inside, and that it is kept
+// Variables per workspace, to warn that deleting a workspace deletes them
+const workspaceVariableCount = ref(new Map<number, number>())
+watch(pendingDelete, async (pending) => {
+  if (pending?.kind !== 'workspace') return
+  try {
+    const res = await $fetch<{ data: { workspaceId: number | null }[] }>('/api/v1/variables')
+    const counts = new Map<number, number>()
+    for (const v of res.data) if (v.workspaceId != null) counts.set(v.workspaceId, (counts.get(v.workspaceId) ?? 0) + 1)
+    workspaceVariableCount.value = counts
+  } catch { /* the message just omits the count */ }
+})
+
 const deleteMessage = computed(() => {
   const pending = pendingDelete.value
   if (!pending) return ''
   if (pending.kind === 'workspace') {
     const { groupCount, monitorCount } = pending.item
     const inside = groupCount + monitorCount > 0 ? t('workspaceContains', { groups: groupCount, monitors: monitorCount }) + ' ' : ''
-    return inside + t('deleteWorkspaceMsg')
+    // Its variables go with it (monitors keep their {{placeholders}})
+    const vars = workspaceVariableCount.value.get(pending.item.id) ?? 0
+    return inside + t('deleteWorkspaceMsg') + (vars ? ' ' + t('deleteWorkspaceVariables', [vars]) : '')
   }
   const subgroups = groups.value.filter(g => g.parent === pending.item.id).length
   const members = pending.item.monitorCount
