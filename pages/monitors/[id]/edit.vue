@@ -78,9 +78,9 @@ async function handleSubmit(formData: any) {
         icon="i-heroicons-arrow-left"
         class="mb-4"
       >
-        Back to Monitors
+        {{ $t('Back to Monitors') }}
       </UButton>
-      <h1 class="text-2xl font-bold">Edit Monitor</h1>
+      <h1 class="text-2xl font-bold">{{ monitor?.type === 'group' ? $t('Edit Group') : $t('Edit Monitor') }}</h1>
     </div>
 
     <UCard v-if="loading">

@@ -1287,5 +1287,11 @@
     "Group resumed": "Group and its monitors resumed",
     "workspaceContains": "It contains {groups} group(s) and {monitors} monitor(s).",
     "groupContains": "It contains {count} item(s), {subgroups} of them subgroups.",
-    "groupNotificationsHint": "Sent when the group changes status, e.g. one alert when any member goes down instead of one per monitor. Default channels are always used."
+    "groupNotificationsHint": "Sent when the group changes status, e.g. one alert when any member goes down instead of one per monitor. Default channels are always used.",
+    "Manage your monitors": "Manage your monitors",
+    "Loading monitors...": "Loading monitors…",
+    "No monitors yet": "No monitors yet",
+    "Add your first monitor": "Add your first monitor",
+    "Back to Monitors": "Back to Monitors",
+    "Edit Monitor": "Edit Monitor"
 }

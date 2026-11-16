@@ -2,8 +2,8 @@
   <div class="page-container">
     <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-highlighted">Monitors</h1>
-        <p class="text-toned">Manage your monitors</p>
+        <h1 class="text-2xl font-bold text-highlighted">{{ t('Monitors') }}</h1>
+        <p class="text-toned">{{ t('Manage your monitors') }}</p>
       </div>
       <div class="flex gap-2">
         <UButton variant="outline" color="neutral" icon="i-heroicons-folder-plus" @click="openGroupDialog()">
@@ -11,7 +11,7 @@
         </UButton>
         <NuxtLink :to="addMonitorLink()" class="btn btn-primary">
           <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
-          Add Monitor
+          {{ t('Add New Monitor') }}
         </NuxtLink>
       </div>
     </div>
@@ -34,14 +34,14 @@
     <div class="card card-body">
       <div v-if="(pending && !data) || !loaded" class="text-center py-12">
         <div class="spinner w-8 h-8 mx-auto"></div>
-        <p class="text-toned mt-2">Loading monitors...</p>
+        <p class="text-toned mt-2">{{ t('Loading monitors...') }}</p>
       </div>
 
       <div v-else-if="monitors.length === 0" class="text-center py-12">
         <UIcon name="i-heroicons-server" class="w-12 h-12 mx-auto text-muted mb-3" />
-        <p class="text-toned mb-4">No monitors yet</p>
+        <p class="text-toned mb-4">{{ t('No monitors yet') }}</p>
         <NuxtLink to="/monitors/add" class="btn btn-primary">
-          Add your first monitor
+          {{ t('Add your first monitor') }}
         </NuxtLink>
       </div>
 
@@ -55,7 +55,7 @@
         <UIcon name="i-heroicons-rectangle-group" class="w-12 h-12 mx-auto text-muted mb-3" />
         <p class="text-toned mb-4">{{ t('workspaceEmpty') }}</p>
         <div class="flex justify-center gap-2">
-          <NuxtLink :to="addMonitorLink()" class="btn btn-primary">Add Monitor</NuxtLink>
+          <NuxtLink :to="addMonitorLink()" class="btn btn-primary">{{ t('Add New Monitor') }}</NuxtLink>
           <button type="button" class="btn btn-secondary" @click="current = 'all'">{{ t('All Workspaces') }}</button>
         </div>
       </div>

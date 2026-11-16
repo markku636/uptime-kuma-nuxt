@@ -1299,5 +1299,11 @@
     "Group resumed": "已恢復群組與其成員",
     "workspaceContains": "此工作區有 {groups} 個群組、{monitors} 個監控項目。",
     "groupContains": "此群組有 {count} 個成員（其中 {subgroups} 個是子群組）。",
-    "groupNotificationsHint": "群組狀態改變時發送，例如任一成員離線時只收到一則群組通知，而不是每個監控各一則。預設通知管道一律會使用。"
+    "groupNotificationsHint": "群組狀態改變時發送，例如任一成員離線時只收到一則群組通知，而不是每個監控各一則。預設通知管道一律會使用。",
+    "Manage your monitors": "管理所有監控項目",
+    "Loading monitors...": "正在載入監控項目…",
+    "No monitors yet": "尚未建立監控項目",
+    "Add your first monitor": "新增第一個監控項目",
+    "Back to Monitors": "返回監控列表",
+    "Edit Monitor": "編輯監控項目"
 }
