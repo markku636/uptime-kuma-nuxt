@@ -159,6 +159,11 @@
       <template v-if="monitors.length === 0">
         No monitors yet. Click "Add New Monitor" to create one.
       </template>
+      <!-- Only the selected workspace is empty: say so and offer the way back -->
+      <template v-else-if="monitorsWithLiveData.length === 0">
+        {{ t('workspaceEmpty') }}
+        <button @click="clearFilters" class="link ml-1">{{ t('All Workspaces') }}</button>
+      </template>
       <template v-else>
         No monitors match your filters.
         <button @click="clearFilters" class="link ml-1">Clear filters</button>
@@ -391,6 +396,8 @@ const clearFilters = () => {
   statusFilter.value = 'all'
   typeFilter.value = 'all'
   groupFilter.value = 'all'
+  // The workspace is a filter too: without this the list could stay empty
+  currentWorkspace.value = 'all'
 }
 
 const getLatestStatus = (monitor: any) => {
