@@ -58,40 +58,9 @@
   --color-kuma-950: var(--uk-green-950);
 }
 
-/* ========== Legacy aliases (to be removed once no component uses them) ========== */
-:root,
-.dark {
-  --bg-primary: var(--uk-bg-app);
-  --bg-secondary: var(--uk-bg-surface);
-  --bg-tertiary: var(--uk-bg-raised);
-  --bg-card: var(--uk-bg-surface);
-  --text-primary: var(--uk-text);
-  --text-secondary: var(--uk-text-secondary);
-  --text-tertiary: var(--uk-text-muted);
-  --text-muted: var(--uk-text-muted);
-  --border-color: var(--uk-border);
+/* ========== Legacy alias (only --shadow-color is still referenced) ========== */
+:root {
   --shadow-color: rgba(15, 23, 42, 0.08);
-  --hover-bg: var(--uk-bg-hover);
-
-  --uk-danger: var(--uk-status-down);
-  --uk-warning: var(--uk-status-pending);
-  --uk-info: var(--uk-status-maintenance);
-  --uk-maintenance: var(--uk-status-maintenance);
-  --uk-highlight: var(--uk-green-300);
-  --uk-highlight-white: var(--uk-green-50);
-
-  --color-border: var(--uk-border);
-  --color-text: var(--uk-text);
-  --color-text-primary: var(--uk-text);
-  --color-text-secondary: var(--uk-text-muted);
-  --color-bg: var(--uk-bg-surface);
-  --color-bg-primary: var(--uk-bg-surface);
-  --color-bg-secondary: var(--uk-bg-raised);
-  --color-bg-hover: var(--uk-bg-hover);
-  --color-danger: var(--uk-status-down);
-  --color-danger-dark: var(--uk-red-700);
-  --color-primary-dark: var(--uk-primary-fg);
-  --color-primary-light: color-mix(in srgb, var(--uk-primary) 20%, transparent);
 }
 
 .dark {

@@ -521,7 +521,7 @@ function handleDiscard() {
 }
 
 .btn-icon-add:hover {
-  color: var(--color-primary-dark, #059669);
+  color: var(--uk-primary-fg, #059669);
 }
 
 .domain-list {
@@ -542,14 +542,14 @@ function handleDiscard() {
 .btn-icon-remove {
   background: none;
   border: none;
-  color: var(--color-danger, #ef4444);
+  color: var(--uk-status-down, #ef4444);
   cursor: pointer;
   padding: 4px;
   font-size: 1.25rem;
 }
 
 .btn-icon-remove:hover {
-  color: var(--color-danger-dark, #dc2626);
+  color: var(--uk-red-700, #dc2626);
 }
 
 .css-editor {
@@ -560,7 +560,7 @@ function handleDiscard() {
 .danger-zone {
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid var(--color-danger, var(--uk-status-down));
+  border-top: 1px solid var(--uk-status-down, var(--uk-status-down));
 }
 
 .danger-title {
@@ -597,7 +597,7 @@ function handleDiscard() {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--color-primary-dark, #059669);
+  background: var(--uk-primary-fg, #059669);
 }
 
 .btn-primary:disabled {
@@ -616,13 +616,13 @@ function handleDiscard() {
 }
 
 .btn-danger {
-  background: var(--color-danger, #ef4444);
+  background: var(--uk-status-down, #ef4444);
   color: white;
   border: none;
 }
 
 .btn-danger:hover {
-  background: var(--color-danger-dark, #dc2626);
+  background: var(--uk-red-700, #dc2626);
 }
 
 .me-1 {
@@ -685,7 +685,7 @@ function handleDiscard() {
 
 /* Monitor Selector Modal */
 .monitor-selector-modal {
-  background: var(--color-bg-primary, #fff);
+  background: var(--uk-bg-surface, #fff);
   border-radius: 12px;
   max-width: 500px;
   width: 100%;
@@ -699,7 +699,7 @@ function handleDiscard() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border, var(--uk-border));
+  border-bottom: 1px solid var(--uk-border, var(--uk-border));
 }
 
 .modal-title {
@@ -710,14 +710,14 @@ function handleDiscard() {
 .modal-close {
   background: none;
   border: none;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--uk-text-muted, #6b7280);
   cursor: pointer;
   padding: 4px;
   font-size: 1.5rem;
 }
 
 .modal-close:hover {
-  color: var(--color-text-primary);
+  color: var(--uk-text);
 }
 
 .modal-body {
@@ -732,7 +732,7 @@ function handleDiscard() {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
-  border-top: 1px solid var(--color-border, var(--uk-border));
+  border-top: 1px solid var(--uk-border, var(--uk-border));
 }
 
 .monitor-selector-list {
@@ -776,14 +776,14 @@ function handleDiscard() {
 
 .monitor-type {
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--uk-text-muted, #6b7280);
   text-transform: uppercase;
 }
 
 .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid var(--color-border, var(--uk-border));
+  border: 3px solid var(--uk-border, var(--uk-border));
   border-top-color: var(--color-primary, #10b981);
   border-radius: 50%;
   animation: spin 1s linear infinite;

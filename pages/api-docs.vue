@@ -79,7 +79,7 @@ onUnmounted(() => {
 <style scoped>
 .api-docs-container {
   min-height: calc(100vh - 80px);
-  background-color: var(--bg-primary);
+  background-color: var(--uk-bg-app);
 }
 
 .header-bar {
@@ -88,7 +88,7 @@ onUnmounted(() => {
   align-items: center;
   padding: 1rem 0;
   margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--uk-border);
 }
 
 .swagger-wrapper {
@@ -106,13 +106,13 @@ onUnmounted(() => {
 }
 
 .btn-secondary {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background-color: var(--uk-bg-raised);
+  color: var(--uk-text);
+  border: 1px solid var(--uk-border);
 }
 
 .btn-secondary:hover {
-  background-color: var(--hover-bg);
+  background-color: var(--uk-bg-hover);
 }
 
 /* Override Swagger UI styles for dark mode compatibility */

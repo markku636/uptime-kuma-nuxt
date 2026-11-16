@@ -92,12 +92,12 @@ const isActive = (path: string) => route.path === path
 }
 
 .settings-sidebar {
-  background-color: var(--bg-tertiary);
+  background-color: var(--uk-bg-raised);
   border-radius: 0.75rem;
   padding: 1rem;
   position: sticky;
   top: 5rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--uk-border);
   box-shadow: 0 12px 24px -12px var(--shadow-color);
 }
 
@@ -107,14 +107,14 @@ const isActive = (path: string) => route.path === path
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  color: var(--text-secondary);
+  color: var(--uk-text-secondary);
   transition: all 0.2s ease;
   border: 1px solid transparent;
 }
 
 .settings-nav-item:hover {
-  color: var(--text-primary);
-  background-color: var(--hover-bg);
+  color: var(--uk-text);
+  background-color: var(--uk-bg-hover);
 }
 
 .settings-nav-item-active {
@@ -124,15 +124,15 @@ const isActive = (path: string) => route.path === path
 }
 
 .settings-content {
-  background-color: var(--bg-secondary);
+  background-color: var(--uk-bg-surface);
   border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--uk-border);
   box-shadow: 0 12px 24px -12px var(--shadow-color);
 }
 
 .settings-content-header {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--uk-border);
 }
 
 @media (max-width: 1024px) {

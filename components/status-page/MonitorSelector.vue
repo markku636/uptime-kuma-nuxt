@@ -134,7 +134,7 @@ function removeMonitor(id: number) {
   font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: 6px;
-  color: var(--color-text, #374151);
+  color: var(--uk-text, #374151);
 }
 
 .selected-monitors {
@@ -149,8 +149,8 @@ function removeMonitor(id: number) {
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  background: var(--color-primary-light, #d1fae5);
-  color: var(--color-primary-dark, #065f46);
+  background: color-mix(in srgb, var(--uk-primary) 20%, transparent);
+  color: var(--uk-primary-fg, #065f46);
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -186,7 +186,7 @@ function removeMonitor(id: number) {
 .search-icon {
   position: absolute;
   left: 12px;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--uk-text-muted, #6b7280);
   pointer-events: none;
 }
 
@@ -194,17 +194,17 @@ function removeMonitor(id: number) {
   width: 100%;
   padding: 10px 12px 10px 36px;
   font-size: 0.875rem;
-  border: 1px solid var(--color-border, var(--uk-border));
+  border: 1px solid var(--uk-border, var(--uk-border));
   border-radius: 8px;
-  background: var(--color-bg-secondary, #f9fafb);
-  color: var(--color-text, #374151);
+  background: var(--uk-bg-raised, #f9fafb);
+  color: var(--uk-text, #374151);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--color-primary, #10b981);
-  box-shadow: 0 0 0 3px var(--color-primary-light, rgba(16, 185, 129, 0.1));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--uk-primary) 20%, transparent));
 }
 
 .dropdown-list {
@@ -214,8 +214,8 @@ function removeMonitor(id: number) {
   right: 0;
   max-height: 240px;
   overflow-y: auto;
-  background: var(--color-bg, white);
-  border: 1px solid var(--color-border, var(--uk-border));
+  background: var(--uk-bg-surface, white);
+  border: 1px solid var(--uk-border, var(--uk-border));
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 50;
@@ -231,7 +231,7 @@ function removeMonitor(id: number) {
 }
 
 .dropdown-item:hover:not(.disabled) {
-  background: var(--color-bg-hover, #f3f4f6);
+  background: var(--uk-bg-hover, #f3f4f6);
 }
 
 .dropdown-item.disabled {
@@ -241,7 +241,7 @@ function removeMonitor(id: number) {
 
 .monitor-name {
   font-size: 0.875rem;
-  color: var(--color-text, #374151);
+  color: var(--uk-text, #374151);
 }
 
 .selected-check {
@@ -256,9 +256,9 @@ function removeMonitor(id: number) {
   padding: 16px;
   text-align: center;
   font-size: 0.875rem;
-  color: var(--color-text-secondary, #6b7280);
-  background: var(--color-bg, white);
-  border: 1px solid var(--color-border, var(--uk-border));
+  color: var(--uk-text-muted, #6b7280);
+  background: var(--uk-bg-surface, white);
+  border: 1px solid var(--uk-border, var(--uk-border));
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 50;

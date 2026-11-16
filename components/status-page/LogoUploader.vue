@@ -171,7 +171,7 @@ function confirmCrop() {
   border-radius: 12px;
   overflow: hidden;
   position: relative;
-  background: var(--color-bg-secondary, #f3f4f6);
+  background: var(--uk-bg-raised, #f3f4f6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -195,7 +195,7 @@ function confirmCrop() {
 
 .logo-placeholder {
   font-size: 2rem;
-  color: var(--color-text-secondary, #9ca3af);
+  color: var(--uk-text-muted, #9ca3af);
 }
 
 .upload-overlay {
@@ -234,7 +234,7 @@ function confirmCrop() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border, var(--uk-border));
+  border-bottom: 1px solid var(--uk-border, var(--uk-border));
 }
 
 .crop-header h3 {
@@ -248,12 +248,12 @@ function confirmCrop() {
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: var(--uk-text-muted);
   padding: 4px;
 }
 
 .btn-close:hover {
-  color: var(--color-text-primary);
+  color: var(--uk-text);
 }
 
 .crop-body {
@@ -280,7 +280,7 @@ function confirmCrop() {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
-  border-top: 1px solid var(--color-border, var(--uk-border));
+  border-top: 1px solid var(--uk-border, var(--uk-border));
 }
 
 .btn {
@@ -300,17 +300,17 @@ function confirmCrop() {
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-dark, #059669);
+  background: var(--uk-primary-fg, #059669);
 }
 
 .btn-outline {
   background: transparent;
-  border: 1px solid var(--color-border, var(--uk-border-strong));
-  color: var(--color-text-primary);
+  border: 1px solid var(--uk-border, var(--uk-border-strong));
+  color: var(--uk-text);
 }
 
 .btn-outline:hover {
-  background: var(--color-bg-secondary, #f3f4f6);
+  background: var(--uk-bg-raised, #f3f4f6);
 }
 
 .me-1 {

@@ -20,8 +20,10 @@ const { data: statusPage, pending: loadingStatusPage } = useFetch<StatusPage>(
   }
 )
 
+// The API answers { ok, data: Monitor[] }
 const { data: monitors } = useFetch('/api/v1/monitors', {
-  headers: useRequestHeaders(['cookie'])
+  headers: useRequestHeaders(['cookie']),
+  transform: (res: any) => (Array.isArray(res) ? res : res?.data ?? []),
 })
 
 // Form state

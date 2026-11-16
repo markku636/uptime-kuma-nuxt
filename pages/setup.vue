@@ -144,7 +144,7 @@ const handleSetup = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-primary);
+  background-color: var(--uk-bg-app);
   padding: 1rem;
 }
 

@@ -340,7 +340,7 @@ const select = (value: WorkspaceFilter) => { current.value = value }
 
 .ws-item:hover {
   color: var(--uk-text);
-  background-color: var(--hover-bg);
+  background-color: var(--uk-bg-hover);
 }
 
 .ws-item-active {

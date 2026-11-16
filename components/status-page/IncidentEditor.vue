@@ -389,7 +389,7 @@ function dateFromNow(date: string) {
 }
 
 .create-btn:hover {
-  background: var(--color-primary-dark, #059669);
+  background: var(--uk-primary-fg, #059669);
 }
 
 .me-1 {
