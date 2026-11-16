@@ -593,12 +593,13 @@ const handleCreate = async () => {
       tlsExpiryDays: form.expiryNotification ? tlsExpiryDays.value : undefined,
     }
 
-    await $fetch('/api/v1/monitors', {
+    const res = await $fetch<{ data?: { id: number } }>('/api/v1/monitors', {
       method: 'POST',
       body,
     })
 
-    router.push('/dashboard')
+    // Open the new monitor so its first check is visible right away
+    router.push(res?.data?.id ? `/monitors/${res.data.id}` : '/dashboard')
   } catch (e: any) {
     error.value = e.data?.message || 'Failed to create monitor'
   } finally {
