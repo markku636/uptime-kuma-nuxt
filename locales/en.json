@@ -1189,5 +1189,11 @@
     "maintenanceMonitorActive": "Under maintenance: {title}",
     "maintenanceMonitorActiveHint": "Checks are paused and recorded as maintenance; no notifications are sent.",
     "maintenanceMonitorUpcoming": "Upcoming maintenance",
-    "scheduleMaintenanceForMonitor": "Schedule maintenance"
+    "scheduleMaintenanceForMonitor": "Schedule maintenance",
+    "Monitors": "Monitors",
+    "API Docs": "API Docs",
+    "Profile": "Profile",
+    "Keyboard Shortcuts": "Keyboard Shortcuts",
+    "Toggle navigation": "Toggle navigation",
+    "activeMaintenanceCount": "{n} under maintenance"
 }

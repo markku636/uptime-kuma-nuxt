@@ -3,154 +3,94 @@
     <!-- Header -->
     <header class="header-main">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+        <div class="flex items-center justify-between h-16 gap-4">
           <!-- Logo -->
-          <NuxtLink to="/dashboard" class="flex items-center gap-2 text-highlighted hover:text-up-fg transition-colors">
-            <img src="/icon.svg" alt="Uptime Kuma" class="h-8 w-8" />
+          <NuxtLink to="/dashboard" class="flex shrink-0 items-center gap-2 text-highlighted hover:no-underline">
+            <img src="/icon.svg" alt="" class="h-8 w-8" />
             <span class="text-xl font-bold">Uptime Kuma</span>
           </NuxtLink>
 
           <!-- Navigation -->
-          <nav class="hidden md:flex items-center gap-6">
+          <nav class="hidden lg:flex items-center gap-1" :aria-label="t('Toggle navigation')">
             <NuxtLink
-              to="/dashboard"
+              v-for="item in navItems"
+              :key="item.to"
+              :to="item.to"
               class="nav-link"
               active-class="nav-link-active"
             >
-              Dashboard
-            </NuxtLink>
-            <NuxtLink
-              to="/monitors"
-              class="nav-link"
-              active-class="nav-link-active"
-            >
-              Monitors
-            </NuxtLink>
-            <NuxtLink
-              to="/settings"
-              class="nav-link"
-              active-class="nav-link-active"
-            >
-              Settings
-            </NuxtLink>
-            <NuxtLink
-              to="/status-pages"
-              class="nav-link"
-              active-class="nav-link-active"
-            >
-              Status Pages
-            </NuxtLink>
-            <NuxtLink
-              to="/api-docs"
-              class="nav-link"
-              active-class="nav-link-active"
-            >
-              API Docs
+              <UIcon :name="item.icon" class="size-4" />
+              {{ item.label }}
+              <span
+                v-if="item.badge"
+                class="ml-0.5 rounded-full bg-maintenance px-1.5 text-[11px] font-semibold leading-5 text-white"
+                :title="t('activeMaintenanceCount', { n: item.badge })"
+              >
+                {{ item.badge }}
+              </span>
             </NuxtLink>
           </nav>
 
           <!-- Right side -->
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1 sm:gap-2">
             <!-- Node Selector (Cluster Mode) -->
             <CommonNodeSelector />
-            
-            <!-- Dark mode toggle -->
-            <button
-              @click="toggleColorMode"
-              class="header-icon-btn"
-              title="Toggle dark mode"
-            >
-              <svg v-if="colorMode.value === 'dark'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />
-              </svg>
-              <svg v-else class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-              </svg>
-            </button>
+
+            <!-- Theme -->
+            <UDropdownMenu :items="themeMenuItems" :content="{ align: 'end' }">
+              <button class="header-icon-btn" :title="t('Theme')" :aria-label="t('Theme')">
+                <UIcon :name="themeIcon" class="size-5" />
+              </button>
+            </UDropdownMenu>
 
             <!-- Keyboard shortcuts help -->
             <button
+              class="header-icon-btn hidden sm:inline-flex"
+              :title="`${t('Keyboard Shortcuts')} (Ctrl+/)`"
+              :aria-label="t('Keyboard Shortcuts')"
               @click="showShortcutsHelp = true"
-              class="header-icon-btn"
-              title="Keyboard shortcuts (Ctrl+/)"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <UIcon name="i-heroicons-question-mark-circle" class="size-5" />
             </button>
 
             <!-- Profile dropdown -->
-            <UDropdownMenu
-              :items="profileMenuItems"
-              :content="{ align: 'end' }"
-            >
-              <button class="header-icon-btn">
-                <div class="w-8 h-8 bg-tertiary rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                  </svg>
-                </div>
+            <UDropdownMenu :items="profileMenuItems" :content="{ align: 'end' }">
+              <button class="header-icon-btn" :aria-label="t('Profile')">
+                <span class="flex size-8 items-center justify-center rounded-full bg-elevated">
+                  <UIcon name="i-heroicons-user" class="size-5" />
+                </span>
               </button>
             </UDropdownMenu>
 
             <!-- Mobile menu button -->
             <button
+              class="lg:hidden header-icon-btn"
+              :aria-label="t('Toggle navigation')"
+              :aria-expanded="mobileMenuOpen"
               @click="mobileMenuOpen = !mobileMenuOpen"
-              class="md:hidden header-icon-btn"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path v-if="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <UIcon :name="mobileMenuOpen ? 'i-heroicons-x-mark' : 'i-heroicons-bars-3'" class="size-6" />
             </button>
           </div>
         </div>
 
         <!-- Mobile menu -->
-        <div v-if="mobileMenuOpen" class="md:hidden py-4 border-t border-default">
-          <nav class="flex flex-col gap-2">
-            <NuxtLink
-              to="/dashboard"
-              class="mobile-nav-link"
-              active-class="mobile-nav-link-active"
-              @click="mobileMenuOpen = false"
-            >
-              Dashboard
-            </NuxtLink>
-            <NuxtLink
-              to="/monitors"
-              class="mobile-nav-link"
-              active-class="mobile-nav-link-active"
-              @click="mobileMenuOpen = false"
-            >
-              Monitors
-            </NuxtLink>
-            <NuxtLink
-              to="/settings"
-              class="mobile-nav-link"
-              active-class="mobile-nav-link-active"
-              @click="mobileMenuOpen = false"
-            >
-              Settings
-            </NuxtLink>
-            <NuxtLink
-              to="/status-pages"
-              class="mobile-nav-link"
-              active-class="mobile-nav-link-active"
-              @click="mobileMenuOpen = false"
-            >
-              Status Pages
-            </NuxtLink>
-            <NuxtLink
-              to="/api-docs"
-              class="mobile-nav-link"
-              active-class="mobile-nav-link-active"
-              @click="mobileMenuOpen = false"
-            >
-              API Docs
-            </NuxtLink>
-          </nav>
-        </div>
+        <nav v-if="mobileMenuOpen" class="lg:hidden flex flex-col gap-1 border-t border-default py-3">
+          <NuxtLink
+            v-for="item in navItems"
+            :key="item.to"
+            :to="item.to"
+            class="nav-link"
+            active-class="nav-link-active"
+            @click="mobileMenuOpen = false"
+          >
+            <UIcon :name="item.icon" class="size-4" />
+            {{ item.label }}
+            <span v-if="item.badge" class="ml-auto rounded-full bg-maintenance px-1.5 text-[11px] font-semibold leading-5 text-white">
+              {{ item.badge }}
+            </span>
+          </NuxtLink>
+        </nav>
       </div>
     </header>
 
@@ -165,40 +105,61 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const colorMode = useColorMode()
+const route = useRoute()
 const mobileMenuOpen = ref(false)
 const { clear } = useUserSession()
 
-// Toggle color mode
-const toggleColorMode = () => {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-}
+// Active maintenance count for the nav badge (refreshed on navigation)
+const { activeCount, fetchMaintenances } = useMaintenances({ live: false })
+watch(() => route.path, (path, old) => {
+  if (old && path !== old) fetchMaintenances()
+})
+
+const navItems = computed(() => [
+  { to: '/dashboard', label: t('Dashboard'), icon: 'i-heroicons-squares-2x2' },
+  { to: '/monitors', label: t('Monitors'), icon: 'i-heroicons-signal' },
+  { to: '/maintenance', label: t('Maintenance'), icon: 'i-heroicons-wrench-screwdriver', badge: activeCount.value || 0 },
+  { to: '/status-pages', label: t('Status Pages'), icon: 'i-heroicons-globe-alt' },
+  { to: '/settings', label: t('Settings'), icon: 'i-heroicons-cog-6-tooth' },
+  { to: '/api-docs', label: t('API Docs'), icon: 'i-heroicons-code-bracket' },
+])
+
+// Theme: light / dark / follow the system
+const themeIcon = computed(() => {
+  if (colorMode.preference === 'system') return 'i-heroicons-computer-desktop'
+  return colorMode.value === 'dark' ? 'i-heroicons-moon' : 'i-heroicons-sun'
+})
+
+const themeMenuItems = computed(() => [
+  [
+    { label: t('Light'), icon: 'i-heroicons-sun', value: 'light' },
+    { label: t('Dark'), icon: 'i-heroicons-moon', value: 'dark' },
+    { label: t('Auto'), icon: 'i-heroicons-computer-desktop', value: 'system' },
+  ].map(option => ({
+    label: option.label,
+    icon: option.icon,
+    type: 'checkbox' as const,
+    checked: colorMode.preference === option.value,
+    onSelect: () => { colorMode.preference = option.value },
+    onUpdateChecked: () => { colorMode.preference = option.value },
+  })),
+])
 
 // Use shared keyboard shortcuts state
 const { showHelp } = useKeyboardShortcuts()
 const showShortcutsHelp = showHelp
 
-const profileMenuItems = [
+const profileMenuItems = computed(() => [
   [
-    {
-      label: 'Profile',
-      icon: 'i-heroicons-user',
-      to: '/settings/profile'
-    },
-    {
-      label: 'Settings',
-      icon: 'i-heroicons-cog-6-tooth',
-      to: '/settings'
-    }
+    { label: t('Profile'), icon: 'i-heroicons-user', to: '/settings/profile' },
+    { label: t('Settings'), icon: 'i-heroicons-cog-6-tooth', to: '/settings' },
   ],
   [
-    {
-      label: 'Logout',
-      icon: 'i-heroicons-arrow-right-on-rectangle',
-      onSelect: handleLogout
-    }
-  ]
-]
+    { label: t('Logout'), icon: 'i-heroicons-arrow-right-on-rectangle', onSelect: handleLogout },
+  ],
+])
 
 // Logout handler
 async function handleLogout() {
@@ -214,72 +175,57 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-/* Layout root */
 .layout-root {
   min-height: 100vh;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  background-color: var(--uk-bg-app);
+  color: var(--uk-text);
 }
 
-/* Header */
 .header-main {
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: var(--uk-z-header);
+  background-color: color-mix(in srgb, var(--uk-bg-surface) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(8px);
+  border-bottom: 1px solid var(--uk-border);
 }
 
-/* Nav links */
 .nav-link {
-  color: var(--text-secondary);
-  transition: color 0.2s ease;
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: var(--uk-radius-sm);
+  color: var(--uk-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color var(--uk-duration-fast) ease, background-color var(--uk-duration-fast) ease;
 }
 
 .nav-link:hover {
-  color: var(--text-primary);
-  background-color: var(--hover-bg);
+  color: var(--uk-text);
+  background-color: var(--uk-bg-hover);
+  text-decoration: none;
 }
 
-.nav-link-active {
-  color: var(--uk-primary) !important;
-  background-color: rgba(18, 176, 106, 0.12);
+.nav-link-active,
+.nav-link-active:hover {
+  color: var(--uk-primary-fg);
+  background-color: color-mix(in srgb, var(--uk-primary) 14%, transparent);
 }
 
-/* Header icon button */
 .header-icon-btn {
-  padding: 0.5rem;
-  color: var(--text-tertiary);
-  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  border-radius: var(--uk-radius-sm);
+  color: var(--uk-text-muted);
+  transition: color var(--uk-duration-fast) ease, background-color var(--uk-duration-fast) ease;
 }
 
 .header-icon-btn:hover {
-  color: var(--text-primary);
-}
-
-/* Background tertiary class */
-.bg-tertiary {
-  background-color: var(--bg-tertiary);
-}
-
-/* Mobile nav */
-.mobile-nav-link {
-  padding: 0.5rem 0.75rem;
-  color: var(--text-secondary);
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.mobile-nav-link:hover {
-  color: var(--text-primary);
-  background-color: var(--hover-bg);
-}
-
-.mobile-nav-link-active {
-  color: var(--uk-primary) !important;
-  background-color: rgba(18, 176, 106, 0.12);
+  color: var(--uk-text);
+  background-color: var(--uk-bg-hover);
 }
 </style>

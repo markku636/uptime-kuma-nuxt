@@ -1201,5 +1201,11 @@
     "maintenanceMonitorActive": "維護中：{title}",
     "maintenanceMonitorActiveHint": "此期間暫停檢查並記錄為維護，不會發送通知。",
     "maintenanceMonitorUpcoming": "即將進行的維護",
-    "scheduleMaintenanceForMonitor": "排程維護"
+    "scheduleMaintenanceForMonitor": "排程維護",
+    "Monitors": "監控項目",
+    "API Docs": "API 文件",
+    "Profile": "個人資料",
+    "Keyboard Shortcuts": "鍵盤快捷鍵",
+    "Toggle navigation": "切換選單",
+    "activeMaintenanceCount": "{n} 個維護進行中"
 }
