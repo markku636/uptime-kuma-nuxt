@@ -1306,5 +1306,6 @@
     "Add your first monitor": "新增第一個監控項目",
     "Back to Monitors": "返回監控列表",
     "Edit Monitor": "編輯監控項目",
-    "monitorsDown": "{0} 個監控項目離線"
+    "monitorsDown": "{0} 個監控項目離線",
+    "keptPausedHint": "{0} 個先前個別暫停的監控項目維持暫停。"
 }

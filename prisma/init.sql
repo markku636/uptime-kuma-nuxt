@@ -628,3 +628,6 @@ DO $$ BEGIN
         ALTER TABLE "maintenance_status_pages" ADD CONSTRAINT "maintenance_status_pages_status_page_id_fkey" FOREIGN KEY ("status_page_id") REFERENCES "status_pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
     END IF;
 END $$;
+
+-- Which group pause paused a monitor (resuming the group only resumes those)
+ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "paused_by_group" INTEGER;

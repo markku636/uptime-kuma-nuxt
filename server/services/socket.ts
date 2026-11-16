@@ -1470,7 +1470,7 @@ const socketHandlers = {
 
       const updated = await prisma.monitor.update({
         where: { id: monitorId },
-        data: { active: false }
+        data: { active: false, pausedByGroup: null }
       })
 
       const { stopMonitorJob, scheduleGroupRecheck } = await import('./monitor/scheduler')
@@ -1500,7 +1500,7 @@ const socketHandlers = {
 
       const updated = await prisma.monitor.update({
         where: { id: monitorId },
-        data: { active: true }
+        data: { active: true, pausedByGroup: null }
       })
 
       const { startMonitorJob, scheduleGroupRecheck } = await import('./monitor/scheduler')

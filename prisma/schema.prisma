@@ -118,6 +118,9 @@ model Monitor {
 
   // Workspace (top-level category: Workspace -> Group -> Monitor)
   workspaceId     Int?      @map("workspace_id")
+  // Set when pausing a group paused this monitor, so resuming the group only
+  // resumes what it paused (monitors paused on their own stay paused)
+  pausedByGroup   Int?      @map("paused_by_group")
   
   // Real Browser specific
   remoteBrowserId Int?      @map("remote_browser_id")

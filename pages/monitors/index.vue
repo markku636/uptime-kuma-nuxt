@@ -262,9 +262,13 @@ const togglingGroup = ref<number | null>(null)
 async function toggleGroup(group: MonitorGroup) {
   togglingGroup.value = group.id
   try {
-    await setGroupActive(group.id, !group.active)
+    const result = await setGroupActive(group.id, !group.active)
     await refresh()
-    toast.add({ title: group.active ? t('Group paused') : t('Group resumed'), color: 'success' })
+    toast.add({
+      title: group.active ? t('Group paused') : t('Group resumed'),
+      description: !group.active && result?.keptPaused ? t('keptPausedHint', [result.keptPaused]) : undefined,
+      color: 'success',
+    })
   } catch (e: any) {
     toast.add({ title: e?.data?.message || t('Failed to save'), color: 'error' })
   } finally {

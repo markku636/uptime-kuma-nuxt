@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
   const monitor = await prisma.monitor.update({
     where: { id },
-    data: { active: true }
+    data: { active: true, pausedByGroup: null }
   })
 
   // Start the monitor job

@@ -168,9 +168,13 @@ async function confirmDelete() {
 async function toggleGroup(group: MonitorGroup, active: boolean) {
   busy.value = true
   try {
-    await setGroupActive(group.id, active)
+    const result = await setGroupActive(group.id, active)
     await fetchMonitors()
-    toast.add({ title: active ? t('Group resumed') : t('Group paused'), color: 'success' })
+    toast.add({
+      title: active ? t('Group resumed') : t('Group paused'),
+      description: active && result?.keptPaused ? t('keptPausedHint', [result.keptPaused]) : undefined,
+      color: 'success',
+    })
   } catch (e) {
     toast.add({ title: workspaceErrorMessage(e, t('Failed to save')), color: 'error' })
   } finally {

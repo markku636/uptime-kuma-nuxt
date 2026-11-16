@@ -271,20 +271,47 @@ export async function updateGroup(userId: number, id: number, body: unknown) {
   return { ...pick(group), notificationIds: await notificationIdsOf(id), monitorCount }
 }
 
-/** Pause or resume a group together with everything inside it (subgroups included) */
+/**
+ * Pause or resume a group together with everything inside it (subgroups included).
+ * Pausing marks the monitors it paused (pausedByGroup); resuming only resumes
+ * those, so a monitor that was paused on its own stays paused.
+ */
 export async function setGroupActive(userId: number, id: number, active: boolean) {
   const group = await findGroup(userId, id)
-  const ids = [id, ...descendantIds(await loadTree(userId), id)]
-  await prisma.monitor.updateMany({ where: { id: { in: ids }, userId }, data: { active } })
+  const members = descendantIds(await loadTree(userId), id)
 
-  const monitors = await prisma.monitor.findMany({ where: { id: { in: ids }, userId } })
+  let changed: number[]
+  if (active) {
+    const marked = await prisma.monitor.findMany({
+      where: { id: { in: members }, userId, pausedByGroup: id },
+      select: { id: true },
+    })
+    changed = [id, ...marked.map(m => m.id)]
+    await prisma.monitor.updateMany({ where: { id: { in: changed }, userId }, data: { active: true, pausedByGroup: null } })
+  } else {
+    const running = await prisma.monitor.findMany({
+      where: { id: { in: members }, userId, active: true },
+      select: { id: true },
+    })
+    await prisma.$transaction([
+      prisma.monitor.update({ where: { id }, data: { active: false } }),
+      prisma.monitor.updateMany({ where: { id: { in: running.map(m => m.id) }, userId }, data: { active: false, pausedByGroup: id } }),
+    ])
+    changed = [id, ...running.map(m => m.id)]
+  }
+
+  const monitors = await prisma.monitor.findMany({ where: { id: { in: changed }, userId } })
   for (const monitor of monitors) {
     if (active) startMonitorJob(monitor)
     else stopMonitorJob(monitor.id)
   }
   // The group above (if any) counts this one differently now
   scheduleGroupRecheck(group.parent)
-  return { updated: ids.length }
+
+  const keptPaused = active
+    ? await prisma.monitor.count({ where: { id: { in: members }, userId, active: false } })
+    : 0
+  return { updated: changed.length, keptPaused }
 }
 
 /** Members are kept: they move up to the deleted group's own parent (or become ungrouped) */

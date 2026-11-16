@@ -93,6 +93,8 @@ export default defineEventHandler(async (event) => {
     data: {
       ...data,
       ...placement,
+      // Pausing / resuming by hand makes the state the monitor's own
+      ...(data.active !== undefined && data.active !== existingMonitor.active ? { pausedByGroup: null } : {}),
       headers: data.headers ? data.headers : undefined,
     },
     include: {
