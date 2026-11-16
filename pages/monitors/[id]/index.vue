@@ -132,15 +132,16 @@
       <GroupMembers v-if="monitor.type === 'group'" :group-id="monitor.id" class="mb-6" />
 
       <!-- Statistics Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="stat-card card-interactive">
+      <!-- A group has no response time of its own: only its uptime is shown -->
+      <div class="grid grid-cols-2 gap-4 mb-6" :class="isGroupMonitor ? '' : 'md:grid-cols-4'">
+        <div v-if="!isGroupMonitor" class="stat-card card-interactive">
           <div class="stat-label text-sm text-toned mb-1">{{ $t('Response Time') }}</div>
           <div class="stat-value text-2xl font-bold text-up-fg" :key="lastPing">
             <span class="tabular-nums">{{ animatedPing }}</span><span class="text-lg">ms</span>
           </div>
           <div class="text-xs text-muted mt-1">{{ $t('Current') }}</div>
         </div>
-        <div class="stat-card card-interactive">
+        <div v-if="!isGroupMonitor" class="stat-card card-interactive">
           <div class="stat-label text-sm text-toned mb-1">{{ $t('Avg. Response') }}</div>
           <div class="stat-value text-2xl font-bold text-info">
             <span class="tabular-nums">{{ avgPing }}</span><span class="text-lg">ms</span>
@@ -164,7 +165,7 @@
       </div>
 
       <!-- Response Time Chart -->
-      <div class="card card-body mb-6">
+      <div v-if="!isGroupMonitor" class="card card-body mb-6">
         <h3 class="text-lg font-semibold text-highlighted mb-4">Response Time (Last 24 Hours)</h3>
         <div class="h-48 relative pl-14">
           <div class="absolute inset-0 pl-14 flex items-end gap-0.5">
@@ -375,6 +376,7 @@ const { $socket } = useNuxtApp()
 
 const monitorId = computed(() => Number(route.params.id))
 const monitor = ref<any>(null)
+const isGroupMonitor = computed(() => monitor.value?.type === 'group')
 const heartbeats = ref<any[]>([])
 const loading = ref(true)
 const deleting = ref(false)
