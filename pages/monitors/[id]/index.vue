@@ -144,14 +144,14 @@
         <div class="stat-card card-interactive">
           <div class="stat-label text-sm text-toned mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime24hColor">
-            <span class="tabular-nums">{{ uptime24h }}</span><span class="text-lg">%</span>
+            <span class="tabular-nums">{{ uptime24h }}</span><span v-if="uptime24h !== '—'" class="text-lg">%</span>
           </div>
           <div class="text-xs text-muted mt-1">24-hour</div>
         </div>
         <div class="stat-card card-interactive">
           <div class="stat-label text-sm text-toned mb-1">Uptime</div>
           <div class="stat-value text-2xl font-bold" :class="uptime30dColor">
-            <span class="tabular-nums">{{ uptime30d }}</span><span class="text-lg">%</span>
+            <span class="tabular-nums">{{ uptime30d }}</span><span v-if="uptime30d !== '—'" class="text-lg">%</span>
           </div>
           <div class="text-xs text-muted mt-1">30-day</div>
         </div>
@@ -581,35 +581,28 @@ const maxPing = computed(() => {
   return Math.ceil(max / 100) * 100
 })
 
-const uptime24h = computed(() => {
-  const now = Date.now()
-  const beats = heartbeats.value.filter(h => new Date(h.time).getTime() > now - 24 * 60 * 60 * 1000)
-  if (beats.length === 0) return '0.00'
+// Uptime counts only UP (1) and DOWN (0) beats; maintenance (3) and pending (2)
+// are excluded, as in upstream and server/services/uptime/calculator.ts
+function uptimeSince(ms: number): string {
+  const since = Date.now() - ms
+  const beats = heartbeats.value.filter(h => (h.status === 0 || h.status === 1) && new Date(h.time).getTime() > since)
+  if (beats.length === 0) return '—'
   const up = beats.filter(h => h.status === 1).length
   return ((up / beats.length) * 100).toFixed(2)
-})
+}
 
-const uptime30d = computed(() => {
-  const now = Date.now()
-  const beats = heartbeats.value.filter(h => new Date(h.time).getTime() > now - 30 * 24 * 60 * 60 * 1000)
-  if (beats.length === 0) return '0.00'
-  const up = beats.filter(h => h.status === 1).length
-  return ((up / beats.length) * 100).toFixed(2)
-})
-
-const uptime24hColor = computed(() => {
-  const val = parseFloat(uptime24h.value)
+function uptimeColor(value: string): string {
+  const val = parseFloat(value)
+  if (Number.isNaN(val)) return 'text-muted'
   if (val >= 99) return 'text-up-fg'
   if (val >= 95) return 'text-pending-fg'
   return 'text-down-fg'
-})
+}
 
-const uptime30dColor = computed(() => {
-  const val = parseFloat(uptime30d.value)
-  if (val >= 99) return 'text-up-fg'
-  if (val >= 95) return 'text-pending-fg'
-  return 'text-down-fg'
-})
+const uptime24h = computed(() => uptimeSince(24 * 60 * 60 * 1000))
+const uptime30d = computed(() => uptimeSince(30 * 24 * 60 * 60 * 1000))
+const uptime24hColor = computed(() => uptimeColor(uptime24h.value))
+const uptime30dColor = computed(() => uptimeColor(uptime30d.value))
 
 const displayHeartbeats = computed(() => {
   const result = []
