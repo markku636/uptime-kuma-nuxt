@@ -199,7 +199,8 @@ function override(global: Variable) {
 
     <div v-else class="overflow-hidden rounded-lg border border-default">
       <table class="w-full text-sm">
-        <thead class="bg-elevated text-left text-xs text-muted">
+        <!-- Phones: each variable is a block (name on its own line), wider screens: a table -->
+        <thead class="hidden bg-elevated text-left text-xs text-muted sm:table-header-group">
           <tr>
             <th class="px-3 py-2 font-medium">{{ t('Name') }}</th>
             <th class="px-3 py-2 font-medium">{{ t('Value') }}</th>
@@ -208,15 +209,15 @@ function override(global: Variable) {
           </tr>
         </thead>
         <tbody class="divide-y divide-(--uk-border)">
-          <tr v-for="v in own" :key="v.id">
-            <td class="px-3 py-2 align-middle">
-              <code class="break-all text-highlighted">{{ v.name }}</code>
+          <tr v-for="v in own" :key="v.id" class="flex flex-wrap items-center sm:table-row">
+            <td class="basis-full px-3 pt-2 align-middle sm:basis-auto sm:py-2">
+              <code class="break-words text-highlighted">{{ v.name }}</code>
               <div class="mt-0.5 flex flex-wrap gap-1">
-                <UBadge v-if="v.secret" size="sm" color="neutral" variant="subtle" icon="i-heroicons-lock-closed">{{ t('Secret') }}</UBadge>
+                <UBadge v-if="v.secret" size="sm" color="neutral" variant="subtle" icon="i-heroicons-lock-closed" class="whitespace-nowrap">{{ t('Secret') }}</UBadge>
                 <UBadge v-if="overridden.has(v.name)" size="sm" color="info" variant="subtle">{{ t('Overrides global') }}</UBadge>
               </div>
             </td>
-            <td class="px-3 py-2">
+            <td class="min-w-0 flex-1 px-3 py-2">
               <input
                 :type="v.secret ? 'password' : 'text'"
                 class="input-field py-1 font-mono text-xs"
@@ -274,12 +275,12 @@ function override(global: Variable) {
           </tr>
 
           <!-- Global values in effect in this workspace -->
-          <tr v-for="g in inherited" :key="`g-${g.id}`" class="bg-muted/40 text-muted">
-            <td class="px-3 py-2">
-              <code class="break-all">{{ g.name }}</code>
+          <tr v-for="g in inherited" :key="`g-${g.id}`" class="flex flex-wrap items-center bg-muted/40 text-muted sm:table-row">
+            <td class="basis-full px-3 pt-2 sm:basis-auto sm:py-2">
+              <code class="break-words">{{ g.name }}</code>
               <div class="mt-0.5"><UBadge size="sm" color="neutral" variant="outline">{{ t('Inherited from global') }}</UBadge></div>
             </td>
-            <td class="px-3 py-2 font-mono text-xs">{{ g.secret ? '••••••' : g.value }}</td>
+            <td class="min-w-0 flex-1 px-3 py-2 font-mono text-xs">{{ g.secret ? '••••••' : g.value }}</td>
             <td class="hidden px-3 py-2 sm:table-cell">{{ t('monitorCountShort', [usage.get(g.name) ?? 0]) }}</td>
             <td class="px-3 py-2 text-right">
               <UButton variant="ghost" color="neutral" size="xs" icon="i-heroicons-pencil-square" @click="override(g)">
