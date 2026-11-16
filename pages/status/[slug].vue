@@ -16,6 +16,7 @@
 
 // Explicit import for useUserSession to ensure it's available
 import { useUserSession } from '#imports'
+import { descendantIds } from '~/server/services/workspace/tree'
 
 // Public status page - no auth required for viewing
 definePageMeta({
@@ -150,14 +151,49 @@ const availableMonitors = computed(() => {
   return allMonitors.value.filter(m => !usedMonitorIds.has(m.id))
 })
 
+// "Group / Subgroup / Monitor" so monitors with the same name can be told apart
+const monitorPath = (monitor: any): string => {
+  const byId = new Map(allMonitors.value.map(m => [m.id, m]))
+  const parts = [monitor.name]
+  let parent = monitor.parent != null ? byId.get(monitor.parent) : undefined
+  for (let i = 0; parent && i < 10; i++) {
+    parts.unshift(parent.name)
+    parent = parent.parent != null ? byId.get(parent.parent) : undefined
+  }
+  return parts.join(' / ')
+}
+
 // Available monitor options for USelectMenu (with label/value format)
 const availableMonitorOptions = computed(() => {
-  return availableMonitors.value.map(m => ({
-    label: m.pathName || m.name,
-    value: m.id,
-    tags: m.tags || []
-  }))
+  return availableMonitors.value
+    .map(m => ({
+      label: m.pathName || monitorPath(m),
+      value: m.id,
+      isGroup: m.type === 'group',
+      tags: m.tags || []
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
 })
+
+// When a monitor group is picked, its members (also inside subgroups) can be added in one go
+const selectedMonitorId = computed(() => {
+  const value = selectedMonitorToAdd.value as any
+  const id = Number(value && typeof value === 'object' ? value.value : value)
+  return Number.isNaN(id) ? null : id
+})
+const selectedGroupMembers = computed(() => {
+  const groupId = selectedMonitorId.value
+  if (groupId == null || allMonitors.value.find(m => m.id === groupId)?.type !== 'group') return []
+  const memberIds = new Set(descendantIds(allMonitors.value.map(m => ({ id: m.id, parent: m.parent ?? null })), groupId))
+  return availableMonitors.value.filter(m => memberIds.has(m.id) && m.type !== 'group')
+})
+
+function handleAddGroupMembers() {
+  const groupId = Number(selectedGroupForMonitor.value)
+  if (Number.isNaN(groupId)) return
+  for (const monitor of selectedGroupMembers.value) addMonitorToGroup(groupId, monitor)
+  selectedMonitorToAdd.value = null as any
+}
 
 // Page head management
 useHead({
@@ -728,6 +764,7 @@ function formatLastUpdated(date: Date | null) {
             >
               <template #item="{ item }">
                 <div class="flex items-center gap-2 py-1">
+                  <UIcon v-if="item.isGroup" name="i-heroicons-folder" class="size-4 shrink-0 text-muted" />
                   <span>{{ item.label }}</span>
                   <template v-if="item.tags?.length">
                     <span 
@@ -762,6 +799,16 @@ function formatLastUpdated(date: Date | null) {
               >
                 <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-1" />
                 Add
+              </button>
+              <button
+                v-if="selectedGroupMembers.length"
+                type="button"
+                class="btn btn-secondary btn-sm"
+                :disabled="!selectedGroupForMonitor"
+                @click="handleAddGroupMembers"
+              >
+                <UIcon name="i-heroicons-squares-plus" class="w-4 h-4 mr-1" />
+                {{ $t('addGroupMembers', selectedGroupMembers.length) }}
               </button>
             </div>
           </div>

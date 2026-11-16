@@ -1279,5 +1279,6 @@
     "Move down": "Move down",
     "Parent group": "Parent group",
     "None (top level)": "None (top level)",
-    "parentGroupHint": "Put this group inside another group of the same workspace. Its status then counts for the parent."
+    "parentGroupHint": "Put this group inside another group of the same workspace. Its status then counts for the parent.",
+    "addGroupMembers": "Add its {n} monitor | Add its {n} monitors"
 }
