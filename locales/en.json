@@ -1251,5 +1251,7 @@
     "Toggle navigation": "Toggle navigation",
     "activeMaintenanceCount": "{n} under maintenance",
     "maintenancePreview": "Preview",
-    "maintenancePreviewNone": "No upcoming windows"
+    "maintenancePreviewNone": "No upcoming windows",
+    "maintenanceFilterAll": "All",
+    "maintenanceNoMatch": "No maintenance matches the filter."
 }

@@ -1263,5 +1263,7 @@
     "Toggle navigation": "切換選單",
     "activeMaintenanceCount": "{n} 個維護進行中",
     "maintenancePreview": "預覽",
-    "maintenancePreviewNone": "沒有即將到來的時段"
+    "maintenancePreviewNone": "沒有即將到來的時段",
+    "maintenanceFilterAll": "全部",
+    "maintenanceNoMatch": "沒有符合條件的維護。"
 }

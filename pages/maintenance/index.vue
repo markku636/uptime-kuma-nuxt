@@ -10,6 +10,29 @@ const { t } = useI18n()
 const toast = useToast()
 const { sortedMaintenances, isLoading, error, setActive, deleteMaintenance } = useMaintenances()
 
+// Filters: status tab + text search (remembered for this browser tab)
+type Filter = 'all' | 'under-maintenance' | 'scheduled' | 'inactive' | 'ended'
+const filter = useState<Filter>('maintenance-filter', () => 'all')
+const search = ref('')
+
+const filterTabs = computed(() => {
+  const count = (status?: string) => sortedMaintenances.value.filter(m => !status || m.status === status).length
+  return [
+    { value: 'all' as Filter, label: t('maintenanceFilterAll'), count: count() },
+    { value: 'under-maintenance' as Filter, label: t('maintenanceStatus-under-maintenance'), count: count('under-maintenance') },
+    { value: 'scheduled' as Filter, label: t('maintenanceStatus-scheduled'), count: count('scheduled') },
+    { value: 'inactive' as Filter, label: t('maintenanceStatus-inactive'), count: count('inactive') },
+    { value: 'ended' as Filter, label: t('maintenanceStatus-ended'), count: count('ended') },
+  ]
+})
+
+const visibleMaintenances = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  return sortedMaintenances.value.filter(m =>
+    (filter.value === 'all' || m.status === filter.value)
+    && (!q || m.title.toLowerCase().includes(q) || m.description?.toLowerCase().includes(q)))
+})
+
 const pending = ref<{ action: 'pause' | 'delete'; item: Maintenance } | null>(null)
 const busyId = ref<number | null>(null)
 
@@ -66,6 +89,25 @@ const statusBar: Record<string, string> = {
 
     <UAlert v-if="error" color="error" variant="subtle" :title="error" class="mb-4" />
 
+    <div v-if="sortedMaintenances.length > 0" class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-wrap gap-1" role="tablist">
+        <button
+          v-for="tab in filterTabs"
+          :key="tab.value"
+          type="button"
+          role="tab"
+          :aria-selected="filter === tab.value"
+          class="filter-tab"
+          :class="{ 'filter-tab-active': filter === tab.value }"
+          @click="filter = tab.value"
+        >
+          {{ tab.label }}
+          <span class="filter-count">{{ tab.count }}</span>
+        </button>
+      </div>
+      <UInput v-model="search" icon="i-heroicons-magnifying-glass" :placeholder="t('Search...')" class="sm:w-64" />
+    </div>
+
     <div class="card overflow-hidden">
       <div v-if="isLoading && sortedMaintenances.length === 0" class="flex justify-center py-16">
         <div class="spinner size-8" />
@@ -76,9 +118,13 @@ const statusBar: Record<string, string> = {
         <p class="mt-3 text-muted">{{ t('No Maintenance') }}</p>
       </div>
 
+      <div v-else-if="visibleMaintenances.length === 0" class="px-6 py-12 text-center text-muted">
+        {{ t('maintenanceNoMatch') }}
+      </div>
+
       <ul v-else class="divide-y divide-(--uk-border)">
         <li
-          v-for="item in sortedMaintenances"
+          v-for="item in visibleMaintenances"
           :key="item.id"
           class="relative flex flex-col gap-3 py-4 pr-4 pl-5 sm:flex-row sm:items-center"
           :class="{ 'opacity-70': item.status === 'ended' || item.status === 'inactive' }"
@@ -142,3 +188,38 @@ const statusBar: Record<string, string> = {
     />
   </div>
 </template>
+
+<style scoped>
+.filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--uk-radius-pill);
+  font-size: 0.875rem;
+  color: var(--uk-text-secondary);
+  transition: background-color var(--uk-duration-fast) ease, color var(--uk-duration-fast) ease;
+}
+
+.filter-tab:hover {
+  background-color: var(--uk-bg-hover);
+  color: var(--uk-text);
+}
+
+.filter-tab-active,
+.filter-tab-active:hover {
+  background-color: color-mix(in srgb, var(--uk-primary) 14%, transparent);
+  color: var(--uk-primary-fg);
+  font-weight: 600;
+}
+
+.filter-count {
+  min-width: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: var(--uk-radius-pill);
+  background-color: var(--uk-bg-sunken);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  text-align: center;
+}
+</style>
