@@ -1285,5 +1285,6 @@
     "Fingerprint": "指紋",
     "Subject Alternative Names": "主體別名（SAN）",
     "Important Events": "重要事件",
-    "Delete Monitor": "刪除監控"
+    "Delete Monitor": "刪除監控",
+    "Group members": "群組成員"
 }

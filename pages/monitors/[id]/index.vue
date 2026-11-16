@@ -13,6 +13,9 @@
           <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
           {{ $t('Back to Dashboard') }}
         </NuxtLink>
+
+        <!-- Workspace › Group -->
+        <WorkspaceMonitorBreadcrumb :monitor="monitor" class="mb-2" />
         
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -124,6 +127,9 @@
           </div>
         </div>
       </div>
+
+      <!-- Members of a group -->
+      <GroupMembers v-if="monitor.type === 'group'" :group-id="monitor.id" class="mb-6" />
 
       <!-- Statistics Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
