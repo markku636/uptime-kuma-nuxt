@@ -2,8 +2,14 @@
 //
 // Supported inputs
 //   - .bru request files (Bruno Lang), optionally a whole collection folder:
-//     collection.bru (shared headers/auth), folder.bru, environments/*.bru
+//     bruno.json, collection.bru and folder.bru (headers / auth / vars that
+//     requests inherit), environments/*.bru, and the collection's .env file
+//     ({{process.env.NAME}})
 //   - Bruno collection export JSON ("Export collection" in Bruno)
+//
+// Variables follow Bruno's precedence (lowest first): collection vars,
+// environment, folder vars (outer to inner), request vars; values the user
+// enters in the import dialog override all of them.
 //
 // Pure functions only, no Vue / Nuxt imports, so it can be unit tested.
 
@@ -17,6 +23,7 @@ export type BrunoAuth =
   | { mode: 'inherit' }
   | { mode: 'basic'; username: string; password: string }
   | { mode: 'bearer'; token: string }
+  | { mode: 'apikey'; key: string; value: string; placement: 'header' | 'queryparams' }
   | { mode: 'unsupported'; type: string }
 
 export interface BrunoRequest {
@@ -30,6 +37,8 @@ export interface BrunoRequest {
   body: string
   bodyMode: 'none' | 'json' | 'text' | 'xml' | 'form' | 'unsupported'
   auth: BrunoAuth
+  /** Folder and request variables (vars:pre-request), inner ones win */
+  vars: Record<string, string>
   /** From `assert { res.status: … }` */
   expectedStatus: string[]
   /** From `assert { res.body: contains … }` */
@@ -40,14 +49,18 @@ export interface BrunoRequest {
 export interface BrunoEnvironment {
   name: string
   variables: Record<string, string>
+  /** Variables marked secret in Bruno: their values are not in the files */
+  secrets: string[]
 }
 
 export interface BrunoImport {
   collectionName: string
   requests: BrunoRequest[]
   environments: BrunoEnvironment[]
-  /** Variables defined at collection level (collection.bru `vars:pre-request`) */
+  /** Variables defined at collection level (collection.bru `vars:pre-request`, .env as process.env.*) */
   collectionVars: Record<string, string>
+  /** Names whose values should be masked (environment secrets, .env values) */
+  secretVars: string[]
   errors: string[]
 }
 
@@ -103,12 +116,21 @@ export function parseBruBlocks(source: string): BruBlock[] {
     } else if (TEXT_BLOCK.test(name)) {
       block.text = dedent(content)
     } else {
-      for (const raw of content) {
-        const line = raw.trim()
-        if (!line || line.startsWith('~')) continue
+      for (let j = 0; j < content.length; j++) {
+        const line = content[j].trim()
+        if (!line) continue
         const idx = line.indexOf(':')
         if (idx <= 0) continue
-        block.dict.push({ key: line.slice(0, idx).trim(), value: line.slice(idx + 1).trim() })
+        const key = line.slice(0, idx).trim()
+        let value = line.slice(idx + 1).trim()
+        // Multi-line value:  key: '''  …  '''
+        if (value === "'''") {
+          const lines: string[] = []
+          for (j++; j < content.length && content[j].trim() !== "'''"; j++) lines.push(content[j])
+          value = dedent(lines.map(l => l.replace(/^ {2}/, '')))
+        }
+        if (key.startsWith('~')) continue // disabled entry
+        block.dict.push({ key, value })
       }
     }
     blocks.push(block)
@@ -124,6 +146,14 @@ function authFromBlocks(blocks: BruBlock[], mode: string): BrunoAuth {
   const block = blocks.find(b => b.name === `auth:${mode}`)
   if (mode === 'basic') return { mode: 'basic', username: dictGet(block, 'username'), password: dictGet(block, 'password') }
   if (mode === 'bearer') return { mode: 'bearer', token: dictGet(block, 'token') }
+  if (mode === 'apikey') {
+    return {
+      mode: 'apikey',
+      key: dictGet(block, 'key'),
+      value: dictGet(block, 'value'),
+      placement: dictGet(block, 'placement') === 'queryparams' ? 'queryparams' : 'header',
+    }
+  }
   return { mode: 'unsupported', type: mode }
 }
 
@@ -162,13 +192,33 @@ function formEncode(entries: KeyValue[]): string {
   return entries.map(e => `${encodeURIComponent(e.key)}=${encodeURIComponent(e.value)}`).join('&')
 }
 
+/** Replace `/:name` path segments with their values (`params:path`) */
+export function applyPathParams(url: string, params: KeyValue[]): string {
+  if (!params.length) return url
+  const values = new Map(params.map(p => [p.key, p.value]))
+  return url.replace(/\/:([A-Za-z_][\w-]*)/g, (m, name) => (values.has(name) ? `/${values.get(name)}` : m))
+}
+
+/** GraphQL query + variables as the JSON body a GraphQL server expects */
+export function graphqlBody(query: string, variables: string): string {
+  let vars: unknown = {}
+  if (variables.trim()) {
+    try { vars = JSON.parse(variables) } catch { vars = variables }
+  }
+  return JSON.stringify({ query, variables: vars })
+}
+
+const toVars = (entries: KeyValue[] | undefined): Record<string, string> =>
+  Object.fromEntries((entries ?? []).map(e => [e.key, e.value]))
+
 /** Parse one .bru request file. Returns null for non-request files. */
 export function parseBruRequest(source: string, path = 'request.bru'): BrunoRequest | null {
   const blocks = parseBruBlocks(source)
   const meta = blocks.find(b => b.name === 'meta')
   const methodBlock = blocks.find(b => HTTP_METHODS.includes(b.name))
   if (!methodBlock) return null
-  if (meta && dictGet(meta, 'type') && dictGet(meta, 'type') !== 'http') return null
+  const type = dictGet(meta, 'type')
+  if (type && type !== 'http' && type !== 'graphql') return null
 
   const bodyMode = dictGet(methodBlock, 'body') || 'none'
   let body = ''
@@ -179,6 +229,12 @@ export function parseBruRequest(source: string, path = 'request.bru'): BrunoRequ
   } else if (bodyMode === 'formUrlEncoded' || bodyMode === 'form-urlencoded') {
     body = formEncode(blocks.find(b => b.name === 'body:form-urlencoded')?.dict ?? [])
     mode = 'form'
+  } else if (bodyMode === 'graphql' || type === 'graphql') {
+    const query = blocks.find(b => b.name === 'body:graphql')?.text ?? ''
+    if (query) {
+      body = graphqlBody(query, blocks.find(b => b.name === 'body:graphql:vars')?.text ?? '')
+      mode = 'json'
+    }
   } else if (bodyMode !== 'none') {
     mode = 'unsupported'
   }
@@ -191,33 +247,99 @@ export function parseBruRequest(source: string, path = 'request.bru'): BrunoRequ
     name: dictGet(meta, 'name') || fileName.replace(/\.bru$/, ''),
     folder: parts.join('/'),
     method: methodBlock.name.toUpperCase(),
-    url: dictGet(methodBlock, 'url'),
+    url: applyPathParams(dictGet(methodBlock, 'url'), blocks.find(b => b.name === 'params:path')?.dict ?? []),
     headers: blocks.find(b => b.name === 'headers')?.dict ?? [],
     body,
     bodyMode: mode,
     auth: authFromBlocks(blocks, dictGet(methodBlock, 'auth')),
+    vars: toVars(blocks.find(b => b.name === 'vars:pre-request')?.dict),
     ...parseAssertions(blocks.find(b => b.name === 'assert')?.dict ?? []),
     seq: Number(dictGet(meta, 'seq')) || 0,
   }
 }
 
-/** Parse an environment .bru file (`vars { … }`) */
+/** Parse an environment .bru file (`vars { … }`, `vars:secret [ … ]`) */
 export function parseBruEnvironment(source: string, name: string): BrunoEnvironment {
   const blocks = parseBruBlocks(source)
   const variables: Record<string, string> = {}
   for (const e of blocks.find(b => b.name === 'vars')?.dict ?? []) variables[e.key] = e.value
   // vars:secret only lists names; values live in Bruno's local store
-  for (const secret of blocks.find(b => b.name === 'vars:secret')?.list ?? []) {
+  const secrets = blocks.find(b => b.name === 'vars:secret')?.list.map(s => s.replace(/^~/, '')) ?? []
+  for (const secret of secrets) {
     if (!(secret in variables)) variables[secret] = ''
   }
-  return { name, variables }
+  return { name, variables, secrets }
+}
+
+/** Parse a .env file (KEY=value, # comments, optional quotes) */
+export function parseDotEnv(source: string): Record<string, string> {
+  const vars: Record<string, string> = {}
+  for (const raw of source.replace(/\r\n?/g, '\n').split('\n')) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) continue
+    const m = /^(?:export\s+)?([\w.-]+)\s*=\s*(.*)$/.exec(line)
+    if (!m) continue
+    let value = m[2].trim()
+    if (/^(['"]).*\1$/.test(value)) value = value.slice(1, -1)
+    else value = value.replace(/\s+#.*$/, '')
+    vars[m[1]] = value
+  }
+  return vars
+}
+
+/** Headers / auth / vars a folder (folder.bru) or the collection passes down */
+interface Inherited {
+  headers: KeyValue[]
+  auth: BrunoAuth
+  vars: Record<string, string>
+}
+
+function inheritedFromBlocks(blocks: BruBlock[]): Inherited {
+  return {
+    headers: blocks.find(b => b.name === 'headers')?.dict ?? [],
+    auth: authFromBlocks(blocks, dictGet(blocks.find(b => b.name === 'auth'), 'mode') || 'inherit'),
+    vars: toVars(blocks.find(b => b.name === 'vars:pre-request')?.dict),
+  }
+}
+
+/** Child headers win over parent headers with the same name (case-insensitive) */
+function mergeHeaders(parent: KeyValue[], child: KeyValue[]): KeyValue[] {
+  const own = new Set(child.map(h => h.key.toLowerCase()))
+  return [...parent.filter(h => !own.has(h.key.toLowerCase())), ...child]
+}
+
+/**
+ * Apply collection and folder settings to a request: headers merged from the
+ * outside in, `inherit` auth taken from the nearest folder that sets one,
+ * folder variables under the request's own.
+ */
+function applyInheritance(req: BrunoRequest, collection: Inherited, folders: Map<string, Inherited>) {
+  const chain: Inherited[] = [collection]
+  const segments = req.folder ? req.folder.split('/') : []
+  for (let i = 1; i <= segments.length; i++) {
+    const folder = folders.get(segments.slice(0, i).join('/'))
+    if (folder) chain.push(folder)
+  }
+
+  let headers: KeyValue[] = []
+  let auth: BrunoAuth = { mode: 'none' }
+  let vars: Record<string, string> = {}
+  for (const level of chain) {
+    headers = mergeHeaders(headers, level.headers)
+    if (level.auth.mode !== 'inherit') auth = level.auth
+    // Collection vars are kept apart (below the environment); folders are not
+    if (level !== collection) vars = { ...vars, ...level.vars }
+  }
+  req.headers = mergeHeaders(headers, req.headers)
+  if (req.auth.mode === 'inherit') req.auth = auth
+  req.vars = { ...vars, ...req.vars }
 }
 
 /** Parse a set of files picked by the user (single .bru files or a collection folder) */
 export function parseBruFiles(files: BrunoFile[]): BrunoImport {
-  const result: BrunoImport = { collectionName: '', requests: [], environments: [], collectionVars: {}, errors: [] }
-  let collectionHeaders: KeyValue[] = []
-  let collectionAuth: BrunoAuth = { mode: 'none' }
+  const result: BrunoImport = { collectionName: '', requests: [], environments: [], collectionVars: {}, secretVars: [], errors: [] }
+  let collection: Inherited = { headers: [], auth: { mode: 'none' }, vars: {} }
+  const folders = new Map<string, Inherited>()
 
   // Paths from a folder picker start with the collection folder itself
   // ("shop/users/list.bru"); strip it so folders are relative to the collection.
@@ -233,19 +355,26 @@ export function parseBruFiles(files: BrunoFile[]): BrunoImport {
     const fullPath = file.path.replace(/\\/g, '/')
     const path = root && fullPath.startsWith(root) ? fullPath.slice(root.length) : fullPath
     const base = path.split('/').pop() || path
+    const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : ''
     try {
       if (base === 'bruno.json') {
         result.collectionName = JSON.parse(file.text).name || ''
+      } else if (base === '.env' && !dir) {
+        // Bruno exposes the collection's .env as {{process.env.NAME}}
+        for (const [key, value] of Object.entries(parseDotEnv(file.text))) {
+          result.collectionVars[`process.env.${key}`] = value
+          result.secretVars.push(`process.env.${key}`)
+        }
       } else if (/(^|\/)environments\/[^/]+\.bru$/.test(path)) {
-        result.environments.push(parseBruEnvironment(file.text, base.replace(/\.bru$/, '')))
+        const env = parseBruEnvironment(file.text, base.replace(/\.bru$/, ''))
+        result.environments.push(env)
+        result.secretVars.push(...env.secrets)
       } else if (base === 'collection.bru') {
-        const blocks = parseBruBlocks(file.text)
-        collectionHeaders = blocks.find(b => b.name === 'headers')?.dict ?? []
-        const authMode = dictGet(blocks.find(b => b.name === 'auth'), 'mode')
-        collectionAuth = authFromBlocks(blocks, authMode)
-        for (const e of blocks.find(b => b.name === 'vars:pre-request')?.dict ?? []) result.collectionVars[e.key] = e.value
+        collection = inheritedFromBlocks(parseBruBlocks(file.text))
+        if (collection.auth.mode === 'inherit') collection.auth = { mode: 'none' }
+        Object.assign(result.collectionVars, collection.vars)
       } else if (base === 'folder.bru') {
-        continue
+        folders.set(dir, inheritedFromBlocks(parseBruBlocks(file.text)))
       } else if (base.endsWith('.bru')) {
         const req = parseBruRequest(file.text, path)
         if (req) result.requests.push(req)
@@ -255,11 +384,8 @@ export function parseBruFiles(files: BrunoFile[]): BrunoImport {
     }
   }
 
-  for (const req of result.requests) {
-    const own = new Set(req.headers.map(h => h.key.toLowerCase()))
-    req.headers = [...collectionHeaders.filter(h => !own.has(h.key.toLowerCase())), ...req.headers]
-    if (req.auth.mode === 'inherit') req.auth = collectionAuth
-  }
+  for (const req of result.requests) applyInheritance(req, collection, folders)
+  result.secretVars = [...new Set(result.secretVars)]
   result.requests.sort((a, b) => a.folder.localeCompare(b.folder) || a.seq - b.seq || a.name.localeCompare(b.name))
   return result
 }
@@ -277,29 +403,50 @@ function authFromJson(auth: any): BrunoAuth {
   if (mode === 'inherit') return { mode: 'inherit' }
   if (mode === 'basic') return { mode: 'basic', username: auth.basic?.username ?? '', password: auth.basic?.password ?? '' }
   if (mode === 'bearer') return { mode: 'bearer', token: auth.bearer?.token ?? '' }
+  if (mode === 'apikey') {
+    return {
+      mode: 'apikey',
+      key: auth.apikey?.key ?? '',
+      value: auth.apikey?.value ?? '',
+      placement: auth.apikey?.placement === 'queryparams' ? 'queryparams' : 'header',
+    }
+  }
   return { mode: 'unsupported', type: mode }
 }
 
+/** Folder / collection settings in an export (`root.request`) */
+function inheritedFromJson(root: any): Inherited {
+  const request = root?.request
+  return {
+    headers: enabled(request?.headers),
+    auth: request?.auth ? authFromJson(request.auth) : { mode: 'inherit' },
+    vars: toVars(enabled(request?.vars?.req)),
+  }
+}
+
 export function parseBrunoCollectionJson(json: any): BrunoImport {
-  const result: BrunoImport = { collectionName: json?.name || '', requests: [], environments: [], collectionVars: {}, errors: [] }
+  const result: BrunoImport = { collectionName: json?.name || '', requests: [], environments: [], collectionVars: {}, secretVars: [], errors: [] }
   if (!json || !Array.isArray(json.items)) {
     result.errors.push('Not a Bruno collection export (missing "items")')
     return result
   }
-  const rootHeaders = enabled(json.root?.request?.headers)
-  const rootAuth = authFromJson(json.root?.request?.auth)
-  for (const e of enabled(json.root?.request?.vars?.req)) result.collectionVars[e.key] = e.value
+  const collection = inheritedFromJson(json.root)
+  if (collection.auth.mode === 'inherit') collection.auth = { mode: 'none' }
+  Object.assign(result.collectionVars, collection.vars)
+  const folders = new Map<string, Inherited>()
 
   const walk = (items: any[], folder: string[], pathPrefix: string) => {
     items.forEach((item, index) => {
       const path = `${pathPrefix}/${index}`
       if (item?.type === 'folder') {
-        walk(item.items || [], [...folder, item.name || 'folder'], path)
+        const next = [...folder, item.name || 'folder']
+        if (item.root) folders.set(next.join('/'), inheritedFromJson(item.root))
+        walk(item.items || [], next, path)
         return
       }
-      if (item?.type !== 'http-request' || !item.request) return
+      if ((item?.type !== 'http-request' && item?.type !== 'graphql-request') || !item.request) return
       const r = item.request
-      const bodyModeRaw = r.body?.mode || 'none'
+      const bodyModeRaw = r.body?.mode || (item.type === 'graphql-request' ? 'graphql' : 'none')
       let body = ''
       let bodyMode: BrunoRequest['bodyMode'] = 'none'
       if (bodyModeRaw === 'json' || bodyModeRaw === 'text' || bodyModeRaw === 'xml') {
@@ -308,39 +455,51 @@ export function parseBrunoCollectionJson(json: any): BrunoImport {
       } else if (bodyModeRaw === 'formUrlEncoded') {
         body = formEncode(enabled(r.body?.formUrlEncoded))
         bodyMode = 'form'
+      } else if (bodyModeRaw === 'graphql') {
+        const query = r.body?.graphql?.query ?? ''
+        if (query) {
+          body = graphqlBody(query, r.body?.graphql?.variables ?? '')
+          bodyMode = 'json'
+        }
       } else if (bodyModeRaw !== 'none') {
         bodyMode = 'unsupported'
       }
-      const own = enabled(r.headers)
-      const ownKeys = new Set(own.map(h => h.key.toLowerCase()))
-      let auth = authFromJson(r.auth)
-      if (auth.mode === 'inherit') auth = rootAuth
+      const pathParams = enabled((r.params || []).filter((p: any) => p?.type === 'path'))
       result.requests.push({
         id: path,
         name: item.name || r.url || 'Request',
         folder: folder.join('/'),
         method: String(r.method || 'GET').toUpperCase(),
-        url: r.url || '',
-        headers: [...rootHeaders.filter(h => !ownKeys.has(h.key.toLowerCase())), ...own],
+        url: applyPathParams(r.url || '', pathParams),
+        headers: enabled(r.headers),
         body,
         bodyMode,
-        auth,
+        auth: authFromJson(r.auth),
+        vars: toVars(enabled(r.vars?.req)),
         ...parseAssertions(enabled(r.assertions)),
         seq: Number(item.seq) || index,
       })
     })
   }
   walk(json.items, [], '')
+  for (const req of result.requests) applyInheritance(req, collection, folders)
 
   for (const env of json.environments || []) {
     const variables: Record<string, string> = {}
-    for (const v of env.variables || []) if (v?.enabled !== false && v?.name) variables[v.name] = String(v.value ?? '')
-    result.environments.push({ name: env.name || 'Environment', variables })
+    const secrets: string[] = []
+    for (const v of env.variables || []) {
+      if (v?.enabled === false || !v?.name) continue
+      variables[v.name] = String(v.value ?? '')
+      if (v.secret) secrets.push(v.name)
+    }
+    result.environments.push({ name: env.name || 'Environment', variables, secrets })
+    result.secretVars.push(...secrets)
   }
+  result.secretVars = [...new Set(result.secretVars)]
   return result
 }
 
-/** Accepts any mix of .bru files, bruno.json and collection export JSON */
+/** Accepts any mix of .bru files, bruno.json, .env and collection export JSON */
 export function parseBrunoInput(files: BrunoFile[]): BrunoImport {
   const exports = files.filter(f => f.path.endsWith('.json') && !f.path.endsWith('bruno.json'))
   const bru = files.filter(f => !exports.includes(f))
@@ -351,6 +510,7 @@ export function parseBrunoInput(files: BrunoFile[]): BrunoImport {
       merged.requests.push(...part.requests.map(r => ({ ...r, id: `${file.path}${r.id}` })))
       merged.environments.push(...part.environments)
       Object.assign(merged.collectionVars, part.collectionVars)
+      merged.secretVars = [...new Set([...merged.secretVars, ...part.secretVars])]
       merged.errors.push(...part.errors.map(e => `${file.path}: ${e}`))
       merged.collectionName ||= part.collectionName
     } catch (e: any) {
@@ -377,12 +537,40 @@ export function unresolvedVariables(text: string): string[] {
   return [...new Set([...text.matchAll(VAR)].map(m => m[1]))]
 }
 
+/** Every variable name a request refers to (URL, headers, body, auth) */
+export function requestVariables(req: BrunoRequest): string[] {
+  const auth = req.auth.mode === 'basic'
+    ? [req.auth.username, req.auth.password]
+    : req.auth.mode === 'bearer'
+      ? [req.auth.token]
+      : req.auth.mode === 'apikey'
+        ? [req.auth.key, req.auth.value]
+        : []
+  return unresolvedVariables([req.url, req.body, ...req.headers.flatMap(h => [h.key, h.value]), ...auth].join('\n'))
+}
+
+/**
+ * Variables for one request, Bruno precedence (lowest first): collection,
+ * environment, folder + request vars, then the user's overrides.
+ */
+export function variablesFor(
+  req: BrunoRequest,
+  collectionVars: Record<string, string>,
+  environment: Record<string, string> | undefined,
+  overrides: Record<string, string> = {},
+): Record<string, string> {
+  const filled = Object.fromEntries(Object.entries(overrides).filter(([, v]) => v !== ''))
+  return { ...collectionVars, ...(environment ?? {}), ...req.vars, ...filled }
+}
+
 export function resolveRequest(req: BrunoRequest, vars: Record<string, string>): BrunoRequest {
   const auth: BrunoAuth = req.auth.mode === 'basic'
     ? { ...req.auth, username: interpolate(req.auth.username, vars), password: interpolate(req.auth.password, vars) }
     : req.auth.mode === 'bearer'
       ? { ...req.auth, token: interpolate(req.auth.token, vars) }
-      : req.auth
+      : req.auth.mode === 'apikey'
+        ? { ...req.auth, key: interpolate(req.auth.key, vars), value: interpolate(req.auth.value, vars) }
+        : req.auth
   return {
     ...req,
     url: interpolate(req.url, vars),
@@ -435,6 +623,14 @@ export function toMonitorDraft(req: BrunoRequest): MonitorDraft {
     basicAuthPass = req.auth.password
   } else if (req.auth.mode === 'bearer' && req.auth.token && !hasHeader('authorization')) {
     headers.push({ key: 'Authorization', value: `Bearer ${req.auth.token}` })
+  } else if (req.auth.mode === 'apikey' && req.auth.key) {
+    if (req.auth.placement === 'queryparams') {
+      // Add ?key=value (or &key=value) to the URL
+      const sep = req.url.includes('?') ? '&' : '?'
+      req = { ...req, url: `${req.url}${sep}${encodeURIComponent(req.auth.key)}=${encodeURIComponent(req.auth.value)}` }
+    } else if (!hasHeader(req.auth.key.toLowerCase())) {
+      headers.push({ key: req.auth.key, value: req.auth.value })
+    }
   } else if (req.auth.mode === 'unsupported') {
     warnings.push(`Auth "${req.auth.type}" is not supported; add it manually`)
   }
