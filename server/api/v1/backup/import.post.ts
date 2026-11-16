@@ -1,8 +1,9 @@
 import { prisma } from '~/server/utils/prisma'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
-import { prepareMonitor, resolveParents, type IdMap } from '~/server/services/backup/monitor-import'
+import { pickScalars, prepareMonitor, remapIds, resolveParents, type IdMap } from '~/server/services/backup/monitor-import'
 import { startMonitorJob } from '~/server/services/monitor/scheduler'
+import { startMaintenanceJob } from '~/server/services/maintenance/scheduler'
 
 
 
@@ -58,6 +59,7 @@ export default defineEventHandler(async (event) => {
   const notificationMap: IdMap = new Map()
   const proxyMap: IdMap = new Map()
   const workspaceMap: IdMap = new Map()
+  const monitorMap: IdMap = new Map()
 
   // Import tags first (they may be referenced by monitors)
   if (backupData.tags && backupData.tags.length > 0) {
@@ -270,7 +272,6 @@ export default defineEventHandler(async (event) => {
   if (options.importMonitors && backupData.monitors) {
     const scalarFields = Object.values(Prisma.MonitorScalarFieldEnum)
     const maps = { workspaces: workspaceMap, proxies: proxyMap, tags: tagMap, notifications: notificationMap }
-    const monitorMap: IdMap = new Map()
     const oldParents = new Map<number, number | null>()
     const importedIds: number[] = []
 
@@ -342,56 +343,82 @@ export default defineEventHandler(async (event) => {
     for (const monitor of toStart) startMonitorJob(monitor)
   }
 
-  // Import status pages
+  // Monitors that were not imported (option off, or failed) may already exist here: match them by name
+  for (const monitor of backupData.monitors ?? []) {
+    if (monitor?.id == null || monitorMap.has(monitor.id) || !monitor.name) continue
+    const existing = await prisma.monitor.findFirst({ where: { userId, name: monitor.name }, select: { id: true } })
+    if (existing) monitorMap.set(monitor.id, existing.id)
+  }
+
+  // Import status pages (matched by slug), with their groups and monitors
+  const statusPageMap: IdMap = new Map()
   if (options.importStatusPages && backupData.statusPages) {
+    const scalarFields = Object.values(Prisma.StatusPageScalarFieldEnum)
     for (const statusPage of backupData.statusPages) {
       try {
+        if (!statusPage?.slug || !statusPage?.title) throw new Error('Status page without a slug or title')
         const existing = await prisma.statusPage.findFirst({
-          where: {
-            userId: userId,
-            slug: statusPage.slug
-          }
+          where: { slug: statusPage.slug }
         })
 
+        if (existing && existing.userId !== userId) throw new Error(`Slug "${statusPage.slug}" is used by another user`)
+        if (existing) statusPageMap.set(statusPage.id, existing.id)
         if (existing && !options.overwrite) {
           results.statusPages.skipped++
           continue
         }
 
-        const { id, monitors, monitorIds, userId: _sourceUserId, ...statusPageData } = statusPage
+        const data = pickScalars(statusPage, scalarFields) as Prisma.StatusPageUncheckedCreateInput
+        const saved = existing
+          ? await prisma.statusPage.update({ where: { id: existing.id }, data })
+          : await prisma.statusPage.create({ data: { ...data, userId } })
+        statusPageMap.set(statusPage.id, saved.id)
 
-        if (existing && options.overwrite) {
-          await prisma.statusPage.update({
-            where: { id: existing.id },
-            data: {
-              ...statusPageData,
-              userId: userId
+        // Groups: exported as `groups: [{ name, weight, monitors: [{ monitorId }] }]`
+        if (Array.isArray(statusPage.groups)) {
+          await prisma.statusPageGroup.deleteMany({ where: { statusPageId: saved.id } })
+          for (const [index, group] of statusPage.groups.entries()) {
+            const created = await prisma.statusPageGroup.create({
+              data: {
+                statusPageId: saved.id,
+                name: typeof group?.name === 'string' ? group.name : 'Services',
+                // Exported in display order; ties in old data must not reorder them
+                weight: index + 1,
+              }
+            })
+            const rows = (Array.isArray(group?.monitors) ? group.monitors : [])
+              .map((m: any) => ({ monitorId: monitorMap.get(Number(m?.monitorId)), sendUrl: !!m?.sendUrl }))
+              .filter((m: { monitorId?: number }) => m.monitorId != null)
+            if (rows.length) {
+              await prisma.statusPageMonitor.createMany({
+                data: rows.map((m: { monitorId: number; sendUrl: boolean }) => ({ groupId: created.id, monitorId: m.monitorId, sendUrl: m.sendUrl }))
+              })
             }
-          })
-        } else {
-          await prisma.statusPage.create({
-            data: {
-              ...statusPageData,
-              userId: userId
-            }
-          })
+          }
         }
         results.statusPages.imported++
       } catch (error) {
+        console.error('[Backup] Status page import failed:', statusPage?.slug, error)
         results.statusPages.skipped++
       }
     }
   }
 
-  // Import maintenances
+  // Status pages that were not imported may already exist here: match them by slug
+  for (const statusPage of backupData.statusPages ?? []) {
+    if (statusPage?.id == null || statusPageMap.has(statusPage.id) || !statusPage.slug) continue
+    const existing = await prisma.statusPage.findFirst({ where: { userId, slug: statusPage.slug }, select: { id: true } })
+    if (existing) statusPageMap.set(statusPage.id, existing.id)
+  }
+
+  // Import maintenances (matched by title), with their monitors and status pages
   if (options.importMaintenances && backupData.maintenances) {
+    const scalarFields = Object.values(Prisma.MaintenanceScalarFieldEnum)
     for (const maintenance of backupData.maintenances) {
       try {
+        if (!maintenance?.title) throw new Error('Maintenance without a title')
         const existing = await prisma.maintenance.findFirst({
-          where: {
-            userId: userId,
-            title: maintenance.title
-          }
+          where: { userId, title: maintenance.title }
         })
 
         if (existing && !options.overwrite) {
@@ -399,26 +426,27 @@ export default defineEventHandler(async (event) => {
           continue
         }
 
-        const { id, monitors, monitorIds, userId: _sourceUserId, ...maintenanceData } = maintenance
+        const data = pickScalars(maintenance, scalarFields) as Prisma.MaintenanceUncheckedCreateInput
+        const saved = existing
+          ? await prisma.maintenance.update({ where: { id: existing.id }, data })
+          : await prisma.maintenance.create({ data: { ...data, userId } })
 
-        if (existing && options.overwrite) {
-          await prisma.maintenance.update({
-            where: { id: existing.id },
-            data: {
-              ...maintenanceData,
-              userId: userId
-            }
-          })
-        } else {
-          await prisma.maintenance.create({
-            data: {
-              ...maintenanceData,
-              userId: userId
-            }
-          })
+        const monitorIds = remapIds(maintenance.monitorIds ?? (maintenance.monitors ?? []).map((m: any) => m?.monitorId), monitorMap)
+        const statusPageIds = remapIds(maintenance.statusPageIds ?? (maintenance.statusPages ?? []).map((s: any) => s?.statusPageId), statusPageMap)
+        await prisma.maintenanceMonitor.deleteMany({ where: { maintenanceId: saved.id } })
+        await prisma.maintenanceStatusPage.deleteMany({ where: { maintenanceId: saved.id } })
+        if (monitorIds.length) {
+          await prisma.maintenanceMonitor.createMany({ data: monitorIds.map(monitorId => ({ maintenanceId: saved.id, monitorId })) })
         }
+        if (statusPageIds.length) {
+          await prisma.maintenanceStatusPage.createMany({ data: statusPageIds.map(statusPageId => ({ maintenanceId: saved.id, statusPageId })) })
+        }
+
+        // Schedule its windows like a maintenance created in the app
+        await startMaintenanceJob(saved)
         results.maintenances.imported++
       } catch (error) {
+        console.error('[Backup] Maintenance import failed:', maintenance?.title, error)
         results.maintenances.skipped++
       }
     }

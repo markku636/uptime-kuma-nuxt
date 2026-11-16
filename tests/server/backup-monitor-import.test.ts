@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { prepareMonitor, resolveParents } from '../../server/services/backup/monitor-import'
+import { pickScalars, prepareMonitor, remapIds, resolveParents } from '../../server/services/backup/monitor-import'
+
+describe('pickScalars / remapIds', () => {
+  it('copies known columns only, without identity and skipped ones', () => {
+    const row = { id: 1, userId: 2, createdAt: 'x', slug: 'a', title: 'A', groups: [{}], extra: 1, startDate: null }
+    expect(pickScalars(row, ['id', 'userId', 'createdAt', 'slug', 'title', 'startDate', 'missing'], ['title']))
+      .toEqual({ slug: 'a', startDate: null })
+  })
+
+  it('remaps ids and ignores junk', () => {
+    expect(remapIds([1, '2', 3, null, 1], new Map([[1, 10], [2, 20]]))).toEqual([10, 20])
+    expect(remapIds(undefined, new Map())).toEqual([])
+  })
+})
 
 const scalars = ['id', 'name', 'type', 'url', 'active', 'userId', 'createdAt', 'workspaceId', 'proxyId', 'parent', 'headers', 'tlsInfo', 'interval']
 const maps = () => ({

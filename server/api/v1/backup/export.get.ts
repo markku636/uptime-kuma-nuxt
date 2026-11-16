@@ -21,7 +21,10 @@ export default defineEventHandler(async (event) => {
     prisma.statusPage.findMany({
       where: { userId: userId },
       include: {
-        groups: { include: { monitors: { select: { monitorId: true } } } }
+        groups: {
+          orderBy: [{ weight: 'asc' }, { id: 'asc' }],
+          select: { name: true, weight: true, monitors: { select: { monitorId: true, sendUrl: true } } }
+        }
       }
     }),
     prisma.maintenance.findMany({

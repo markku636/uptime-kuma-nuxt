@@ -60,6 +60,24 @@ export function prepareMonitor(
   }
 }
 
+/**
+ * Copy the columns of any model (Prisma.<Model>ScalarFieldEnum) from a backup
+ * row, leaving out identity / owner columns and anything listed in `skip`.
+ */
+export function pickScalars(raw: Record<string, any>, scalarFields: readonly string[], skip: string[] = []): Record<string, unknown> {
+  const skipped = new Set(['id', 'userId', 'createdAt', ...skip])
+  const data: Record<string, unknown> = {}
+  for (const field of scalarFields) {
+    if (!skipped.has(field) && field in raw && raw[field] !== undefined) data[field] = raw[field]
+  }
+  return data
+}
+
+/** Ids from a backup translated through `map`; unknown ids are dropped */
+export function remapIds(ids: unknown, map: IdMap): number[] {
+  return Array.isArray(ids) ? mapIds(ids, map) : []
+}
+
 const JSON_FIELDS = new Set(['headers', 'acceptedStatuscodes', 'kafkaBrokers', 'rabbitmqNodes', 'childrenIds', 'tlsExpiryDays', 'tlsInfo'])
 function isJsonField(field: string) {
   return JSON_FIELDS.has(field)
