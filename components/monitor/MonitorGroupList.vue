@@ -78,8 +78,19 @@ function toneLabel(monitor: MonitorRow) {
 const downCount = (monitors: MonitorRow[]) => monitors.filter(m => tone(m) === 'down').length
 
 // ---------- Selection ----------
+// The model only reflects a change after the parent re-renders, so two quick
+// clicks would both start from the old list. Keep the latest value until then.
+let pendingSelection: number[] | null = null
+const currentSelection = () => pendingSelection ?? selected.value
+function setSelected(next: number[]) {
+  pendingSelection = next
+  selected.value = next
+  nextTick(() => { pendingSelection = null })
+}
+
 function toggleSelected(id: number) {
-  selected.value = selected.value.includes(id) ? selected.value.filter(i => i !== id) : [...selected.value, id]
+  const list = currentSelection()
+  setSelected(list.includes(id) ? list.filter(i => i !== id) : [...list, id])
 }
 function sectionState(monitors: MonitorRow[]) {
   const count = monitors.filter(m => selected.value.includes(m.id)).length
@@ -87,9 +98,10 @@ function sectionState(monitors: MonitorRow[]) {
 }
 function toggleSection(monitors: MonitorRow[]) {
   const ids = monitors.map(m => m.id)
-  selected.value = sectionState(monitors).checked
-    ? selected.value.filter(id => !ids.includes(id))
-    : [...new Set([...selected.value, ...ids])]
+  const list = currentSelection()
+  setSelected(ids.every(id => list.includes(id))
+    ? list.filter(id => !ids.includes(id))
+    : [...new Set([...list, ...ids])])
 }
 
 // ---------- Move (menu + drag & drop) ----------
