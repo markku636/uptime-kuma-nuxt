@@ -1284,5 +1284,7 @@
     "Pause group": "Pause group (with its monitors)",
     "Resume group": "Resume group (with its monitors)",
     "Group paused": "Group and its monitors paused",
-    "Group resumed": "Group and its monitors resumed"
+    "Group resumed": "Group and its monitors resumed",
+    "workspaceContains": "It contains {groups} group(s) and {monitors} monitor(s).",
+    "groupContains": "It contains {count} item(s), {subgroups} of them subgroups."
 }

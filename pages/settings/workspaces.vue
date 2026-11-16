@@ -126,6 +126,21 @@ const confirmOpen = computed({
   set: (v: boolean) => { if (!v) pendingDelete.value = null },
 })
 
+// Say what the delete touches: counts of what is inside, and that it is kept
+const deleteMessage = computed(() => {
+  const pending = pendingDelete.value
+  if (!pending) return ''
+  if (pending.kind === 'workspace') {
+    const { groupCount, monitorCount } = pending.item
+    const inside = groupCount + monitorCount > 0 ? t('workspaceContains', { groups: groupCount, monitors: monitorCount }) + ' ' : ''
+    return inside + t('deleteWorkspaceMsg')
+  }
+  const subgroups = groups.value.filter(g => g.parent === pending.item.id).length
+  const members = pending.item.monitorCount
+  const inside = members > 0 ? t('groupContains', { count: members, subgroups }) + ' ' : ''
+  return inside + t('deleteGroupMsg')
+})
+
 async function confirmDelete() {
   const pending = pendingDelete.value
   if (!pending) return
@@ -362,7 +377,7 @@ const select = (value: WorkspaceFilter) => { current.value = value }
     <CommonConfirmDialog
       v-model:open="confirmOpen"
       :title="pendingDelete ? `${t('Delete')}: ${pendingDelete.item.name}` : ''"
-      :message="pendingDelete?.kind === 'workspace' ? t('deleteWorkspaceMsg') : t('deleteGroupMsg')"
+      :message="deleteMessage"
       type="danger"
       :confirm-text="t('Delete')"
       :cancel-text="t('Cancel')"

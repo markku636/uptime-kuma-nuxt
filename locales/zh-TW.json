@@ -1296,5 +1296,7 @@
     "Pause group": "暫停群組（含所有成員）",
     "Resume group": "恢復群組（含所有成員）",
     "Group paused": "已暫停群組與其成員",
-    "Group resumed": "已恢復群組與其成員"
+    "Group resumed": "已恢復群組與其成員",
+    "workspaceContains": "此工作區有 {groups} 個群組、{monitors} 個監控項目。",
+    "groupContains": "此群組有 {count} 個成員（其中 {subgroups} 個是子群組）。"
 }
