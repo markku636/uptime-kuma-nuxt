@@ -43,12 +43,13 @@ onMounted(async () => {
 async function handleSubmit(formData: any) {
   saving.value = true
   try {
-    const updated = await $fetch(`/api/v1/monitors/${monitorId.value}`, {
+    // The API answers { ok, data }: keep the monitor itself in the store
+    const res = await $fetch<{ data: any }>(`/api/v1/monitors/${monitorId.value}`, {
       method: 'PUT',
       body: formData
     })
-    
-    monitorStore.updateMonitor(updated)
+
+    monitorStore.updateMonitor(res.data)
     
     toast.add({
       title: 'Success',
