@@ -320,6 +320,28 @@ npm run bruno:generate
 
 `npm test` 會檢查 `server/api` 下的每個路由都已登錄在 `server/openapi/spec.ts`。
 
+### 從 Bruno 匯入監控
+
+新增監控頁的「從 Bruno 匯入」可以把 Bruno 請求轉成 HTTP 監控：
+
+- **來源**：單一或多個 `.bru` 檔、整個 collection 資料夾（點選或直接拖放資料夾）、Bruno 的 collection 匯出 JSON，或單獨的環境檔（`.bru` 或匯出的環境 JSON）。
+- **相容性**：
+  - 會讀取 `collection.bru` 與各層 `folder.bru` 的 headers、驗證和變數（`auth: inherit` 依序往上找）。
+  - 會讀取請求本身的 `vars:pre-request`、`params:path`（`/:id`）、GraphQL（轉成 JSON POST）、API Key 驗證（header 或 query）、多行值（`'''`），以及 collection 的 `.env`（`{{process.env.NAME}}`）。
+  - 變數優先順序與 Bruno 相同：collection < 環境 < 資料夾 < 請求 < 對話框中輸入的值。
+- **變數面板**：列出所有用到的變數、目前的值和來源，可以補填或覆寫。機密值與 `.env` 會遮罩；非機密的值會依 collection 記在瀏覽器中，機密值不會儲存。
+- **整個 collection**：可指定工作區，並依資料夾建立群組（collection → 資料夾 → 子資料夾）。重複匯入會沿用既有群組；已存在的監控（同名稱、方法、URL）會標示出來並預設不勾選。
+- **保留變數**：開啟後，監控保留 `{{變數}}`，用到的值會存成該工作區（或全域）的環境變數。之後要切換環境或更換 token，只需修改變數即可。
+
+### 環境變數
+
+設定 → 環境變數可以管理全域與各工作區的變數。
+
+- 監控可以在 URL、主機名稱、headers、body、驗證、關鍵字等欄位使用 `{{名稱}}`，每次檢查時才代入。工作區的值會覆寫同名的全域值。
+- 機密變數儲存後不會再由 API 回傳。用到未定義變數的監控，檢查會回報「Unknown variable」。
+- 備份會包含變數（含機密值），還原時會對應到還原後的工作區。
+- API：`/api/v1/variables`（CRUD）與 `POST /api/v1/variables/bulk`（依名稱批次建立或更新）。
+
 ---
 
 ## 🌐 環境變數
