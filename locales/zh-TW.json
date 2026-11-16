@@ -1357,5 +1357,6 @@
     "brunoWarnUnresolved": "未解析的變數：{0}",
     "brunoWarnAuth": "不支援「{0}」驗證，請於匯入後自行設定",
     "brunoWarnBody": "不支援此 body 類型，已略過",
-    "brunoWarnUrl": "URL 必須以 http:// 或 https:// 開頭"
+    "brunoWarnUrl": "URL 必須以 http:// 或 https:// 開頭",
+    "Checks": "實際檢查"
 }

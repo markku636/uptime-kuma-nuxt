@@ -43,6 +43,12 @@
               </a>
               <span v-else-if="monitor.hostname">{{ monitor.hostname }}{{ monitor.port ? `:${monitor.port}` : '' }}</span>
             </div>
+            <!-- What the check actually requests (secret values masked) -->
+            <p v-if="resolvedUrl" class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+              <span>{{ $t('Checks') }}</span>
+              <code class="break-all text-toned">{{ resolvedUrl.text }}</code>
+              <span v-if="resolvedUrl.missing.length" class="text-pending-fg">{{ $t('brunoWarnUnresolved', [resolvedUrl.missing.join(', ')]) }}</span>
+            </p>
           </div>
           
           <!-- Actions -->
@@ -382,6 +388,36 @@ const { $socket } = useNuxtApp()
 const monitorId = computed(() => Number(route.params.id))
 const monitor = ref<any>(null)
 const isGroupMonitor = computed(() => monitor.value?.type === 'group')
+
+// The URL with its {{variables}} filled in as the check would (workspace over
+// global). Secret values never reach the browser, so they show as dots.
+const variableList = ref<{ name: string; value: string; secret: boolean; workspaceId: number | null }[] | null>(null)
+watch(() => monitor.value?.url, async (url) => {
+  if (!url?.includes('{{') || variableList.value) return
+  try {
+    variableList.value = (await $fetch<{ data: { name: string; value: string; secret: boolean; workspaceId: number | null }[] }>('/api/v1/variables')).data
+  } catch {
+    variableList.value = []
+  }
+}, { immediate: true })
+const resolvedUrl = computed(() => {
+  const url: string | undefined = monitor.value?.url
+  if (!url?.includes('{{') || !variableList.value) return null
+  const ws: number | null = monitor.value?.workspaceId ?? null
+  const pick = (name: string) =>
+    (ws != null ? variableList.value!.find(v => v.name === name && v.workspaceId === ws) : undefined)
+    ?? variableList.value!.find(v => v.name === name && v.workspaceId == null)
+  const missing: string[] = []
+  const text = url.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (match, name: string) => {
+    const v = pick(name)
+    if (!v) {
+      missing.push(name)
+      return match
+    }
+    return v.secret ? '••••••' : v.value
+  })
+  return { text, missing }
+})
 const heartbeats = ref<any[]>([])
 const loading = ref(true)
 const deleting = ref(false)
