@@ -39,6 +39,16 @@ const search = ref('')
 const selected = ref<number[]>([])
 watch(current, () => { selected.value = [] })
 
+// Monitors currently DOWN per workspace, shown next to each workspace
+const downByWorkspace = computed(() => {
+  const counts = new Map<number | null, number>()
+  for (const m of monitors.value) {
+    if (m.type === 'group' || !m.active || m.heartbeats?.[0]?.status !== 0) continue
+    counts.set(m.workspaceId ?? null, (counts.get(m.workspaceId ?? null) ?? 0) + 1)
+  }
+  return counts
+})
+
 const totalMonitors = computed(() => monitors.value.filter(m => m.type !== 'group').length)
 const hasUnassigned = computed(() => unassigned.value.monitorCount + unassigned.value.groupCount > 0)
 
@@ -261,6 +271,11 @@ const select = (value: WorkspaceFilter) => { current.value = value }
             >
               <span class="size-3 shrink-0 rounded-full" :style="{ backgroundColor: workspace.color }" aria-hidden="true" />
               <span class="flex-1 truncate text-left">{{ workspace.name }}</span>
+              <span
+                v-if="downByWorkspace.get(workspace.id)"
+                class="ws-down"
+                :title="t('monitorsDown', [downByWorkspace.get(workspace.id)])"
+              >{{ downByWorkspace.get(workspace.id) }}<span class="sr-only"> {{ t('Down') }}</span></span>
               <span class="ws-count group-hover/ws:invisible group-focus-within/ws:invisible [@media(hover:none)]:hidden">{{ workspace.monitorCount }}</span>
             </button>
             <div class="absolute inset-y-0 right-1 flex items-center opacity-0 transition-opacity group-hover/ws:opacity-100 group-focus-within/ws:opacity-100 [@media(hover:none)]:opacity-100">
@@ -416,6 +431,18 @@ const select = (value: WorkspaceFilter) => { current.value = value }
   color: var(--uk-text);
   border-color: color-mix(in srgb, var(--uk-primary) 40%, transparent);
   background-color: color-mix(in srgb, var(--uk-primary) 14%, transparent);
+}
+
+.ws-down {
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  text-align: center;
+  color: var(--uk-status-down-fg);
+  background-color: color-mix(in srgb, var(--uk-status-down) 18%, transparent);
 }
 
 .ws-count {
