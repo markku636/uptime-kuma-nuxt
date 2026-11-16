@@ -100,8 +100,11 @@ const rows = computed(() =>
     const vars = variablesFor(req, parsed.value!.collectionVars, envVars.value, overrides.value)
     const draft = toMonitorDraft(resolveRequest(req, vars))
     // With "keep variables" only request / folder constants are filled in
-    const template = toMonitorDraft(resolveRequest(req, req.vars))
-    const exists = existingKeys.value.has(`${draft.method} ${draft.url}`)
+    // (including values typed in the dialog for those constants)
+    const requestOverrides = Object.fromEntries(Object.entries(overrides.value).filter(([k, v]) => v !== '' && k in req.vars))
+    const template = toMonitorDraft(resolveRequest(req, { ...req.vars, ...requestOverrides }))
+    // A monitor saved with "keep variables" stores the template URL
+    const exists = (existingKeys.value.has(`${draft.method} ${draft.url}`) || existingKeys.value.has(`${template.method} ${template.url}`))
       && (existingNames.value.has(req.name) || existingNames.value.has(draft.name))
     return { req, draft, template, ready: isDraftReady(draft), exists }
   }),

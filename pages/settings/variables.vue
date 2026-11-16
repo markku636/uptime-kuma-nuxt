@@ -83,6 +83,12 @@ async function save(variable: Variable, patch: Partial<Pick<Variable, 'value' | 
   }
 }
 
+// Un-marking a secret clears its value on the server (it is never revealed)
+function toggleSecret(variable: Variable) {
+  if (variable.secret && variable.hasValue && !confirm(t('unsecretClearsValue', [variable.name]))) return
+  save(variable, { secret: !variable.secret })
+}
+
 function commitValue(variable: Variable) {
   const value = drafts[variable.id]
   if (value === undefined) return
@@ -227,7 +233,7 @@ function override(global: Variable) {
                   :aria-label="`${v.secret ? t('Mark as not secret') : t('Mark as secret')}: ${v.name}`"
                   :title="v.secret ? t('Mark as not secret') : t('Mark as secret')"
                   :disabled="busy === v.id"
-                  @click="save(v, { secret: !v.secret })"
+                  @click="toggleSecret(v)"
                 />
                 <UButton
                   variant="ghost"

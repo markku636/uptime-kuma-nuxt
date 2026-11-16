@@ -577,7 +577,9 @@ const VAR = /\{\{\s*([\w.-]+)\s*\}\}/g
 export function interpolate(text: string, vars: Record<string, string>): string {
   // Two passes so variables may reference other variables
   let out = text
-  for (let i = 0; i < 2; i++) out = out.replace(VAR, (m, name) => (name in vars && vars[name] !== '' ? vars[name] : m))
+  // Own keys only: {{constructor}} must not resolve to a built-in
+  const has = (name: string) => Object.prototype.hasOwnProperty.call(vars, name)
+  for (let i = 0; i < 2; i++) out = out.replace(VAR, (m, name) => (has(name) && vars[name] !== '' ? vars[name] : m))
   return out
 }
 

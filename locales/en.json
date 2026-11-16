@@ -1339,5 +1339,6 @@
     "Export to Bruno": "Export to Bruno",
     "exportBrunoHint": "Download the HTTP monitors of this view as a Bruno collection (groups as folders, variables as an environment; secret values are not included)",
     "exportBrunoDone": "Exported {0} monitor(s). In Bruno: Import Collection → Bruno Collection.",
-    "brunoVarRuntime": "Set by a script at run time — enter a value"
+    "brunoVarRuntime": "Set by a script at run time — enter a value",
+    "unsecretClearsValue": "\"{0}\" will no longer be secret. Its stored value is cleared and has to be entered again. Continue?"
 }
