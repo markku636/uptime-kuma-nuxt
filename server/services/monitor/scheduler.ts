@@ -132,7 +132,29 @@ export function stopAllJobs() {
 /**
  * Run a single check for a monitor
  */
+// A group is checked from its own interval and from re-checks. Two runs at
+// once would both see the same previous heartbeat and both report (and
+// notify) the same status change, so they never overlap: a request that
+// comes in while one runs is folded into one more run afterwards.
+const groupChecksRunning = new Set<number>()
+const groupCheckAgain = new Set<number>()
+
 async function runCheck(monitor: any) {
+  if (monitor.type !== 'group') return runSingleCheck(monitor)
+  if (groupChecksRunning.has(monitor.id)) {
+    groupCheckAgain.add(monitor.id)
+    return
+  }
+  groupChecksRunning.add(monitor.id)
+  try {
+    await runSingleCheck(monitor)
+  } finally {
+    groupChecksRunning.delete(monitor.id)
+    if (groupCheckAgain.delete(monitor.id)) scheduleGroupRecheck(monitor.id)
+  }
+}
+
+async function runSingleCheck(monitor: any) {
   // Check if monitor is under maintenance
   const { isMonitorUnderMaintenance } = await import('../maintenance/scheduler')
   const underMaintenance = await isMonitorUnderMaintenance(monitor.id)
