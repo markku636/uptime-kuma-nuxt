@@ -1276,5 +1276,8 @@
     "Delete Monitor": "Delete Monitor",
     "Group members": "Group members",
     "Move up": "Move up",
-    "Move down": "Move down"
+    "Move down": "Move down",
+    "Parent group": "Parent group",
+    "None (top level)": "None (top level)",
+    "parentGroupHint": "Put this group inside another group of the same workspace. Its status then counts for the parent."
 }

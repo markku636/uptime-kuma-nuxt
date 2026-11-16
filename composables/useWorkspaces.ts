@@ -37,6 +37,8 @@ export interface GroupInput {
   name: string
   description?: string | null
   workspaceId?: number | null
+  /** Parent group (nesting); null = top level */
+  parent?: number | null
 }
 
 export const WORKSPACE_COLORS = ['#5cdd8b', '#3b82f6', '#8b5cf6', '#ef4444', '#f97316', '#ec4899', '#14b8a6', '#6b7280']

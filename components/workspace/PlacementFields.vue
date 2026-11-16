@@ -3,6 +3,8 @@
 // so a workspace or group can be created without leaving the form.
 // A monitor inside a group always lives in the group's workspace.
 
+import { orderAsTree } from '~/server/services/workspace/tree'
+
 const props = defineProps<{
   /** Id of the monitor being edited (a group cannot be its own parent) */
   monitorId?: number | null
@@ -22,12 +24,12 @@ const workspaceName = (id: number | null) => workspaces.value.find(w => w.id ===
 
 // Groups of the chosen workspace first; with no workspace chosen, every group
 const groupOptions = computed(() =>
-  groups.value
-    .filter(g => g.id !== props.monitorId)
-    .filter(g => workspaceId.value == null || g.workspaceId === workspaceId.value || g.id === parent.value)
-    .map(g => ({
+  orderAsTree(groups.value)
+    .filter(({ item: g }) => g.id !== props.monitorId)
+    .filter(({ item: g }) => workspaceId.value == null || g.workspaceId === workspaceId.value || g.id === parent.value)
+    .map(({ item: g, path }) => ({
       id: g.id,
-      label: workspaceId.value == null && g.workspaceId != null ? `${workspaceName(g.workspaceId)} / ${g.name}` : g.name,
+      label: workspaceId.value == null && g.workspaceId != null ? `${workspaceName(g.workspaceId)} / ${path}` : path,
     })),
 )
 

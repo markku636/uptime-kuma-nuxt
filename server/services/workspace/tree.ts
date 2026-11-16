@@ -69,3 +69,45 @@ export function aggregateGroupStatus(members: GroupMemberStatus[]): { status: nu
 
   return { status: 1, msg: 'All members are healthy' }
 }
+
+export interface TreeOrderItem extends TreeNode {
+  name: string
+}
+
+/**
+ * Groups in tree order (each parent followed by its children, siblings in
+ * the given order) with their depth and "Parent / Child" path. A group whose
+ * parent is not in the list is treated as a root. Safe on cyclic data.
+ */
+export function orderAsTree<T extends TreeOrderItem>(items: T[]): { item: T; depth: number; path: string }[] {
+  const ids = new Set(items.map(i => i.id))
+  const children = new Map<number | null, T[]>()
+  for (const item of items) {
+    const key = item.parent != null && ids.has(item.parent) && item.parent !== item.id ? item.parent : null
+    const list = children.get(key)
+    if (list) list.push(item)
+    else children.set(key, [item])
+  }
+
+  const result: { item: T; depth: number; path: string }[] = []
+  const seen = new Set<number>()
+  const visit = (parent: number | null, depth: number, prefix: string) => {
+    for (const item of children.get(parent) ?? []) {
+      if (seen.has(item.id)) continue
+      seen.add(item.id)
+      const path = prefix ? `${prefix} / ${item.name}` : item.name
+      result.push({ item, depth, path })
+      visit(item.id, depth + 1, path)
+    }
+  }
+  visit(null, 0, '')
+  // Members of a cycle have no root: list them at the top level
+  for (const item of items) {
+    if (!seen.has(item.id)) {
+      seen.add(item.id)
+      result.push({ item, depth: 0, path: item.name })
+      visit(item.id, 1, item.name)
+    }
+  }
+  return result
+}

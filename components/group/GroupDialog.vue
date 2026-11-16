@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MonitorGroup } from '~/composables/useWorkspaces'
 import { workspaceErrorMessage } from '~/composables/useWorkspaces'
+import { descendantIds, orderAsTree } from '~/server/services/workspace/tree'
 
 // Create (no `group` prop) or edit a monitor group
 const props = defineProps<{
@@ -17,16 +18,27 @@ const open = defineModel<boolean>('open', { default: false })
 
 const { t } = useI18n()
 const toast = useToast()
-const { workspaces, createGroup, updateGroup } = useWorkspaces()
+const { workspaces, groups, createGroup, updateGroup } = useWorkspaces()
 
 const saving = ref(false)
 const nameError = ref('')
-const form = reactive({ name: '', description: '', workspaceId: null as number | null })
+const form = reactive({ name: '', description: '', workspaceId: null as number | null, parent: null as number | null })
 
 const isEdit = computed(() => !!props.group)
 const movesMembers = computed(() =>
   isEdit.value && (props.group?.monitorCount ?? 0) > 0 && form.workspaceId !== (props.group?.workspaceId ?? null),
 )
+
+// Possible parents: groups of the chosen workspace, never the group itself or one of its subgroups
+const parentOptions = computed(() => {
+  const excluded = new Set<number>()
+  if (props.group) {
+    excluded.add(props.group.id)
+    for (const id of descendantIds(groups.value, props.group.id)) excluded.add(id)
+  }
+  const candidates = groups.value.filter(g => !excluded.has(g.id) && (g.workspaceId ?? null) === form.workspaceId)
+  return orderAsTree(candidates).map(({ item, path }) => ({ id: item.id, label: path }))
+})
 
 watch(open, (isOpen) => {
   if (!isOpen) return
@@ -34,6 +46,17 @@ watch(open, (isOpen) => {
   form.name = props.group?.name ?? ''
   form.description = props.group?.description ?? ''
   form.workspaceId = props.group ? props.group.workspaceId : props.defaultWorkspaceId ?? null
+  form.parent = props.group?.parent ?? null
+})
+
+// A subgroup lives in the workspace of its parent
+watch(() => form.parent, (parentId) => {
+  const parent = groups.value.find(g => g.id === parentId)
+  if (parent) form.workspaceId = parent.workspaceId
+})
+watch(() => form.workspaceId, (workspaceId) => {
+  const parent = groups.value.find(g => g.id === form.parent)
+  if (parent && (parent.workspaceId ?? null) !== workspaceId) form.parent = null
 })
 
 async function submit() {
@@ -44,7 +67,7 @@ async function submit() {
 
   saving.value = true
   try {
-    const input = { name: form.name.trim(), description: form.description.trim() || null, workspaceId: form.workspaceId }
+    const input = { name: form.name.trim(), description: form.description.trim() || null, workspaceId: form.workspaceId, parent: form.parent }
     const saved = props.group ? await updateGroup(props.group.id, input) : await createGroup(input)
     toast.add({ title: isEdit.value ? t('Group updated') : t('Group created'), color: 'success' })
     emit('saved', saved)
@@ -91,6 +114,15 @@ async function submit() {
             <option :value="null">{{ t('No workspace') }}</option>
             <option v-for="workspace in workspaces" :key="workspace.id" :value="workspace.id">
               {{ workspace.name }}
+            </option>
+          </select>
+        </UFormField>
+
+        <UFormField :label="t('Parent group')" :help="t('parentGroupHint')">
+          <select v-model="form.parent" class="select-field">
+            <option :value="null">{{ t('None (top level)') }}</option>
+            <option v-for="option in parentOptions" :key="option.id" :value="option.id">
+              {{ option.label }}
             </option>
           </select>
         </UFormField>

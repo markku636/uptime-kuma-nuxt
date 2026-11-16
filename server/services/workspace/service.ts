@@ -31,6 +31,8 @@ const groupInputSchema = z.object({
   name: nameSchema,
   description: descriptionSchema,
   workspaceId: idOrNull.optional(),
+  // Parent group (nesting). A nested group always lives in its parent's workspace.
+  parent: idOrNull.optional(),
 })
 
 const organizeInputSchema = z
@@ -176,7 +178,7 @@ export async function listGroups(userId: number) {
 
 export async function createGroup(userId: number, body: unknown) {
   const input = parse(groupInputSchema, body)
-  await assertWorkspace(userId, input.workspaceId)
+  const placement = await resolvePlacement(userId, null, { parent: input.parent, workspaceId: input.workspaceId })
 
   const group = await prisma.monitor.create({
     data: {
@@ -184,35 +186,33 @@ export async function createGroup(userId: number, body: unknown) {
       description: input.description || null,
       type: 'group',
       active: true,
-      workspaceId: input.workspaceId ?? null,
+      ...placement,
       userId,
     },
   })
   startMonitorJob(group)
+  scheduleGroupRecheck(placement.parent)
   return { ...pick(group), monitorCount: 0 }
 }
 
 export async function updateGroup(userId: number, id: number, body: unknown) {
   const input = parse(groupInputSchema, body)
   const existing = await findGroup(userId, id)
-  await assertWorkspace(userId, input.workspaceId)
+  const current = { parent: existing.parent, workspaceId: existing.workspaceId }
 
-  const workspaceId = input.workspaceId === undefined ? existing.workspaceId : input.workspaceId
-  const workspaceChanged = workspaceId !== existing.workspaceId
-
-  // A nested group follows its parent; moving it elsewhere detaches it.
-  let parent = existing.parent
-  if (workspaceChanged && parent != null) {
-    const parentGroup = await prisma.monitor.findFirst({ where: { id: parent, userId }, select: { workspaceId: true } })
-    if (!parentGroup || parentGroup.workspaceId !== workspaceId) parent = null
+  // Moving a nested group to another workspace (without naming a new parent) detaches it
+  let parentInput = input.parent
+  if (parentInput === undefined && input.workspaceId !== undefined && input.workspaceId !== existing.workspaceId) {
+    parentInput = null
   }
+  const placement = await resolvePlacement(userId, id, { parent: parentInput, workspaceId: input.workspaceId }, current)
 
   const group = await prisma.monitor.update({
     where: { id },
-    data: { name: input.name, description: input.description || null, workspaceId, parent },
+    data: { name: input.name, description: input.description || null, ...placement },
   })
-  if (workspaceChanged) await syncSubtreeWorkspace(userId, [id], workspaceId)
-  if (parent !== existing.parent) scheduleGroupRecheck(existing.parent)
+  if (placement.workspaceId !== existing.workspaceId) await syncSubtreeWorkspace(userId, [id], placement.workspaceId)
+  if (placement.parent !== existing.parent) scheduleGroupRecheck([existing.parent, placement.parent])
 
   // The scheduler keeps a copy of the monitor, restart so the new name is used
   startMonitorJob(group)

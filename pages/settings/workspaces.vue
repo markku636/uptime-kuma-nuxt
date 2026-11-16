@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MonitorGroup, Workspace, WorkspaceFilter } from '~/composables/useWorkspaces'
 import { matchesWorkspace, workspaceErrorMessage } from '~/composables/useWorkspaces'
+import { orderAsTree } from '~/server/services/workspace/tree'
 
 // Settings > Workspaces & Groups
 // Left: workspaces (create / edit / delete, pick one to work in).
@@ -56,9 +57,12 @@ const matchesSearch = (m: any) => !search.value.trim() || m.name.toLowerCase().i
 
 const visibleGroups = computed(() => groups.value.filter(g => matchesWorkspace(g, current.value)))
 
+// Subgroups follow their parent, labelled with their full path
 const sections = computed(() => {
-  const list = visibleGroups.value.map(group => ({
+  const list = orderAsTree(visibleGroups.value).map(({ item: group, depth, path }) => ({
     group,
+    depth,
+    label: path,
     monitors: monitors.value.filter(m => m.type !== 'group' && m.parent === group.id && matchesSearch(m)),
   }))
   // While searching, hide groups that neither match nor contain a match
@@ -79,10 +83,10 @@ const ungrouped = computed(() =>
 // Groups of other workspaces stay available as move targets, labelled with their workspace
 const workspaceName = (id: number | null) => workspaces.value.find(w => w.id === id)?.name
 const targets = computed<MonitorGroup[]>(() =>
-  groups.value.map(g => (
+  orderAsTree(groups.value).map(({ item: g, path }) => (
     current.value !== 'all' && !matchesWorkspace(g, current.value) && g.workspaceId != null
-      ? { ...g, name: `${workspaceName(g.workspaceId)} / ${g.name}` }
-      : g
+      ? { ...g, name: `${workspaceName(g.workspaceId)} / ${path}` }
+      : { ...g, name: path }
   )),
 )
 

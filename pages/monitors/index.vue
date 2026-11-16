@@ -58,7 +58,7 @@
                 :class="{ 'rotate-90': !collapsed.has(section.key) }"
               />
               <UIcon :name="section.group ? 'i-heroicons-folder' : 'i-heroicons-inbox'" class="w-4 h-4 shrink-0 text-muted" />
-              <span class="truncate font-semibold text-highlighted">{{ section.group ? section.group.name : t('Ungrouped') }}</span>
+              <span class="truncate font-semibold text-highlighted">{{ section.group ? section.label ?? section.group.name : t('Ungrouped') }}</span>
               <span class="text-sm text-muted">{{ section.monitors.length }}</span>
               <span v-if="section.group" :class="getStatusBadgeClass(section.status)" class="badge">
                 {{ getStatusText(section.status) }}
@@ -131,6 +131,7 @@
 <script setup lang="ts">
 import type { MonitorGroup, Workspace } from '~/composables/useWorkspaces'
 import { matchesWorkspace } from '~/composables/useWorkspaces'
+import { orderAsTree } from '~/server/services/workspace/tree'
 
 definePageMeta({
   middleware: ['auth']
@@ -160,6 +161,8 @@ type StatusKey = 'up' | 'down' | 'maintenance' | 'pending' | 'paused'
 interface Section {
   key: string
   group: MonitorGroup | null
+  /** Full "Parent / Child" name of the group */
+  label?: string
   workspace: Workspace | null
   status: StatusKey
   monitors: any[]
@@ -173,11 +176,12 @@ const sections = computed<Section[]>(() => {
   const showWorkspace = current.value === 'all'
   const workspaceOf = (id: number | null) => (showWorkspace ? workspaces.value.find(w => w.id === id) ?? null : null)
 
-  const result: Section[] = groups.value
-    .filter(g => matchesWorkspace(g, current.value))
-    .map(group => ({
+  // Subgroups follow their parent and carry the full "Parent / Child" name
+  const result: Section[] = orderAsTree(groups.value.filter(g => matchesWorkspace(g, current.value)))
+    .map(({ item: group, path }) => ({
       key: `group-${group.id}`,
       group,
+      label: path,
       workspace: workspaceOf(group.workspaceId),
       // The group itself is a monitor whose status is aggregated from its members
       status: byId.has(group.id) ? statusOf(byId.get(group.id)) : 'pending',

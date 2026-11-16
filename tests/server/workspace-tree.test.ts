@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateGroupStatus, descendantIds, wouldCreateCycle } from '../../server/services/workspace/tree'
+import { aggregateGroupStatus, descendantIds, orderAsTree, wouldCreateCycle } from '../../server/services/workspace/tree'
 
 // 1 (group) -> 2 (group) -> 3, 4 ; 1 -> 5 ; 6 is standalone
 const nodes = [
@@ -64,5 +64,22 @@ describe('aggregateGroupStatus', () => {
   it('ignores paused and maintenance members', () => {
     expect(aggregateGroupStatus([m(1), m(0, false), m(3)]).status).toBe(1)
     expect(aggregateGroupStatus([m(3), m(3)]).status).toBe(3)
+  })
+})
+
+describe('orderAsTree', () => {
+  const g = (id: number, name: string, parent: number | null = null) => ({ id, name, parent })
+
+  it('puts children right after their parent with a path', () => {
+    const out = orderAsTree([g(1, 'Web'), g(2, 'DB'), g(3, 'Edge', 1), g(4, 'CDN', 3)])
+    expect(out.map(o => [o.path, o.depth])).toEqual([
+      ['Web', 0], ['Web / Edge', 1], ['Web / Edge / CDN', 2], ['DB', 0],
+    ])
+  })
+
+  it('treats a missing parent as root and survives cycles', () => {
+    expect(orderAsTree([g(1, 'Orphan', 99)]).map(o => o.path)).toEqual(['Orphan'])
+    const out = orderAsTree([g(1, 'A', 2), g(2, 'B', 1)])
+    expect(out).toHaveLength(2)
   })
 })

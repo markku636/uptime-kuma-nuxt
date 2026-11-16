@@ -1288,5 +1288,8 @@
     "Delete Monitor": "刪除監控",
     "Group members": "群組成員",
     "Move up": "上移",
-    "Move down": "下移"
+    "Move down": "下移",
+    "Parent group": "上層群組",
+    "None (top level)": "無（最上層）",
+    "parentGroupHint": "把此群組放進同一工作區的另一個群組中，其狀態會計入上層群組。"
 }

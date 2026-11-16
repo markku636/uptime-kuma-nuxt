@@ -19,6 +19,9 @@ interface MonitorRow {
 interface GroupSection {
   group: MonitorGroup
   monitors: MonitorRow[]
+  /** Nesting level (0 = top level) and full "Parent / Child" name */
+  depth?: number
+  label?: string
 }
 
 const props = defineProps<{
@@ -154,10 +157,11 @@ function onDrop(target: number | 'ungrouped') {
   <div class="space-y-3" :class="{ 'pointer-events-none opacity-60': busy }" :aria-busy="busy">
     <!-- Groups -->
     <section
-      v-for="{ group, monitors } in sections"
+      v-for="{ group, monitors, depth, label } in sections"
       :key="group.id"
       class="overflow-hidden rounded-lg border transition-colors"
       :class="dropTarget === group.id ? 'border-primary bg-primary/5' : 'border-default'"
+      :style="depth ? { marginLeft: `${Math.min(depth, 4) * 1.5}rem` } : undefined"
       @dragover="onDragOver($event, group.id)"
       @dragleave="dropTarget = null"
       @drop.prevent="onDrop(group.id)"
@@ -184,7 +188,7 @@ function onDrop(target: number | 'ungrouped') {
             :class="{ 'rotate-90': isOpen(group.id) }"
           />
           <UIcon name="i-heroicons-folder" class="size-4 shrink-0 text-muted" />
-          <span class="truncate font-medium text-highlighted">{{ group.name }}</span>
+          <span class="truncate font-medium text-highlighted" :title="label">{{ label ?? group.name }}</span>
           <UBadge variant="subtle" color="neutral" size="sm">{{ monitors.length }}</UBadge>
           <UBadge v-if="downCount(monitors) > 0" variant="subtle" color="error" size="sm">
             {{ downCount(monitors) }} {{ t('Down') }}
