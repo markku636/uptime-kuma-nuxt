@@ -13,6 +13,10 @@ get {
   auth: none
 }
 
+params:query {
+  ~heartbeats: 1
+}
+
 assert {
   res.status: eq 200
 }
