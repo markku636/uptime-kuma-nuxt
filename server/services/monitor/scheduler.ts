@@ -6,6 +6,8 @@ import { sendNotificationForMonitor } from '../notification/sender'
 import { isClusterMode, getCurrentNodeId } from '../../utils/cluster-config'
 import { getNodeForMonitor } from '../monitor-distributor'
 
+const STATUS_NAMES: Record<number, string> = { 0: 'DOWN', 1: 'UP', 2: 'PENDING', 3: 'MAINTENANCE' }
+
 // Store active monitor jobs
 const jobs = new Map<number, NodeJS.Timeout>()
 
@@ -243,7 +245,7 @@ async function runCheck(monitor: any) {
     }
   }
 
-  console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}): ${result.status === 1 ? 'UP' : 'DOWN'} - ${result.msg} (${result.ping}ms)`)
+  console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}): ${STATUS_NAMES[result.status] ?? result.status} - ${result.msg} (${result.ping}ms)`)
 }
 
 /**
