@@ -1,0 +1,28 @@
+meta {
+  name: Reorder workspaces
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/reorder
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "ids": [
+      2,
+      1
+    ]
+  }
+}
+
+docs {
+  調整工作區順序
+
+  `ids`: every workspace id in the new order, first to last.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

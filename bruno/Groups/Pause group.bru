@@ -1,0 +1,23 @@
+meta {
+  name: Pause group
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/groups/:id/pause
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{groupId}}
+}
+
+docs {
+  暫停群組 (含所有成員)
+
+  Pauses the group and every monitor inside it, subgroups included.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}

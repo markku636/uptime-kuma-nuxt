@@ -1,0 +1,23 @@
+meta {
+  name: Resume group
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/groups/:id/resume
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{groupId}}
+}
+
+docs {
+  恢復群組 (含所有成員)
+
+  Resumes the group and every monitor inside it, subgroups included.
+
+  Requires the session cookie from **Auth / Login**, or the `apiKey` environment secret.
+}
