@@ -26,7 +26,7 @@
       @update:open="importNotice = null"
     />
 
-    <MonitorBrunoImportDialog v-model:open="showBrunoImport" @fill="applyDraft" @created="router.push('/dashboard')" />
+    <MonitorBrunoImportDialog v-model:open="showBrunoImport" @fill="applyDraft" @created="router.push('/monitors')" />
 
     <!-- Form -->
     <div class="card card-body">
