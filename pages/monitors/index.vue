@@ -24,7 +24,7 @@
         <input
           v-model="search"
           type="search"
-          class="input-field pl-9"
+          class="input-field pl-9!"
           :placeholder="t('Search monitors')"
           :aria-label="t('Search monitors')"
         >
@@ -76,11 +76,19 @@
                 :class="{ 'rotate-90': !isCollapsed(section.key) }"
               />
               <UIcon :name="section.group ? 'i-heroicons-folder' : 'i-heroicons-inbox'" class="w-4 h-4 shrink-0 text-muted" />
-              <span class="truncate font-semibold text-highlighted">{{ section.group ? section.label ?? section.group.name : t('Ungrouped') }}</span>
-              <span class="text-sm text-muted">{{ section.monitors.length }}</span>
-              <span v-if="section.group" :class="getStatusBadgeClass(section.status)" class="badge">
-                {{ getStatusText(section.status) }}
+              <span class="min-w-16 truncate font-semibold text-highlighted">{{ section.group ? section.label ?? section.group.name : t('Ungrouped') }}</span>
+              <span class="shrink-0 text-sm text-muted">{{ section.monitors.length }}</span>
+              <!-- Narrow screens: a dot instead of the badge so the name keeps its room -->
+              <!-- .badge sets display itself, so the responsive switch sits on a wrapper -->
+              <span v-if="section.group" class="hidden shrink-0 sm:inline">
+                <span :class="getStatusBadgeClass(section.status)" class="badge">{{ getStatusText(section.status) }}</span>
               </span>
+              <span
+                v-if="section.group"
+                class="size-2.5 shrink-0 rounded-full sm:hidden"
+                :class="getStatusDotClass(section.status)"
+                :title="getStatusText(section.status)"
+              ><span class="sr-only">{{ getStatusText(section.status) }}</span></span>
               <span v-if="section.workspace" class="hidden sm:inline-flex items-center gap-1.5 text-xs text-muted">
                 <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: section.workspace.color }"></span>
                 {{ section.workspace.name }}
@@ -132,7 +140,7 @@
                 <div class="flex items-center gap-3 min-w-0">
                   <span :class="getStatusDotClass(statusOf(monitor))" class="w-3 h-3 rounded-full shrink-0"></span>
                   <span class="font-semibold text-highlighted truncate">{{ monitor.name }}</span>
-                  <span class="text-muted text-sm uppercase">{{ monitor.type }}</span>
+                  <span class="hidden text-muted text-sm uppercase sm:inline">{{ monitor.type }}</span>
                 </div>
                 <span :class="getStatusBadgeClass(statusOf(monitor))" class="badge">
                   {{ getStatusText(statusOf(monitor)) }}

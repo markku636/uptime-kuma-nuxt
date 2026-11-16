@@ -255,9 +255,9 @@ const select = (value: WorkspaceFilter) => { current.value = value }
             >
               <span class="size-3 shrink-0 rounded-full" :style="{ backgroundColor: workspace.color }" aria-hidden="true" />
               <span class="flex-1 truncate text-left">{{ workspace.name }}</span>
-              <span class="ws-count group-hover/ws:invisible group-focus-within/ws:invisible">{{ workspace.monitorCount }}</span>
+              <span class="ws-count group-hover/ws:invisible group-focus-within/ws:invisible [@media(hover:none)]:hidden">{{ workspace.monitorCount }}</span>
             </button>
-            <div class="absolute inset-y-0 right-1 flex items-center opacity-0 transition-opacity group-hover/ws:opacity-100 group-focus-within/ws:opacity-100">
+            <div class="absolute inset-y-0 right-1 flex items-center opacity-0 transition-opacity group-hover/ws:opacity-100 group-focus-within/ws:opacity-100 [@media(hover:none)]:opacity-100">
               <UButton
                 variant="ghost"
                 color="neutral"
@@ -322,7 +322,7 @@ const select = (value: WorkspaceFilter) => { current.value = value }
           </div>
           <div class="relative w-full sm:w-56">
             <UIcon name="i-heroicons-magnifying-glass" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
-            <input v-model="search" type="search" class="input-field pl-9" :placeholder="t('Search monitors')" :aria-label="t('Search monitors')">
+            <input v-model="search" type="search" class="input-field pl-9!" :placeholder="t('Search monitors')" :aria-label="t('Search monitors')">
           </div>
         </div>
 

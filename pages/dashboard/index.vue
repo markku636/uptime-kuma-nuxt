@@ -57,7 +57,7 @@
           <input 
             v-model="searchQuery" 
             type="text" 
-            class="input-field pl-10" 
+            class="input-field pl-10!" 
             placeholder="Search monitors..."
           />
         </div>
