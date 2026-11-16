@@ -2,7 +2,7 @@
   <div class="settings-page">
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-highlighted">Settings</h1>
+      <h1 class="text-2xl font-bold text-highlighted">{{ $t('Settings') }}</h1>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-6">
@@ -18,7 +18,7 @@
               :class="{ 'settings-nav-item-active': isActive(item.to) }"
             >
               <UIcon :name="item.icon" class="w-5 h-5 flex-shrink-0" />
-              <span>{{ item.label }}</span>
+              <span>{{ $t(item.label) }}</span>
             </NuxtLink>
           </nav>
         </div>
@@ -29,7 +29,7 @@
         <div class="settings-content">
           <!-- Content Header -->
           <div v-if="currentPageTitle" class="settings-content-header">
-            <h2 class="text-xl font-semibold text-highlighted">{{ currentPageTitle }}</h2>
+            <h2 class="text-xl font-semibold text-highlighted">{{ $t(currentPageTitle) }}</h2>
           </div>
           
           <!-- Content Body -->
@@ -65,7 +65,7 @@ const settingsNav = [
   { label: 'Docker Hosts', to: '/settings/docker-hosts', icon: 'i-heroicons-cube' },
   { label: 'Remote Browsers', to: '/settings/remote-browsers', icon: 'i-heroicons-globe-alt' },
   { label: 'API Keys', to: '/settings/api-keys', icon: 'i-heroicons-key' },
-  { label: 'Backup / Restore', to: '/settings/backup', icon: 'i-heroicons-arrow-down-tray' },
+  { label: 'Backup', to: '/settings/backup', icon: 'i-heroicons-arrow-down-tray' },
   { label: 'About', to: '/settings/about', icon: 'i-heroicons-information-circle' },
 ]
 
@@ -117,10 +117,12 @@ const isActive = (path: string) => route.path === path
   background-color: var(--uk-bg-hover);
 }
 
-.settings-nav-item-active {
-  background-color: rgba(18, 176, 106, 0.14);
-  color: var(--uk-primary) !important;
-  border-color: rgba(18, 176, 106, 0.35);
+.settings-nav-item-active,
+.settings-nav-item-active:hover {
+  background-color: color-mix(in srgb, var(--uk-primary) 14%, transparent);
+  color: var(--uk-primary-fg);
+  border-color: color-mix(in srgb, var(--uk-primary) 35%, transparent);
+  font-weight: 600;
 }
 
 .settings-content {
