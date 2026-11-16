@@ -4,7 +4,7 @@
 
 import { z } from 'zod'
 import { prisma } from '../../utils/prisma'
-import { applyVariables, VARIABLE_NAME, variablesForWorkspace, type ScopedVariable } from './resolve'
+import { applyVariables, fill, VARIABLE_NAME, variablesForWorkspace, type ScopedVariable } from './resolve'
 
 export class VariableError extends Error {
   constructor(message: string, public statusCode = 400) {
@@ -65,7 +65,12 @@ export async function variablesForMonitor(userId: number, workspaceId: number | 
   const all = await scopedVariables(userId)
   const vars = variablesForWorkspace(all, workspaceId)
   const secretNames = new Set(all.filter(v => v.secret && (v.workspaceId == null || v.workspaceId === workspaceId)).map(v => v.name))
-  const secrets = [...secretNames].map(name => vars[name]).filter((v): v is string => !!v)
+  // A secret's value may itself use {{other}}: mask both its raw and filled forms
+  const secrets = [...secretNames].flatMap((name) => {
+    const raw = vars[name]
+    if (!raw) return []
+    try { return [raw, fill(raw, vars, new Set())] } catch { return [raw] }
+  })
   return { vars, secrets }
 }
 

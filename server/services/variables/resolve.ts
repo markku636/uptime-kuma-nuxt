@@ -65,12 +65,19 @@ export function placeholders(text: string): string[] {
 export function fill(text: string, vars: Record<string, string>, missing: Set<string>): string {
   let out = text
   for (let pass = 0; pass < 2; pass++) {
+    // Track the projected length while replacing, so a value used many
+    // times fails before a huge string is ever built
+    let length = out.length
     out = out.replace(PLACEHOLDER, (match, name) => {
-      if (Object.prototype.hasOwnProperty.call(vars, name)) return vars[name]
+      if (Object.prototype.hasOwnProperty.call(vars, name)) {
+        const value = vars[name]
+        length += value.length - match.length
+        if (length > MAX_FILLED_LENGTH) throw new VariableExpansionError('Variable values make a field too long')
+        return value
+      }
       if (pass === 1) missing.add(name)
       return match
     })
-    if (out.length > MAX_FILLED_LENGTH) throw new VariableExpansionError('Variable values make a field too long')
   }
   return out
 }
@@ -117,9 +124,17 @@ export function applyVariables<T extends Record<string, any>>(monitor: T, vars: 
 
 /** Replace secret values in a message (e.g. an error that echoes a URL) */
 export function maskSecrets(text: string, secrets: string[]): string {
-  let out = text
+  // Also the URL-encoded form (a secret in a query string is echoed encoded);
+  // longest first, so a secret containing another one is masked whole
+  const forms = new Set<string>()
   for (const secret of secrets) {
-    if (secret.length >= 4) out = out.split(secret).join('••••••')
+    if (secret.length < 4) continue
+    forms.add(secret)
+    try { forms.add(encodeURIComponent(secret)) } catch { /* lone surrogate */ }
+  }
+  let out = text
+  for (const form of [...forms].sort((a, b) => b.length - a.length)) {
+    out = out.split(form).join('••••••')
   }
   return out
 }

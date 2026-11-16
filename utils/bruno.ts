@@ -302,8 +302,16 @@ export function parseDotEnv(source: string): Record<string, string> {
     const m = /^(?:export\s+)?([\w.-]+)\s*=\s*(.*)$/.exec(line)
     if (!m) continue
     let value = m[2].trim()
-    if (/^(['"]).*\1$/.test(value)) value = value.slice(1, -1)
-    else value = value.replace(/\s+#.*$/, '')
+    if (/^".*"$/.test(value)) {
+      // Double quotes allow escapes (\" \\ \n), as written by JSON.stringify
+      try { value = JSON.parse(value) } catch { value = value.slice(1, -1) }
+    } else if (/^'.*'$/.test(value)) {
+      value = value.slice(1, -1)
+    } else if (value.startsWith('#')) {
+      value = '' // KEY=  # comment
+    } else {
+      value = value.replace(/\s+#.*$/, '')
+    }
     vars[m[1]] = value
   }
   return vars

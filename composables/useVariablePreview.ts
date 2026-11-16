@@ -28,15 +28,21 @@ export function previewVariables(text: string, variables: VariableRow[], workspa
 }
 
 export function useVariablePreview(text: Ref<string | null | undefined>, workspaceId: Ref<number | null | undefined>) {
-  // Shared by every form / page that previews, loaded on first need
-  const variables = useState<VariableRow[] | null>('variable-preview-list', () => null)
+  // Loaded per form / page on first need, so a page opened after editing
+  // variables shows the current values; a failed load is retried on the
+  // next change instead of being cached as "no variables"
+  const variables = ref<VariableRow[] | null>(null)
+  let loading = false
 
   watch(text, async (value) => {
-    if (!value?.includes('{{') || variables.value) return
+    if (!value?.includes('{{') || variables.value || loading) return
+    loading = true
     try {
       variables.value = (await $fetch<{ data: VariableRow[] }>('/api/v1/variables')).data
     } catch {
-      variables.value = []
+      // keep null: no preview rather than a wrong "unknown variable" warning
+    } finally {
+      loading = false
     }
   }, { immediate: true })
 

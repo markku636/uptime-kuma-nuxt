@@ -165,8 +165,10 @@ async function importEnv() {
 
 /** Download the variables of the shown scope as .env (secret values left empty) */
 function exportEnv() {
-  const quote = (v: string) => (/[\s#"']/.test(v) ? JSON.stringify(v) : v)
-  const lines = own.value.map(v => `${v.name}=${v.secret ? '' : quote(v.value)}${v.secret ? '  # secret' : ''}`)
+  // Double-quoted with JSON escapes, which parseDotEnv reads back exactly;
+  // a secret is written as an empty value (re-importing it keeps the stored one)
+  const quote = (v: string) => (/[\s#"'\\]/.test(v) || v === '' ? JSON.stringify(v) : v)
+  const lines = own.value.flatMap(v => v.secret ? [`# ${v.name} is secret: enter its value`, `${v.name}=`] : [`${v.name}=${quote(v.value)}`])
   const blob = new Blob([lines.join('\n') + '\n'], { type: 'text/plain' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)

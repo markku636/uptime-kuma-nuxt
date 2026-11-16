@@ -8,6 +8,7 @@ import {
   parseBrunoCollectionJson,
   parseBrunoInput,
   parseBruRequest,
+  parseDotEnv,
   requestVariables,
   resolveRequest,
   toBrunoCollection,
@@ -403,5 +404,32 @@ describe('docs', () => {
     const exported = toBrunoCollection('C', [{ id: 9, name: 'H', description: 'Health check', type: 'http', url: 'https://x' }], [])
     const back = parseBrunoCollectionJson(exported).requests[0]
     expect(back.docs.startsWith('Health check')).toBe(true)
+  })
+})
+
+describe('parseDotEnv', () => {
+  it('reads comments, quotes and escapes', () => {
+    expect(parseDotEnv([
+      '# comment',
+      'EMPTY=',
+      'COMMENTED=  # secret',
+      'PLAIN=value # trailing',
+      'DQ="a\\"b \\\\ c\\nd"',
+      "SQ='keep \\n as is'",
+      'HASH="#not a comment"',
+    ].join('\n'))).toEqual({
+      EMPTY: '',
+      COMMENTED: '',
+      PLAIN: 'value',
+      DQ: 'a"b \\ c\nd',
+      SQ: 'keep \\n as is',
+      HASH: '#not a comment',
+    })
+  })
+
+  it('round-trips values written with JSON.stringify', () => {
+    const values = ['a"b', 'C:\\x y', 'line1\nline2', ' spaced ', '#hash', '']
+    const text = values.map((v, i) => `K${i}=${JSON.stringify(v)}`).join('\n')
+    expect(Object.values(parseDotEnv(text))).toEqual(values)
   })
 })

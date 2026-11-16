@@ -1,9 +1,15 @@
 // server/api/v1/monitors/[id]/certificate.get.ts
 import { prisma } from '~/server/utils/prisma'
 import { getTLSInfo } from '~/server/services/monitor/checkers'
-import { resolveMonitorUrl } from '~/server/services/variables/service'
+import { resolveMonitorUrl, variablesForMonitor } from '~/server/services/variables/service'
+import { maskSecrets } from '~/server/services/variables/resolve'
 
 export default defineEventHandler(async (event) => {
+  const session = await getUserSession(event)
+  if (!session?.user) {
+    throw createError({ statusCode: 401, message: 'Unauthorized' })
+  }
+
   const id = Number(getRouterParam(event, 'id'))
 
   if (isNaN(id)) {
@@ -13,8 +19,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const monitor = await prisma.monitor.findUnique({
-    where: { id }
+  // Only the owner may probe a monitor (its URL can carry secret variables)
+  const monitor = await prisma.monitor.findFirst({
+    where: { id, userId: (session.user as any).id }
   })
 
   if (!monitor) {
@@ -60,7 +67,8 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     return {
       hasCertificate: false,
-      message: error.message || 'Failed to retrieve certificate'
+      // The error may echo the filled URL: hide secret values
+      message: maskSecrets(String(error?.message || 'Failed to retrieve certificate'), (await variablesForMonitor(monitor.userId, monitor.workspaceId ?? null).catch(() => ({ secrets: [] as string[] }))).secrets)
     }
   }
 })

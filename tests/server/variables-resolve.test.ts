@@ -67,6 +67,15 @@ describe('applyVariables', () => {
     expect(maskSecrets('GET https://u:s3cr3t@h failed', ['s3cr3t', 'ab'])).toBe('GET https://u:••••••@h failed')
   })
 
+  it('masks URL-encoded secrets and the longest secret first', () => {
+    expect(maskSecrets('GET /?k=p%40ss%20word', ['p@ss word'])).toBe('GET /?k=••••••')
+    expect(maskSecrets('token abcd-efgh', ['abcd', 'abcd-efgh'])).toBe('token ••••••')
+  })
+
+  it('fails a single-pass blow-up before building the string', () => {
+    expect(() => applyVariables({ body: '{{b}}'.repeat(100) }, { b: 'x'.repeat(1000) })).toThrow(/too long/)
+  })
+
   it('does not touch the original monitor', () => {
     const original = { url: '{{host}}' }
     applyVariables(original, vars)
