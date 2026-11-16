@@ -31,6 +31,12 @@ const RATE_LIMIT_CONFIG = {
 /**
  * @param event
  */
+const UNLIMITED_PATHS = [
+    /^\/api\/health\/?$/,
+    /^\/api\/v1\/health\/?$/,
+    /^\/api\/push\/[^/]+\/?$/,
+];
+
 function getClientIP(event: any): string {
     // Try to get real IP from various headers
     const forwarded = getHeader(event, "x-forwarded-for");
@@ -67,6 +73,15 @@ export default defineEventHandler(async (event) => {
 
     // Only apply rate limiting to API routes
     if (!path.startsWith("/api/")) {
+        return;
+    }
+
+    // Never limited:
+    // - health probes: the load balancer checks every node every few seconds
+    //   from one IP; a 429 would take a healthy node out of rotation
+    // - push heartbeats: one host often pushes for many monitors, each request
+    //   carries an unguessable token, and a 429 would raise a false DOWN alert
+    if (UNLIMITED_PATHS.some(pattern => pattern.test(path))) {
         return;
     }
 
