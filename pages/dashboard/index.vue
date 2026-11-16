@@ -279,6 +279,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { matchesWorkspace } from '~/composables/useWorkspaces'
+import { descendantIds, orderAsTree } from '~/server/services/workspace/tree'
 
 definePageMeta({
   middleware: ['auth']
@@ -299,7 +300,10 @@ const groupFilter = ref<number | 'all' | 'none'>('all')
 // Workspace shown (shared with the monitor list) and the groups inside it
 const { t } = useI18n()
 const { groups, current: currentWorkspace } = useWorkspaces()
-const groupOptions = computed(() => groups.value.filter(g => matchesWorkspace(g, currentWorkspace.value)))
+const groupOptions = computed(() =>
+  orderAsTree(groups.value.filter(g => matchesWorkspace(g, currentWorkspace.value)))
+    .map(({ item, path }) => ({ id: item.id, name: path })),
+)
 watch(currentWorkspace, () => { groupFilter.value = 'all' })
 
 // Fetch monitors
@@ -349,8 +353,14 @@ const filteredMonitors = computed(() => {
 
   // Group filter
   if (groupFilter.value !== 'all') {
-    const wanted = groupFilter.value === 'none' ? null : groupFilter.value
-    result = result.filter((m: any) => (m.parent ?? null) === wanted || m.id === wanted)
+    if (groupFilter.value === 'none') {
+      result = result.filter((m: any) => m.parent == null && m.type !== 'group')
+    } else {
+      // The group itself and everything below it, subgroups included
+      const groupId = groupFilter.value
+      const ids = new Set([groupId, ...descendantIds(monitors.value.map((m: any) => ({ id: m.id, parent: m.parent ?? null })), groupId)])
+      result = result.filter((m: any) => ids.has(m.id))
+    }
   }
 
   // Type filter
