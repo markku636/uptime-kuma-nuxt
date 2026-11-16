@@ -2,7 +2,9 @@ import { prisma } from '~/server/utils/prisma'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { pickScalars, prepareMonitor, remapIds, resolveParents, type IdMap } from '~/server/services/backup/monitor-import'
-import { startMonitorJob } from '~/server/services/monitor/scheduler'
+import { startMonitorJob, stopMonitorJob } from '~/server/services/monitor/scheduler'
+import { normalizeWorkspaces } from '~/server/services/workspace/service'
+import { wouldCreateCycle } from '~/server/services/workspace/tree'
 import { startMaintenanceJob } from '~/server/services/maintenance/scheduler'
 
 
@@ -328,19 +330,25 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Second pass: group membership. A member always lives in its group's workspace.
+    // Second pass: group membership, checked against the tree as it is now
+    // so a hand-edited or legacy backup cannot create a cycle (A > B > A)
+    const tree = await prisma.monitor.findMany({ where: { userId }, select: { id: true, parent: true, type: true } })
+    const groupIds = new Set(tree.filter(m => m.type === 'group').map(m => m.id))
     for (const [id, parent] of resolveParents(oldParents, monitorMap)) {
-      if (parent == null) continue
-      const group = await prisma.monitor.findFirst({
-        where: { id: parent, userId: userId, type: 'group' },
-        select: { workspaceId: true }
-      })
-      if (group) await prisma.monitor.update({ where: { id }, data: { parent, workspaceId: group.workspaceId } })
+      if (parent == null || !groupIds.has(parent) || wouldCreateCycle(tree, id, parent)) continue
+      await prisma.monitor.update({ where: { id }, data: { parent } })
+      const node = tree.find(m => m.id === id)
+      if (node) node.parent = parent
     }
+    // A member always lives in its group's workspace, whatever order the rows came in
+    await normalizeWorkspaces(userId)
 
-    // Start checking what was imported
-    const toStart = await prisma.monitor.findMany({ where: { id: { in: importedIds }, active: true } })
-    for (const monitor of toStart) startMonitorJob(monitor)
+    // Run what is active, and stop the old check of a monitor the backup marks paused
+    const restored = await prisma.monitor.findMany({ where: { id: { in: importedIds } } })
+    for (const monitor of restored) {
+      if (monitor.active) startMonitorJob(monitor)
+      else stopMonitorJob(monitor.id)
+    }
   }
 
   // Monitors that were not imported (option off, or failed) may already exist here: match them by name

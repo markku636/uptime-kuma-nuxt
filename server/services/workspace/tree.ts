@@ -111,3 +111,39 @@ export function orderAsTree<T extends TreeOrderItem>(items: T[]): { item: T; dep
   }
   return result
 }
+
+export interface PlacedNode extends TreeNode {
+  workspaceId: number | null
+}
+
+/**
+ * Members must live in their group's workspace, all the way down: the
+ * workspace of a top-level group (or ungrouped monitor) wins. Returns the
+ * rows whose workspace has to change. Rows on a cycle are left alone.
+ */
+export function workspaceCorrections(nodes: PlacedNode[]): { id: number; workspaceId: number | null }[] {
+  const byId = new Map(nodes.map(n => [n.id, n]))
+  const children = new Map<number, PlacedNode[]>()
+  for (const node of nodes) {
+    if (node.parent == null || !byId.has(node.parent)) continue
+    const list = children.get(node.parent)
+    if (list) list.push(node)
+    else children.set(node.parent, [node])
+  }
+
+  const fixes: { id: number; workspaceId: number | null }[] = []
+  const seen = new Set<number>()
+  const visit = (node: PlacedNode, workspaceId: number | null) => {
+    for (const child of children.get(node.id) ?? []) {
+      if (seen.has(child.id)) continue
+      seen.add(child.id)
+      if ((child.workspaceId ?? null) !== workspaceId) fixes.push({ id: child.id, workspaceId })
+      visit(child, workspaceId)
+    }
+  }
+  for (const root of nodes.filter(n => n.parent == null || !byId.has(n.parent))) {
+    seen.add(root.id)
+    visit(root, root.workspaceId ?? null)
+  }
+  return fixes
+}

@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { prisma } from '../../utils/prisma'
 import { scheduleGroupRecheck, startMonitorJob, stopMonitorJob } from '../monitor/scheduler'
 import { broadcastMonitorDeleted } from '../socket'
-import { descendantIds, wouldCreateCycle, type TreeNode } from './tree'
+import { descendantIds, workspaceCorrections, wouldCreateCycle, type TreeNode } from './tree'
 
 export class WorkspaceError extends Error {
   constructor(message: string, public statusCode = 400) {
@@ -83,6 +83,25 @@ async function syncSubtreeWorkspace(userId: number, rootIds: number[], workspace
   if (ids.length) {
     await prisma.monitor.updateMany({ where: { id: { in: ids }, userId }, data: { workspaceId } })
   }
+}
+
+/**
+ * Put every member into its group's workspace (top-level group wins), e.g.
+ * after a backup restore assembled the tree in arbitrary order.
+ */
+export async function normalizeWorkspaces(userId: number) {
+  const rows = await prisma.monitor.findMany({ where: { userId }, select: { id: true, parent: true, workspaceId: true } })
+  const fixes = workspaceCorrections(rows)
+  const byWorkspace = new Map<number | null, number[]>()
+  for (const fix of fixes) {
+    const list = byWorkspace.get(fix.workspaceId)
+    if (list) list.push(fix.id)
+    else byWorkspace.set(fix.workspaceId, [fix.id])
+  }
+  for (const [workspaceId, ids] of byWorkspace) {
+    await prisma.monitor.updateMany({ where: { id: { in: ids }, userId }, data: { workspaceId } })
+  }
+  return fixes.length
 }
 
 // ---------- Workspaces ----------
@@ -362,7 +381,11 @@ export async function organizeMonitors(userId: number, body: unknown) {
     const parentIds = [...new Set(monitors.map(m => m.parent).filter((p): p is number => p != null))]
     const parents = await prisma.monitor.findMany({ where: { id: { in: parentIds }, userId }, select: { id: true, workspaceId: true } })
     const parentWorkspace = new Map(parents.map(p => [p.id, p.workspaceId]))
-    const detach = monitors.filter(m => m.parent != null && parentWorkspace.get(m.parent) !== workspaceId).map(m => m.id)
+    // A member stays in its group when the group moves along with it
+    const moving = new Set(ids)
+    const detach = monitors
+      .filter(m => m.parent != null && !moving.has(m.parent) && parentWorkspace.get(m.parent) !== workspaceId)
+      .map(m => m.id)
 
     await prisma.$transaction([
       prisma.monitor.updateMany({ where: { id: { in: ids }, userId }, data: { workspaceId } }),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateGroupStatus, descendantIds, orderAsTree, wouldCreateCycle } from '../../server/services/workspace/tree'
+import { aggregateGroupStatus, descendantIds, orderAsTree, workspaceCorrections, wouldCreateCycle } from '../../server/services/workspace/tree'
 
 // 1 (group) -> 2 (group) -> 3, 4 ; 1 -> 5 ; 6 is standalone
 const nodes = [
@@ -81,5 +81,24 @@ describe('orderAsTree', () => {
     expect(orderAsTree([g(1, 'Orphan', 99)]).map(o => o.path)).toEqual(['Orphan'])
     const out = orderAsTree([g(1, 'A', 2), g(2, 'B', 1)])
     expect(out).toHaveLength(2)
+  })
+})
+
+describe('workspaceCorrections', () => {
+  const n = (id: number, parent: number | null, workspaceId: number | null) => ({ id, parent, workspaceId })
+
+  it('pulls every level into the top group\'s workspace', () => {
+    // 1 (W1) > 2 (W2) > 3 (W3); 4 ungrouped in W2
+    expect(workspaceCorrections([n(1, null, 1), n(2, 1, 2), n(3, 2, 3), n(4, null, 2)]))
+      .toEqual([{ id: 2, workspaceId: 1 }, { id: 3, workspaceId: 1 }])
+  })
+
+  it('returns nothing when consistent and ignores cycles', () => {
+    expect(workspaceCorrections([n(1, null, 1), n(2, 1, 1)])).toEqual([])
+    expect(workspaceCorrections([n(1, 2, 1), n(2, 1, 2)])).toEqual([])
+  })
+
+  it('treats a member whose group is gone as top level', () => {
+    expect(workspaceCorrections([n(5, 99, 3)])).toEqual([])
   })
 })
