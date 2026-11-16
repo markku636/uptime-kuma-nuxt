@@ -1,5 +1,5 @@
 // server/api/v1/monitors/[id]/pause.post.ts
-import { stopMonitorJob } from '../../../../services/monitor/scheduler'
+import { scheduleGroupRecheck, stopMonitorJob } from '../../../../services/monitor/scheduler'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -42,6 +42,8 @@ export default defineEventHandler(async (event) => {
 
   // Stop the monitor job
   stopMonitorJob(id)
+  // A paused member no longer counts for its group
+  scheduleGroupRecheck(monitor.parent)
 
   return {
     ok: true,

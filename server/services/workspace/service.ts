@@ -7,7 +7,7 @@
 
 import { z } from 'zod'
 import { prisma } from '../../utils/prisma'
-import { startMonitorJob, stopMonitorJob } from '../monitor/scheduler'
+import { scheduleGroupRecheck, startMonitorJob, stopMonitorJob } from '../monitor/scheduler'
 import { broadcastMonitorDeleted } from '../socket'
 import { descendantIds, wouldCreateCycle, type TreeNode } from './tree'
 
@@ -197,6 +197,7 @@ export async function updateGroup(userId: number, id: number, body: unknown) {
     data: { name: input.name, description: input.description || null, workspaceId, parent },
   })
   if (workspaceChanged) await syncSubtreeWorkspace(userId, [id], workspaceId)
+  if (parent !== existing.parent) scheduleGroupRecheck(existing.parent)
 
   // The scheduler keeps a copy of the monitor, restart so the new name is used
   startMonitorJob(group)
@@ -214,6 +215,8 @@ export async function deleteGroup(userId: number, id: number) {
     prisma.monitor.delete({ where: { id } }),
   ])
   broadcastMonitorDeleted(userId, id)
+  // Its members now count for the group above it
+  scheduleGroupRecheck(group.parent)
 }
 
 /** Detach the children of a monitor that is about to be deleted through the monitors API */
@@ -304,11 +307,13 @@ export async function organizeMonitors(userId: number, body: unknown) {
       prisma.monitor.updateMany({ where: { id: { in: detach }, userId }, data: { parent: null } }),
     ])
     await syncSubtreeWorkspace(userId, ids, workspaceId)
+    scheduleGroupRecheck(monitors.filter(m => detach.includes(m.id)).map(m => m.parent))
     return { updated: ids.length }
   }
 
   await prisma.monitor.updateMany({ where: { id: { in: ids }, userId }, data })
   if (data.workspaceId !== undefined) await syncSubtreeWorkspace(userId, ids, data.workspaceId)
+  scheduleGroupRecheck([...monitors.map(m => m.parent), data.parent])
   return { updated: ids.length }
 }
 

@@ -1,5 +1,5 @@
 // server/api/v1/monitors/[id].delete.ts
-import { stopMonitorJob } from '../../../services/monitor/scheduler'
+import { scheduleGroupRecheck, stopMonitorJob } from '../../../services/monitor/scheduler'
 import { releaseChildren } from '../../../services/workspace/service'
 
 export default defineEventHandler(async (event) => {
@@ -46,6 +46,8 @@ export default defineEventHandler(async (event) => {
   await prisma.monitor.delete({
     where: { id }
   })
+
+  scheduleGroupRecheck(existingMonitor.parent)
 
   return {
     ok: true,

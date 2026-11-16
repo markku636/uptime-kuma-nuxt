@@ -1,7 +1,7 @@
 // server/api/v1/monitors/index.post.ts
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
-import { startMonitorJob } from '../../../services/monitor/scheduler'
+import { scheduleGroupRecheck, startMonitorJob } from '../../../services/monitor/scheduler'
 import { normalizeMonitorPayload } from '../../../services/monitor/status-codes'
 import { WorkspaceError, resolvePlacement } from '../../../services/workspace/service'
 
@@ -154,6 +154,7 @@ export default defineEventHandler(async (event) => {
   if (updatedMonitor && updatedMonitor.active) {
     startMonitorJob(updatedMonitor)
   }
+  scheduleGroupRecheck(updatedMonitor?.parent)
 
   return {
     ok: true,

@@ -83,6 +83,39 @@ export function stopMonitorJob(monitorId: number) {
   }
 }
 
+// ---------- Group re-evaluation ----------
+// A group's status is derived from its members (checker.ts > checkGroup). Instead
+// of waiting for the group's own interval, re-check it shortly after a member
+// changes status or the membership changes. Debounced so a burst of member
+// changes produces one group heartbeat. Only groups run by this node are
+// re-checked; in cluster mode a group on another node keeps its own interval.
+const GROUP_RECHECK_DELAY_MS = 1500
+const pendingGroupChecks = new Map<number, NodeJS.Timeout>()
+
+export function scheduleGroupRecheck(groupIds: number | null | undefined | (number | null | undefined)[]) {
+  const ids = (Array.isArray(groupIds) ? groupIds : [groupIds]).filter((id): id is number => id != null)
+  for (const groupId of new Set(ids)) {
+    if (!jobs.has(groupId)) continue
+    clearTimeout(pendingGroupChecks.get(groupId))
+    pendingGroupChecks.set(groupId, setTimeout(async () => {
+      pendingGroupChecks.delete(groupId)
+      try {
+        const group = await prisma.monitor.findUnique({ where: { id: groupId } })
+        if (group?.active && group.type === 'group' && jobs.has(groupId)) await runCheck(group)
+      } catch (error) {
+        console.error(`[Scheduler] Group ${groupId} re-check failed:`, error)
+      }
+    }, GROUP_RECHECK_DELAY_MS))
+  }
+}
+
+/** After a monitor changed status, let its group (if any) catch up */
+async function notifyParentGroup(monitorId: number) {
+  // Read the parent from the DB: the job keeps the monitor as it was when started
+  const row = await prisma.monitor.findUnique({ where: { id: monitorId }, select: { parent: true } })
+  scheduleGroupRecheck(row?.parent)
+}
+
 /**
  * Stop all monitoring jobs
  */
@@ -134,7 +167,9 @@ async function runCheck(monitor: any) {
       important: heartbeat.important,
       duration: heartbeat.duration,
     })
-    
+
+    if (heartbeat.important) await notifyParentGroup(monitor.id)
+
     return
   }
 
@@ -190,6 +225,9 @@ async function runCheck(monitor: any) {
     important: heartbeat.important,
     duration: heartbeat.duration,
   })
+
+  // A status change of a member changes the status of its group
+  if (isImportant) await notifyParentGroup(monitor.id)
 
   // Send notifications if status changed
   if (isImportant && previousHeartbeat) {

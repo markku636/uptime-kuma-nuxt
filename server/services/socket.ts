@@ -1430,6 +1430,12 @@ const socketHandlers = {
         return callback({ ok: false, msg: 'Monitor not found' })
       }
 
+      // Stop checking it, keep the members of a deleted group (they move up one level)
+      const { stopMonitorJob, scheduleGroupRecheck } = await import('./monitor/scheduler')
+      const { releaseChildren } = await import('./workspace/service')
+      stopMonitorJob(monitorId)
+      await releaseChildren(socket.userId, monitorId, existing.parent)
+
       // Delete related data
       await prisma.heartbeat.deleteMany({ where: { monitorId } })
       await prisma.monitorTag.deleteMany({ where: { monitorId } })
@@ -1439,6 +1445,7 @@ const socketHandlers = {
       
       // Delete monitor
       await prisma.monitor.delete({ where: { id: monitorId } })
+      scheduleGroupRecheck(existing.parent)
 
       callback({ ok: true })
       broadcastMonitorDeleted(socket.userId, monitorId)
@@ -1466,6 +1473,10 @@ const socketHandlers = {
         data: { active: false }
       })
 
+      const { stopMonitorJob, scheduleGroupRecheck } = await import('./monitor/scheduler')
+      stopMonitorJob(monitorId)
+      scheduleGroupRecheck(updated.parent)
+
       callback({ ok: true, monitor: updated })
       broadcastMonitorUpdate(socket.userId, updated)
     } catch (error: any) {
@@ -1491,6 +1502,10 @@ const socketHandlers = {
         where: { id: monitorId },
         data: { active: true }
       })
+
+      const { startMonitorJob, scheduleGroupRecheck } = await import('./monitor/scheduler')
+      await startMonitorJob(updated)
+      scheduleGroupRecheck(updated.parent)
 
       callback({ ok: true, monitor: updated })
       broadcastMonitorUpdate(socket.userId, updated)

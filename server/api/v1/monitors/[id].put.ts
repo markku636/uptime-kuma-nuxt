@@ -1,6 +1,6 @@
 // server/api/v1/monitors/[id].put.ts
 import { z } from 'zod'
-import { startMonitorJob, stopMonitorJob } from '../../../services/monitor/scheduler'
+import { scheduleGroupRecheck, startMonitorJob, stopMonitorJob } from '../../../services/monitor/scheduler'
 import { normalizeMonitorPayload } from '../../../services/monitor/status-codes'
 import { WorkspaceError, resolvePlacement, syncMembersAfterMove } from '../../../services/workspace/service'
 
@@ -102,6 +102,11 @@ export default defineEventHandler(async (event) => {
 
   if (placement.workspaceId !== current.workspaceId) {
     await syncMembersAfterMove(session.user.id, monitor)
+  }
+
+  // Membership or the active flag changed: the old and the new group re-evaluate
+  if (placement.parent !== current.parent || monitor.active !== existingMonitor.active) {
+    scheduleGroupRecheck([current.parent, placement.parent])
   }
 
   // Restart the monitor job with new settings

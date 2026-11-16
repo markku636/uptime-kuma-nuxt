@@ -1,5 +1,5 @@
 // server/api/v1/monitors/[id]/resume.post.ts
-import { startMonitorJob } from '../../../../services/monitor/scheduler'
+import { scheduleGroupRecheck, startMonitorJob } from '../../../../services/monitor/scheduler'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -42,6 +42,7 @@ export default defineEventHandler(async (event) => {
 
   // Start the monitor job
   startMonitorJob(monitor)
+  scheduleGroupRecheck(monitor.parent)
 
   return {
     ok: true,
