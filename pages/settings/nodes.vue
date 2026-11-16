@@ -216,7 +216,7 @@ function formatDateTime(dateTime: string | null) {
                 </span>
                 <span 
                   v-if="isCurrentNode(node.nodeId)" 
-                  class="bg-up text-white text-xs px-2 py-0.5 rounded-full"
+                  class="bg-up text-on-primary text-xs px-2 py-0.5 rounded-full"
                 >
                   Current
                 </span>

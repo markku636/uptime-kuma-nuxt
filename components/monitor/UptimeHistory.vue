@@ -165,9 +165,9 @@ function getDayClass(day: DayData): string {
   }
   
   if (day.uptime === 100) {
-    return 'bg-up text-white'
+    return 'bg-up text-on-primary'
   } else if (day.uptime >= 90) {
-    return 'bg-up text-white'
+    return 'bg-up text-on-primary'
   } else if (day.uptime >= 75) {
     return 'bg-pending text-white'
   } else if (day.uptime >= 50) {

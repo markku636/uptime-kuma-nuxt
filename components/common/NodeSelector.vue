@@ -94,7 +94,7 @@
                   <!-- Current Badge -->
                   <span 
                     v-if="selectedNodeId === node.nodeId" 
-                    class="px-2 py-1 text-xs rounded bg-up text-white"
+                    class="px-2 py-1 text-xs rounded bg-up text-on-primary"
                   >
                     Current
                   </span>

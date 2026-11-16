@@ -248,7 +248,7 @@ async function handleDelete() {
   transition: all 0.15s;
 }
 
-.btn-primary { background: var(--uk-status-up); color: white; border-color: var(--uk-status-up); }
+.btn-primary { background: var(--uk-primary); color: var(--uk-text-on-primary); border-color: var(--uk-primary); }
 .btn-primary:hover { background: var(--uk-primary-hover); }
 .btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
 

@@ -116,6 +116,9 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
 
   // Computed
   const overallStatus = computed(() => {
+    // An active maintenance announced on this page wins, as in upstream
+    if (maintenanceList.value.length > 0) return STATUS_PAGE_MAINTENANCE
+
     const allHeartbeats: Heartbeat[] = []
     
     for (const group of groups.value) {

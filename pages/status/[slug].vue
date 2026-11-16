@@ -204,43 +204,20 @@ function removeCustomCss() {
 }
 
 // Calculate overall status from all monitors
+const { t } = useI18n()
 const overallStatusConfig = computed(() => {
+  // Light fills (up / pending) take dark text; dark fills take white
   switch (overallStatusType.value) {
     case 'operational':
-      return { 
-        text: 'All Systems Operational', 
-        icon: '✓',
-        bgClass: 'bg-up',
-        textClass: 'text-white'
-      }
+      return { text: t('All Systems Operational'), icon: '✓', bgClass: 'bg-up', textClass: 'text-on-primary' }
     case 'partial-outage':
-      return { 
-        text: 'Partial System Outage', 
-        icon: '⚠',
-        bgClass: 'bg-pending',
-        textClass: 'text-white'
-      }
+      return { text: t('Partially Degraded Service'), icon: '⚠', bgClass: 'bg-pending', textClass: 'text-on-primary' }
     case 'major-outage':
-      return { 
-        text: 'Major System Outage', 
-        icon: '✕',
-        bgClass: 'bg-down',
-        textClass: 'text-white'
-      }
+      return { text: t('Degraded Service'), icon: '✕', bgClass: 'bg-down', textClass: 'text-white' }
     case 'maintenance':
-      return { 
-        text: 'Scheduled Maintenance', 
-        icon: '🔧',
-        bgClass: 'bg-maintenance',
-        textClass: 'text-white'
-      }
+      return { text: t('Maintenance'), icon: '🔧', bgClass: 'bg-maintenance', textClass: 'text-white' }
     default:
-      return { 
-        text: 'Status Unknown', 
-        icon: '?',
-        bgClass: 'bg-unknown',
-        textClass: 'text-white'
-      }
+      return { text: t('Unknown'), icon: '?', bgClass: 'bg-unknown', textClass: 'text-on-primary' }
   }
 })
 
@@ -600,7 +577,7 @@ function formatLastUpdated(date: Date | null) {
           <p class="text-xl text-muted mb-8">{{ error }}</p>
           <NuxtLink 
             to="/" 
-            class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            class="inline-flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary/90 transition-colors"
           >
             Go Home
           </NuxtLink>

@@ -293,7 +293,7 @@ async function saveTlsExpirySettings() {
     <div v-if="showAlert" 
          :class="[
            'fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md',
-           alertType === 'success' ? 'bg-up text-white' : 'bg-down text-white'
+           alertType === 'success' ? 'bg-up text-on-primary' : 'bg-down text-white'
          ]">
       <div class="flex items-start gap-3">
         <div class="flex-1 text-sm">{{ alertMessage }}</div>
