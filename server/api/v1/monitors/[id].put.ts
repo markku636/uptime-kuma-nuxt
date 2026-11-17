@@ -1,37 +1,9 @@
 // server/api/v1/monitors/[id].put.ts
-import { z } from 'zod'
 import { scheduleGroupRecheck, startMonitorJob, stopMonitorJob } from '../../../services/monitor/scheduler'
 import { normalizeMonitorPayload } from '../../../services/monitor/status-codes'
+import { normalizeMonitorFields, updateMonitorSchema } from '../../../services/monitor/fields'
+import { prismaColumns, replaceMonitorRelations } from '../../../services/monitor/save'
 import { WorkspaceError, resolvePlacement, syncMembersAfterMove } from '../../../services/workspace/service'
-
-const updateMonitorSchema = z.object({
-  name: z.string().min(1).optional(),
-  type: z.string().optional(),  // Support all 24 monitor types
-  url: z.string().optional(),
-  hostname: z.string().optional(),
-  port: z.number().optional(),
-  interval: z.number().optional(),
-  timeout: z.number().optional(),
-  retryInterval: z.number().optional(),
-  maxretries: z.number().optional(),
-  method: z.string().optional(),
-  body: z.string().optional(),
-  headers: z.record(z.string(), z.string()).nullable().optional(),
-  acceptedStatuscodes: z.array(z.string()).optional(),
-  keyword: z.string().optional(),
-  invertKeyword: z.boolean().optional(),
-  ignoreTls: z.boolean().optional(),
-  upsideDown: z.boolean().optional(),
-  authMethod: z.string().optional(),
-  basicAuthUser: z.string().optional(),
-  basicAuthPass: z.string().optional(),
-  description: z.string().optional(),
-  active: z.boolean().optional(),
-  weight: z.number().optional(),
-  // Organization: group (parent) and workspace
-  parent: z.number().int().positive().nullable().optional(),
-  workspaceId: z.number().int().positive().nullable().optional(),
-})
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -68,7 +40,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // Accept both monitor forms' shapes (headers as JSON string, basic_auth_* keys, "200-299, 404")
-  const body = normalizeMonitorPayload(await readBody(event))
+  // and the edit form's own keys (maxredirects, dns_resolve_server, notificationIDList…)
+  const body = normalizeMonitorFields(normalizeMonitorPayload(await readBody(event)))
   
   // Validate input
   const result = updateMonitorSchema.safeParse(body)
@@ -91,16 +64,17 @@ export default defineEventHandler(async (event) => {
   const monitor = await prisma.monitor.update({
     where: { id },
     data: {
-      ...data,
+      ...prismaColumns(data),
       ...placement,
       // Pausing / resuming by hand makes the state the monitor's own
       ...(data.active !== undefined && data.active !== existingMonitor.active ? { pausedByGroup: null } : {}),
-      headers: data.headers ? data.headers : undefined,
     },
     include: {
       tags: { include: { tag: true } }
     }
   })
+
+  await replaceMonitorRelations(session.user.id, id, { tags: data.tags, notifications: data.notifications })
 
   if (placement.workspaceId !== current.workspaceId) {
     await syncMembersAfterMove(session.user.id, monitor)

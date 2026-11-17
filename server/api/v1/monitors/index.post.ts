@@ -3,55 +3,15 @@ import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { scheduleGroupRecheck, startMonitorJob } from '../../../services/monitor/scheduler'
 import { normalizeMonitorPayload } from '../../../services/monitor/status-codes'
+import { monitorFields, normalizeMonitorFields } from '../../../services/monitor/fields'
+import { prismaColumns, replaceMonitorRelations } from '../../../services/monitor/save'
 import { WorkspaceError, resolvePlacement } from '../../../services/workspace/service'
 
+// Every settable column (see services/monitor/fields.ts); name and type are required
 const createMonitorSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  type: z.string().min(1, 'Type is required'),  // Support all 24 monitor types
-  url: z.string().optional().nullable(),
-  hostname: z.string().optional().nullable(),
-  port: z.number().optional().nullable(),
-  interval: z.number().default(60),
-  timeout: z.number().default(48),
-  retryInterval: z.number().default(60),
-  maxretries: z.number().default(0),
-  method: z.string().default('GET'),
-  body: z.string().optional().nullable(),
-  headers: z.record(z.string(), z.string()).optional().nullable(),
-  acceptedStatuscodes: z.array(z.string()).optional().nullable(),
-  keyword: z.string().optional().nullable(),
-  jsonPath: z.string().optional().nullable(),
-  expectedValue: z.string().optional().nullable(),
-  invertKeyword: z.boolean().default(false),
-  ignoreTls: z.boolean().default(false),
-  upsideDown: z.boolean().default(false),
-  authMethod: z.string().optional().nullable(),
-  basicAuthUser: z.string().optional().nullable(),
-  basicAuthPass: z.string().optional().nullable(),
-  description: z.string().optional().nullable(),
-  maxRedirects: z.number().default(10).nullable(),
-  active: z.boolean().default(true),
-  // TLS Certificate settings
-  expiryNotification: z.boolean().default(false),
-  tlsExpiryDays: z.array(z.number()).optional().nullable(),
-  // DNS settings
-  dnsRecordType: z.string().optional().nullable(),
-  dnsResolver: z.string().optional().nullable(),
-  // Docker settings
-  dockerHost: z.number().optional().nullable(),
-  dockerContainer: z.string().optional().nullable(),
-  // Database settings
-  databaseType: z.string().optional().nullable(),
-  databaseConnectionString: z.string().optional().nullable(),
-  databaseQuery: z.string().optional().nullable(),
-  // Proxy
-  proxyId: z.number().optional().nullable(),
-  // Organization: group (parent) and workspace
-  parent: z.number().int().positive().optional().nullable(),
-  workspaceId: z.number().int().positive().optional().nullable(),
-  // Tags and notifications
-  tags: z.array(z.number()).optional().nullable(),
-  notifications: z.array(z.number()).optional().nullable(),
+  ...monitorFields,
+  name: z.string().min(1, 'Name is required').max(150),
+  type: z.string().min(1, 'Type is required'),
 })
 
 export default defineEventHandler(async (event) => {
@@ -65,7 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Accept both monitor forms' shapes (headers as JSON string, basic_auth_* keys, "200-299, 404")
-  const body = normalizeMonitorPayload(await readBody(event))
+  const body = normalizeMonitorFields(normalizeMonitorPayload(await readBody(event)))
   
   // Validate input
   const result = createMonitorSchema.safeParse(body)
@@ -97,7 +57,7 @@ export default defineEventHandler(async (event) => {
   const pushToken = data.type === 'push' ? nanoid(32) : undefined
 
   // Extract tags and notifications for separate handling
-  const { tags, notifications, tlsExpiryDays, parent, workspaceId, ...monitorData } = data
+  const { tags, notifications, parent, workspaceId } = data
 
   // A monitor inside a group always lives in the group's workspace
   const placement = await resolvePlacement(session.user.id, null, { parent, workspaceId }).catch((e) => {
@@ -107,39 +67,18 @@ export default defineEventHandler(async (event) => {
 
   const monitor = await prisma.monitor.create({
     data: {
-      ...monitorData,
+      ...(prismaColumns(data) as any),
       ...placement,
       userId: session.user.id,
       pushToken,
-      headers: monitorData.headers ? monitorData.headers : undefined,
-      tlsExpiryDays: tlsExpiryDays ? tlsExpiryDays : undefined,
     },
     include: {
       tags: { include: { tag: true } }
     }
   })
 
-  // Add tags if provided
-  if (tags && tags.length > 0) {
-    await prisma.monitorTag.createMany({
-      data: tags.map((tagId: number) => ({
-        monitorId: monitor.id,
-        tagId,
-      })),
-      skipDuplicates: true,
-    })
-  }
-
-  // Add notifications if provided
-  if (notifications && notifications.length > 0) {
-    await prisma.monitorNotification.createMany({
-      data: notifications.map((notificationId: number) => ({
-        monitorId: monitor.id,
-        notificationId,
-      })),
-      skipDuplicates: true,
-    })
-  }
+  // Tags and notifications (only the user's own)
+  await replaceMonitorRelations(session.user.id, monitor.id, { tags: tags ?? undefined, notifications: notifications ?? undefined })
 
   // Fetch the updated monitor with all relations
   const updatedMonitor = await prisma.monitor.findUnique({

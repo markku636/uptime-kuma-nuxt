@@ -4,6 +4,24 @@ import axios from 'axios'
 import https from 'https'
 import fs from 'fs'
 import path from 'path'
+import { prisma } from '../../../utils/prisma'
+
+/**
+ * Where to reach Docker: the monitor stores a Docker host's id (forms) or a
+ * socket path / URL directly (imports, API). Plain http:// is kept as is.
+ */
+async function resolveDockerEndpoint(monitor: any): Promise<string> {
+  const value = String(monitor.dockerHost ?? '').trim()
+  if (/^\d+$/.test(value)) {
+    const host = await prisma.dockerHost.findFirst({ where: { id: Number(value), userId: monitor.userId } })
+    if (!host) throw new Error('Docker host not found')
+    if (!host.active) throw new Error(`Docker host "${host.name}" is disabled`)
+    const endpoint = (host.dockerType === 'tcp' ? host.connectionUrl : host.dockerDaemon) || host.dockerDaemon || host.connectionUrl
+    if (!endpoint) throw new Error(`Docker host "${host.name}" has no socket or URL`)
+    return endpoint
+  }
+  return value || '/var/run/docker.sock'
+}
 
 export async function checkDocker(monitor: any, startTime: number): Promise<CheckResult> {
   try {
@@ -15,7 +33,7 @@ export async function checkDocker(monitor: any, startTime: number): Promise<Chec
       }
     }
 
-    const dockerHost = monitor.dockerHost || '/var/run/docker.sock'
+    const dockerHost = await resolveDockerEndpoint(monitor)
     const container = monitor.dockerContainer
 
     let containerInfo: any
