@@ -82,7 +82,8 @@ export default defineEventHandler(async (event) => {
 
   // Generate unique filename
   const timestamp = Date.now()
-  const filename = `${slug}-logo-${timestamp}.${extension}`
+  // The id, not the slug: slugs from imports / sockets are not validated
+  const filename = `status-page-${statusPage.id}-logo-${timestamp}.${extension}`
   const filePath = join(uploadDir, filename)
 
   // Write file
