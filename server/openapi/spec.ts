@@ -485,6 +485,10 @@ export const ENDPOINTS: Endpoint[] = [
   { method: 'post', path: '/api/v1/database/clear-statistics', tag: 'Database', summary: 'Clear statistics (deletes your heartbeats)', zh: '清除統計資料（刪除自己的心跳記錄）', destructive: true },
   { method: 'post', path: '/api/v1/database/shrink-database', tag: 'Database', summary: 'Shrink database', zh: '壓縮資料庫', destructive: true },
   { method: 'post', path: '/api/v1/database/clear-all', tag: 'Database', summary: 'Clear all monitoring data', zh: '清除全部資料', destructive: true },
+  { method: 'get', path: '/api/v1/monitor-history/settings', tag: 'Database', summary: 'Heartbeat retention and history size', zh: '取得心跳保留天數與目前記錄量' },
+  { method: 'put', path: '/api/v1/monitor-history/settings', tag: 'Database', summary: 'Set heartbeat retention in days (0 keeps forever)', zh: '設定心跳保留天數（0 為永久保留）' },
+  { method: 'post', path: '/api/v1/monitor-history/clear', tag: 'Database', summary: 'Delete your heartbeats older than N days', zh: '刪除超過 N 天的心跳記錄', destructive: true },
+  { method: 'post', path: '/api/v1/monitor-history/clear-all', tag: 'Database', summary: 'Delete all your heartbeats', zh: '刪除全部心跳記錄', destructive: true },
 
   // ──────────────────────────── Badges ────────────────────────────
   {

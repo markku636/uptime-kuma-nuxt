@@ -2,8 +2,9 @@
 // Clears old heartbeat data from the database based on keepDataPeriodDays setting
 
 import { prisma } from '../utils/prisma'
+import { HISTORY_DEFAULT_DAYS } from '../services/monitor/history'
 
-const DEFAULT_KEEP_PERIOD = 180
+const DEFAULT_KEEP_PERIOD = HISTORY_DEFAULT_DAYS
 
 /**
  * Clears old data from the heartbeat table.
