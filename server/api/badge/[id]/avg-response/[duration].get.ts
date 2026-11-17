@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
   if (avgResponse > 1000) color = '#e67e22' // Orange - slow
   if (avgResponse > 2000) color = '#e74c3c' // Red - very slow
 
-  const svg = generateBadge(`Avg Response`, `${avgResponse}ms`, color)
+  const svg = generateBadge({ label: `Avg Response`, message: `${avgResponse}ms`, color: color })
 
   setResponseHeader(event, 'Content-Type', 'image/svg+xml')
   setResponseHeader(event, 'Cache-Control', 'no-cache, no-store, must-revalidate')

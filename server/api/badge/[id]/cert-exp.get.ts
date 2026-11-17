@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
   // Only HTTP(S) monitors with URLs can have certificates (the URL may use {{variables}})
   const monitorUrl = await resolveMonitorUrl(monitor)
   if (!monitorUrl) {
-    const svg = generateBadge('Cert Exp', 'N/A', '#808080')
+    const svg = generateBadge({ label: 'Cert Exp', message: 'N/A', color: '#808080' })
     setResponseHeader(event, 'Content-Type', 'image/svg+xml')
     return svg
   }
@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
     
     // Only HTTPS has certificates
     if (url.protocol !== 'https:') {
-      const svg = generateBadge('Cert Exp', 'N/A', '#808080')
+      const svg = generateBadge({ label: 'Cert Exp', message: 'N/A', color: '#808080' })
       setResponseHeader(event, 'Content-Type', 'image/svg+xml')
       return svg
     }
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
     const certInfo = await getCertificateInfo(url.hostname, parseInt(url.port) || 443)
     
     if (!certInfo) {
-      const svg = generateBadge('Cert Exp', 'Error', '#e74c3c')
+      const svg = generateBadge({ label: 'Cert Exp', message: 'Error', color: '#e74c3c' })
       setResponseHeader(event, 'Content-Type', 'image/svg+xml')
       return svg
     }
@@ -96,14 +96,14 @@ export default defineEventHandler(async (event) => {
     if (certInfo.daysRemaining < 0) color = '#c0392b' // Dark red - expired
 
     const label = certInfo.daysRemaining < 0 ? 'Expired' : `${certInfo.daysRemaining} days`
-    const svg = generateBadge('Cert Exp', label, color)
+    const svg = generateBadge({ label: 'Cert Exp', message: label, color: color })
 
     setResponseHeader(event, 'Content-Type', 'image/svg+xml')
     setResponseHeader(event, 'Cache-Control', 'public, max-age=3600')
     
     return svg
   } catch {
-    const svg = generateBadge('Cert Exp', 'Error', '#e74c3c')
+    const svg = generateBadge({ label: 'Cert Exp', message: 'Error', color: '#e74c3c' })
     setResponseHeader(event, 'Content-Type', 'image/svg+xml')
     return svg
   }
