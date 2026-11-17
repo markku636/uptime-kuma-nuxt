@@ -1,41 +1,18 @@
 // server/services/monitor/checkers/json-query-checker.ts
-import axios from 'axios'
 import { JSONPath } from 'jsonpath-plus'
 import type { CheckResult } from '../checker'
+import { isStatusAccepted } from '../status-codes'
+import { sendMonitorRequest } from './http-request'
 
 export async function checkJsonQuery(monitor: any, startTime: number): Promise<CheckResult> {
-  const https = await import('https')
-  
-  const config: any = {
-    method: monitor.method || 'GET',
-    url: monitor.url,
-    timeout: (monitor.timeout || 48) * 1000,
-    headers: monitor.headers || {},
-    validateStatus: () => true,
-  }
-
-  if (monitor.body) {
-    config.data = monitor.body
-  }
-
-  if (monitor.ignoreTls) {
-    config.httpsAgent = new https.Agent({ rejectUnauthorized: false })
-  }
-
-  if (monitor.authMethod === 'basic' && monitor.basicAuthUser) {
-    config.auth = {
-      username: monitor.basicAuthUser,
-      password: monitor.basicAuthPass || ''
-    }
-  }
-
   try {
-    const response = await axios(config)
+    const response = await sendMonitorRequest(monitor)
     const ping = Date.now() - startTime
 
-    if (response.status < 200 || response.status >= 400) {
+    // Same accepted status codes as HTTP monitors (default 2xx/3xx)
+    if (!isStatusAccepted(response.status, monitor.acceptedStatuscodes)) {
       return {
-        status: 0,
+        status: monitor.upsideDown ? 1 : 0,
         ping,
         msg: `HTTP ${response.status} - ${response.statusText}`
       }

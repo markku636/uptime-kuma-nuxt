@@ -373,7 +373,7 @@
               <select v-model="form.proxyId" class="select-field">
                 <option :value="null">No Proxy</option>
                 <option v-for="proxy in proxies" :key="proxy.id" :value="proxy.id">
-                  {{ proxy.name }} ({{ proxy.host }}:{{ proxy.port }})
+                  {{ proxy.protocol }}://{{ proxy.host }}:{{ proxy.port }}{{ proxy.isDefault ? ' (Default)' : '' }}
                 </option>
               </select>
             </div>

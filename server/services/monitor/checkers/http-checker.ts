@@ -1,19 +1,22 @@
 // server/services/monitor/checkers/http-checker.ts
-import axios from 'axios'
 import type { CheckResult } from '../checker'
 import { getTLSInfo, type TLSInfo } from './tls-checker'
 import { isStatusAccepted } from '../status-codes'
+import { bodyText, sendMonitorRequest } from './http-request'
 
 export interface HttpCheckResult extends CheckResult {
   tlsInfo?: TLSInfo | null
 }
 
+/** Shorten a keyword for messages */
+function quote(keyword: string): string {
+  return keyword.length > 50 ? `"${keyword.slice(0, 47)}..."` : `"${keyword}"`
+}
+
 export async function checkHttp(monitor: any, startTime: number): Promise<HttpCheckResult> {
-  const https = await import('https')
-  
   let tlsInfo: TLSInfo | null = null
-  
-  // Get TLS info for HTTPS URLs
+
+  // Certificate details for HTTPS URLs (expiry notifications use them)
   if (monitor.url && monitor.url.startsWith('https://')) {
     try {
       tlsInfo = await getTLSInfo(monitor.url, (monitor.timeout || 48) * 1000)
@@ -21,89 +24,30 @@ export async function checkHttp(monitor: any, startTime: number): Promise<HttpCh
       console.error('Failed to get TLS info:', e)
     }
   }
-  
-  const config: any = {
-    method: monitor.method || 'GET',
-    url: monitor.url,
-    timeout: (monitor.timeout || 48) * 1000,
-    headers: monitor.headers || {},
-    validateStatus: () => true, // Accept all status codes
-  }
 
-  if (monitor.body) {
-    config.data = monitor.body
-  }
-
-  if (monitor.ignoreTls) {
-    config.httpsAgent = new https.Agent({ rejectUnauthorized: false })
-  }
-
-  // Basic auth
-  if (monitor.authMethod === 'basic' && monitor.basicAuthUser) {
-    config.auth = {
-      username: monitor.basicAuthUser,
-      password: monitor.basicAuthPass || ''
-    }
-  }
-
-  // NTLM auth
-  if (monitor.authMethod === 'ntlm' && monitor.basicAuthUser) {
-    const httpntlm = await import('httpntlm')
-    // Handle NTLM differently
-  }
-
-  // OAuth / Bearer token
-  if (monitor.authMethod === 'oauth2-cc' && monitor.oauth2TokenURL) {
-    const tokenResponse = await axios.post(monitor.oauth2TokenURL, {
-      grant_type: 'client_credentials',
-      client_id: monitor.oauth2ClientId,
-      client_secret: monitor.oauth2ClientSecret,
-      scope: monitor.oauth2Scope
-    })
-    config.headers['Authorization'] = `Bearer ${tokenResponse.data.access_token}`
-  }
-
-  const response = await axios(config)
+  const response = await sendMonitorRequest(monitor)
   const ping = Date.now() - startTime
 
-  // Check if response is successful
   // Accepted codes support ranges ("200-299"); default is 2xx/3xx
   let isUp = isStatusAccepted(response.status, monitor.acceptedStatuscodes)
+  let msg = `HTTP ${response.status} - ${response.statusText}`
 
-  // Keyword check
   if (monitor.keyword && isUp) {
-    const bodyText = typeof response.data === 'string' 
-      ? response.data 
-      : JSON.stringify(response.data)
-    
-    const found = bodyText.includes(monitor.keyword)
-    
-    if (monitor.invertKeyword) {
-      isUp = found ? false : true
-    } else {
-      isUp = found
-    }
-
+    const found = bodyText(response.data).includes(monitor.keyword)
+    isUp = monitor.invertKeyword ? !found : found
     if (!isUp) {
-      return {
-        status: 0,
-        ping,
-        msg: monitor.invertKeyword ? 'Keyword found (inverted)' : 'Keyword not found'
-      }
+      msg = monitor.invertKeyword
+        ? `Keyword ${quote(monitor.keyword)} found, but should be absent`
+        : `Keyword ${quote(monitor.keyword)} not found`
+    } else {
+      msg += monitor.invertKeyword ? `, keyword ${quote(monitor.keyword)} absent` : `, keyword ${quote(monitor.keyword)} found`
     }
   }
 
-  // Upside down mode
-  if (monitor.upsideDown) {
-    isUp = !isUp
-  }
+  // Upside down mode flips the outcome, keyword checks included
+  if (monitor.upsideDown) isUp = !isUp
 
-  return {
-    status: isUp ? 1 : 0,
-    ping,
-    msg: `HTTP ${response.status} - ${response.statusText}`,
-    tlsInfo
-  }
+  return { status: isUp ? 1 : 0, ping, msg, tlsInfo }
 }
 
 export async function checkKeyword(monitor: any, startTime: number): Promise<HttpCheckResult> {

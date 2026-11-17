@@ -6,7 +6,13 @@ declare module 'httpntlm' {
     password: string
     domain?: string
     workstation?: string
-    request?: any
+    /** Sent with the final (authenticated) request; Connection / Authorization are reserved */
+    headers?: Record<string, string>
+    body?: string
+    /** Milliseconds, per request of the handshake */
+    timeout?: number
+    agent?: import('node:http').Agent
+    [option: string]: unknown
   }
 
   interface NtlmResponse {
@@ -15,9 +21,14 @@ declare module 'httpntlm' {
     headers: Record<string, string>
   }
 
-  export function get(options: NtlmOptions, callback: (err: Error | null, response: NtlmResponse) => void): void
-  export function post(options: NtlmOptions & { body?: string }, callback: (err: Error | null, response: NtlmResponse) => void): void
-  export function put(options: NtlmOptions & { body?: string }, callback: (err: Error | null, response: NtlmResponse) => void): void
-  export function del(options: NtlmOptions, callback: (err: Error | null, response: NtlmResponse) => void): void
-  export function patch(options: NtlmOptions & { body?: string }, callback: (err: Error | null, response: NtlmResponse) => void): void
+  type Send = (options: NtlmOptions, callback: (err: Error | null, response: NtlmResponse) => void) => void
+
+  export const get: Send
+  export const post: Send
+  export const put: Send
+  export const patch: Send
+  // `delete` is a reserved word: exported under that name by the library
+  const del: Send
+  export { del as delete }
+  export const options: Send
 }
