@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
 
     // 使用資料庫中的狀態作為主要來源
     const isOnline = node.status === 'online'
-    const lastHeartbeat = node.lastHeartbeat?.getTime() || 0
+    const lastHeartbeat = node.lastSeen?.getTime() || 0
 
     // 檢查快取或執行即時健康檢查 (僅在需要時)
     let healthStatus = { healthy: isOnline, error: '' }
