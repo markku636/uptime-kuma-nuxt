@@ -32,13 +32,14 @@
 所有類型都可以在「新增監控」頁面建立（較少用的類型列在「More」）。
 
 ### 🔔 通知渠道
-- Email (SMTP)
-- Webhook
-- Discord
-- Slack
-- Telegram
-- Microsoft Teams
-- 更多...
+- Email (SMTP，支援 TLS / STARTTLS、CC / BCC、DKIM、自訂主旨與內文範本)
+- Webhook（自訂 JSON 內文與標頭；範本可用 `{{ msg }}`、`{{ monitorJSON.name }}`、`{{monitorName}}` 等）
+- Discord、Slack、Telegram、Microsoft Teams、PagerDuty、Opsgenie、Pushover、ntfy、Gotify、Matrix 等共約 77 種
+
+狀態變化（UP / DOWN）時通知；標記為「預設」的通知會自動套用到新監控。設定頁的「Test」可以先送出一則測試訊息。
+
+### 🌐 狀態頁自訂網域
+在狀態頁的編輯側欄加入網域（例如 `status.example.com`），把該網域指向本服務後，開啟網域根目錄 `/` 會直接顯示這個狀態頁。同一個網域只能屬於一個狀態頁。
 
 ### 📊 功能亮點
 - 📈 多語言支援 (70+ 語言)
