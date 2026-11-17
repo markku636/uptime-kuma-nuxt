@@ -639,6 +639,15 @@ ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "snmp_oid" TEXT;
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "snmp_version" TEXT;
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "json_path_operator" TEXT;
 
+-- The add page used to save a generic "database" type: use the checker's type
+UPDATE "monitors" SET "type" = CASE lower(coalesce("database_type", ''))
+    WHEN 'mssql' THEN 'sqlserver' WHEN 'sqlserver' THEN 'sqlserver'
+    WHEN 'postgresql' THEN 'postgres' WHEN 'postgres' THEN 'postgres'
+    WHEN 'mariadb' THEN 'mysql' WHEN 'mysql' THEN 'mysql'
+    WHEN 'mongodb' THEN 'mongodb' WHEN 'redis' THEN 'redis'
+    ELSE "type" END
+WHERE "type" = 'database';
+
 -- Variables monitors can use as {{name}} (global, or per workspace)
 CREATE TABLE IF NOT EXISTS "variables" (
     "id" SERIAL NOT NULL,

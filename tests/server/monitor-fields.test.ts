@@ -87,3 +87,12 @@ describe('review fixes', () => {
     expect(updateMonitorSchema.parse({ timeout: 1.6 }).timeout).toBe(2)
   })
 })
+
+describe('database type', () => {
+  it('turns the generic database type into the checker type', () => {
+    expect(normalizeMonitorFields({ type: 'database', databaseType: 'mssql' }).type).toBe('sqlserver')
+    expect(normalizeMonitorFields({ type: 'database', databaseType: 'postgres' }).type).toBe('postgres')
+    expect(normalizeMonitorFields({ type: 'database', databaseType: 'weird' }).type).toBe('database')
+    expect(normalizeMonitorFields({ type: 'http', databaseType: 'mysql' }).type).toBe('http')
+  })
+})

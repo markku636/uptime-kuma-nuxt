@@ -123,6 +123,19 @@ export function idList(value: unknown): number[] | undefined {
   return [...new Set(ids.map(Number).filter(n => Number.isInteger(n) && n > 0))]
 }
 
+/**
+ * The add page's generic "database" type + databaseType → the checker's
+ * type (mysql, postgres, sqlserver, mongodb, redis); null if unknown.
+ */
+export function databaseMonitorType(databaseType: unknown): string | null {
+  const t = String(databaseType ?? '').toLowerCase()
+  if (t === 'mssql' || t === 'sqlserver') return 'sqlserver'
+  if (t === 'postgresql' || t === 'postgres') return 'postgres'
+  if (t === 'mariadb' || t === 'mysql') return 'mysql'
+  if (t === 'mongodb' || t === 'redis') return t
+  return null
+}
+
 /** Lines or commas → list (Kafka brokers, RabbitMQ nodes) */
 function listOf(value: unknown): unknown {
   if (typeof value !== 'string') return value
@@ -155,6 +168,7 @@ export function normalizeMonitorFields<T extends Record<string, any>>(body: T): 
   alias('kafkaProducerBrokers', 'kafkaBrokers')
 
   // null / [] empties a set; anything unreadable leaves it as it is
+  if (out.type === 'database') out.type = databaseMonitorType(out.databaseType) ?? out.type
   if ('tags' in out) out.tags = out.tags === null ? null : idList(out.tags)
   if ('notifications' in out) out.notifications = out.notifications === null ? null : idList(out.notifications)
   for (const key of ['kafkaBrokers', 'rabbitmqNodes']) if (key in out) out[key] = listOf(out[key])

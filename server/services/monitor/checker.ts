@@ -27,6 +27,7 @@ import { prisma } from '../../utils/prisma'
 import { aggregateGroupStatus } from '../workspace/tree'
 import { applyVariables, maskSecrets, usesVariables } from '../variables/resolve'
 import { variablesForMonitor } from '../variables/service'
+import { databaseMonitorType } from './fields'
 
 export interface CheckResult {
   status: number // 0: DOWN, 1: UP, 2: PENDING, 3: MAINTENANCE
@@ -64,6 +65,13 @@ export async function checkMonitor(monitor: any): Promise<CheckResult> {
 async function runChecker(monitor: any, startTime: number): Promise<CheckResult> {
 
   try {
+    // Monitors saved with the generic "database" type: check by their database type
+    if (monitor.type === 'database') {
+      const type = databaseMonitorType(monitor.databaseType)
+      if (!type) return { status: 0, ping: 0, msg: `Unknown database type: ${monitor.databaseType ?? '(none)'}` }
+      monitor = { ...monitor, type }
+    }
+
     switch (monitor.type) {
       case 'http':
         return await checkHttp(monitor, startTime)
