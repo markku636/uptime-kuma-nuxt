@@ -367,7 +367,7 @@ export const ENDPOINTS: Endpoint[] = [
     body: { logo: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' },
   },
   { method: 'delete', path: '/api/v1/status-pages/{slug}', tag: 'Status Pages', summary: 'Delete status page', zh: '刪除狀態頁面', params: { slug: 'statusPageSlug' }, destructive: true },
-  { method: 'get', path: '/api/v1/status-page/{slug}/heartbeat', tag: 'Status Pages', summary: 'Get status page heartbeats (legacy path)', zh: '取得狀態頁面心跳 (舊路徑)', params: { slug: 'statusPageSlug' } },
+  { method: 'get', path: '/api/v1/status-page/{slug}/heartbeat', tag: 'Status Pages', public: true, summary: 'Get status page heartbeats (legacy path)', zh: '取得狀態頁面心跳 (舊路徑)', params: { slug: 'statusPageSlug' } },
   { method: 'get', path: '/api/status-page/{slug}/heartbeat', tag: 'Status Pages', summary: 'Get status page heartbeats (unversioned path)', zh: '取得狀態頁面心跳 (無版本路徑)', params: { slug: 'statusPageSlug' } },
   { method: 'get', path: '/api/status/{slug}/rss', tag: 'Status Pages', public: true, summary: 'Status page RSS feed', zh: '狀態頁面 RSS', params: { slug: 'statusPageSlug' }, produces: 'application/rss+xml' },
 

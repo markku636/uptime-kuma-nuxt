@@ -26,7 +26,8 @@ export default defineEventHandler(async (event) => {
 
   // Public status page routes (GET only for viewing)
   // Pattern: /api/v1/status-pages/{slug}/monitors or /api/v1/status-pages/{slug}/heartbeat
-  if (method === 'GET' && path.match(/^\/api\/v1\/status-pages\/[^\/]+\/(monitors|heartbeat)/)) {
+  // (and the legacy /api/v1/status-page/{slug}/heartbeat)
+  if (method === 'GET' && path.match(/^\/api\/v1\/status-pages?\/[^\/]+\/(monitors|heartbeat)/)) {
     return
   }
 
