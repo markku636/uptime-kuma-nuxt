@@ -143,15 +143,22 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     }
   }
 
-  async function testNotification(id: number) {
+  /** Test a saved notification (by id) or an unsaved one (type + config) */
+  async function testNotification(target: number | { type: string; config: unknown }) {
+    const body = typeof target === 'number'
+      ? { notificationId: target }
+      : {
+          type: target.type,
+          // Forms may hand over the config as a JSON string
+          config: typeof target.config === 'string' ? JSON.parse(target.config || '{}') : target.config,
+        }
     try {
-      const response = await $fetch<{ success: boolean; message?: string }>(`/api/v1/notifications/${id}/test`, {
-        method: 'POST'
+      return await $fetch<{ success: boolean; message?: string }>('/api/v1/notifications/test', {
+        method: 'POST',
+        body,
       })
-      
-      return response
     } catch (e: any) {
-      throw new Error(e.message || 'Test notification failed')
+      throw new Error(e?.data?.message || e.message || 'Test notification failed')
     }
   }
 
