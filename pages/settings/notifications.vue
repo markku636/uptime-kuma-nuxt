@@ -4,6 +4,8 @@
  * Complete implementation with all 78 notification providers
  */
 
+import { NotificationProviderMap } from '~/components/notification/providers'
+
 definePageMeta({ middleware: ['auth'] })
 
 const toast = useToast()
@@ -167,6 +169,25 @@ const form = ref({
   config: {} as Record<string, any>,
   isDefault: false,
   active: true
+})
+
+// Types without an explicit form above still have a component in the map
+// (names compared without separators: "google-chat" = "googlechat")
+const providerComponents = new Map<string, any>()
+const providerComponent = computed(() => {
+  const norm = (s: string) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const key = Object.keys(NotificationProviderMap).find(k => norm(k) === norm(form.value.type))
+  if (!key) return null
+  if (!providerComponents.has(key)) providerComponents.set(key, defineAsyncComponent(NotificationProviderMap[key]))
+  return providerComponents.get(key)
+})
+
+// Last resort: edit the config as JSON text
+const configText = computed({
+  get: () => JSON.stringify(form.value.config ?? {}, null, 2),
+  set: (text: string) => {
+    try { form.value.config = JSON.parse(text || '{}') } catch { /* keep the last valid config while typing */ }
+  },
 })
 
 onMounted(async () => {
@@ -451,11 +472,12 @@ async function saveTlsExpirySettings() {
                 <NotificationProvidersSplunk v-else-if="form.type === 'splunk'" v-model="form.config" />
                 <NotificationProvidersApprise v-else-if="form.type === 'apprise'" v-model="form.config" />
                 <NotificationProvidersLunaSea v-else-if="form.type === 'lunasea'" v-model="form.config" />
-                <!-- Fallback for other types -->
+                <component :is="providerComponent" v-else-if="providerComponent" v-model="form.config" />
+                <!-- Fallback for types without a form -->
                 <div v-else class="text-toned text-sm">
-                  <p class="mb-2">Provider-specific configuration:</p>
+                  <p class="mb-2">Provider-specific configuration (JSON):</p>
                   <textarea
-                    v-model="form.config"
+                    v-model.lazy="configText"
                     class="input-field w-full font-mono text-sm"
                     rows="4"
                     placeholder='{"webhookUrl": "https://..."}'
