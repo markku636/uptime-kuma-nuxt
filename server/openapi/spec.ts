@@ -251,6 +251,7 @@ export const ENDPOINTS: Endpoint[] = [
     query: [
       { name: 'limit', type: 'integer', example: 100, enabled: true },
       { name: 'offset', type: 'integer', example: 0, enabled: true },
+      { name: 'hours', type: 'integer', example: 24, enabled: false },
     ],
   },
   {
