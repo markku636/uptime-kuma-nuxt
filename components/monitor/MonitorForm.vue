@@ -611,6 +611,22 @@
       </div>
     </div>
 
+    <!-- RabbitMQ Settings -->
+    <div v-if="form.type === 'rabbitmq'" class="section-card">
+      <h2 class="section-title">RabbitMQ Settings</h2>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">Username</label>
+          <input v-model="form.rabbitmqUsername" type="text" class="input-field" placeholder="guest" autocomplete="off" :disabled="loading" />
+        </div>
+        <div class="form-group">
+          <label class="input-label">Password</label>
+          <input v-model="form.rabbitmqPassword" type="password" class="input-field" autocomplete="new-password" :disabled="loading" />
+        </div>
+      </div>
+      <p class="text-xs text-dimmed mt-2">Port 5671 connects with TLS (amqps), any other port without.</p>
+    </div>
+
     <!-- Kafka Settings -->
     <div v-if="form.type === 'kafka'" class="section-card">
       <h2 class="section-title">Kafka Settings</h2>
@@ -1260,6 +1276,9 @@ const form = reactive({
   mqttUsername: props.initialData?.mqttUsername || '',
   mqttPassword: props.initialData?.mqttPassword || '',
   mqttSuccessMessage: props.initialData?.mqttSuccessMessage || '',
+  // RabbitMQ
+  rabbitmqUsername: props.initialData?.rabbitmqUsername || '',
+  rabbitmqPassword: props.initialData?.rabbitmqPassword || '',
   // Kafka
   kafkaTopic: props.initialData?.kafkaTopic || '',
   kafkaSaslMechanism: props.initialData?.kafkaSaslMechanism || '',
@@ -1577,6 +1596,12 @@ const handleSubmit = () => {
     data.mqttUsername = form.mqttUsername || undefined
     data.mqttPassword = form.mqttPassword || undefined
     data.mqttSuccessMessage = form.mqttSuccessMessage || undefined
+  }
+
+  // RabbitMQ specific
+  if (form.type === 'rabbitmq') {
+    data.rabbitmqUsername = form.rabbitmqUsername || null
+    data.rabbitmqPassword = form.rabbitmqPassword || null
   }
 
   // Kafka specific

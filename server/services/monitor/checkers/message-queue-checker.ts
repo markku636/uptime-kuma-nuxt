@@ -194,11 +194,13 @@ export async function checkRabbitMQ(monitor: any, startTime: number): Promise<Ch
     if (monitor.databaseConnectionString) {
       connectionUrl = monitor.databaseConnectionString
     } else if (monitor.hostname) {
-      const protocol = monitor.ignoreTls ? 'amqp' : 'amqps'
-      const auth = monitor.rabbitmqUsername 
-        ? `${monitor.rabbitmqUsername}:${monitor.rabbitmqPassword || ''}@`
+      // 5671 is RabbitMQ's TLS port; 5672 (the default) is plain AMQP
+      const port = monitor.port || 5672
+      const protocol = port === 5671 ? 'amqps' : 'amqp'
+      const auth = monitor.rabbitmqUsername
+        ? `${encodeURIComponent(monitor.rabbitmqUsername)}:${encodeURIComponent(monitor.rabbitmqPassword || '')}@`
         : ''
-      connectionUrl = `${protocol}://${auth}${monitor.hostname}:${monitor.port || 5672}`
+      connectionUrl = `${protocol}://${auth}${monitor.hostname}:${port}`
     } else {
       return {
         status: 0,
