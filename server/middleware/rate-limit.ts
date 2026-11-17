@@ -1,5 +1,7 @@
 // server/middleware/rate-limit.ts
 // Simple in-memory rate limiter for Nitro/H3
+import { prisma } from "../utils/prisma";
+import { clientIp, envTrustsProxy } from "../services/auth/client-ip";
 
 interface RateLimitEntry {
   count: number
@@ -37,20 +39,20 @@ const UNLIMITED_PATHS = [
     /^\/api\/push\/[^/]+\/?$/,
 ];
 
-function getClientIP(event: any): string {
-    // Try to get real IP from various headers
-    const forwarded = getHeader(event, "x-forwarded-for");
-    if (forwarded) {
-        return forwarded.split(",")[0].trim();
-    }
+// Whether forwarded headers are believed (setting cached for 30 s)
+let trustCache: { value: boolean; until: number } | null = null
 
-    const realIP = getHeader(event, "x-real-ip");
-    if (realIP) {
-        return realIP;
-    }
+async function trustsProxy(): Promise<boolean> {
+    if (envTrustsProxy()) return true;
+    const now = Date.now();
+    if (trustCache && now < trustCache.until) return trustCache.value;
+    const row = await prisma.setting.findUnique({ where: { key: "trustProxy" } }).catch(() => null);
+    trustCache = { value: row?.value === "true", until: now + 30_000 };
+    return trustCache.value;
+}
 
-    // Fallback to socket address
-    return event.node?.req?.socket?.remoteAddress || "unknown";
+async function getClientIP(event: any): Promise<string> {
+    return clientIp(event.node?.req?.headers ?? {}, event.node?.req?.socket?.remoteAddress, await trustsProxy());
 }
 
 /**
@@ -106,7 +108,7 @@ export default defineEventHandler(async (event) => {
         }
     }
 
-    const clientIP = getClientIP(event);
+    const clientIP = await getClientIP(event);
     const key = `${prefix}:${clientIP}`;
     const now = Date.now();
 
