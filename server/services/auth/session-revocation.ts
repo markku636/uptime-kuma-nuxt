@@ -45,4 +45,8 @@ export async function revokeOtherSessions(event: H3Event, userId: number): Promi
   cache.set(userId, { after: now, until: now + CACHE_MS })
   const session = await getUserSession(event)
   if (session?.user) await setUserSession(event, { loggedInAt: now })
+  // Sockets were authenticated at their handshake: close the ended sessions' ones
+  // (this browser reconnects with its re-issued cookie)
+  const { disconnectSessionsBefore } = await import('../socket')
+  disconnectSessionsBefore(userId, now)
 }

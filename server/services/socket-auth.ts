@@ -25,7 +25,7 @@ export function readCookie(header: string | undefined, name: string): string | n
  * Origin and are let through (they still need a valid session cookie).
  * Behind a proxy the forwarded host is what the browser saw.
  */
-export function isSameOrigin(headers: Record<string, string | string[] | undefined>): boolean {
+export function isSameOrigin(headers: Record<string, string | string[] | undefined>, publicUrls: (string | null | undefined)[] = []): boolean {
   const origin = headers.origin
   if (!origin || typeof origin !== 'string') return true
   let originHost: string
@@ -33,11 +33,13 @@ export function isSameOrigin(headers: Record<string, string | string[] | undefin
   const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.split(',')[0]?.trim().toLowerCase()
   const hosts = [first(headers['x-forwarded-host']), first(headers.host)].filter(Boolean)
   if (hosts.includes(originHost)) return true
-  // NUXT_PUBLIC_APP_URL names the public address when it differs
-  try {
-    const app = process.env.NUXT_PUBLIC_APP_URL
-    if (app && new URL(app).host.toLowerCase() === originHost) return true
-  } catch { /* not a URL */ }
+  // The public address when the proxy rewrites Host: NUXT_PUBLIC_APP_URL,
+  // or Settings > General > Primary Base URL
+  for (const url of [process.env.NUXT_PUBLIC_APP_URL, ...publicUrls]) {
+    try {
+      if (url && new URL(url).host.toLowerCase() === originHost) return true
+    } catch { /* not a URL */ }
+  }
   return false
 }
 
@@ -52,7 +54,23 @@ function sessionConfig() {
   }
 }
 
-export async function socketUserId(cookieHeader: string | undefined): Promise<number | null> {
+/** Primary Base URL (cached 30 s): another name the site may be reached by */
+let baseUrlCache: { value: string; until: number } | null = null
+export async function primaryBaseUrl(): Promise<string> {
+  const now = Date.now()
+  if (baseUrlCache && now < baseUrlCache.until) return baseUrlCache.value
+  const row = await prisma.setting.findUnique({ where: { key: 'primaryBaseUrl' } }).catch(() => null)
+  baseUrlCache = { value: row?.value ?? '', until: now + 30_000 }
+  return baseUrlCache.value
+}
+
+export interface SocketSession {
+  userId: number
+  /** When that login happened (0: before this was recorded) */
+  loggedInAt: number
+}
+
+export async function socketSession(cookieHeader: string | undefined): Promise<SocketSession | null> {
   const config = sessionConfig()
   const sealed = readCookie(cookieHeader, config.name)
   if (!sealed || !config.password) return null
@@ -63,7 +81,8 @@ export async function socketUserId(cookieHeader: string | undefined): Promise<nu
     const user = await prisma.user.findUnique({ where: { id }, select: { active: true } })
     if (!user?.active) return null
     // A session logged out elsewhere cannot open sockets either
-    return (await isSessionRevoked(session.data as any)) ? null : id
+    if (await isSessionRevoked(session.data as any)) return null
+    return { userId: id, loggedInAt: Number((session.data as any)?.loggedInAt) || 0 }
   } catch {
     return null
   }

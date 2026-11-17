@@ -218,7 +218,7 @@ async function saveSettings() {
         <template #hint>
           <p class="text-xs text-muted mt-2">
             If you are behind a reverse proxy (nginx, Apache, etc.), enable this to correctly detect the client IP address from X-Forwarded-For header.
-            A proxy on this machine or a private network (Docker, LAN) is trusted automatically. Enable this only for a proxy on a public address that every request passes through: otherwise clients can fake their address and avoid the login rate limit.
+            A proxy on this machine is trusted automatically. Enable this for a proxy elsewhere (e.g. another container) that every request passes through; the last X-Forwarded-For hop is used. If the server can also be reached without the proxy, clients could fake their address and avoid the login rate limit.
           </p>
           <p v-if="trustProxyFromEnv" class="text-xs text-muted mt-1">
             TRUST_PROXY=true is set for this server, so the proxy is trusted whatever is chosen here.

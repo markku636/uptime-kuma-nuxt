@@ -356,7 +356,7 @@ npm run bruno:generate
 
 - **登入工作階段**：Socket.IO 連線以登入的 Session Cookie 驗證；未登入的連線不能讀寫任何資料，也收不到心跳。其他網站的頁面即使帶著 Cookie 也只會是匿名連線。
 - **登出其他工作階段**：設定 > 安全性 可以登出其他所有瀏覽器／裝置；變更密碼時也會自動登出其他工作階段（API Key 不受影響）。
-- **速率限制與用戶端 IP**：只有來自反向代理（本機、私有網段，或開啟 Trust Proxy）的連線才會採信 `X-Real-IP`／`X-Forwarded-For`，並取代理自己加上的最後一段，避免偽造標頭繞過登入次數限制。若反向代理位於公開 IP，請開啟 Trust Proxy 或設定 `TRUST_PROXY=true`。
+- **速率限制與用戶端 IP**：只有來自本機（loopback）的連線，或開啟 Trust Proxy 時，才會採信 `X-Forwarded-For`，而且只取代理自己加上的最後一段（`X-Real-IP` 不採信），避免偽造標頭繞過登入次數限制。反向代理不在同一台主機時（例如 Docker 網路中的 OpenResty），請開啟 Trust Proxy 或設定 `TRUST_PROXY=true`，並且不要讓應用程式的連接埠繞過代理直接對外。
 - **心跳保留**：設定 > 監測器歷史紀錄 可調整保留天數（0 為永久保留），每晚自動清除較舊的記錄。
 
 ## 🌐 環境變數
@@ -370,7 +370,7 @@ npm run bruno:generate
 | `NODE_ID` | 節點 ID (叢集模式) | `node1` |
 | `NODE_NAME` | 節點名稱 (叢集模式) | `Node 1` |
 | `IS_PRIMARY` | 是否為主節點 | `false` |
-| `TRUST_PROXY` | 一律採信 `X-Real-IP` / `X-Forwarded-For`（同 設定 > 反向代理 > Trust Proxy）。來自本機或私有網段的連線本來就會被當成反向代理 | `false` |
+| `TRUST_PROXY` | 採信任何來源的 `X-Forwarded-For` 最後一段（同 設定 > 反向代理 > Trust Proxy）。來自本機的連線本來就會採信 | `false` |
 
 ---
 

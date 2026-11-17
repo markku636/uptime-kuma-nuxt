@@ -50,7 +50,8 @@ export default defineEventHandler(async (event) => {
       })
     }
     if (revoked) {
-      await clearUserSession(event).catch(() => {})
+      // No cookie clearing here: a request of the revoking browser still in
+      // flight with its old cookie would otherwise delete the re-issued one
       throw createError({ statusCode: 401, message: 'Session ended: please log in again' })
     }
   }

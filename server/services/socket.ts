@@ -6,7 +6,7 @@ import { Server as SocketServer, Socket } from 'socket.io'
 import { Prisma } from '@prisma/client'
 import crypto from 'crypto'
 import { getMonitorTypeListForClient } from './monitor/types'
-import { isSameOrigin, socketUserId } from './socket-auth'
+import { isSameOrigin, primaryBaseUrl, socketSession } from './socket-auth'
 
 
 
@@ -1435,6 +1435,7 @@ const socketHandlers = {
       const { stopMonitorJob, scheduleGroupRecheck } = await import('./monitor/scheduler')
       const { releaseChildren } = await import('./workspace/service')
       stopMonitorJob(monitorId)
+      ;(await import('./monitor/screenshots')).deleteScreenshot(monitorId)
       await releaseChildren(socket.userId, monitorId, existing.parent)
 
       // Delete related data
@@ -2170,7 +2171,9 @@ export function initSocketServer(httpServer: HTTPServer) {
   // anonymous too (connecting it anyway, as aborting the upgrade upsets proxies)
   io.use(async (socket: AuthenticatedSocket, next) => {
     const headers = socket.request.headers
-    socket.userId = isSameOrigin(headers) ? (await socketUserId(headers.cookie)) ?? undefined : undefined
+    const session = isSameOrigin(headers, [await primaryBaseUrl()]) ? await socketSession(headers.cookie) : null
+    socket.userId = session?.userId
+    ;(socket as any).loggedInAt = session?.loggedInAt ?? 0
     next()
   })
 
@@ -2347,6 +2350,19 @@ export function initSocketServer(httpServer: HTTPServer) {
 
   console.log('[Socket.io] Server created')
   return io
+}
+
+/** Close the user's sockets whose login is older than `validAfter` (sessions logged out) */
+export function disconnectSessionsBefore(userId: number, validAfter: number): number {
+  if (!io) return 0
+  let closed = 0
+  for (const socket of io.sockets.sockets.values() as Iterable<AuthenticatedSocket>) {
+    if (socket.userId === userId && ((socket as any).loggedInAt ?? 0) < validAfter) {
+      socket.disconnect(true)
+      closed++
+    }
+  }
+  return closed
 }
 
 export function getIO(): SocketServer | null {
