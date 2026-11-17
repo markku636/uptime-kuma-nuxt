@@ -1,4 +1,5 @@
 // server/api/auth/change-password.post.ts
+import { revokeOtherSessions } from '~/server/services/auth/session-revocation'
 import { z } from 'zod'
 import { verifyPassword, hashPassword } from '../../utils/password'
 
@@ -40,6 +41,9 @@ export default defineEventHandler(async (event) => {
     where: { id: session.user.id },
     data: { password: hashedPassword }
   })
+
+  // A changed password ends every other session (e.g. a stolen one)
+  await revokeOtherSessions(event, session.user.id)
 
   return { success: true }
 })

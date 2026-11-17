@@ -1,4 +1,5 @@
 // server/middleware/auth.ts
+import { isSessionRevoked } from '../services/auth/session-revocation'
 export default defineEventHandler(async (event) => {
   // Skip auth for public routes
   const publicRoutes = [
@@ -31,6 +32,7 @@ export default defineEventHandler(async (event) => {
 
   // Check if route requires authentication
   if (path.startsWith('/api/')) {
+    let revoked = false
     try {
       const session = await getUserSession(event)
       if (!session?.user) {
@@ -39,11 +41,17 @@ export default defineEventHandler(async (event) => {
           message: 'Unauthorized'
         })
       }
+      // Logged out from another session ("log out other sessions", password change)
+      revoked = await isSessionRevoked(session as any)
     } catch (error) {
       throw createError({
         statusCode: 401,
         message: 'Unauthorized'
       })
+    }
+    if (revoked) {
+      await clearUserSession(event).catch(() => {})
+      throw createError({ statusCode: 401, message: 'Session ended: please log in again' })
     }
   }
 })

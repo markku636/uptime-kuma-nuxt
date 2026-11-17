@@ -5,6 +5,7 @@
 // an inactive user means nobody.
 import { unsealSession } from 'h3'
 import { prisma } from '../utils/prisma'
+import { isSessionRevoked } from './auth/session-revocation'
 
 /** Value of one cookie in a Cookie header */
 export function readCookie(header: string | undefined, name: string): string | null {
@@ -60,7 +61,9 @@ export async function socketUserId(cookieHeader: string | undefined): Promise<nu
     const id = Number((session.data as any)?.user?.id)
     if (!Number.isInteger(id) || id <= 0) return null
     const user = await prisma.user.findUnique({ where: { id }, select: { active: true } })
-    return user?.active ? id : null
+    if (!user?.active) return null
+    // A session logged out elsewhere cannot open sockets either
+    return (await isSessionRevoked(session.data as any)) ? null : id
   } catch {
     return null
   }

@@ -153,22 +153,11 @@ async function confirmDisableAuth() {
   }
 }
 
-async function revokeSession(sessionId: string) {
-  if (!confirm('Revoke this session?')) return
-  try {
-    await $fetch(`/api/auth/sessions/${sessionId}`, { method: 'DELETE' })
-    toast.add({ title: 'Success', description: 'Session revoked', color: 'success' })
-    await fetchActiveSessions()
-  } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || 'Failed to revoke session', color: 'error' })
-  }
-}
-
 async function revokeAllSessions() {
-  if (!confirm('Revoke all other sessions? You will remain logged in.')) return
+  if (!confirm('Log out every other session? You stay logged in here.')) return
   try {
     await $fetch('/api/auth/sessions/revoke-all', { method: 'POST' })
-    toast.add({ title: 'Success', description: 'All other sessions revoked', color: 'success' })
+    toast.add({ title: 'Success', description: 'Other sessions logged out', color: 'success' })
     await fetchActiveSessions()
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to revoke sessions', color: 'error' })
@@ -244,11 +233,14 @@ function copyToClipboard(text: string) {
     <div class="section-card">
       <div class="flex justify-between items-center mb-4">
         <h5 class="text-lg font-semibold text-highlighted">Active Sessions</h5>
-        <button v-if="activeSessions.length > 1" class="btn btn-sm btn-secondary" @click="revokeAllSessions">
-          Revoke All Others
+        <button class="btn btn-sm btn-secondary" @click="revokeAllSessions">
+          Log Out Other Sessions
         </button>
       </div>
-      
+      <p class="text-sm text-toned mb-4">
+        Ends every login except this one (other browsers and devices). Changing the password does this too.
+      </p>
+
       <div v-if="loadingSessions" class="text-center py-8 text-toned">Loading sessions...</div>
       <div v-else-if="activeSessions.length === 0" class="text-center py-8 text-toned">No active sessions</div>
       <div v-else class="space-y-3">
@@ -263,7 +255,6 @@ function copyToClipboard(text: string) {
               </p>
             </div>
           </div>
-          <button v-if="!session.current" class="btn btn-sm btn-danger" @click="revokeSession(session.id)">Revoke</button>
         </div>
       </div>
     </div>

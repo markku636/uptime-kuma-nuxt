@@ -167,6 +167,7 @@ export const ENDPOINTS: Endpoint[] = [
   },
   { method: 'get', path: '/api/auth/session', tag: 'Auth', summary: 'Get current session', zh: '取得目前 Session' },
   { method: 'get', path: '/api/auth/sessions', tag: 'Auth', summary: 'List sessions', zh: '取得登入工作階段列表' },
+  { method: 'post', path: '/api/auth/sessions/revoke-all', tag: 'Auth', summary: 'Log out all other sessions', zh: '登出其他所有工作階段' },
   { method: 'get', path: '/api/auth/profile', tag: 'Auth', summary: 'Get profile', zh: '取得使用者資料' },
   {
     method: 'put', path: '/api/auth/profile', tag: 'Auth', summary: 'Update profile', zh: '更新使用者資料',

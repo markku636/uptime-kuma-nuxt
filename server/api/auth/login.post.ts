@@ -88,7 +88,9 @@ export default defineEventHandler(async (event) => {
       id: user.id,
       username: user.username,
       timezone: user.timezone,
-    }
+    },
+    // Compared with the user's "sessions valid after" time (log out elsewhere)
+    loggedInAt: Date.now(),
   })
 
   return {
