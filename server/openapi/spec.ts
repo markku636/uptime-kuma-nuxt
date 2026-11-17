@@ -315,6 +315,7 @@ export const ENDPOINTS: Endpoint[] = [
     method: 'post', path: '/api/v1/tags', tag: 'Tags', summary: 'Create tag', zh: '建立標籤', bodySchema: 'TagInput',
     body: { name: 'Production', color: '#4CAF50' }, capture: { var: 'tagId', field: 'id' },
   },
+  { method: 'put', path: '/api/v1/tags/{id}', tag: 'Tags', summary: 'Update tag (name / color)', zh: '更新標籤', params: { id: 'tagId' }, body: { name: 'Production', color: '#22c55e' } },
   { method: 'delete', path: '/api/v1/tags/{id}', tag: 'Tags', summary: 'Delete tag', zh: '刪除標籤', params: { id: 'tagId' }, destructive: true },
 
   // ───────────────────────── Notifications ────────────────────────
