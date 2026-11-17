@@ -1,29 +1,23 @@
 // server/api/v1/database/clear-statistics.post.ts
+// Uptime statistics are computed from heartbeats (there are no separate
+// aggregate tables), so clearing them deletes the user's heartbeats, as
+// "Clear Statistics" does in uptime-kuma.
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  // Check authentication
   const session = await getUserSession(event)
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
+  const userId = (session?.user as any)?.id
+  if (!userId) {
+    throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
 
-  // Reset statistics - update all monitors to clear cached stats
-  const result = await prisma.monitor.updateMany({
-    data: {
-      // Reset any cached statistics fields if they exist
-      // This is a placeholder - adjust based on your actual schema
-    }
+  const result = await prisma.heartbeat.deleteMany({
+    where: { monitor: { userId } },
   })
-
-  // Also clear any aggregated statistics tables if they exist
-  // await prisma.statistic.deleteMany({})
 
   return {
     success: true,
-    message: 'Statistics have been cleared'
+    deleted: result.count,
+    message: `Statistics cleared (${result.count} heartbeats deleted)`,
   }
 })
