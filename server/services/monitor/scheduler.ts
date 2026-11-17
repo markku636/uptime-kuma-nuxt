@@ -139,8 +139,23 @@ export function stopAllJobs() {
 const groupChecksRunning = new Set<number>()
 const groupCheckAgain = new Set<number>()
 
+// Any other monitor: a check still running (e.g. waiting between retries)
+// makes the next tick skip, so two runs never record the same change twice
+const checksRunning = new Set<number>()
+
 async function runCheck(monitor: any) {
-  if (monitor.type !== 'group') return runSingleCheck(monitor)
+  if (monitor.type !== 'group') {
+    if (checksRunning.has(monitor.id)) {
+      console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}): previous check still running, skipping this tick`)
+      return
+    }
+    checksRunning.add(monitor.id)
+    try {
+      return await runSingleCheck(monitor)
+    } finally {
+      checksRunning.delete(monitor.id)
+    }
+  }
   if (groupChecksRunning.has(monitor.id)) {
     groupCheckAgain.add(monitor.id)
     return
