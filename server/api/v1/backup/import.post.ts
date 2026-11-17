@@ -419,6 +419,8 @@ export default defineEventHandler(async (event) => {
         }
 
         const data = pickScalars(statusPage, scalarFields) as Prisma.StatusPageUncheckedCreateInput
+        // A null JSON column must be written as SQL NULL
+        if ((data as any).domainNameList === null) (data as any).domainNameList = Prisma.DbNull
         const saved = existing
           ? await prisma.statusPage.update({ where: { id: existing.id }, data })
           : await prisma.statusPage.create({ data: { ...data, userId } })
