@@ -13,7 +13,8 @@
 ## ✨ 功能特色
 
 ### 🖥️ 監控類型
-- **HTTP(s)** - 網站監控、關鍵字檢測、JSON 查詢
+- **HTTP(s)** - 網站監控、關鍵字檢測、JSON 查詢（Basic / NTLM 驗證、HTTP(S) Proxy、最大重新導向次數）
+- **Browser Engine** - 以 Chromium 載入頁面（會執行 JavaScript），每次檢查保留一張截圖；使用 Remote Browser（Chrome DevTools 端點）或本機 Chrome（設定 > 一般 > Chrome 執行檔）
 - **TCP Port** - 端口連接測試
 - **Ping** - ICMP 網路監控
 - **DNS** - DNS 解析監控
@@ -351,6 +352,13 @@ npm run bruno:generate
 
 ---
 
+## 🔒 安全性說明
+
+- **登入工作階段**：Socket.IO 連線以登入的 Session Cookie 驗證；未登入的連線不能讀寫任何資料，也收不到心跳。其他網站的頁面即使帶著 Cookie 也只會是匿名連線。
+- **登出其他工作階段**：設定 > 安全性 可以登出其他所有瀏覽器／裝置；變更密碼時也會自動登出其他工作階段（API Key 不受影響）。
+- **速率限制與用戶端 IP**：只有來自反向代理（本機、私有網段，或開啟 Trust Proxy）的連線才會採信 `X-Real-IP`／`X-Forwarded-For`，並取代理自己加上的最後一段，避免偽造標頭繞過登入次數限制。若反向代理位於公開 IP，請開啟 Trust Proxy 或設定 `TRUST_PROXY=true`。
+- **心跳保留**：設定 > 監測器歷史紀錄 可調整保留天數（0 為永久保留），每晚自動清除較舊的記錄。
+
 ## 🌐 環境變數
 
 | 變數名稱 | 說明 | 預設值 |
@@ -362,6 +370,7 @@ npm run bruno:generate
 | `NODE_ID` | 節點 ID (叢集模式) | `node1` |
 | `NODE_NAME` | 節點名稱 (叢集模式) | `Node 1` |
 | `IS_PRIMARY` | 是否為主節點 | `false` |
+| `TRUST_PROXY` | 一律採信 `X-Real-IP` / `X-Forwarded-For`（同 設定 > 反向代理 > Trust Proxy）。來自本機或私有網段的連線本來就會被當成反向代理 | `false` |
 
 ---
 
