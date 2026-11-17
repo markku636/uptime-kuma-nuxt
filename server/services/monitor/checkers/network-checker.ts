@@ -145,7 +145,7 @@ export async function checkRadius(monitor: any, startTime: number): Promise<Chec
 
     client.on('message', (msg) => {
       const reply = parseReply(msg, request.identifier, request.authenticator, monitor.radiusSecret)
-      if (!reply.ok) return finish(false, reply.reason)
+      if ('reason' in reply) return finish(false, reply.reason)
       // Only an accepted login means the service works end to end
       finish(reply.code === 2, reply.code === 3 ? 'Access-Reject: check the username and password' : reply.name)
     })

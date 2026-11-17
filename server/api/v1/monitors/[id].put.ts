@@ -92,8 +92,14 @@ export default defineEventHandler(async (event) => {
     stopMonitorJob(monitor.id)
   }
 
+  // Answer with the saved relations (tags / notifications were replaced after the update)
+  const saved = await prisma.monitor.findUnique({
+    where: { id },
+    include: { tags: { include: { tag: true } }, monitorNotifications: true },
+  })
+
   return {
     ok: true,
-    data: monitor
+    data: saved ?? monitor
   }
 })

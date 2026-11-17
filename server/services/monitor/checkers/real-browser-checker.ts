@@ -9,9 +9,14 @@ import { isStatusAccepted } from '../status-codes'
 import { saveScreenshot } from '../screenshots'
 
 let chromiumPromise: Promise<any> | null = null
-let localBrowser: any = null
-/** The executable the shared browser was started with ('' = Playwright's own) */
-let localBrowserPath = ''
+/**
+ * The shared local browser, as one launch every check awaits (checks that
+ * start together must not each launch, and orphan, a Chromium).
+ * `path`: the executable it was started with ('' = Playwright's own).
+ */
+let localLaunch: { path: string; browser: Promise<any> } | null = null
+/** A browser replaced after a path change stays open this long for running checks */
+const RETIRE_AFTER_MS = 5 * 60 * 1000
 
 async function chromium() {
   // playwright is optional at run time (it is large); load it on first use
@@ -27,30 +32,48 @@ async function chromePath(): Promise<string> {
   return (row?.value ?? '').trim()
 }
 
-/** Shared local headless Chromium; restarted when the configured path changes */
-async function getLocalBrowser() {
-  const path = await chromePath()
-  if (localBrowser?.isConnected() && path === localBrowserPath) return localBrowser
-  if (localBrowser) await localBrowser.close().catch(() => {})
+async function launch(path: string) {
   const c = await chromium()
   try {
-    localBrowser = await c.launch({ headless: true, ...(path ? { executablePath: path } : {}) })
-    localBrowserPath = path
+    return await c.launch({ headless: true, ...(path ? { executablePath: path } : {}) })
   } catch (error: any) {
-    localBrowser = null
     const reason = String(error?.message || error).split('\n')[0]
     throw new Error(path
       ? `Could not start Chrome at "${path}" (${reason}). Check Settings > General > Chrome executable`
       : `No local Chromium (${reason}). Set the Chrome executable in Settings > General, add a remote browser, or run "npx playwright install chromium"`)
   }
-  return localBrowser
+}
+
+/** Shared local headless Chromium; started again when it died or the configured path changed */
+async function getLocalBrowser() {
+  const path = await chromePath()
+  const current = localLaunch
+  if (current && current.path === path) {
+    const browser = await current.browser.catch(() => null)
+    if (browser?.isConnected()) return browser
+  }
+  // Only the first check to get here starts a browser; the others share it
+  if (localLaunch === current) {
+    const previous = current
+    localLaunch = { path, browser: launch(path) }
+    // A failed launch is retried by the next check
+    const mine = localLaunch
+    mine.browser.catch(() => { if (localLaunch === mine) localLaunch = null })
+    // Retire the old browser once checks still using it are done
+    if (previous) {
+      previous.browser
+        .then((old: any) => setTimeout(() => old?.close().catch(() => {}), RETIRE_AFTER_MS).unref?.())
+        .catch(() => {})
+    }
+  }
+  // Another check may have started the replacement in the meantime
+  return (localLaunch ?? (localLaunch = { path, browser: launch(path) })).browser
 }
 
 export async function closeBrowser() {
-  if (localBrowser) {
-    await localBrowser.close().catch(() => {})
-    localBrowser = null
-  }
+  const current = localLaunch
+  localLaunch = null
+  if (current) await current.browser.then((b: any) => b?.close()).catch(() => {})
 }
 
 /** Fold a keyword result into the check (uptime-kuma semantics) */

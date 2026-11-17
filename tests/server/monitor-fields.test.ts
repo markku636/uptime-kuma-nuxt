@@ -76,3 +76,14 @@ describe('updateMonitorSchema', () => {
     expect(columnData({ name: 'x', tags: [1], notifications: [2], parent: 3, workspaceId: 4 })).toEqual({ name: 'x' })
   })
 })
+
+describe('review fixes', () => {
+  it('leaves relations alone when their value cannot be read', () => {
+    expect(normalizeMonitorFields({ tags: '3' })).toEqual({ tags: undefined })
+    expect(normalizeMonitorFields({ tags: null, notifications: [] })).toEqual({ tags: null, notifications: [] })
+  })
+
+  it('rounds the timeout to whole seconds', () => {
+    expect(updateMonitorSchema.parse({ timeout: 1.6 }).timeout).toBe(2)
+  })
+})

@@ -27,7 +27,8 @@ export const monitorFields = {
   interval: z.number().int().min(1).optional(),
   retryInterval: z.number().int().min(1).optional(),
   maxretries: z.number().int().min(0).optional(),
-  timeout: z.number().min(0).optional(),
+  // Whole seconds (the column is an integer)
+  timeout: z.number().min(0).transform(v => Math.round(v)).optional(),
   weight: z.number().int().optional(),
   // HTTP
   url: str,
@@ -153,8 +154,9 @@ export function normalizeMonitorFields<T extends Record<string, any>>(body: T): 
   alias('notificationIDList', 'notifications')
   alias('kafkaProducerBrokers', 'kafkaBrokers')
 
-  if ('tags' in out) out.tags = idList(out.tags) ?? null
-  if ('notifications' in out) out.notifications = idList(out.notifications) ?? null
+  // null / [] empties a set; anything unreadable leaves it as it is
+  if ('tags' in out) out.tags = out.tags === null ? null : idList(out.tags)
+  if ('notifications' in out) out.notifications = out.notifications === null ? null : idList(out.notifications)
   for (const key of ['kafkaBrokers', 'rabbitmqNodes']) if (key in out) out[key] = listOf(out[key])
 
   for (const key of INT_FIELDS) {
