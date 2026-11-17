@@ -1,6 +1,13 @@
 // server/services/monitor/checkers/message-queue-checker.ts
 import type { CheckResult } from '../checker'
 
+/** TLS on the protocol's TLS port, plain on its plain port, else TLS unless ignoreTls */
+export function useTls(port: number, tlsPort: number, plainPort: number, ignoreTls: unknown): boolean {
+  if (port === tlsPort) return true
+  if (port === plainPort) return false
+  return !ignoreTls
+}
+
 export async function checkMqtt(monitor: any, startTime: number): Promise<CheckResult> {
   try {
     const mqtt = await import('mqtt')
@@ -14,8 +21,9 @@ export async function checkMqtt(monitor: any, startTime: number): Promise<CheckR
     }
 
     const port = monitor.port || 1883
-    // 8883 is MQTT over TLS; 1883 (the default) is plain MQTT
-    const protocol = port === 8883 ? 'mqtts' : 'mqtt'
+    // The standard ports decide (8883 TLS, 1883 plain); on any other port TLS
+    // is used unless "ignore TLS" is set, so credentials are not sent in clear
+    const protocol = useTls(port, 8883, 1883, monitor.ignoreTls) ? 'mqtts' : 'mqtt'
     const url = `${protocol}://${monitor.hostname}:${port}`
 
     return new Promise((resolve) => {
@@ -180,9 +188,9 @@ export async function checkRabbitMQ(monitor: any, startTime: number): Promise<Ch
     if (monitor.databaseConnectionString) {
       connectionUrl = monitor.databaseConnectionString
     } else if (monitor.hostname) {
-      // 5671 is RabbitMQ's TLS port; 5672 (the default) is plain AMQP
+      // Standard ports decide (5671 TLS, 5672 plain); other ports use TLS unless "ignore TLS"
       const port = monitor.port || 5672
-      const protocol = port === 5671 ? 'amqps' : 'amqp'
+      const protocol = useTls(port, 5671, 5672, monitor.ignoreTls) ? 'amqps' : 'amqp'
       const auth = monitor.rabbitmqUsername
         ? `${encodeURIComponent(monitor.rabbitmqUsername)}:${encodeURIComponent(monitor.rabbitmqPassword || '')}@`
         : ''

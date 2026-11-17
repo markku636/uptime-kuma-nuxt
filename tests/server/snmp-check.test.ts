@@ -58,3 +58,17 @@ describe('checkSnmp', () => {
     expect(r.status).toBe(0)
   })
 })
+
+describe('checkSnmp with a garbage reply', () => {
+  it('reports the error instead of crashing', async () => {
+    const bad = dgram.createSocket('udp4')
+    bad.on('message', (_m, rinfo) => bad.send(Buffer.from([0x30, 0x03, 0xff, 0xff, 0xff]), rinfo.port, rinfo.address))
+    await new Promise<void>(resolve => bad.bind(0, '127.0.0.1', () => resolve()))
+    try {
+      const r = await checkSnmp({ hostname: '127.0.0.1', port: bad.address().port, snmpOid: OID, timeout: 2 }, Date.now())
+      expect(r.status).toBe(0)
+    } finally {
+      bad.close()
+    }
+  })
+})

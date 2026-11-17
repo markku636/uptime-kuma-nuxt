@@ -624,7 +624,7 @@
           <input v-model="form.rabbitmqPassword" type="password" class="input-field" autocomplete="new-password" :disabled="loading" />
         </div>
       </div>
-      <p class="text-xs text-dimmed mt-2">Port 5671 connects with TLS (amqps), any other port without.</p>
+      <p class="text-xs text-dimmed mt-2">Port 5671 uses TLS (amqps) and 5672 plain AMQP; other ports use TLS unless Ignore TLS is set.</p>
     </div>
 
     <!-- Kafka Settings -->

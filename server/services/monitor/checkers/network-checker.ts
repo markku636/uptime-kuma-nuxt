@@ -233,6 +233,9 @@ export async function checkSnmp(monitor: any, startTime: number): Promise<CheckR
       resolve({ up, msg, ping: Date.now() - startTime })
     }
     const timer = setTimeout(() => settle(false, `SNMP timeout after ${timeout / 1000}s (check host, port and community)`), timeout + 500)
+    // An unparsable reply makes the session emit 'error': without a listener
+    // that would be an uncaught exception that stops the whole server
+    session.on('error', (error: any) => settle(false, `SNMP error: ${error?.message || error}`))
 
     // snmp-native wants ".1.3.6..."; the form asks for "1.3.6..."
     const raw = String(monitor.snmpOid).trim()

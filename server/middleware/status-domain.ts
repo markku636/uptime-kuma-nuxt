@@ -14,8 +14,13 @@ async function domainMap(): Promise<Map<string, string>> {
     select: { slug: true, domainNameList: true },
   }).catch(() => [])
   for (const page of pages) {
-    if (Array.isArray(page.domainNameList)) {
-      for (const host of page.domainNameList as unknown[]) {
+    let list: unknown = page.domainNameList
+    // Older versions saved a JSON string
+    if (typeof list === 'string') {
+      try { list = JSON.parse(list) } catch { list = [] }
+    }
+    if (Array.isArray(list)) {
+      for (const host of list as unknown[]) {
         if (typeof host === 'string' && host) map.set(host.toLowerCase(), page.slug)
       }
     }

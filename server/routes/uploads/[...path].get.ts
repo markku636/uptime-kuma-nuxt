@@ -15,7 +15,12 @@ const TYPES: Record<string, string> = {
 }
 
 export default defineEventHandler(async (event) => {
-  const rel = decodeURIComponent(getRouterParam(event, 'path') || '')
+  let rel = ''
+  try {
+    rel = decodeURIComponent(getRouterParam(event, 'path') || '')
+  } catch {
+    throw createError({ statusCode: 404, message: 'Not found' })
+  }
   const file = resolve(join(UPLOAD_ROOT, rel))
   const type = TYPES[extname(file).toLowerCase()]
   if (!type || !file.startsWith(UPLOAD_ROOT + sep)) throw createError({ statusCode: 404, message: 'Not found' })

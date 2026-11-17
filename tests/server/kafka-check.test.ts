@@ -12,3 +12,13 @@ describe('checkKafka', () => {
     expect(monitor.kafkaBrokers).toEqual([])
   }, 30_000)
 })
+
+describe('useTls', async () => {
+  const { useTls } = await import('../../server/services/monitor/checkers/message-queue-checker')
+  it('follows the standard ports, else the monitor setting', () => {
+    expect(useTls(8883, 8883, 1883, true)).toBe(true)
+    expect(useTls(1883, 8883, 1883, false)).toBe(false)
+    expect(useTls(8884, 8883, 1883, false)).toBe(true)
+    expect(useTls(8884, 8883, 1883, true)).toBe(false)
+  })
+})

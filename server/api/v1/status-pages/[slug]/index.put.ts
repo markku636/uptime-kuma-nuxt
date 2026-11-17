@@ -34,6 +34,15 @@ const updateStatusPageSchema = z.object({
   publicGroupList: z.array(groupSchema).optional(),
 })
 
+/** A page's domains: a JSON array, or a JSON string saved by older versions */
+function domainsOf(value: unknown): string[] {
+  let list = value
+  if (typeof list === 'string') {
+    try { list = JSON.parse(list) } catch { return [] }
+  }
+  return Array.isArray(list) ? list.filter((d): d is string => typeof d === 'string').map(d => d.toLowerCase()) : []
+}
+
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
   
@@ -113,7 +122,7 @@ export default defineEventHandler(async (event) => {
     if (hosts.length) {
       const others = await prisma.statusPage.findMany({ where: { NOT: { slug } }, select: { title: true, domainNameList: true } })
       for (const other of others) {
-        const taken = hosts.find(h => Array.isArray(other.domainNameList) && (other.domainNameList as string[]).includes(h))
+        const taken = hosts.find(h => domainsOf(other.domainNameList).includes(h))
         if (taken) throw createError({ statusCode: 409, message: `${taken} is already used by "${other.title}"` })
       }
     }

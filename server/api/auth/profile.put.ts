@@ -43,8 +43,9 @@ export default defineEventHandler(async (event) => {
     }
   } else {
     const body = await readBody(event)
-    displayName = body.displayName || ''
-    email = body.email || ''
+    // Strings only (anything else is treated as empty)
+    displayName = typeof body?.displayName === 'string' ? body.displayName : ''
+    email = typeof body?.email === 'string' ? body.email : ''
     removeAvatar = body.removeAvatar || false
   }
 
