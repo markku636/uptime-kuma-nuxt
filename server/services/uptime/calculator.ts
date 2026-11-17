@@ -29,25 +29,20 @@ export async function calculateUptime(
   startTime: Date,
   endTime: Date = new Date()
 ): Promise<UptimeResult> {
-  // Get heartbeats within the time range
-  const heartbeats = await prisma.heartbeat.findMany({
-    where: {
-      monitorId,
-      time: {
-        gte: startTime,
-        lte: endTime
-      }
-    },
-    select: {
-      status: true,
-      ping: true,
-      duration: true,
-      time: true
-    },
-    orderBy: { time: 'asc' }
-  })
+  // Aggregated in the database: a year of heartbeats can be millions of rows
+  const where = { monitorId, time: { gte: startTime, lte: endTime } }
+  const [byStatus, pings] = await Promise.all([
+    prisma.heartbeat.groupBy({ by: ['status'], where, _count: { _all: true }, _sum: { duration: true } }),
+    prisma.heartbeat.aggregate({
+      where: { ...where, status: 1, ping: { gt: 0 } },
+      _avg: { ping: true },
+      _min: { ping: true },
+      _max: { ping: true },
+    }),
+  ])
+  const totalCount = byStatus.reduce((n, g) => n + g._count._all, 0)
 
-  if (heartbeats.length === 0) {
+  if (totalCount === 0) {
     return {
       uptime: 0,
       uptimeMs: 0,
@@ -62,51 +57,30 @@ export async function calculateUptime(
     }
   }
 
-  let uptimeMs = 0
-  let downtimeMs = 0
-  let upCount = 0
-  let downCount = 0
-  let totalPing = 0
-  let pingCount = 0
-  let minPing = Infinity
-  let maxPing = 0
-
-  for (let i = 0; i < heartbeats.length; i++) {
-    const hb = heartbeats[i]
-    const duration = hb.duration || 0
-
-    // Status: 0=DOWN, 1=UP, 2=PENDING, 3=MAINTENANCE
-    if (hb.status === 1) {
-      upCount++
-      uptimeMs += duration * 1000
-    } else if (hb.status === 0) {
-      downCount++
-      downtimeMs += duration * 1000
-    }
-
-    // Calculate ping stats (only for valid pings)
-    if (hb.ping !== null && hb.ping > 0 && hb.status === 1) {
-      totalPing += hb.ping
-      pingCount++
-      minPing = Math.min(minPing, hb.ping)
-      maxPing = Math.max(maxPing, hb.ping)
-    }
-  }
-
+  // Status: 0=DOWN, 1=UP, 2=PENDING, 3=MAINTENANCE (pending / maintenance do not count)
+  const group = (status: number) => byStatus.find(g => g.status === status)
+  const upCount = group(1)?._count._all ?? 0
+  const downCount = group(0)?._count._all ?? 0
+  const uptimeMs = (group(1)?._sum.duration ?? 0) * 1000
+  const downtimeMs = (group(0)?._sum.duration ?? 0) * 1000
   const totalMs = uptimeMs + downtimeMs
-  const uptime = totalMs > 0 ? (uptimeMs / totalMs) * 100 : 0
+
+  // By time when known; with no durations yet (a monitor's first beats) by count
+  let uptime = 0
+  if (totalMs > 0) uptime = (uptimeMs / totalMs) * 100
+  else if (upCount + downCount > 0) uptime = (upCount / (upCount + downCount)) * 100
 
   return {
     uptime: Math.round(uptime * 100) / 100, // Round to 2 decimal places
     uptimeMs,
     downtimeMs,
     totalMs,
-    avgPing: pingCount > 0 ? Math.round(totalPing / pingCount) : 0,
-    minPing: minPing === Infinity ? 0 : minPing,
-    maxPing,
+    avgPing: pings._avg.ping ? Math.round(pings._avg.ping) : 0,
+    minPing: pings._min.ping ?? 0,
+    maxPing: pings._max.ping ?? 0,
     upCount,
     downCount,
-    totalCount: heartbeats.length
+    totalCount
   }
 }
 
