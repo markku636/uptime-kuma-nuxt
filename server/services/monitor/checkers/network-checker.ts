@@ -225,7 +225,10 @@ export async function checkSnmp(monitor: any, startTime: number): Promise<CheckR
     }
     const timer = setTimeout(() => settle(false, `SNMP timeout after ${timeout / 1000}s (check host, port and community)`), timeout + 500)
 
-    session.get({ oid: monitor.snmpOid }, (error: any, varbinds: any[]) => {
+    // snmp-native wants ".1.3.6..."; the form asks for "1.3.6..."
+    const raw = String(monitor.snmpOid).trim()
+    const oid = raw.startsWith('.') ? raw : `.${raw}`
+    session.get({ oid }, (error: any, varbinds: any[]) => {
       if (settled) return
       if (error) return settle(false, `SNMP error: ${error.message || error}`)
       if (!varbinds?.length) return settle(false, `No value returned for OID ${monitor.snmpOid}`)

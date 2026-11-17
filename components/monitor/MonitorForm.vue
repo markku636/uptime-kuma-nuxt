@@ -1389,11 +1389,11 @@ const showUrlField = computed(() =>
 )
 
 const showHostnameField = computed(() => 
-  ['tcp', 'ping', 'dns', 'mqtt', 'kafka', 'rabbitmq', 'steam', 'gamedig', 'radius', 'tailscale-ping'].includes(form.type)
+  ['tcp', 'ping', 'dns', 'mqtt', 'kafka', 'rabbitmq', 'steam', 'gamedig', 'radius', 'tailscale-ping', 'snmp'].includes(form.type)
 )
 
 const showPortField = computed(() => 
-  ['tcp', 'mqtt', 'kafka', 'rabbitmq', 'steam', 'gamedig', 'radius'].includes(form.type)
+  ['tcp', 'mqtt', 'kafka', 'rabbitmq', 'steam', 'gamedig', 'radius', 'snmp'].includes(form.type)
 )
 
 const showHttpSettings = computed(() => 

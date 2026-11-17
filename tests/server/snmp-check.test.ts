@@ -44,6 +44,10 @@ describe('checkSnmp', () => {
     expect(r.msg).toMatch(/42/)
   })
 
+  it('accepts an OID without the leading dot (as the form asks for it)', async () => {
+    expect((await checkSnmp(monitor({ snmpOid: OID.slice(1) }), Date.now())).status).toBe(1)
+  })
+
   it('compares the value with the operator', async () => {
     expect((await checkSnmp(monitor({ jsonPathOperator: '>', expectedValue: '40' }), Date.now())).status).toBe(1)
     expect((await checkSnmp(monitor({ jsonPathOperator: '<', expectedValue: '40' }), Date.now())).status).toBe(0)

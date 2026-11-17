@@ -28,8 +28,20 @@
 
     <MonitorBrunoImportDialog v-model:open="showBrunoImport" @fill="applyDraft" @created="router.push('/monitors')" />
 
+    <!-- Types this page has no settings for: the full monitor form -->
+    <div v-if="usesFullForm" class="card card-body">
+      <MonitorForm
+        :key="form.type"
+        :initial-data="{ type: form.type, name: form.name, workspaceId: form.workspaceId, parent: form.parent }"
+        :loading="loading"
+        submit-label="Create Monitor"
+        @submit="createFromFullForm"
+      />
+      <p v-if="error" class="text-down-fg text-sm mt-4">{{ error }}</p>
+    </div>
+
     <!-- Form -->
-    <div class="card card-body">
+    <div v-else class="card card-body">
       <form @submit.prevent="handleCreate" class="space-y-6">
         <!-- Basic Information -->
         <div class="section-card">
@@ -53,6 +65,9 @@
                   <option value="docker">Docker Container</option>
                   <option value="database">Database</option>
                   <option value="push">Push</option>
+                </optgroup>
+                <optgroup label="More">
+                  <option v-for="m in moreTypes" :key="m.value" :value="m.value">{{ m.label }}</option>
                 </optgroup>
               </select>
             </div>
@@ -488,6 +503,33 @@ function queryId(key: string): number | null {
   return Number.isInteger(value) && value > 0 ? value : null
 }
 const loading = ref(false)
+
+// Created with the full monitor form (it has their settings)
+const moreTypes = [
+  { value: 'snmp', label: 'SNMP' },
+  { value: 'radius', label: 'RADIUS' },
+  { value: 'mqtt', label: 'MQTT' },
+  { value: 'kafka', label: 'Kafka Producer' },
+  { value: 'rabbitmq', label: 'RabbitMQ' },
+  { value: 'redis', label: 'Redis' },
+  { value: 'steam', label: 'Steam Game Server' },
+  { value: 'gamedig', label: 'Game Server (GameDig)' },
+  { value: 'tailscale-ping', label: 'Tailscale Ping' },
+]
+const usesFullForm = computed(() => moreTypes.some(m => m.value === form.type))
+
+async function createFromFullForm(data: Record<string, any>) {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await $fetch<{ data?: { id: number } }>('/api/v1/monitors', { method: 'POST', body: data })
+    router.push(res?.data?.id ? `/monitors/${res.data.id}` : '/dashboard')
+  } catch (e: any) {
+    error.value = e.data?.message || 'Failed to create monitor'
+  } finally {
+    loading.value = false
+  }
+}
 const error = ref('')
 const showAuthSection = ref(false)
 const showAdvanced = ref(false)
