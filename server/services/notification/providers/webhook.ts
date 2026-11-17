@@ -1,5 +1,6 @@
 // server/services/notification/providers/webhook.ts
 import type { NotificationMessage } from '../sender'
+import { renderTemplate } from '../template'
 
 export const webhookProvider = {
   async send(config: {
@@ -18,14 +19,8 @@ export const webhookProvider = {
     // Prepare body - replace placeholders if custom body template is provided
     let body: any
     if (config.body) {
-      body = config.body
-        .replace(/\{\{title\}\}/g, message.title)
-        .replace(/\{\{body\}\}/g, message.body)
-        .replace(/\{\{monitorName\}\}/g, message.monitorName)
-        .replace(/\{\{monitorUrl\}\}/g, message.monitorUrl || '')
-        .replace(/\{\{status\}\}/g, message.status)
-        .replace(/\{\{ping\}\}/g, String(message.ping))
-        .replace(/\{\{time\}\}/g, message.time)
+      // Both template styles: {{monitorName}} and uptime-kuma's {{ monitorJSON.name }} / {{ msg }}
+      body = renderTemplate(config.body, message)
     } else {
       body = {
         title: message.title,

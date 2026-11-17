@@ -2,21 +2,34 @@
 import { prisma } from '../../utils/prisma'
 import type { CheckResult } from '../monitor/checker'
 
-// Import providers
-import { discordProvider } from './providers/discord'
-import { slackProvider } from './providers/slack'
-import { telegramProvider } from './providers/telegram'
-import { emailProvider } from './providers/email'
-import { webhookProvider } from './providers/webhook'
-import { lineProvider } from './providers/line'
+import * as providerModules from './providers/index'
+import { providers as providerExports } from './providers/index'
+import { normalizeType, notificationConfig } from './config-aliases'
 
-const providers: Record<string, any> = {
-  discord: discordProvider,
-  slack: slackProvider,
-  telegram: telegramProvider,
-  email: emailProvider,
-  webhook: webhookProvider,
-  line: lineProvider,
+type Send = (config: any, message: NotificationMessage, monitor: any) => Promise<void>
+
+/**
+ * The provider for a notification type, from the full registry
+ * (providers/index.ts). Type names match with or without dashes / dots
+ * ("google-chat" = "googlechat"). Two provider styles exist:
+ * { send(config, message) } objects and modules exporting
+ * send(config, title, text, status, monitor?, heartbeat?).
+ */
+export function resolveProvider(type: string): Send | null {
+  const key = Object.keys(providerExports).find(k => normalizeType(k) === normalizeType(type))
+  const mod: any = key ? (providerModules as any)[(providerExports as any)[key]] : null
+  if (!mod || typeof mod.send !== 'function') return null
+  if ('default' in mod) {
+    return (config, message, monitor) => mod.send(
+      config,
+      message.title,
+      `[${message.monitorName}] ${message.status === 'up' ? 'UP' : 'DOWN'}: ${message.body}`,
+      message.status,
+      monitor ? { id: monitor.id, name: monitor.name, url: monitor.url, type: monitor.type } : undefined,
+      { status: message.status === 'up' ? 1 : 0, msg: message.body, ping: message.ping, time: message.time },
+    )
+  }
+  return (config, message) => mod.send(config, message)
 }
 
 export interface NotificationMessage {
@@ -56,16 +69,18 @@ export async function sendNotification(
   monitor: any,
   result: CheckResult
 ): Promise<void> {
-  const provider = providers[notification.type]
+  const provider = resolveProvider(notification.type)
   
   if (!provider) {
     throw new Error(`Unknown notification provider type: ${notification.type}`)
   }
 
   const message = formatMessage(monitor, result)
+  // The forms' field names → the provider's
+  const config = notificationConfig(notification.type, notification.config)
 
   try {
-    await provider.send(notification.config, message)
+    await provider(config, message, monitor)
     console.log(`[Notification] Sent ${notification.type} notification for ${monitor.name}`)
   } catch (error: any) {
     console.error(`[Notification] Failed to send ${notification.type} notification:`, error.message)
