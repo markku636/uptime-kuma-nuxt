@@ -73,7 +73,7 @@
       <h2 class="section-title">HTTP Settings</h2>
       
       <div class="grid gap-4 md:grid-cols-2">
-        <div class="form-group">
+        <div v-if="form.type !== 'real-browser'" class="form-group">
           <label class="input-label">Method</label>
           <select v-model="form.method" class="select-field" :disabled="loading">
             <option v-for="method in httpMethods" :key="method.value" :value="method.value">
@@ -82,7 +82,7 @@
           </select>
         </div>
 
-        <div v-if="form.type === 'http' || form.type === 'keyword'" class="form-group">
+        <div v-if="form.type === 'http' || form.type === 'keyword' || form.type === 'real-browser'" class="form-group">
           <label class="input-label">Expected Keyword</label>
           <input 
             v-model="form.keyword" 
@@ -126,8 +126,8 @@
         </label>
       </div>
 
-      <!-- Remote Browser (for Keyword monitoring) -->
-      <div v-if="form.type === 'keyword'" class="mt-4">
+      <!-- Remote Browser (browser engine monitors) -->
+      <div v-if="form.type === 'real-browser'" class="mt-4">
         <label class="flex items-center gap-2 cursor-pointer mb-2">
           <input 
             v-model="form.useRemoteBrowser" 
@@ -137,12 +137,12 @@
           />
           <span class="text-default">Use Remote Browser</span>
         </label>
-        <p class="text-xs text-dimmed mb-2">Use a Chromium-based browser to render JavaScript content before checking for keyword</p>
+        <p class="text-xs text-dimmed mb-2">Load the page in a remote Chromium (Chrome DevTools endpoint) instead of a local one</p>
         
         <div v-if="form.useRemoteBrowser" class="mt-2">
           <label class="input-label">Remote Browser</label>
           <select v-model="form.remoteBrowser" class="select-field" :disabled="loading">
-            <option :value="null">Auto Select</option>
+            <option :value="null" disabled>Select a remote browser</option>
             <option v-for="browser in remoteBrowsers" :key="browser.id" :value="browser.id">
               {{ browser.name }}
             </option>
@@ -154,7 +154,7 @@
       </div>
 
       <!-- Proxy Selection -->
-      <div class="mt-4">
+      <div v-if="form.type !== 'real-browser'" class="mt-4">
         <label class="input-label">Proxy</label>
         <select v-model="form.proxyId" class="select-field" :disabled="loading">
           <option :value="null">No Proxy</option>
@@ -1157,13 +1157,19 @@ const initNotificationIds = (): Record<number, boolean> => {
       ids[Number(id)] = true
     }
   }
+  // The API returns the links: [{ notificationId, notification }]
+  for (const link of props.initialData?.monitorNotifications ?? []) {
+    const id = link.notificationId ?? link.notification?.id
+    if (id) ids[Number(id)] = true
+  }
   return ids
 }
 
 // Initialize tag IDs from initial data
 const initTagIds = (): number[] => {
   if (props.initialData?.tags) {
-    return props.initialData.tags.map((t: any) => t.tag_id || t.id)
+    // Links from the API ({ tagId, tag }) or plain tags
+    return props.initialData.tags.map((t: any) => t.tagId ?? t.tag?.id ?? t.tag_id ?? t.id)
   }
   return []
 }
@@ -1251,9 +1257,9 @@ const form = reactive({
   snmpOid: props.initialData?.snmpOid || '',
   snmpVersion: props.initialData?.snmpVersion || '2c',
   // DNS
-  dnsResolveServer: props.initialData?.dnsResolveServer || props.initialData?.dns_resolve_server || '1.1.1.1',
+  dnsResolveServer: props.initialData?.dnsResolver || props.initialData?.dnsResolveServer || props.initialData?.dns_resolve_server || '1.1.1.1',
   dnsPort: props.initialData?.dnsPort || props.initialData?.port || 53,
-  dnsResolveType: props.initialData?.dnsResolveType || props.initialData?.dns_resolve_type || 'A',
+  dnsResolveType: props.initialData?.dnsRecordType || props.initialData?.dnsResolveType || props.initialData?.dns_resolve_type || 'A',
   // Radius
   radiusUsername: props.initialData?.radiusUsername || '',
   radiusPassword: props.initialData?.radiusPassword || '',
@@ -1285,8 +1291,8 @@ const form = reactive({
   // Cache Bust
   cacheBust: props.initialData?.cacheBust || false,
   // Remote Browser
-  useRemoteBrowser: !!props.initialData?.remote_browser,
-  remoteBrowser: props.initialData?.remote_browser || props.initialData?.remoteBrowser || null,
+  useRemoteBrowser: !!(props.initialData?.remoteBrowserId || props.initialData?.remote_browser),
+  remoteBrowser: props.initialData?.remoteBrowserId || props.initialData?.remote_browser || props.initialData?.remoteBrowser || null,
   // Monitor Conditions
   conditions: props.initialData?.conditions || [],
   // Node Assignment (Cluster Mode)
@@ -1298,6 +1304,7 @@ const monitorTypes = [
   { value: 'http', label: 'HTTP(s)' },
   { value: 'keyword', label: 'HTTP(s) - Keyword' },
   { value: 'json-query', label: 'HTTP(s) - JSON Query' },
+  { value: 'real-browser', label: 'HTTP(s) - Browser Engine (Chromium)' },
   { value: 'grpc-keyword', label: 'gRPC(s) - Keyword' },
   { value: 'tcp', label: 'TCP Port' },
   { value: 'ping', label: 'Ping' },
@@ -1344,7 +1351,7 @@ const gameTypes = [
 
 // Computed properties for conditional fields
 const showUrlField = computed(() => 
-  ['http', 'keyword', 'json-query'].includes(form.type)
+  ['http', 'keyword', 'json-query', 'real-browser'].includes(form.type)
 )
 
 const showHostnameField = computed(() => 
@@ -1356,7 +1363,7 @@ const showPortField = computed(() =>
 )
 
 const showHttpSettings = computed(() => 
-  ['http', 'keyword', 'json-query'].includes(form.type)
+  ['http', 'keyword', 'json-query', 'real-browser'].includes(form.type)
 )
 
 const showDatabaseSettings = computed(() => 
@@ -1607,8 +1614,8 @@ const handleSubmit = () => {
     data.cacheBust = form.cacheBust
     
     // Remote Browser (for keyword monitoring)
-    if (form.type === 'keyword' && form.useRemoteBrowser) {
-      data.remote_browser = form.remoteBrowser
+    if (form.type === 'real-browser') {
+      data.remote_browser = form.useRemoteBrowser ? form.remoteBrowser : null
     }
   }
 

@@ -105,6 +105,7 @@ async function handleSubmit(formData: any) {
       v-else-if="monitor"
       :initial-data="monitor"
       :loading="saving"
+      submit-label="Save Changes"
       @submit="handleSubmit"
     />
   </div>

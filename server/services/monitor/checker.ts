@@ -20,7 +20,8 @@ import {
   checkDns,
   checkRadius,
   checkTailscalePing,
-  checkSnmp
+  checkSnmp,
+  checkRealBrowser,
 } from './checkers'
 import { prisma } from '../../utils/prisma'
 import { aggregateGroupStatus } from '../workspace/tree'
@@ -166,65 +167,4 @@ async function checkGroup(monitor: any): Promise<CheckResult> {
   )
 
   return { status, ping: 0, msg }
-}
-
-async function checkRealBrowser(monitor: any, startTime: number): Promise<CheckResult> {
-  try {
-    // Real browser monitoring using Playwright
-    // This requires a browser instance running via remote browser service
-    const { chromium } = await import('playwright')
-    
-    if (!monitor.url) {
-      return {
-        status: 0,
-        ping: 0,
-        msg: 'URL is required for real browser monitoring'
-      }
-    }
-
-    const browser = await chromium.launch({
-      headless: true,
-      timeout: (monitor.timeout || 48) * 1000
-    })
-    
-    const context = await browser.newContext()
-    const page = await context.newPage()
-    
-    await page.goto(monitor.url, {
-      timeout: (monitor.timeout || 48) * 1000,
-      waitUntil: 'networkidle'
-    })
-
-    const ping = Date.now() - startTime
-
-    // Check for keyword if specified
-    if (monitor.keyword) {
-      const content = await page.content()
-      const found = content.includes(monitor.keyword)
-      
-      await browser.close()
-      
-      if (monitor.invertKeyword ? found : !found) {
-        return {
-          status: monitor.upsideDown ? 1 : 0,
-          ping,
-          msg: monitor.invertKeyword ? 'Keyword found (inverted)' : 'Keyword not found'
-        }
-      }
-    }
-
-    await browser.close()
-
-    return {
-      status: monitor.upsideDown ? 0 : 1,
-      ping,
-      msg: 'Page loaded successfully'
-    }
-  } catch (error: any) {
-    return {
-      status: monitor.upsideDown ? 1 : 0,
-      ping: Date.now() - startTime,
-      msg: error.message || 'Real browser check failed'
-    }
-  }
 }

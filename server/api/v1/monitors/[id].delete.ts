@@ -1,5 +1,6 @@
 // server/api/v1/monitors/[id].delete.ts
 import { scheduleGroupRecheck, stopMonitorJob } from '../../../services/monitor/scheduler'
+import { deleteScreenshot } from '../../../services/monitor/screenshots'
 import { releaseChildren } from '../../../services/workspace/service'
 
 export default defineEventHandler(async (event) => {
@@ -38,6 +39,7 @@ export default defineEventHandler(async (event) => {
 
   // Stop the monitor job first
   stopMonitorJob(id)
+  deleteScreenshot(id)
 
   // Members of a deleted group are kept and move up one level
   await releaseChildren(session.user.id, id, existingMonitor.parent)

@@ -260,6 +260,8 @@ export const ENDPOINTS: Endpoint[] = [
     ],
   },
   { method: 'get', path: '/api/v1/monitors/{id}/certificate', tag: 'Monitors', summary: 'Get monitor TLS certificate', zh: '取得 Monitor 憑證資訊', params: { id: 'monitorId' } },
+  { method: 'get', path: '/api/v1/monitors/{id}/screenshot', tag: 'Monitors', summary: 'Latest real-browser screenshot (URL and time)', zh: '取得真實瀏覽器 Monitor 最新截圖資訊', params: { id: 'monitorId' } },
+  { method: 'get', path: '/api/v1/monitors/{id}/screenshot.png', tag: 'Monitors', summary: 'Latest real-browser screenshot image', zh: '取得真實瀏覽器 Monitor 最新截圖', params: { id: 'monitorId' }, produces: 'image/png' },
   { method: 'delete', path: '/api/v1/monitors/{id}', tag: 'Monitors', summary: 'Delete monitor', zh: '刪除 Monitor', params: { id: 'monitorId' }, destructive: true },
 
   {
@@ -480,7 +482,7 @@ export const ENDPOINTS: Endpoint[] = [
   // ─────────────────────────── Database ───────────────────────────
   { method: 'post', path: '/api/v1/database/clear-events', tag: 'Database', summary: 'Clear events', zh: '清除事件資料', destructive: true },
   { method: 'post', path: '/api/v1/database/clear-heartbeats', tag: 'Database', summary: 'Clear heartbeats', zh: '清除所有心跳資料', destructive: true },
-  { method: 'post', path: '/api/v1/database/clear-statistics', tag: 'Database', summary: 'Clear statistics', zh: '清除統計資料', destructive: true },
+  { method: 'post', path: '/api/v1/database/clear-statistics', tag: 'Database', summary: 'Clear statistics (deletes your heartbeats)', zh: '清除統計資料（刪除自己的心跳記錄）', destructive: true },
   { method: 'post', path: '/api/v1/database/shrink-database', tag: 'Database', summary: 'Shrink database', zh: '壓縮資料庫', destructive: true },
   { method: 'post', path: '/api/v1/database/clear-all', tag: 'Database', summary: 'Clear all monitoring data', zh: '清除全部資料', destructive: true },
 

@@ -43,6 +43,7 @@
                   <option value="http">HTTP(s)</option>
                   <option value="keyword">HTTP(s) - Keyword</option>
                   <option value="json-query">HTTP(s) - JSON Query</option>
+                  <option value="real-browser">HTTP(s) - Browser Engine (Chromium)</option>
                   <option value="tcp">TCP Port</option>
                   <option value="ping">Ping</option>
                   <option value="dns">DNS</option>
@@ -173,6 +174,45 @@
             <label v-if="form.type === 'keyword'" class="flex items-center gap-2">
               <input type="checkbox" v-model="form.invertKeyword" class="checkbox" />
               <span class="text-default">Invert Keyword (alert if found)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Browser engine (real-browser) -->
+        <div v-if="form.type === 'real-browser'" class="section-card">
+          <h2 class="section-title">Browser Settings</h2>
+          <p class="text-sm text-muted mb-4">
+            The page is loaded in Chromium (JavaScript runs), and every check keeps a screenshot.
+          </p>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="form-group md:col-span-2">
+              <label class="input-label">Browser</label>
+              <select v-model="form.remoteBrowserId" class="select-field">
+                <option :value="null">Local Chromium on this server</option>
+                <option v-for="b in remoteBrowsers" :key="b.id" :value="b.id">{{ b.name }}</option>
+              </select>
+              <p class="text-xs text-muted mt-1">
+                Without a local Chromium, add a remote one (a Chrome DevTools endpoint) in
+                <NuxtLink to="/settings/remote-browsers" class="text-up-fg hover:underline">Remote Browsers</NuxtLink>.
+              </p>
+            </div>
+            <div class="form-group md:col-span-2">
+              <label class="input-label">{{ t('Accepted Status Codes') }}</label>
+              <input v-model="form.acceptedStatuscodes" type="text" class="input-field font-mono" placeholder="200-299, 301" />
+            </div>
+            <div class="form-group md:col-span-2">
+              <label class="input-label">Expected Keyword</label>
+              <input v-model="form.keyword" type="text" class="input-field" placeholder="Optional: text the rendered page must contain" />
+            </div>
+          </div>
+          <div class="mt-4 space-y-3">
+            <label v-if="form.keyword" class="flex items-center gap-2">
+              <input type="checkbox" v-model="form.invertKeyword" class="checkbox" />
+              <span class="text-default">Invert Keyword (alert if found)</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" v-model="form.ignoreTls" class="checkbox" />
+              <span class="text-default">Ignore TLS/SSL Certificate Errors</span>
             </label>
           </div>
         </div>
@@ -491,6 +531,7 @@ const tlsExpiryDays = ref<number[]>([7, 14, 30])
 // Available options from API
 const dockerHosts = ref<any[]>([])
 const proxies = ref<any[]>([])
+const remoteBrowsers = ref<any[]>([])
 const availableTags = ref<any[]>([])
 const notifications = ref<any[]>([])
 
@@ -538,6 +579,7 @@ const form = reactive({
   databaseQuery: '',
   // Proxy
   proxyId: null as number | null,
+  remoteBrowserId: null as number | null,
   // Organization: pre-filled from ?group= / ?workspace= or the workspace currently shown
   parent: queryId('group'),
   workspaceId: queryId('workspace') ?? defaultWorkspaceId.value,
@@ -545,7 +587,7 @@ const form = reactive({
 
 // Computed
 const isHttpType = computed(() => ['http', 'keyword', 'json-query'].includes(form.type))
-const showUrlField = computed(() => ['http', 'keyword', 'json-query', 'grpc-keyword'].includes(form.type))
+const showUrlField = computed(() => ['http', 'keyword', 'json-query', 'grpc-keyword', 'real-browser'].includes(form.type))
 const showHostnameField = computed(() => ['tcp', 'ping', 'dns'].includes(form.type))
 const showPortField = computed(() => ['tcp'].includes(form.type))
 
@@ -563,17 +605,19 @@ const dbConnectionPlaceholder = computed(() => {
 // Fetch available options
 onMounted(async () => {
   try {
-    const [tagsRes, notifsRes, proxiesRes, dockerRes] = await Promise.all([
+    const [tagsRes, notifsRes, proxiesRes, dockerRes, browsersRes] = await Promise.all([
       $fetch<any>('/api/v1/tags').catch(() => ({ data: [] })),
       $fetch<any>('/api/v1/notifications').catch(() => ({ data: [] })),
       $fetch<any>('/api/v1/proxies').catch(() => ({ data: [] })),
       $fetch<any>('/api/v1/docker-hosts').catch(() => ({ data: [] })),
+      $fetch<any>('/api/v1/remote-browsers').catch(() => ({ data: [] })),
     ])
     
     availableTags.value = tagsRes.data || []
     notifications.value = notifsRes.data || []
     proxies.value = proxiesRes.data || []
     dockerHosts.value = dockerRes.data || []
+    remoteBrowsers.value = browsersRes.data || browsersRes || []
   } catch (e) {
     console.error('Failed to fetch options:', e)
   }

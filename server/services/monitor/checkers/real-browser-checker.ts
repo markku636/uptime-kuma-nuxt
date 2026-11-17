@@ -1,171 +1,99 @@
 // server/services/monitor/checkers/real-browser-checker.ts
-import type { CheckResult } from './index'
+// Load the page in Chromium (Playwright): through the monitor's remote
+// browser (a Chrome DevTools endpoint such as browserless or
+// `chrome --remote-debugging-port`) or a local headless Chromium.
+// Every check keeps a screenshot of the page (see ../screenshots).
+import type { CheckResult } from '../checker'
+import { prisma } from '../../../utils/prisma'
+import { isStatusAccepted } from '../status-codes'
+import { saveScreenshot } from '../screenshots'
 
-// Playwright chromium for browser automation
-let chromium: any = null
+let chromiumPromise: Promise<any> | null = null
+let localBrowser: any = null
 
-try {
-  // Try to import playwright-core
-  const playwright = require('playwright-core')
-  chromium = playwright.chromium
-} catch (e) {
-  console.log('[Real Browser] Playwright not available')
+async function chromium() {
+  // playwright is optional at run time (it is large); load it on first use
+  chromiumPromise ??= import('playwright').then((mod: any) => mod.chromium ?? mod.default?.chromium)
+  const c = await chromiumPromise
+  if (!c) throw new Error('Playwright is not available')
+  return c
 }
 
-let browser: any = null
-
-/**
- * Get or create browser instance
- */
-async function getBrowser(executablePath?: string) {
-  if (browser && browser.isConnected()) {
-    return browser
-  }
-
-  if (!chromium) {
-    throw new Error('Playwright is not installed. Run: npm install playwright-core')
-  }
-
-  const launchOptions: any = {
-    headless: true,
-  }
-
-  if (executablePath && executablePath !== '#playwright_chromium') {
-    launchOptions.executablePath = executablePath
-  }
-
-  browser = await chromium.launch(launchOptions)
-  return browser
-}
-
-/**
- * Close browser instance
- */
-export async function closeBrowser() {
-  if (browser) {
-    await browser.close()
-    browser = null
-  }
-}
-
-/**
- * Check URL using real browser
- */
-export async function checkRealBrowser(monitor: any, startTime: number): Promise<CheckResult> {
-  const url = monitor.url
-  const keyword = monitor.keyword
-  const invertKeyword = monitor.invertKeyword
-  const timeout = (monitor.timeout || 30) * 1000
-
-  if (!chromium) {
-    return {
-      status: 0,
-      msg: 'Playwright is not installed',
-      ping: 0
-    }
-  }
-
-  let context: any = null
-  let page: any = null
-
+/** Shared local headless Chromium */
+async function getLocalBrowser() {
+  if (localBrowser?.isConnected()) return localBrowser
+  const c = await chromium()
   try {
-    const browserInstance = await getBrowser(monitor.remote_browser || undefined)
-    
-    context = await browserInstance.newContext({
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    })
-    
-    page = await context.newPage()
+    localBrowser = await c.launch({ headless: true })
+  } catch (error: any) {
+    localBrowser = null
+    throw new Error(`No local Chromium (${String(error?.message || error).split('\n')[0]}). Add a remote browser in Settings, or install one with "npx playwright install chromium"`)
+  }
+  return localBrowser
+}
+
+export async function closeBrowser() {
+  if (localBrowser) {
+    await localBrowser.close().catch(() => {})
+    localBrowser = null
+  }
+}
+
+/** Fold a keyword result into the check (uptime-kuma semantics) */
+function keywordOutcome(content: string, keyword: string, invert: boolean): { ok: boolean; msg: string } {
+  const found = content.includes(keyword)
+  const shown = keyword.length > 50 ? `"${keyword.slice(0, 47)}..."` : `"${keyword}"`
+  if (invert) return { ok: !found, msg: found ? `Keyword ${shown} found, but should be absent` : `keyword ${shown} absent` }
+  return { ok: found, msg: found ? `keyword ${shown} found` : `Keyword ${shown} not found` }
+}
+
+export async function checkRealBrowser(monitor: any, startTime: number): Promise<CheckResult> {
+  if (!monitor.url) return { status: 0, ping: 0, msg: 'URL is required for real browser monitoring' }
+  const timeout = (monitor.timeout || 48) * 1000
+
+  let remote: any = null
+  let context: any = null
+  try {
+    let browser: any
+    if (monitor.remoteBrowserId) {
+      const row = await prisma.remoteBrowser.findFirst({ where: { id: monitor.remoteBrowserId, userId: monitor.userId } })
+      if (!row) return { status: 0, ping: 0, msg: 'Remote browser not found' }
+      if (!row.active) return { status: 0, ping: 0, msg: `Remote browser "${row.name}" is disabled` }
+      remote = await (await chromium()).connectOverCDP(row.url, { timeout })
+      browser = remote
+    } else {
+      browser = await getLocalBrowser()
+    }
+
+    context = await browser.newContext({ ignoreHTTPSErrors: !!monitor.ignoreTls })
+    const page = await context.newPage()
     page.setDefaultTimeout(timeout)
-
-    // Navigate to URL
-    const response = await page.goto(url, {
-      waitUntil: 'networkidle',
-      timeout
-    })
-
+    const response = await page.goto(monitor.url, { waitUntil: 'networkidle', timeout })
     const ping = Date.now() - startTime
 
-    // Check response status
-    if (!response) {
-      return {
-        status: 0,
-        msg: 'No response from page',
-        ping
-      }
-    }
+    // Keep what the page looked like, whatever the outcome
+    try {
+      saveScreenshot(monitor.id, await page.screenshot({ type: 'png', fullPage: false }))
+    } catch { /* a screenshot is a bonus */ }
 
-    const statusCode = response.status()
-    
-    // Check for keyword if specified
-    if (keyword) {
-      const content = await page.content()
-      const found = content.includes(keyword)
-      
-      if (invertKeyword) {
-        // Keyword should NOT be found
-        if (found) {
-          return {
-            status: 0,
-            msg: `Keyword "${keyword}" found (should not be present)`,
-            ping
-          }
-        }
-      } else {
-        // Keyword should be found
-        if (!found) {
-          return {
-            status: 0,
-            msg: `Keyword "${keyword}" not found`,
-            ping
-          }
-        }
-      }
-    }
+    if (!response) return { status: monitor.upsideDown ? 1 : 0, ping, msg: 'No response from page' }
 
-    // Take screenshot if enabled
-    if (monitor.screenshot) {
-      try {
-        const screenshotBuffer = await page.screenshot({
-          type: 'png',
-          fullPage: false
-        })
-        // Could save screenshot to storage here
-        // For now, we just indicate it was captured
-      } catch (e) {
-        console.error('[Real Browser] Screenshot error:', e)
-      }
+    const code = response.status()
+    let up = isStatusAccepted(code, monitor.acceptedStatuscodes)
+    let msg = `HTTP ${code}`
+    if (up && monitor.keyword) {
+      const outcome = keywordOutcome(await page.content(), monitor.keyword, !!monitor.invertKeyword)
+      up = outcome.ok
+      msg = outcome.ok ? `${msg}, ${outcome.msg}` : outcome.msg
     }
-
-    // Check status code
-    if (statusCode >= 400) {
-      return {
-        status: 0,
-        msg: `HTTP ${statusCode}`,
-        ping
-      }
-    }
-
-    return {
-      status: 1,
-      msg: `OK - HTTP ${statusCode}`,
-      ping
-    }
-
+    if (monitor.upsideDown) up = !up
+    return { status: up ? 1 : 0, ping, msg }
   } catch (error: any) {
     const ping = Date.now() - startTime
-    return {
-      status: 0,
-      msg: error.message || 'Browser check failed',
-      ping
-    }
+    return { status: monitor.upsideDown ? 1 : 0, ping, msg: String(error?.message || 'Real browser check failed').split('\n')[0] }
   } finally {
-    // Clean up
-    if (page) {
-      try { await page.close() } catch (e) {}
-    }
-    if (context) {
-      try { await context.close() } catch (e) {}
-    }
+    // Always release the page's context; a remote connection is per check
+    if (context) await context.close().catch(() => {})
+    if (remote) await remote.close().catch(() => {})
   }
 }
