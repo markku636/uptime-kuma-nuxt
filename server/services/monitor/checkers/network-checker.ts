@@ -5,6 +5,7 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import type { CheckResult } from '../checker'
 import { evaluateJsonQuery } from '../../../utils/json-query'
+import { dnsServers, formatRecords, recordType } from './dns-options'
 
 const execAsync = promisify(exec)
 
@@ -80,86 +81,29 @@ export async function checkPing(monitor: any, startTime: number): Promise<CheckR
 }
 
 export async function checkDns(monitor: any, startTime: number): Promise<CheckResult> {
-  const dnsPromises = dns.promises
+  if (!monitor.hostname) return { status: 0, ping: 0, msg: 'Hostname is required' }
+  const type = recordType(monitor.dnsRecordType)
+  // The monitor's resolver(s); the system's when empty
+  const resolver = new dns.promises.Resolver({ timeout: Math.max(1000, (monitor.timeout || 48) * 1000), tries: 2 })
+  const servers = dnsServers(monitor.dnsResolver, monitor.port)
+  const via = servers.length ? ` via ${servers.join(', ')}` : ''
 
   try {
-    // Get custom DNS server if specified
-    let resolver = dnsPromises
-    if (monitor.dnsServer) {
-      const dnsResolver = new dns.Resolver()
-      dnsResolver.setServers([monitor.dnsServer])
-      resolver = dnsResolver.resolve4 as any
-    }
-
-    // Determine record type
-    const recordType = monitor.dnsResolveType || 'A'
-    let addresses: string[]
-
-    switch (recordType.toUpperCase()) {
-      case 'A':
-        addresses = await dnsPromises.resolve4(monitor.hostname)
-        break
-      case 'AAAA':
-        addresses = await dnsPromises.resolve6(monitor.hostname)
-        break
-      case 'MX':
-        const mxRecords = await dnsPromises.resolveMx(monitor.hostname)
-        addresses = mxRecords.map(r => `${r.priority} ${r.exchange}`)
-        break
-      case 'TXT':
-        const txtRecords = await dnsPromises.resolveTxt(monitor.hostname)
-        addresses = txtRecords.flat()
-        break
-      case 'CNAME':
-        addresses = [await dnsPromises.resolveCname(monitor.hostname).then(r => r[0])]
-        break
-      case 'NS':
-        addresses = await dnsPromises.resolveNs(monitor.hostname)
-        break
-      case 'SOA':
-        const soa = await dnsPromises.resolveSoa(monitor.hostname)
-        addresses = [`${soa.nsname} ${soa.hostmaster}`]
-        break
-      case 'PTR':
-        addresses = await dnsPromises.resolvePtr(monitor.hostname)
-        break
-      case 'SRV':
-        const srvRecords = await dnsPromises.resolveSrv(monitor.hostname)
-        addresses = srvRecords.map(r => `${r.priority} ${r.weight} ${r.port} ${r.name}`)
-        break
-      case 'CAA':
-        const caaRecords = await dnsPromises.resolveCaa(monitor.hostname)
-        addresses = caaRecords.map(r => `${r.critical} ${r.issue || r.issuewild || r.iodef}`)
-        break
-      default:
-        addresses = await dnsPromises.resolve4(monitor.hostname)
-    }
-
+    if (servers.length) resolver.setServers(servers)
+    const records = formatRecords(type, await resolver.resolve(monitor.hostname, type))
     const ping = Date.now() - startTime
-
-    // Check for expected result if specified
-    if (monitor.dnsExpectedResult) {
-      const found = addresses.some(addr => addr.includes(monitor.dnsExpectedResult))
-      if (!found) {
-        return {
-          status: monitor.upsideDown ? 1 : 0,
-          ping,
-          msg: `Expected '${monitor.dnsExpectedResult}', got: ${addresses.join(', ')}`
-        }
-      }
+    if (!records.length) {
+      return { status: monitor.upsideDown ? 1 : 0, ping, msg: `No ${type} records${via}` }
     }
-
-    return {
-      status: monitor.upsideDown ? 0 : 1,
-      ping,
-      msg: `Resolved: ${addresses.join(', ')}`
-    }
+    return { status: monitor.upsideDown ? 0 : 1, ping, msg: `${type}: ${records.join(', ')}` }
   } catch (error: any) {
     return {
       status: monitor.upsideDown ? 1 : 0,
       ping: Date.now() - startTime,
-      msg: error.message || 'DNS resolution failed'
+      msg: `${type} lookup failed${via}: ${error?.code || error?.message || 'DNS resolution failed'}`,
     }
+  } finally {
+    resolver.cancel()
   }
 }
 
