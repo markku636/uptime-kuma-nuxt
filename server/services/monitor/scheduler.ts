@@ -190,7 +190,7 @@ async function runSingleCheck(monitor: any) {
       ping: heartbeat.ping,
       important: heartbeat.important,
       duration: heartbeat.duration,
-    })
+    }, monitor.userId)
 
     if (heartbeat.important) await notifyParentGroup(monitor.id)
 
@@ -248,7 +248,7 @@ async function runSingleCheck(monitor: any) {
     ping: heartbeat.ping,
     important: heartbeat.important,
     duration: heartbeat.duration,
-  })
+  }, monitor.userId)
 
   // A status change of a member changes the status of its group
   if (isImportant) await notifyParentGroup(monitor.id)

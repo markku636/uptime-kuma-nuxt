@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
     time: heartbeat.time.toISOString(),
     msg: heartbeat.msg,
     ping: heartbeat.ping,
-  })
+  }, monitor.userId)
 
   return {
     ok: true,

@@ -6,6 +6,7 @@ import { Server as SocketServer, Socket } from 'socket.io'
 import { Prisma } from '@prisma/client'
 import crypto from 'crypto'
 import { getMonitorTypeListForClient } from './monitor/types'
+import { isSameOrigin, socketUserId } from './socket-auth'
 
 
 
@@ -2160,20 +2161,31 @@ export function initSocketServer(httpServer: HTTPServer) {
       methods: ['GET', 'POST']
     },
     pingTimeout: 60000,
-    pingInterval: 25000
+    pingInterval: 25000,
+  })
+
+  // The user comes from the login session cookie sent with the handshake;
+  // without one the socket stays anonymous (every handler then refuses).
+  // A page on another site must not ride the user's cookie: its socket stays
+  // anonymous too (connecting it anyway, as aborting the upgrade upsets proxies)
+  io.use(async (socket: AuthenticatedSocket, next) => {
+    const headers = socket.request.headers
+    socket.userId = isSameOrigin(headers) ? (await socketUserId(headers.cookie)) ?? undefined : undefined
+    next()
   })
 
   io.on('connection', (socket: AuthenticatedSocket) => {
     console.log(`[Socket.io] Client connected: ${socket.id}`)
 
-    // Handle authentication
-    socket.on('loginByToken', async (token: string, callback: Function) => {
+    // Kept for uptime-kuma style clients: the token is not trusted, the
+    // session cookie of the handshake decides
+    socket.on('loginByToken', async (_token: string, callback: Function) => {
       try {
-        // TODO: Implement JWT token verification
-        // For now, just mark as authenticated with a mock user
-        socket.userId = 1
-        socket.username = 'admin'
-        
+        if (!socket.userId) {
+          callback({ ok: false, msg: 'Not authenticated' })
+          return
+        }
+
         // Send initial data after login
         const monitorTypeList = getMonitorTypeListForClient()
         socket.emit('monitorTypeList', monitorTypeList)
@@ -2306,19 +2318,21 @@ export function initSocketServer(httpServer: HTTPServer) {
     // =====================
     // Subscription Event Handlers (for real-time updates)
     // =====================
+    // Heartbeats only reach the monitor's owner
     socket.on('subscribe_monitors', () => {
-      socket.join('monitors')
-      console.log(`[Socket.io] ${socket.id} subscribed to monitors`)
+      if (!socket.userId) return
+      socket.join(`monitors:${socket.userId}`)
     })
 
     socket.on('unsubscribe_monitors', () => {
-      socket.leave('monitors')
-      console.log(`[Socket.io] ${socket.id} unsubscribed from monitors`)
+      if (socket.userId) socket.leave(`monitors:${socket.userId}`)
     })
 
-    socket.on('subscribe_monitor', (monitorId: number) => {
-      socket.join(`monitor:${monitorId}`)
-      console.log(`[Socket.io] ${socket.id} subscribed to monitor:${monitorId}`)
+    socket.on('subscribe_monitor', async (monitorId: number) => {
+      const id = Number(monitorId)
+      if (!socket.userId || !Number.isInteger(id)) return
+      const owned = await prisma.monitor.count({ where: { id, userId: socket.userId } })
+      if (owned) socket.join(`monitor:${id}`)
     })
 
     socket.on('unsubscribe_monitor', (monitorId: number) => {
@@ -2602,13 +2616,13 @@ export function broadcastDockerHostDeleted(userId: number, dockerHostId: number)
 // =====================
 // Emit Heartbeat (for scheduler)
 // =====================
-export function emitHeartbeat(monitorId: number, heartbeat: any) {
+export function emitHeartbeat(monitorId: number, heartbeat: any, userId?: number) {
   if (!io) return
   
   const payload = { monitorId, heartbeat }
   
-  // Broadcast to 'monitors' room (for dashboard subscribers)
-  io.to('monitors').emit('heartbeat', payload)
+  // The owner's dashboard subscribers (rooms are per user)
+  if (userId) io.to(`monitors:${userId}`).emit('heartbeat', payload)
   
   // Also emit to specific monitor room (for detail page subscribers)
   io.to(`monitor:${monitorId}`).emit('heartbeat', payload)
