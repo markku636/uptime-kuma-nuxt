@@ -1465,6 +1465,24 @@ const clusterNodes = computed(() => {
 // Live preview of {{variables}} in the URL for the chosen workspace
 const urlPreview = useVariablePreview(toRef(form, 'url'), toRef(form, 'workspaceId'))
 
+// A new monitor starts with the notifications / proxy marked "Default"
+if (!props.initialData?.id) {
+  let notificationsApplied = false
+  let proxyApplied = false
+  watch([notifications, proxies], ([notifs, proxyList]) => {
+    if (!notificationsApplied && notifs?.length) {
+      notificationsApplied = true
+      for (const n of notifs as any[]) {
+        if (n.isDefault && n.active !== false) form.notificationIDList[n.id] = true
+      }
+    }
+    if (!proxyApplied && proxyList?.length) {
+      proxyApplied = true
+      if (form.proxyId == null) form.proxyId = (proxyList as any[]).find(p => p.isDefault && p.active !== false)?.id ?? null
+    }
+  }, { immediate: true })
+}
+
 const handleSubmit = () => {
   const data: any = {
     type: form.type,

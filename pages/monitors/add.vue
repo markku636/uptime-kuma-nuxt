@@ -658,6 +658,13 @@ onMounted(async () => {
     availableTags.value = tagsRes.data || []
     notifications.value = notifsRes.data || []
     proxies.value = proxiesRes.data || []
+    // Notifications / proxy marked "Default" apply to new monitors
+    if (!selectedNotifications.value.length) {
+      selectedNotifications.value = notifications.value.filter((n: any) => n.isDefault && n.active !== false).map((n: any) => n.id)
+    }
+    if (form.proxyId == null) {
+      form.proxyId = proxies.value.find((p: any) => p.isDefault && p.active !== false)?.id ?? null
+    }
     dockerHosts.value = dockerRes.data || []
     remoteBrowsers.value = browsersRes.data || browsersRes || []
   } catch (e) {
