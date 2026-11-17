@@ -17,15 +17,19 @@
 - **Browser Engine** - 以 Chromium 載入頁面（會執行 JavaScript），每次檢查保留一張截圖；使用 Remote Browser（Chrome DevTools 端點）或本機 Chrome（設定 > 一般 > Chrome 執行檔）
 - **TCP Port** - 端口連接測試
 - **Ping** - ICMP 網路監控
-- **DNS** - DNS 解析監控
-- **Push** - 被動推送監控
-- **Docker** - 容器健康檢查
-- **gRPC** - gRPC 服務監控
+- **DNS** - DNS 解析監控（指定的解析伺服器與記錄類型：A、AAAA、CNAME、MX、NS、TXT、SRV、CAA、SOA、PTR）
+- **Push** - 被動推送監控（`/api/push/<token>?status=up|down&msg=…&ping=…`；超過檢查間隔沒有推送即為 DOWN）
+- **Docker** - 容器健康檢查（Docker 主機：socket 或 TCP）
+- **gRPC** - gRPC 服務監控（貼上 proto 定義，呼叫指定的服務方法並檢查關鍵字）
 - **Database** - PostgreSQL、MySQL、MSSQL、MongoDB、Redis 連線監控
+- **SNMP** - 讀取 OID（v1 / v2c），可設定比較條件
+- **RADIUS** - 以使用者帳密送出 Access-Request（PAP，含 Message-Authenticator），Access-Accept 為 UP
 - **MQTT** - 消息佇列監控
 - **Kafka** - Kafka 叢集監控
-- **RabbitMQ** - RabbitMQ 監控
+- **RabbitMQ** - RabbitMQ 監控（5671 使用 TLS）
 - **Game Server** - 遊戲伺服器監控 (透過 GameDig)
+
+所有類型都可以在「新增監控」頁面建立（較少用的類型列在「More」）。
 
 ### 🔔 通知渠道
 - Email (SMTP)
