@@ -112,66 +112,26 @@ export async function getDailyUptimeHistory(
   monitorId: number,
   days: number = 90
 ): Promise<Array<{ date: string; uptime: number; avgPing: number }>> {
-  const now = new Date()
-  const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
-  
-  // Get all heartbeats in the range
-  const heartbeats = await prisma.heartbeat.findMany({
-    where: {
-      monitorId,
-      time: { gte: startDate }
-    },
-    select: {
-      status: true,
-      ping: true,
-      time: true
-    },
-    orderBy: { time: 'asc' }
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+
+  // One row per UTC day, counted in the database (up to a year of heartbeats)
+  const rows = await prisma.$queryRaw<Array<{ date: string; up: bigint; down: bigint; avg_ping: number | null }>>`
+    SELECT to_char(time AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
+           count(*) FILTER (WHERE status = 1) AS up,
+           count(*) FILTER (WHERE status = 0) AS down,
+           avg(ping) FILTER (WHERE status = 1 AND ping > 0)::float8 AS avg_ping
+    FROM heartbeats
+    WHERE monitor_id = ${monitorId} AND time >= ${startDate}
+    GROUP BY 1
+    ORDER BY 1`
+
+  return rows.map((row) => {
+    const up = Number(row.up)
+    const total = up + Number(row.down)
+    // Days with only pending / maintenance beats count as fully up (as before)
+    const uptime = total > 0 ? (up / total) * 100 : 100
+    return { date: row.date, uptime: Math.round(uptime * 100) / 100, avgPing: row.avg_ping ? Math.round(row.avg_ping) : 0 }
   })
-
-  // Group by date
-  const dailyStats = new Map<string, { up: number; down: number; pings: number[] }>()
-
-  for (const hb of heartbeats) {
-    const date = hb.time.toISOString().split('T')[0]
-    
-    if (!dailyStats.has(date)) {
-      dailyStats.set(date, { up: 0, down: 0, pings: [] })
-    }
-
-    const stats = dailyStats.get(date)!
-    
-    if (hb.status === 1) {
-      stats.up++
-      if (hb.ping !== null && hb.ping > 0) {
-        stats.pings.push(hb.ping)
-      }
-    } else if (hb.status === 0) {
-      stats.down++
-    }
-  }
-
-  // Convert to array
-  const result: Array<{ date: string; uptime: number; avgPing: number }> = []
-  
-  for (const [date, stats] of dailyStats) {
-    const total = stats.up + stats.down
-    const uptime = total > 0 ? (stats.up / total) * 100 : 100
-    const avgPing = stats.pings.length > 0 
-      ? Math.round(stats.pings.reduce((a, b) => a + b, 0) / stats.pings.length)
-      : 0
-
-    result.push({
-      date,
-      uptime: Math.round(uptime * 100) / 100,
-      avgPing
-    })
-  }
-
-  // Sort by date
-  result.sort((a, b) => a.date.localeCompare(b.date))
-
-  return result
 }
 
 /**
