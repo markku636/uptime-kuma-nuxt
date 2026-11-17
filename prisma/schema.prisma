@@ -264,6 +264,8 @@ model StatusPage {
   autoRefreshInterval   Int       @default(300) @map("auto_refresh_interval")
   customCss             String?   @map("custom_css")
   footerText            String?   @map("footer_text")
+  // Host names that open this status page at "/" (custom domains)
+  domainNameList Json? @map("domain_name_list")
   googleAnalyticsId     String?   @map("google_analytics_id")
   userId                Int       @map("user_id")
   createdAt             DateTime  @default(now()) @map("created_at")

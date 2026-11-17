@@ -1,4 +1,5 @@
 // server/api/v1/status-pages/[slug]/index.put.ts
+import { invalidateStatusDomains } from '../../../../middleware/status-domain'
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 
@@ -101,8 +102,22 @@ export default defineEventHandler(async (event) => {
     updateData.customCss = customCSS
   }
   
-  if (domainNameList && domainNameList.length > 0) {
-    updateData.domainNameList = JSON.stringify(domainNameList)
+  // Custom domains: host names only (no scheme / path), lower case, unique;
+  // a host already used by another status page is refused
+  if (domainNameList !== undefined) {
+    const hosts = [...new Set((domainNameList ?? [])
+      .map(d => d.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''))
+      .filter(Boolean))]
+    const invalid = hosts.find(h => !/^[a-z0-9.-]+(:\d+)?$/.test(h))
+    if (invalid) throw createError({ statusCode: 400, message: `Invalid domain: ${invalid}` })
+    if (hosts.length) {
+      const others = await prisma.statusPage.findMany({ where: { NOT: { slug } }, select: { title: true, domainNameList: true } })
+      for (const other of others) {
+        const taken = hosts.find(h => Array.isArray(other.domainNameList) && (other.domainNameList as string[]).includes(h))
+        if (taken) throw createError({ statusCode: 409, message: `${taken} is already used by "${other.title}"` })
+      }
+    }
+    updateData.domainNameList = hosts
   }
 
   // Update status page basic info
@@ -110,6 +125,7 @@ export default defineEventHandler(async (event) => {
     where: { slug },
     data: updateData
   })
+  if (domainNameList !== undefined) invalidateStatusDomains()
 
   // Update groups if provided
   if (publicGroupList) {

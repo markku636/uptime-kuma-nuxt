@@ -632,6 +632,9 @@ END $$;
 -- Which group pause paused a monitor (resuming the group only resumes those)
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "paused_by_group" INTEGER;
 
+-- Custom domains of a status page (a JSON array of host names)
+ALTER TABLE "status_pages" ADD COLUMN IF NOT EXISTS "domain_name_list" JSONB;
+
 -- Settings > Profile
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email" TEXT;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "display_name" TEXT;
