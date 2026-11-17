@@ -2060,18 +2060,15 @@ const socketHandlers = {
       }
 
       // Try to get version using child_process
-      const { execSync } = await import('child_process')
+      const { execFileSync } = await import('child_process')
       let version = 'Unknown'
-      
+
       try {
-        // Try to get Chrome version
-        if (process.platform === 'win32') {
-          const output = execSync(`"${chromePath}" --version`, { encoding: 'utf8', timeout: 5000 })
-          version = output.trim().replace(/^.*Chrome\s*/, '').trim()
-        } else {
-          const output = execSync(`"${chromePath}" --version`, { encoding: 'utf8', timeout: 5000 })
-          version = output.trim()
-        }
+        // Run the executable directly (no shell): the path is an argument, not a command line
+        const output = execFileSync(chromePath, ['--version'], { encoding: 'utf8', timeout: 5000 })
+        version = process.platform === 'win32'
+          ? output.trim().replace(/^.*Chrome\s*/, '').trim()
+          : output.trim()
       } catch (e) {
         // If we can't get version, just confirm the file exists
         version = 'Found (version check failed)'

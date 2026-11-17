@@ -2,14 +2,16 @@
 import net from 'net'
 import dns from 'dns'
 import dgram from 'dgram'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { promisify } from 'util'
 import type { CheckResult } from '../checker'
 import { evaluateJsonQuery } from '../../../utils/json-query'
 import { dnsServers, formatRecords, recordType } from './dns-options'
 import { buildAccessRequest, parseReply } from './radius'
+import { isSafeHostName } from './host-name'
 
-const execAsync = promisify(exec)
+// Never through a shell: the host name is an argument, not part of a command line
+const execFileAsync = promisify(execFile)
 
 export async function checkTcp(monitor: any, startTime: number): Promise<CheckResult> {
   return new Promise((resolve) => {
@@ -54,12 +56,16 @@ export async function checkPing(monitor: any, startTime: number): Promise<CheckR
   const timeout = monitor.timeout || 48
   const isWindows = process.platform === 'win32'
   
-  const cmd = isWindows
-    ? `ping -n 1 -w ${timeout * 1000} ${monitor.hostname}`
-    : `ping -c 1 -W ${timeout} ${monitor.hostname}`
+  if (!isSafeHostName(monitor.hostname)) {
+    return { status: 0, ping: 0, msg: 'Hostname must be a host name or IP address' }
+  }
+  const host = monitor.hostname.trim()
+  const args = isWindows
+    ? ['-n', '1', '-w', String(timeout * 1000), host]
+    : ['-c', '1', '-W', String(timeout), host]
 
   try {
-    const { stdout } = await execAsync(cmd)
+    const { stdout } = await execFileAsync('ping', args, { timeout: (timeout + 5) * 1000 })
     
     // Extract ping time from output
     let pingTime = Date.now() - startTime
@@ -164,9 +170,12 @@ export async function checkTailscalePing(monitor: any, startTime: number): Promi
       }
     }
 
-    const cmd = `tailscale ping --timeout=${monitor.timeout || 48}s ${monitor.hostname}`
-    
-    const { stdout } = await execAsync(cmd)
+    if (!isSafeHostName(monitor.hostname)) {
+      return { status: 0, ping: 0, msg: 'Hostname must be a host name or IP address' }
+    }
+    const { stdout } = await execFileAsync('tailscale', ['ping', `--timeout=${monitor.timeout || 48}s`, monitor.hostname.trim()], {
+      timeout: ((monitor.timeout || 48) + 5) * 1000,
+    })
     const ping = Date.now() - startTime
 
     // Parse Tailscale ping output
