@@ -53,3 +53,25 @@ describe('notificationConfig', () => {
     expect(notificationConfig('discord', '{"discordWebhookUrl":"https://d"}')).toMatchObject({ webhookUrl: 'https://d' })
   })
 })
+
+describe('provider call style', () => {
+  it('passes title, text and status to title-style providers', async () => {
+    // Signal: send(config, title, message, status) on an object export
+    const calls: any[] = []
+    const g: any = globalThis
+    const saved = [g.$fetch, g.fetch]
+    g.$fetch = async (...args: any[]) => { calls.push(args); return {} }
+    g.fetch = async (...args: any[]) => { calls.push(args); return new Response('{}', { status: 200 }) }
+    try {
+      const send = resolveProvider('signal')!
+      await send({ signalUrl: 'http://signal.local', number: '+1', recipients: '+2' }, {
+        title: 'API is DOWN', body: 'HTTP 503', monitorName: 'API', status: 'down', ping: 1, time: 't',
+      } as any, { id: 1, name: 'API' })
+    } finally {
+      ;[g.$fetch, g.fetch] = saved
+    }
+    expect(calls.length).toBe(1)
+    expect(JSON.stringify(calls[0])).toContain('HTTP 503')
+    expect(JSON.stringify(calls[0])).not.toContain('[object Object]')
+  })
+})

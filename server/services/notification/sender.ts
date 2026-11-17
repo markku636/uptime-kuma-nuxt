@@ -19,7 +19,9 @@ export function resolveProvider(type: string): Send | null {
   const key = Object.keys(providerExports).find(k => normalizeType(k) === normalizeType(type))
   const mod: any = key ? (providerModules as any)[(providerExports as any)[key]] : null
   if (!mod || typeof mod.send !== 'function') return null
-  if ('default' in mod) {
+  // send(config, message) objects vs send(config, title, text, status, ...)
+  // (modules and some objects): told apart by the declared parameters
+  if (mod.send.length >= 3) {
     return (config, message, monitor) => mod.send(
       config,
       message.title,
