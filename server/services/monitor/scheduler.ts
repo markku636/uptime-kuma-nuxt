@@ -11,6 +11,37 @@ const STATUS_NAMES: Record<number, string> = { 0: 'DOWN', 1: 'UP', 2: 'PENDING',
 // Store active monitor jobs
 const jobs = new Map<number, NodeJS.Timeout>()
 
+// Bumped whenever a monitor's job is (re)started or stopped: a check that
+// began under an older job (e.g. waiting between retries while the monitor
+// was edited or paused) does not record its result
+const generations = new Map<number, number>()
+const bumpGeneration = (id: number) => generations.set(id, (generations.get(id) ?? 0) + 1)
+
+// One heartbeat write at a time per monitor (pushes, the push watchdog and
+// checks could otherwise read the same "previous" heartbeat and both alert)
+const locks = new Map<number, Promise<unknown>>()
+function withMonitorLock<T>(id: number, fn: () => Promise<T>): Promise<T> {
+  const run = (locks.get(id) ?? Promise.resolve()).catch(() => {}).then(fn)
+  const tail = run.catch(() => {})
+  locks.set(id, tail)
+  tail.then(() => { if (locks.get(id) === tail) locks.delete(id) })
+  return run
+}
+
+/** A check that never settles (a library waiting forever) must not freeze the monitor */
+async function checkWithDeadline(monitor: any): Promise<CheckResult> {
+  const seconds = (monitor.timeout || 48) + 15
+  let timer: NodeJS.Timeout | undefined
+  const deadline = new Promise<CheckResult>((resolve) => {
+    timer = setTimeout(() => resolve({ status: 0, ping: seconds * 1000, msg: `Check did not finish within ${seconds}s` }), seconds * 1000)
+  })
+  try {
+    return await Promise.race([checkMonitor(monitor), deadline])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 // Current node ID (cached)
 let currentNodeId: string | null = null
 
@@ -36,6 +67,7 @@ async function shouldRunOnThisNode(monitorId: number): Promise<boolean> {
 export async function startMonitorJob(monitor: any) {
   // Clear existing job if any
   stopMonitorJob(monitor.id)
+  bumpGeneration(monitor.id)
 
   // Don't start if monitor is not active
   if (!monitor.active) {
@@ -77,6 +109,7 @@ export async function startMonitorJob(monitor: any) {
  * Stop monitoring job for a monitor
  */
 export function stopMonitorJob(monitorId: number) {
+  bumpGeneration(monitorId)
   const job = jobs.get(monitorId)
   if (job) {
     clearInterval(job)
@@ -174,7 +207,11 @@ async function runCheck(monitor: any) {
  * changes as important, tells the dashboard, re-checks the parent group and
  * sends the monitor's notifications on a change.
  */
-export async function recordHeartbeat(monitor: any, result: CheckResult) {
+export function recordHeartbeat(monitor: any, result: CheckResult) {
+  return withMonitorLock(monitor.id, () => writeHeartbeat(monitor, result))
+}
+
+async function writeHeartbeat(monitor: any, result: CheckResult) {
   // Get previous heartbeat to check for status change
   const previousHeartbeat = await prisma.heartbeat.findFirst({
     where: { monitorId: monitor.id },
@@ -211,9 +248,17 @@ export async function recordHeartbeat(monitor: any, result: CheckResult) {
   // A status change of a member changes the status of its group
   if (isImportant) await notifyParentGroup(monitor.id)
 
-  // Send notifications if status changed
-  if (isImportant && previousHeartbeat) {
-    await sendNotificationForMonitor(monitor, result, previousHeartbeat.status)
+  // Alert only when the monitor goes UP <-> DOWN: entering or leaving
+  // maintenance / pending is not an outage (compared with the last UP / DOWN)
+  if (isImportant && (result.status === 0 || result.status === 1)) {
+    const lastDecisive = await prisma.heartbeat.findFirst({
+      where: { monitorId: monitor.id, status: { in: [0, 1] }, id: { not: heartbeat.id } },
+      orderBy: { time: 'desc' },
+      select: { status: true },
+    })
+    if (lastDecisive && lastDecisive.status !== result.status) {
+      await sendNotificationForMonitor(monitor, result, lastDecisive.status)
+    }
   }
 }
 
@@ -221,7 +266,11 @@ export async function recordHeartbeat(monitor: any, result: CheckResult) {
  * Push monitors: when no push (no heartbeat at all) arrived within the
  * interval, the pushing side is gone: record DOWN (UP when upside down).
  */
-export async function checkMissedPush(monitor: any) {
+export function checkMissedPush(monitor: any) {
+  return withMonitorLock(monitor.id, () => missedPush(monitor))
+}
+
+async function missedPush(monitor: any) {
   const intervalMs = (monitor.interval || 60) * 1000
   const last = await prisma.heartbeat.findFirst({ where: { monitorId: monitor.id }, orderBy: { time: 'desc' }, select: { time: true } })
   // A new monitor gets one interval for its first push. A little grace, so a
@@ -232,10 +281,10 @@ export async function checkMissedPush(monitor: any) {
 
   const { isMonitorUnderMaintenance } = await import('../maintenance/scheduler')
   if (await isMonitorUnderMaintenance(monitor.id)) {
-    await recordHeartbeat(monitor, { status: 3, ping: 0, msg: 'Under maintenance' })
+    await writeHeartbeat(monitor, { status: 3, ping: 0, msg: 'Under maintenance' })
     return
   }
-  await recordHeartbeat(monitor, {
+  await writeHeartbeat(monitor, {
     status: monitor.upsideDown ? 1 : 0,
     ping: 0,
     msg: `No push received in the last ${monitor.interval || 60}s`,
@@ -243,6 +292,7 @@ export async function checkMissedPush(monitor: any) {
 }
 
 async function runSingleCheck(monitor: any) {
+  const generation = generations.get(monitor.id)
   // Check if monitor is under maintenance
   const { isMonitorUnderMaintenance } = await import('../maintenance/scheduler')
   const underMaintenance = await isMonitorUnderMaintenance(monitor.id)
@@ -290,7 +340,7 @@ async function runSingleCheck(monitor: any) {
   let result: CheckResult
 
   do {
-    result = await checkMonitor(monitor)
+    result = await checkWithDeadline(monitor)
     
     if (result.status === 1 || retryCount >= maxRetries) {
       break
@@ -304,6 +354,12 @@ async function runSingleCheck(monitor: any) {
       setTimeout(resolve, (monitor.retryInterval || 60) * 1000)
     )
   } while (retryCount <= maxRetries)
+
+  // The monitor was edited, paused or deleted meanwhile: this result is stale
+  if (generations.get(monitor.id) !== generation) {
+    console.log(`[Scheduler] Monitor ${monitor.id}: settings changed during the check, result dropped`)
+    return
+  }
 
   await recordHeartbeat(monitor, result)
 

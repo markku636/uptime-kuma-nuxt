@@ -17,7 +17,8 @@ export default defineEventHandler(async (event) => {
     where: { pushToken: token }
   })
 
-  if (!monitor) {
+  // A token left over from when the monitor was a push monitor is not valid
+  if (!monitor || monitor.type !== 'push') {
     throw createError({
       statusCode: 404,
       message: 'Monitor not found'
@@ -39,7 +40,9 @@ export default defineEventHandler(async (event) => {
   if (monitor.upsideDown && status !== 2) status = status === 1 ? 0 : 1
 
   const msg = String(query.msg ?? 'Push received').slice(0, 1000) || 'Push received'
-  const ping = Math.max(0, Math.round(Number(query.ping) || 0))
+  // A whole number of ms the column can hold (Infinity / huge values are clamped)
+  const rawPing = Number(query.ping)
+  const ping = Number.isFinite(rawPing) ? Math.min(2_147_483_647, Math.max(0, Math.round(rawPing))) : 0
 
   // During maintenance a push is recorded as maintenance (no alerts)
   const { isMonitorUnderMaintenance } = await import('../../services/maintenance/scheduler')
