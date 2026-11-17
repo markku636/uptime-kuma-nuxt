@@ -1,7 +1,22 @@
 // server/services/monitor/checkers/grpc-checker.ts
 import * as grpc from '@grpc/grpc-js'
 import * as protoLoader from '@grpc/proto-loader'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { CheckResult } from '../checker'
+
+/** proto-loader reads files: load the monitor's proto text through a temporary one */
+async function loadProto(content: string) {
+  const dir = await mkdtemp(join(tmpdir(), 'kuma-grpc-'))
+  try {
+    const file = join(dir, 'monitor.proto')
+    await writeFile(file, content, 'utf8')
+    return protoLoader.loadSync(file, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true })
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => {})
+  }
+}
 
 export async function checkGrpcKeyword(monitor: any, startTime: number): Promise<CheckResult> {
   try {
@@ -22,13 +37,7 @@ export async function checkGrpcKeyword(monitor: any, startTime: number): Promise
     }
 
     // Parse proto content
-    const packageDefinition = await protoLoader.loadSync(monitor.grpcProtoContent, {
-      keepCase: true,
-      longs: String,
-      enums: String,
-      defaults: true,
-      oneofs: true
-    })
+    const packageDefinition = await loadProto(monitor.grpcProtoContent)
 
     const proto = grpc.loadPackageDefinition(packageDefinition)
 
@@ -60,6 +69,10 @@ export async function checkGrpcKeyword(monitor: any, startTime: number): Promise
     }
 
     const client = new ServiceClient(monitor.grpcUrl, credentials)
+    if (typeof client[methodName] !== 'function') {
+      client.close()
+      return { status: 0, ping: 0, msg: `Method ${methodName} not found in service ${serviceName}` }
+    }
 
     // Parse request body
     let requestBody = {}
