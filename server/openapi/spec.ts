@@ -482,8 +482,8 @@ export const ENDPOINTS: Endpoint[] = [
   },
   { method: 'get', path: '/api/v1/settings/export', tag: 'Backup', summary: 'Export settings file', zh: '匯出設定' },
   {
-    method: 'post', path: '/api/v1/settings/import', tag: 'Backup', summary: 'Import settings file', zh: '匯入設定', destructive: true,
-    description: 'Upload the JSON file produced by the settings export.',
+    method: 'post', path: '/api/v1/settings/import', tag: 'Backup', summary: 'Retired (410): use /api/v1/backup/import', zh: '已停用（410）：請改用 /api/v1/backup/import', destructive: true,
+    description: 'Always answers 410 Gone. It created rows without an owner and failed; restore backups with POST /api/v1/backup/import.',
     multipart: { file: 'file' },
   },
 
