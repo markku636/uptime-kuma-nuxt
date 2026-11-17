@@ -119,26 +119,27 @@ export async function checkMqtt(monitor: any, startTime: number): Promise<CheckR
 }
 
 export async function checkKafka(monitor: any, startTime: number): Promise<CheckResult> {
+  let admin: any = null
   try {
-    const { Kafka } = await import('kafkajs')
-    
-    const brokers = monitor.kafkaBrokers || []
+    const { Kafka, logLevel } = await import('kafkajs')
+
+    // A copy: the scheduler reuses the monitor object between checks
+    const brokers: string[] = Array.isArray(monitor.kafkaBrokers) ? [...monitor.kafkaBrokers] : []
     if (brokers.length === 0 && monitor.hostname) {
       brokers.push(`${monitor.hostname}:${monitor.port || 9092}`)
     }
-
     if (brokers.length === 0) {
-      return {
-        status: 0,
-        ping: 0,
-        msg: 'Kafka brokers are required'
-      }
+      return { status: 0, ping: 0, msg: 'Kafka brokers are required' }
     }
 
+    const timeout = (monitor.timeout || 48) * 1000
     const kafkaConfig: any = {
       clientId: 'uptime-kuma-monitor',
       brokers,
-      connectionTimeout: (monitor.timeout || 48) * 1000,
+      connectionTimeout: timeout,
+      requestTimeout: timeout,
+      retry: { retries: 1 },
+      logLevel: logLevel.NOTHING,
     }
 
     // SASL authentication
@@ -146,43 +147,27 @@ export async function checkKafka(monitor: any, startTime: number): Promise<Check
       kafkaConfig.sasl = {
         mechanism: monitor.kafkaSaslMechanism || 'plain',
         username: monitor.kafkaUsername,
-        password: monitor.kafkaPassword
+        password: monitor.kafkaPassword,
       }
       kafkaConfig.ssl = true
     }
 
-    const kafka = new Kafka(kafkaConfig)
-    const admin = kafka.admin()
-
+    admin = new Kafka(kafkaConfig).admin()
     await admin.connect()
-    
-    // Check topic if specified
+
     if (monitor.kafkaTopic) {
-      const topics = await admin.listTopics()
+      const topics: string[] = await admin.listTopics()
       if (!topics.includes(monitor.kafkaTopic)) {
-        await admin.disconnect()
-        return {
-          status: monitor.upsideDown ? 1 : 0,
-          ping: Date.now() - startTime,
-          msg: `Topic '${monitor.kafkaTopic}' not found`
-        }
+        return { status: monitor.upsideDown ? 1 : 0, ping: Date.now() - startTime, msg: `Topic '${monitor.kafkaTopic}' not found` }
       }
     }
 
-    const ping = Date.now() - startTime
-    await admin.disconnect()
-
-    return {
-      status: monitor.upsideDown ? 0 : 1,
-      ping,
-      msg: 'Kafka connection successful'
-    }
+    return { status: monitor.upsideDown ? 0 : 1, ping: Date.now() - startTime, msg: 'Kafka connection successful' }
   } catch (error: any) {
-    return {
-      status: monitor.upsideDown ? 1 : 0,
-      ping: Date.now() - startTime,
-      msg: error.message || 'Kafka check failed'
-    }
+    return { status: monitor.upsideDown ? 1 : 0, ping: Date.now() - startTime, msg: error.message || 'Kafka check failed' }
+  } finally {
+    // Also after errors: connections must not pile up across checks
+    if (admin) await admin.disconnect().catch(() => {})
   }
 }
 
