@@ -1,4 +1,6 @@
 // server/api/v1/monitors/[id]/clone.post.ts
+import { nanoid } from 'nanoid'
+import { Prisma } from '@prisma/client'
 import { startMonitorJob } from '../../../../services/monitor/scheduler'
 
 export default defineEventHandler(async (event) => {
@@ -47,19 +49,25 @@ export default defineEventHandler(async (event) => {
     pushToken,
     tags,
     monitorNotifications,
+    // Not the copy's: a group pause of the original, its cached certificate
+    pausedByGroup: _pausedByGroup,
+    tlsInfo: _tlsInfo,
     ...monitorData 
-  } = original
+  } = original as any
 
-  // Generate new push token if it's a push monitor
-  const newPushToken = monitorData.type === 'push' 
-    ? Math.random().toString(36).substring(2, 34) 
-    : undefined
+  // A push token is a secret: as unguessable as a new monitor's
+  const newPushToken = monitorData.type === 'push' ? nanoid(32) : undefined
+
+  // Null JSON columns must be written as SQL NULL
+  for (const key of ['headers', 'acceptedStatuscodes', 'kafkaBrokers', 'rabbitmqNodes', 'childrenIds', 'tlsExpiryDays']) {
+    if (monitorData[key] === null) monitorData[key] = Prisma.DbNull
+  }
 
   // Create cloned monitor
   const cloned = await prisma.monitor.create({
     data: {
       ...monitorData,
-      name: `${original.name} (Copy)`,
+      name: `${original.name} (Copy)`.slice(0, 150),
       pushToken: newPushToken,
     }
   })
