@@ -10,6 +10,8 @@ import { saveScreenshot } from '../screenshots'
 
 let chromiumPromise: Promise<any> | null = null
 let localBrowser: any = null
+/** The executable the shared browser was started with ('' = Playwright's own) */
+let localBrowserPath = ''
 
 async function chromium() {
   // playwright is optional at run time (it is large); load it on first use
@@ -19,15 +21,27 @@ async function chromium() {
   return c
 }
 
-/** Shared local headless Chromium */
+/** Settings > General > Chrome executable (empty: Playwright's own Chromium) */
+async function chromePath(): Promise<string> {
+  const row = await prisma.setting.findUnique({ where: { key: 'chromePath' } }).catch(() => null)
+  return (row?.value ?? '').trim()
+}
+
+/** Shared local headless Chromium; restarted when the configured path changes */
 async function getLocalBrowser() {
-  if (localBrowser?.isConnected()) return localBrowser
+  const path = await chromePath()
+  if (localBrowser?.isConnected() && path === localBrowserPath) return localBrowser
+  if (localBrowser) await localBrowser.close().catch(() => {})
   const c = await chromium()
   try {
-    localBrowser = await c.launch({ headless: true })
+    localBrowser = await c.launch({ headless: true, ...(path ? { executablePath: path } : {}) })
+    localBrowserPath = path
   } catch (error: any) {
     localBrowser = null
-    throw new Error(`No local Chromium (${String(error?.message || error).split('\n')[0]}). Add a remote browser in Settings, or install one with "npx playwright install chromium"`)
+    const reason = String(error?.message || error).split('\n')[0]
+    throw new Error(path
+      ? `Could not start Chrome at "${path}" (${reason}). Check Settings > General > Chrome executable`
+      : `No local Chromium (${reason}). Set the Chrome executable in Settings > General, add a remote browser, or run "npx playwright install chromium"`)
   }
   return localBrowser
 }
