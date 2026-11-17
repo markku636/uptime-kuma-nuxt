@@ -3,12 +3,7 @@ definePageMeta({ middleware: ['auth'] })
 
 const toast = useToast()
 const showDebugInfo = ref(false)
-const checkUpdate = ref(true)
-const checkBeta = ref(false)
-const latestVersion = ref<string | null>(null)
 const currentVersion = ref('2.0.0-nuxt')
-const hasUpdate = ref(false)
-const checkingUpdate = ref(false)
 
 // Server info
 const serverInfo = ref<{
@@ -22,47 +17,16 @@ const serverInfo = ref<{
   uptimeSeconds: number
 } | null>(null)
 
-onMounted(async () => {
-  await fetchServerInfo()
-  if (checkUpdate.value) {
-    await checkForUpdates()
-  }
-})
+onMounted(fetchServerInfo)
 
 async function fetchServerInfo() {
   try {
+    // Latency: one round trip to the server
+    const started = performance.now()
     const info = await $fetch('/api/info') as any
-    serverInfo.value = info
+    serverInfo.value = { ...info, latency: Math.round(performance.now() - started) }
     currentVersion.value = info?.version || '2.0.0-nuxt'
   } catch (error) {}
-}
-
-async function checkForUpdates() {
-  checkingUpdate.value = true
-  try {
-    const result = await $fetch('/api/check-update') as any
-    latestVersion.value = result?.latestVersion || null
-    hasUpdate.value = result?.hasUpdate || false
-  } catch (error) {
-    // Silent fail
-  } finally {
-    checkingUpdate.value = false
-  }
-}
-
-async function saveUpdateSettings() {
-  try {
-    await $fetch('/api/settings', {
-      method: 'POST',
-      body: { checkUpdate: checkUpdate.value, checkBeta: checkBeta.value }
-    })
-    toast.add({ title: 'Success', description: 'Settings saved', color: 'success' })
-    if (checkUpdate.value) {
-      await checkForUpdates()
-    }
-  } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || 'Failed to save', color: 'error' })
-  }
 }
 
 function formatUptime(seconds: number): string {
@@ -140,54 +104,11 @@ function formatUptime(seconds: number): string {
         </div>
       </div>
 
-      <!-- Update Available Alert -->
-      <div v-if="hasUpdate && latestVersion" class="p-4 bg-up/20 border border-up/40 rounded-lg mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-up-fg font-medium">🎉 New version available: {{ latestVersion }}</p>
-            <p class="text-dimmed text-sm">Current: {{ currentVersion }}</p>
-          </div>
-          <a href="https://github.com/louislam/uptime-kuma/releases" target="_blank" class="btn btn-primary">
-            View Release
-          </a>
-        </div>
-      </div>
-
       <!-- Debug Info Button -->
       <button class="btn btn-secondary" @click="showDebugInfo = true">
         <UIcon name="i-heroicons-bug-ant" class="w-4 h-4 mr-2" />
         Show Debug Info
       </button>
-    </div>
-
-    <!-- Update Settings -->
-    <div class="section-card">
-      <h5 class="text-lg font-semibold text-highlighted mb-4">Update Check</h5>
-      
-      <div class="space-y-4">
-        <label class="flex items-center gap-3 cursor-pointer">
-          <input v-model="checkUpdate" type="checkbox" class="w-4 h-4 text-up-fg rounded" />
-          <div>
-            <span class="text-highlighted">Check for updates</span>
-            <p class="text-toned text-sm">Show notification when a new version is available</p>
-          </div>
-        </label>
-        
-        <label class="flex items-center gap-3 cursor-pointer" :class="{ 'opacity-50': !checkUpdate }">
-          <input v-model="checkBeta" type="checkbox" class="w-4 h-4 text-up-fg rounded" :disabled="!checkUpdate" />
-          <div>
-            <span class="text-highlighted">Include beta releases</span>
-            <p class="text-toned text-sm">Also check for beta versions (may be unstable)</p>
-          </div>
-        </label>
-      </div>
-
-      <div class="flex gap-3 mt-4">
-        <button class="btn btn-primary" @click="saveUpdateSettings">Save</button>
-        <button class="btn btn-secondary" :disabled="checkingUpdate" @click="checkForUpdates">
-          {{ checkingUpdate ? 'Checking...' : 'Check Now' }}
-        </button>
-      </div>
     </div>
 
     <!-- Links -->

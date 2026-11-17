@@ -446,6 +446,11 @@ export const ENDPOINTS: Endpoint[] = [
     method: 'post', path: '/api/settings/general', tag: 'Settings', summary: 'Update general settings', zh: '更新一般設定',
     body: { primaryBaseUrl: 'http://localhost:32400', keepDataPeriodDays: 180, searchEngineIndex: false, entryPage: 'dashboard' },
   },
+  { method: 'get', path: '/api/settings/reverse-proxy', tag: 'Settings', summary: 'Get reverse proxy settings (trust proxy, tunnel token)', zh: '取得反向代理設定' },
+  {
+    method: 'put', path: '/api/settings/reverse-proxy', tag: 'Settings', summary: 'Update reverse proxy settings', zh: '更新反向代理設定',
+    body: { trustProxy: true },
+  },
   { method: 'get', path: '/api/settings/appearance', tag: 'Settings', summary: 'Get appearance settings', zh: '取得外觀設定' },
   {
     method: 'post', path: '/api/settings/appearance', tag: 'Settings', summary: 'Update appearance settings', zh: '更新外觀設定',
@@ -527,6 +532,7 @@ export const ENDPOINTS: Endpoint[] = [
 
   // ──────────────────────────── System ────────────────────────────
   { method: 'get', path: '/api/health', tag: 'System', public: true, summary: 'Health check', zh: '健康檢查' },
+  { method: 'get', path: '/api/info', tag: 'System', summary: 'Server info (version, Node.js, platform, uptime)', zh: '伺服器資訊' },
   { method: 'get', path: '/api/v1/health', tag: 'System', summary: 'Health check (v1)', zh: '健康檢查 (V1)' },
   { method: 'get', path: '/api/metrics', tag: 'System', summary: 'Metrics', zh: '取得 Metrics' },
   { method: 'get', path: '/api/v1/metrics', tag: 'System', summary: 'Prometheus metrics', zh: '取得 Prometheus Metrics', produces: 'text/plain' },

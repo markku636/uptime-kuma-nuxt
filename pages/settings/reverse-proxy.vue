@@ -13,6 +13,7 @@ const loading = ref(false)
 
 // Trust Proxy settings
 const trustProxy = ref(false)
+const trustProxyFromEnv = ref(false)
 
 // Modal states
 const showStopConfirm = ref(false)
@@ -35,9 +36,10 @@ async function fetchCloudflaredStatus() {
 
 async function fetchSettings() {
   try {
-    const result = await $fetch('/api/settings') as any
+    const result = await $fetch('/api/settings/reverse-proxy') as any
     cloudflareTunnelToken.value = result.cloudflareTunnelToken || ''
     trustProxy.value = result.trustProxy || false
+    trustProxyFromEnv.value = !!result.trustProxyFromEnv
   } catch (error) {
     console.error('Failed to fetch settings')
   }
@@ -89,7 +91,7 @@ async function removeToken() {
 
 async function saveSettings() {
   try {
-    await $fetch('/api/settings', {
+    await $fetch('/api/settings/reverse-proxy', {
       method: 'PUT',
       body: { 
         cloudflareTunnelToken: cloudflareTunnelToken.value,
@@ -216,6 +218,10 @@ async function saveSettings() {
         <template #hint>
           <p class="text-xs text-muted mt-2">
             If you are behind a reverse proxy (nginx, Apache, etc.), enable this to correctly detect the client IP address from X-Forwarded-For header.
+            A proxy on this machine or a private network (Docker, LAN) is trusted automatically. Enable this only for a proxy on a public address that every request passes through: otherwise clients can fake their address and avoid the login rate limit.
+          </p>
+          <p v-if="trustProxyFromEnv" class="text-xs text-muted mt-1">
+            TRUST_PROXY=true is set for this server, so the proxy is trusted whatever is chosen here.
           </p>
         </template>
       </UFormField>
