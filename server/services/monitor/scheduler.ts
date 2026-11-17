@@ -43,12 +43,6 @@ export async function startMonitorJob(monitor: any) {
     return
   }
 
-  // Push monitors don't need scheduled jobs
-  if (monitor.type === 'push') {
-    console.log(`[Scheduler] Monitor ${monitor.id} (${monitor.name}) is push type, skipping scheduler`)
-    return
-  }
-
   // In cluster mode, check if this monitor should run on this node
   if (isClusterMode()) {
     const shouldRun = await shouldRunOnThisNode(monitor.id)
@@ -61,6 +55,12 @@ export async function startMonitorJob(monitor: any) {
   const intervalMs = (monitor.interval || 60) * 1000
 
   console.log(`[Scheduler] Starting monitor ${monitor.id} (${monitor.name}) with interval ${intervalMs}ms`)
+
+  // Push monitors are not checked: a watchdog notices missing pushes each interval
+  if (monitor.type === 'push') {
+    jobs.set(monitor.id, setInterval(() => { checkMissedPush(monitor).catch(e => console.error('[Scheduler] push watchdog:', e)) }, intervalMs))
+    return
+  }
 
   // Run check immediately
   runCheck(monitor)
@@ -154,6 +154,79 @@ async function runCheck(monitor: any) {
   }
 }
 
+/**
+ * Store a check / push result as the monitor's next heartbeat: marks status
+ * changes as important, tells the dashboard, re-checks the parent group and
+ * sends the monitor's notifications on a change.
+ */
+export async function recordHeartbeat(monitor: any, result: CheckResult) {
+  // Get previous heartbeat to check for status change
+  const previousHeartbeat = await prisma.heartbeat.findFirst({
+    where: { monitorId: monitor.id },
+    orderBy: { time: 'desc' }
+  })
+
+  const isImportant = !previousHeartbeat || previousHeartbeat.status !== result.status
+
+  // Save heartbeat
+  const heartbeat = await prisma.heartbeat.create({
+    data: {
+      monitorId: monitor.id,
+      status: result.status,
+      ping: result.ping,
+      msg: result.msg,
+      important: isImportant,
+      duration: previousHeartbeat 
+        ? Math.floor((Date.now() - new Date(previousHeartbeat.time).getTime()) / 1000)
+        : 0,
+    }
+  })
+
+  // Emit heartbeat via Socket.io
+  emitHeartbeat(monitor.id, {
+    id: heartbeat.id.toString(),
+    status: heartbeat.status,
+    time: heartbeat.time.toISOString(),
+    msg: heartbeat.msg,
+    ping: heartbeat.ping,
+    important: heartbeat.important,
+    duration: heartbeat.duration,
+  }, monitor.userId)
+
+  // A status change of a member changes the status of its group
+  if (isImportant) await notifyParentGroup(monitor.id)
+
+  // Send notifications if status changed
+  if (isImportant && previousHeartbeat) {
+    await sendNotificationForMonitor(monitor, result, previousHeartbeat.status)
+  }
+}
+
+/**
+ * Push monitors: when no push (no heartbeat at all) arrived within the
+ * interval, the pushing side is gone: record DOWN (UP when upside down).
+ */
+export async function checkMissedPush(monitor: any) {
+  const intervalMs = (monitor.interval || 60) * 1000
+  const last = await prisma.heartbeat.findFirst({ where: { monitorId: monitor.id }, orderBy: { time: 'desc' }, select: { time: true } })
+  // A new monitor gets one interval for its first push. A little grace, so a
+  // client pushing exactly every interval is not "missing" by a few ms.
+  const since = last?.time ?? monitor.createdAt ?? new Date()
+  const grace = Math.min(30_000, intervalMs * 0.2)
+  if (Date.now() - new Date(since).getTime() < intervalMs + grace) return
+
+  const { isMonitorUnderMaintenance } = await import('../maintenance/scheduler')
+  if (await isMonitorUnderMaintenance(monitor.id)) {
+    await recordHeartbeat(monitor, { status: 3, ping: 0, msg: 'Under maintenance' })
+    return
+  }
+  await recordHeartbeat(monitor, {
+    status: monitor.upsideDown ? 1 : 0,
+    ping: 0,
+    msg: `No push received in the last ${monitor.interval || 60}s`,
+  })
+}
+
 async function runSingleCheck(monitor: any) {
   // Check if monitor is under maintenance
   const { isMonitorUnderMaintenance } = await import('../maintenance/scheduler')
@@ -217,46 +290,7 @@ async function runSingleCheck(monitor: any) {
     )
   } while (retryCount <= maxRetries)
 
-  // Get previous heartbeat to check for status change
-  const previousHeartbeat = await prisma.heartbeat.findFirst({
-    where: { monitorId: monitor.id },
-    orderBy: { time: 'desc' }
-  })
-
-  const isImportant = !previousHeartbeat || previousHeartbeat.status !== result.status
-
-  // Save heartbeat
-  const heartbeat = await prisma.heartbeat.create({
-    data: {
-      monitorId: monitor.id,
-      status: result.status,
-      ping: result.ping,
-      msg: result.msg,
-      important: isImportant,
-      duration: previousHeartbeat 
-        ? Math.floor((Date.now() - new Date(previousHeartbeat.time).getTime()) / 1000)
-        : 0,
-    }
-  })
-
-  // Emit heartbeat via Socket.io
-  emitHeartbeat(monitor.id, {
-    id: heartbeat.id.toString(),
-    status: heartbeat.status,
-    time: heartbeat.time.toISOString(),
-    msg: heartbeat.msg,
-    ping: heartbeat.ping,
-    important: heartbeat.important,
-    duration: heartbeat.duration,
-  }, monitor.userId)
-
-  // A status change of a member changes the status of its group
-  if (isImportant) await notifyParentGroup(monitor.id)
-
-  // Send notifications if status changed
-  if (isImportant && previousHeartbeat) {
-    await sendNotificationForMonitor(monitor, result, previousHeartbeat.status)
-  }
+  await recordHeartbeat(monitor, result)
 
   // Check certificate expiry notifications for HTTPS monitors
   if (monitor.expiryNotification && !monitor.ignoreTls) {

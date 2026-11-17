@@ -1,5 +1,5 @@
 // server/api/push/[token].ts
-import { emitHeartbeat } from '../../services/socket'
+import { recordHeartbeat } from '../../services/monitor/scheduler'
 
 export default defineEventHandler(async (event) => {
   const token = getRouterParam(event, 'token')
@@ -31,36 +31,23 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Determine status from query params
-  let status = 1 // Default UP
-  if (query.status === 'down') {
-    status = 0
-  } else if (query.status === 'pending') {
-    status = 2
-  }
+  // status=up (default) | down | pending, as in uptime-kuma
+  let status = 1
+  if (query.status === 'down') status = 0
+  else if (query.status === 'pending') status = 2
+  // Upside down: a push saying "up" means the watched thing is down
+  if (monitor.upsideDown && status !== 2) status = status === 1 ? 0 : 1
 
-  const msg = (query.msg as string) || 'Push received'
-  const ping = parseInt(query.ping as string) || 0
+  const msg = String(query.msg ?? 'Push received').slice(0, 1000) || 'Push received'
+  const ping = Math.max(0, Math.round(Number(query.ping) || 0))
 
-  // Create heartbeat
-  const heartbeat = await prisma.heartbeat.create({
-    data: {
-      monitorId: monitor.id,
-      status,
-      msg,
-      ping,
-      time: new Date(),
-    }
-  })
+  // During maintenance a push is recorded as maintenance (no alerts)
+  const { isMonitorUnderMaintenance } = await import('../../services/maintenance/scheduler')
+  const underMaintenance = await isMonitorUnderMaintenance(monitor.id)
 
-  // Emit to socket
-  emitHeartbeat(monitor.id, {
-    id: heartbeat.id.toString(),
-    status: heartbeat.status,
-    time: heartbeat.time.toISOString(),
-    msg: heartbeat.msg,
-    ping: heartbeat.ping,
-  }, monitor.userId)
+  // Same path as checked monitors: status changes are important, the
+  // dashboard and the parent group are told, notifications are sent
+  await recordHeartbeat(monitor, underMaintenance ? { status: 3, ping, msg: 'Under maintenance' } : { status, ping, msg })
 
   return {
     ok: true,
