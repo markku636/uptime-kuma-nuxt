@@ -632,6 +632,16 @@ END $$;
 -- Which group pause paused a monitor (resuming the group only resumes those)
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "paused_by_group" INTEGER;
 
+-- Expiry warnings already sent (certificate: one row per threshold in days)
+CREATE TABLE IF NOT EXISTS "notification_sent_history" (
+    "id" SERIAL PRIMARY KEY,
+    "type" TEXT NOT NULL,
+    "monitor_id" INTEGER NOT NULL REFERENCES "monitors"("id") ON DELETE CASCADE,
+    "days" INTEGER NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE ("type", "monitor_id", "days")
+);
+
 -- Custom domains of a status page (a JSON array of host names)
 ALTER TABLE "status_pages" ADD COLUMN IF NOT EXISTS "domain_name_list" JSONB;
 

@@ -25,37 +25,48 @@ interface TLSInfo {
  */
 export async function checkCertExpiryNotifications(
   monitor: any,
-  tlsInfo: TLSInfo
+  tlsInfo: any
 ): Promise<void> {
   // Skip if monitor doesn't have expiry notification enabled
-  if (!monitor.expiryNotification) {
+  if (!monitor.expiryNotification || !tlsInfo) {
     return
   }
 
-  // Skip if TLS info is invalid or missing
-  if (!tlsInfo || !tlsInfo.valid || !tlsInfo.certInfo) {
+  // getTLSInfo (checkers/tls-checker) returns a flat object; a { certInfo }
+  // chain is also accepted
+  const leaf: TLSInfo['certInfo'] | null = tlsInfo.certInfo
+    ?? (typeof tlsInfo.daysRemaining === 'number'
+      ? { daysRemaining: tlsInfo.daysRemaining, subject: { CN: typeof tlsInfo.subject === 'string' ? tlsInfo.subject : tlsInfo.subject?.CN } }
+      : null)
+  if (!leaf) return
+
+  const daysRemaining = leaf.daysRemaining
+  if (daysRemaining == null || daysRemaining < 0) {
     return
   }
 
-  const daysRemaining = tlsInfo.certInfo.daysRemaining
-  if (!daysRemaining || daysRemaining < 0) {
-    return
-  }
-
-  // Get notification days setting (from settings or use default)
+  // The monitor's own days, else Settings (tlsExpiryDays), else the default
   let notifyDays = DEFAULT_NOTIFY_DAYS
-  try {
-    const setting = await prisma.setting.findFirst({
-      where: { key: 'tlsExpiryNotifyDays' }
-    })
-    if (setting && setting.value) {
-      const parsed = JSON.parse(setting.value)
-      if (Array.isArray(parsed)) {
-        notifyDays = parsed
-      }
+  const own = Array.isArray(monitor.tlsExpiryDays) ? monitor.tlsExpiryDays.filter((d: unknown) => Number(d) > 0).map(Number) : []
+  if (own.length) {
+    notifyDays = own
+  } else {
+    try {
+      const setting = await prisma.setting.findFirst({
+        where: { key: { in: ['tlsExpiryDays', 'tlsExpiryNotifyDays'] } },
+        orderBy: { key: 'asc' },
+      })
+      const parsed = setting?.value ? JSON.parse(setting.value) : null
+      if (Array.isArray(parsed) && parsed.length) notifyDays = parsed.map(Number).filter(d => d > 0)
+    } catch {
+      // Use default if setting not found or invalid
     }
-  } catch {
-    // Use default if setting not found or invalid
+  }
+
+  // Renewed (or far from expiry): start the warnings again for the next cycle
+  if (daysRemaining > Math.max(...notifyDays)) {
+    await clearCertExpiryNotificationHistory(monitor.id)
+    return
   }
 
   // Get notifications for this monitor
@@ -85,7 +96,7 @@ export async function checkCertExpiryNotifications(
   }
 
   // Check each certificate in the chain
-  let certInfo = tlsInfo.certInfo
+  let certInfo = leaf
   while (certInfo) {
     const certDaysRemaining = certInfo.daysRemaining
     const subjectCN = certInfo.subject?.CN || 'Unknown'
@@ -214,11 +225,11 @@ async function sendCertExpiryNotification(
  */
 export async function clearCertExpiryNotificationHistory(monitorId: number): Promise<void> {
   try {
-    await prisma.$executeRaw`
+    const deleted = await prisma.$executeRaw`
       DELETE FROM notification_sent_history 
       WHERE type = 'certificate' AND monitor_id = ${monitorId}
     `
-    console.log(`[CertExpiry] Cleared notification history for monitor ${monitorId}`)
+    if (deleted) console.log(`[CertExpiry] Cleared notification history for monitor ${monitorId}`)
   } catch (error) {
     console.error('[CertExpiry] Failed to clear notification history:', error)
   }
