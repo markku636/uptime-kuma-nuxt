@@ -1,11 +1,13 @@
 // server/services/monitor/checkers/network-checker.ts
 import net from 'net'
 import dns from 'dns'
+import dgram from 'dgram'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import type { CheckResult } from '../checker'
 import { evaluateJsonQuery } from '../../../utils/json-query'
 import { dnsServers, formatRecords, recordType } from './dns-options'
+import { buildAccessRequest, parseReply } from './radius'
 
 const execAsync = promisify(exec)
 
@@ -108,68 +110,48 @@ export async function checkDns(monitor: any, startTime: number): Promise<CheckRe
 }
 
 export async function checkRadius(monitor: any, startTime: number): Promise<CheckResult> {
+  if (!monitor.hostname || !monitor.radiusSecret) {
+    return { status: 0, ping: 0, msg: 'RADIUS hostname and secret are required' }
+  }
+  if (!monitor.radiusUsername) {
+    return { status: 0, ping: 0, msg: 'RADIUS username is required' }
+  }
+  const timeout = (monitor.timeout || 48) * 1000
+  const port = monitor.port || 1812
+  let request
   try {
-    // Note: This requires a proper Radius client library
-    // Using a simplified approach with dgram for basic connectivity
-    const dgram = await import('dgram')
-    
-    if (!monitor.hostname || !monitor.radiusSecret) {
-      return {
-        status: 0,
-        ping: 0,
-        msg: 'RADIUS hostname and secret are required'
-      }
-    }
-
-    return new Promise((resolve) => {
-      const timeout = (monitor.timeout || 48) * 1000
-      const client = dgram.createSocket('udp4')
-      const port = monitor.port || 1812
-
-      const timeoutId = setTimeout(() => {
-        client.close()
-        resolve({
-          status: monitor.upsideDown ? 1 : 0,
-          ping: Date.now() - startTime,
-          msg: 'RADIUS server timeout'
-        })
-      }, timeout)
-
-      // Simple RADIUS Access-Request packet (simplified)
-      const packet = Buffer.alloc(20)
-      packet[0] = 1 // Code: Access-Request
-      packet[1] = 1 // Identifier
-      packet.writeUInt16BE(20, 2) // Length
-
-      client.on('message', () => {
-        clearTimeout(timeoutId)
-        client.close()
-        resolve({
-          status: monitor.upsideDown ? 0 : 1,
-          ping: Date.now() - startTime,
-          msg: 'RADIUS server responded'
-        })
-      })
-
-      client.on('error', (err) => {
-        clearTimeout(timeoutId)
-        client.close()
-        resolve({
-          status: monitor.upsideDown ? 1 : 0,
-          ping: Date.now() - startTime,
-          msg: err.message || 'RADIUS check failed'
-        })
-      })
-
-      client.send(packet, port, monitor.hostname)
+    request = buildAccessRequest({
+      username: monitor.radiusUsername,
+      password: monitor.radiusPassword || '',
+      secret: monitor.radiusSecret,
+      calledStationId: monitor.radiusCalledStationId,
+      callingStationId: monitor.radiusCallingStationId,
     })
   } catch (error: any) {
-    return {
-      status: monitor.upsideDown ? 1 : 0,
-      ping: Date.now() - startTime,
-      msg: error.message || 'RADIUS check failed'
-    }
+    return { status: 0, ping: 0, msg: error?.message || 'Invalid RADIUS settings' }
   }
+
+  return new Promise((resolve) => {
+    const client = dgram.createSocket(net.isIPv6(monitor.hostname) ? 'udp6' : 'udp4')
+    let done = false
+    const finish = (up: boolean, msg: string) => {
+      if (done) return
+      done = true
+      clearTimeout(timer)
+      client.close()
+      resolve({ status: (monitor.upsideDown ? !up : up) ? 1 : 0, ping: Date.now() - startTime, msg })
+    }
+    const timer = setTimeout(() => finish(false, `RADIUS server did not answer within ${timeout / 1000}s`), timeout)
+
+    client.on('message', (msg) => {
+      const reply = parseReply(msg, request.identifier, request.authenticator, monitor.radiusSecret)
+      if (!reply.ok) return finish(false, reply.reason)
+      // Only an accepted login means the service works end to end
+      finish(reply.code === 2, reply.code === 3 ? 'Access-Reject: check the username and password' : reply.name)
+    })
+    client.on('error', err => finish(false, err.message || 'RADIUS check failed'))
+    client.send(request.packet, port, monitor.hostname)
+  })
 }
 
 export async function checkTailscalePing(monitor: any, startTime: number): Promise<CheckResult> {

@@ -83,6 +83,12 @@ export const monitorFields = {
   radiusSecret: str,
   radiusCalledStationId: str,
   radiusCallingStationId: str,
+  radiusUsername: str,
+  radiusPassword: str,
+  // SNMP (the community string is kept in radiusPassword)
+  snmpOid: str,
+  snmpVersion: z.enum(['1', '2c', '3']).nullable().optional(),
+  jsonPathOperator: str,
   game: str,
   remoteBrowserId: int,
   // DNS

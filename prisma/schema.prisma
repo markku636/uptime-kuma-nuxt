@@ -109,6 +109,15 @@ model Monitor {
   radiusSecret    String?   @map("radius_secret")
   radiusCalledStationId String? @map("radius_called_station_id")
   radiusCallingStationId String? @map("radius_calling_station_id")
+  radiusUsername  String?   @map("radius_username")
+  // RADIUS user password; SNMP monitors keep their community string here (as in uptime-kuma)
+  radiusPassword  String?   @map("radius_password")
+
+  // SNMP specific
+  snmpOid         String?   @map("snmp_oid")
+  snmpVersion     String?   @map("snmp_version")
+  // Comparison for SNMP / JSON query values (==, !=, <, >, contains ...)
+  jsonPathOperator String?  @map("json_path_operator")
   
   // Game server specific
   game            String?
