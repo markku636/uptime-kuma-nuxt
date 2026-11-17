@@ -84,7 +84,10 @@ export async function checkSteam(monitor: any, startTime: number): Promise<Check
 
 export async function checkGamedig(monitor: any, startTime: number): Promise<CheckResult> {
   try {
-    const Gamedig = await import('gamedig')
+    // gamedig 5 exports { GameDig } (older versions a default class)
+    const mod: any = await import('gamedig')
+    const GameDig = mod.GameDig ?? mod.default?.GameDig ?? mod.default
+    if (typeof GameDig?.query !== 'function') throw new Error('GameDig is not available')
     
     if (!monitor.hostname || !monitor.game) {
       return {
@@ -103,7 +106,7 @@ export async function checkGamedig(monitor: any, startTime: number): Promise<Che
       attemptTimeout: (monitor.timeout || 48) * 1000
     }
 
-    const state = await Gamedig.query(queryOptions)
+    const state = await GameDig.query(queryOptions)
     const ping = state.ping || (Date.now() - startTime)
 
     // Build detailed message

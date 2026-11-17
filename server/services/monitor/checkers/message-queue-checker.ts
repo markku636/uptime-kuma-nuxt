@@ -14,7 +14,8 @@ export async function checkMqtt(monitor: any, startTime: number): Promise<CheckR
     }
 
     const port = monitor.port || 1883
-    const protocol = monitor.ignoreTls ? 'mqtt' : 'mqtts'
+    // 8883 is MQTT over TLS; 1883 (the default) is plain MQTT
+    const protocol = port === 8883 ? 'mqtts' : 'mqtt'
     const url = `${protocol}://${monitor.hostname}:${port}`
 
     return new Promise((resolve) => {
