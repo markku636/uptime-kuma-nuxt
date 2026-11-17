@@ -30,9 +30,14 @@ export default defineEventHandler(async (event) => {
         } else if (field.name === 'removeAvatar') {
           removeAvatar = field.data.toString() === 'true'
         } else if (field.name === 'avatar' && field.filename) {
-          // Convert to base64 data URL for simple storage
-          const base64 = field.data.toString('base64')
-          avatarData = `data:${field.type};base64,${base64}`
+          // Stored as a data URL: images only, and small
+          if (!/^image\/(png|jpeg|gif|webp)$/.test(field.type || '')) {
+            throw createError({ statusCode: 400, message: 'Avatar must be a PNG, JPEG, GIF or WebP image' })
+          }
+          if (field.data.length > 512 * 1024) {
+            throw createError({ statusCode: 400, message: 'Avatar must be smaller than 512 KB' })
+          }
+          avatarData = `data:${field.type};base64,${field.data.toString('base64')}`
         }
       }
     }
@@ -43,10 +48,14 @@ export default defineEventHandler(async (event) => {
     removeAvatar = body.removeAvatar || false
   }
 
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw createError({ statusCode: 400, message: 'Invalid email address' })
+  }
+
   // Build update data
   const updateData: any = {
-    displayName: displayName || null,
-    email: email || null
+    displayName: displayName.slice(0, 100) || null,
+    email: email.slice(0, 254) || null
   }
 
   if (removeAvatar) {

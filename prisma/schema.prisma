@@ -17,6 +17,11 @@ model User {
   timezone      String         @default("UTC")
   twofaStatus   Boolean        @default(false) @map("twofa_status")
   twofaSecret   String?        @map("twofa_secret")
+  // Settings > Profile
+  email         String?
+  displayName   String?        @map("display_name")
+  // Small image as a data: URL
+  avatar        String?
   createdAt     DateTime       @default(now()) @map("created_at")
 
   monitors      Monitor[]

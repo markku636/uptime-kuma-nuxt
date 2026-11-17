@@ -632,6 +632,11 @@ END $$;
 -- Which group pause paused a monitor (resuming the group only resumes those)
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "paused_by_group" INTEGER;
 
+-- Settings > Profile
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "display_name" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar" TEXT;
+
 -- RADIUS credentials (radius_password also holds the SNMP community), SNMP settings
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "radius_username" TEXT;
 ALTER TABLE "monitors" ADD COLUMN IF NOT EXISTS "radius_password" TEXT;
