@@ -50,10 +50,13 @@ export default defineEventHandler(async (event) => {
   // Use status page perPage setting, or query limit, or default to 5
   const limit = queryLimit || statusPage.perPage || 5
 
+  // Logged-in users (the editor) see monitor URLs; visitors only those marked "show URL"
+  const viewer = await getUserSession(event).catch(() => null)
+  const isEditor = !!viewer?.user
+
   // Check if published (or authenticated for unpublished)
   if (!statusPage.published) {
-    const session = await getUserSession(event)
-    if (!session?.user) {
+    if (!isEditor) {
       throw createError({
         statusCode: 404,
         message: 'Status page not found'
@@ -106,7 +109,7 @@ export default defineEventHandler(async (event) => {
       id: group.id,
       name: group.name,
       weight: group.weight,
-      monitorList: group.monitors.map(spm => formatMonitor(spm, statusPage.showTags))
+      monitorList: group.monitors.map(spm => formatMonitor(spm, statusPage.showTags, isEditor))
     }))
 
     return {
@@ -193,7 +196,7 @@ export default defineEventHandler(async (event) => {
     id: targetGroup.id,
     name: targetGroup.name,
     weight: targetGroup.weight,
-    monitorList: paginatedMonitors.map(spm => formatMonitor(spm, statusPage.showTags))
+    monitorList: paginatedMonitors.map(spm => formatMonitor(spm, statusPage.showTags, isEditor))
   }]
 
   return {
@@ -248,13 +251,14 @@ function formatIncident(incident: any) {
   }
 }
 
-function formatMonitor(spm: any, showTags: boolean) {
+function formatMonitor(spm: any, showTags: boolean, isEditor: boolean) {
   const monitor = spm.monitor
   return {
     id: monitor.id,
     name: monitor.name,
     sendUrl: spm.sendUrl,
-    url: monitor.url,
+    // A URL can name internal hosts or carry tokens: public only when chosen
+    url: spm.sendUrl || isEditor ? monitor.url : undefined,
     type: monitor.type,
     tags: showTags && monitor.tags ? monitor.tags.map((mt: any) => ({
       id: mt.tag.id,
