@@ -40,7 +40,7 @@
           <UButton 
             icon="i-heroicons-trash" 
             variant="ghost" 
-            color="red"
+            color="error"
             size="sm"
             @click="removeGroup(groupIndex)"
           />

@@ -105,7 +105,7 @@ async function handleSubmit() {
       toast.add({
         title: 'Success',
         description: 'Status page updated successfully',
-        color: 'green'
+        color: 'success'
       })
     } else {
       await $fetch('/api/v1/status-pages', {
@@ -115,7 +115,7 @@ async function handleSubmit() {
       toast.add({
         title: 'Success',
         description: 'Status page created successfully',
-        color: 'green'
+        color: 'success'
       })
     }
     router.push('/status-pages')
@@ -123,7 +123,7 @@ async function handleSubmit() {
     toast.add({
       title: 'Error',
       description: error.data?.message || 'Failed to save status page',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     loading.value = false
@@ -267,7 +267,7 @@ const previewUrl = computed(() => {
               <span class="text-highlighted">{{ domain }}</span>
               <UButton
                 variant="ghost"
-                color="red"
+                color="error"
                 icon="i-heroicons-trash"
                 size="xs"
                 @click="removeDomain(index)"
