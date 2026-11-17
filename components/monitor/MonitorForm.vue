@@ -702,14 +702,28 @@
         </div>
 
         <div class="form-group">
-          <label class="input-label">Expected Value</label>
-          <input 
-            v-model="form.expectedValue" 
-            type="text" 
-            class="input-field" 
-            placeholder="Optional expected value"
-            :disabled="loading"
-          />
+          <label class="input-label">Condition</label>
+          <div class="flex gap-2">
+            <select v-model="form.jsonPathOperator" class="select-field w-28" :disabled="loading" aria-label="Comparison">
+              <option value="">any value</option>
+              <option value="==">==</option>
+              <option value="!=">!=</option>
+              <option value=">">&gt;</option>
+              <option value=">=">&gt;=</option>
+              <option value="<">&lt;</option>
+              <option value="<=">&lt;=</option>
+              <option value="contains">contains</option>
+            </select>
+            <input
+              v-model="form.expectedValue"
+              type="text"
+              class="input-field flex-1"
+              placeholder="Expected value"
+              :disabled="loading || !form.jsonPathOperator"
+              aria-label="Expected value"
+            />
+          </div>
+          <p class="text-xs text-dimmed mt-1">Up when the OID's value meets the condition (any value: the OID just has to answer).</p>
         </div>
       </div>
     </div>
@@ -1226,6 +1240,7 @@ const form = reactive({
   // JSON Query
   jsonPath: props.initialData?.jsonPath || '',
   expectedValue: props.initialData?.expectedValue || '',
+  jsonPathOperator: props.initialData?.jsonPathOperator || '',
   // gRPC
   grpcUrl: props.initialData?.grpcUrl || '',
   grpcServiceName: props.initialData?.grpcServiceName || '',
@@ -1582,7 +1597,8 @@ const handleSubmit = () => {
     data.radiusPassword = form.snmpCommunity // Community string stored in radiusPassword field
     data.snmpOid = form.snmpOid
     data.snmpVersion = form.snmpVersion
-    data.expectedValue = form.expectedValue || undefined
+    data.jsonPathOperator = form.jsonPathOperator || null
+    data.expectedValue = form.jsonPathOperator ? form.expectedValue : null
   }
 
   // DNS specific
