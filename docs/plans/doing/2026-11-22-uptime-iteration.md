@@ -167,3 +167,7 @@ R9 🔵 操作便利性：
 文件：README 已補上 Quick add、24h uptime、response-time alerts、可撤銷工作階段說明。
 分支推送：本機 git 沒有 GitHub 憑證，`git push` 失敗；9 個 commit 都在本機
 `iterate/uptime-20261122`，正式站以部署的 immutable artifact 為準。
+
+R10 🔵 PWA 警告收斂：補上 manifest 參考但缺失的 `public/icon-192.png`／`icon-512.png`、
+`browserconfig.xml`，並加入 `mobile-web-app-capable` meta（保留 Apple 舊 tag）。
+- 驗證：build 成功；unit 52/52。待部署確認 console 無 PWA 警告。

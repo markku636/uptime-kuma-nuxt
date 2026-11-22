@@ -41,6 +41,7 @@ useHead({
   meta: [
     { name: 'description', content: 'A fancy self-hosted monitoring tool' },
     { name: 'theme-color', content: '#10b981' },
+    { name: 'mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
     { name: 'apple-mobile-web-app-title', content: 'Uptime Kuma' },
