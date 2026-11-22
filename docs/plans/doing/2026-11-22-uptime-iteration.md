@@ -340,6 +340,12 @@ R35 🔵 公開狀態頁 SEO：動態 title／description／OpenGraph meta。
   R35b loader `ee4eb77`（rev98）→ app `5e07507`（rev99），`/status/api-platform-demo` 200
   且 og:title 存在。build 成功、unit 58/58。
 
+R36 🔵 README 更新（近期能力與不支援項目），部署 loader `1a1f3ab`（rev100）→ app `62847cd`（rev101）。
+R37 🔵 HTTP checker 真的使用 `cacheBust`（每次請求加 `_` 隨機參數），
+  部署 loader `45e9a91`（rev102）→ app `971568b`（rev103），全 Healthy/Synced，站點 200。
+- 最終煙霧測試（21:12 CST）：/api/info、/api/auth/sessions、uptime-batch、CSV、swagger(26 paths)、
+  entry-page、/login 全部 200；兩個網域皆可達。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
