@@ -257,6 +257,13 @@ R19 🔵 Email 通知（原本只 `console.log` 假成功）：改為走操作�
 - 線上驗證：Notifications > Add resource 的 Provider 下拉出現 `email`，說明文字提到
   SMTP relay。因正式站未設 SMTP_HOST/FROM，實際寄信會死信不重試（預期）。unit 58/58。R19 ✅
 
+R20 🔵 `/monitors` 列表補上 24h uptime 與 Response（與 dashboard 一致，共用 uptime-batch）。
+- 部署：artifact `22066c672ff4c95cf1935bda58cd60c9191f264efc4e530a19f09ff768bed7a6`
+  （202,096,297 bytes；source `0c55f21`），loader `010b0cf`（rev65）→ app `7279624`（rev66）。
+- 線上驗證：列表出現「24h:」欄位。注意：R15 誤觸的 clear-all job 後續把 demo heartbeats
+  清掉了（30d uptime 現在是 null），欄位顯示「—」是正確的無資料表現。此為不可逆資料遺失，
+  已記錄不再探測破壞性端點。unit 58/58。R20 ✅
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
