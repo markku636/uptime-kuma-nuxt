@@ -117,6 +117,18 @@ function clearImportFile() {
           <input v-model="importOptions.importStatusPages" type="checkbox" />
           <span class="text-gray-700 dark:text-gray-300">Import Status Pages</span>
         </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input v-model="importOptions.importMaintenances" type="checkbox" />
+          <span class="text-gray-700 dark:text-gray-300">Import Maintenance windows</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input v-model="importOptions.importProxies" type="checkbox" />
+          <span class="text-gray-700 dark:text-gray-300">Import Proxies</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input v-model="importOptions.importDockerHosts" type="checkbox" />
+          <span class="text-gray-700 dark:text-gray-300">Import Docker Hosts</span>
+        </label>
       </div>
 
       <button v-if="importFile" class="btn btn-primary" :disabled="isImporting" @click="importBackup">

@@ -1418,10 +1418,14 @@ const removeHeader = (index: number) => {
 }
 
 // Available groups for parent selection
-const availableGroups = computed(() => {
-  // This would be populated from an API or parent component
-  // For now return empty array - groups can be fetched from monitors API
-  return []
+const availableGroups = ref<{ id: number; name: string }[]>([])
+onMounted(async () => {
+  try {
+    const result = await $fetch<any>('/api/v1/groups')
+    availableGroups.value = (result?.data || []).map((group: any) => ({ id: Number(group.id), name: String(group.name || group.id) }))
+  } catch {
+    availableGroups.value = []
+  }
 })
 
 // Cluster nodes for node assignment

@@ -688,11 +688,8 @@ function formatLastUpdated(date: Date | null) {
           <!-- Real-time indicator -->
           <div class="mt-6 flex items-center justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
             <div class="flex items-center gap-2">
-              <span 
-                class="w-2.5 h-2.5 rounded-full"
-                :class="connected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'"
-              ></span>
-              <span>{{ connected ? 'Live' : 'Offline' }}</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>Auto-refresh</span>
             </div>
             <span class="text-gray-300 dark:text-gray-600">•</span>
             <span v-if="lastUpdated">

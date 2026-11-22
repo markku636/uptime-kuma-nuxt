@@ -56,8 +56,7 @@ function initSwaggerUI() {
       dom_id: '#swagger-ui',
       deepLinking: true,
       presets: [
-        (window as any).SwaggerUIBundle.presets.apis,
-        (window as any).SwaggerUIBundle.SwaggerUIStandalonePreset
+        (window as any).SwaggerUIBundle.presets.apis
       ],
       plugins: [
         (window as any).SwaggerUIBundle.plugins.DownloadUrl
