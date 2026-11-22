@@ -53,6 +53,18 @@ Email 僅能走操作者設定的 SMTP relay（`SMTP_HOST`／`SMTP_PORT`／`SMTP
 
 ---
 
+近期迭代（2026-11-22）：
+- 首頁／監控列表顯示近期 uptime%（24h，無資料時回退 30d），Quick add 單一 URL 建立 HTTP 監控。
+- 通知：response-time 超標提醒、持續 DOWN 的週期性提醒、email 走操作者設定的 SMTP relay。
+- 工作階段可逐筆撤銷（撤銷後該 socket 也斷線）；登出不再把其他裝置一起登出。
+- 狀態頁：可選密碼保護（防 RSS 繞過）、新增時正確保存 monitor／GA／密碼、公開頁有 SEO meta。
+- 監控詳情可匯出最近 10,000 筆心跳為 CSV；心跳欄位若含試算表公式字元會自動转义。
+- Debug Info 顯示真實版本／DB version／容器狀態；設定頁的無效欄位已移除或改為真正生效。
+
+不支援（畫面已明確標示）：Real Browser screenshot、Ping packet count/size、
+Monitor Conditions、自訂網域、舊類型 checker（TCP/Ping/DNS/SNMP 等可保存但不排程）。
+JVM 式 SLA 報表、多地點探測、SMS/voice 通知不在本部署範圍。
+
 ## 📁 專案結構
 
 ```
