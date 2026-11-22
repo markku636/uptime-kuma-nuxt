@@ -144,8 +144,10 @@
           <span v-if="monitor.url" class="ml-2 truncate block">{{ monitor.url }}</span>
           <span v-else-if="monitor.hostname" class="ml-2">{{ monitor.hostname }}{{ monitor.port ? `:${monitor.port}` : '' }}</span>
         </div>
-        <div v-if="getLatestPing(monitor)" class="text-xs text-tertiary mb-2">
-          Response: {{ getLatestPing(monitor) }}ms
+        <div class="flex items-center justify-between text-xs text-tertiary mb-2">
+          <span v-if="getLatestPing(monitor)">Response: {{ getLatestPing(monitor) }}ms</span>
+          <span v-else>Response: —</span>
+          <span :title="'Uptime over the last 24 hours'">24h: {{ formatUptime(uptimeMap[monitor.id]) }}</span>
         </div>
         <div class="mt-auto flex items-center gap-0.5">
           <div
@@ -190,7 +192,8 @@
               {{ monitor.url || monitor.hostname || '-' }}
             </td>
             <td class="text-secondary">
-              {{ getLatestPing(monitor) ? `${getLatestPing(monitor)}ms` : '-' }}
+              <div>{{ getLatestPing(monitor) ? `${getLatestPing(monitor)}ms` : '-' }}</div>
+              <div class="text-xs">24h: {{ formatUptime(uptimeMap[monitor.id]) }}</div>
             </td>
             <td>
               <div class="flex items-center gap-1">
@@ -392,6 +395,25 @@ watch(monitors,async rows=>{
   if(sequence!==historySequence||ids.join(',')!==monitors.value.map((row:any)=>row.id).join(','))return
   for(const id of ids){const live=heartbeatsMap.value[id]||[],seen=new Set(live.map((beat:any)=>beat.id));heartbeatsMap.value[id]=[...live,...(response.data[id]||[]).filter((beat:any)=>!seen.has(beat.id))].sort((a:any,b:any)=>BigInt(a.id)>BigInt(b.id)?-1:1).slice(0,20)}
 },{flush:'post',immediate:true})
+// 24h uptime percentages (UptimeRobot-style overview)
+const uptimeMap = ref<Record<string, number | null>>({})
+let uptimeSequence = 0
+watch(monitors, async rows => {
+  if (import.meta.server || !rows.length) return
+  const sequence = ++uptimeSequence
+  const ids = rows.map((row: any) => row.id)
+  try {
+    const response: any = await $fetch('/api/v1/monitors/uptime-batch', { query: { ids: ids.join(','), period: '24h' } })
+    if (sequence !== uptimeSequence) return
+    uptimeMap.value = response?.data || {}
+  } catch {
+    // Uptime is supplementary; keep the last known values on failure.
+  }
+}, { flush: 'post', immediate: true })
+function formatUptime(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) ? `${value.toFixed(2)}%` : '—'
+}
+
 const filterByStatus = (status: string) => {
   statusFilter.value = statusFilter.value === status ? 'all' : status
 }

@@ -104,5 +104,15 @@ R4 🔵 Response-time alerts（UptimeRobot「Response time alerts」）：
   notificationDedupe/outbox 建立 `response-time` 事件（每 monitor/channel/小時只發一次）。
 - `dispatcher.ts`／`sender.ts`：事件改寫通知標題為「⚠️ … is responding slowly」與閾值內文。
 - `cleanup.ts`：90 天以上的 dedupe key 定期清理，避免新 key 無界成長。
-- 驗證：build 成功；unit 52/52（新增 `tests/response-time-alert.test.ts` 3 項：跨界觸發／
-  已慢不重複／未超標不發）。待部署與線上欄位驗證。
+- 部署：artifact `666c408661624f17dfaa7237715a4f0e4bef78f70457275570c620a221d80b3d`
+  （201,955,751 bytes；source `6376830`）。GitOps loader `fc5b372`（rev25，Job Succeeded，
+  短命 server 已停）→ migration `ba9b6a2`（rev26，`20261122113500_response_time_threshold`
+  已套用）→ app `cdb25f1`（rev27，API/worker/fixture 全 Healthy，Synced）。
+- 線上驗證：`/monitors/1/edit` Timing 區塊出現新欄位與說明；REST PUT `responseTimeThreshold:750`
+  後讀回 750，再 PUT null 讀回 null（測試值已清除）。unit 52/52。R4 ✅
+
+R5 🔵 24 小時可用率概览（UptimeRobot 首頁核心指標）：
+- `server/api/v1/monitors/uptime-batch.get.ts`：依目前 workspace/environment 範圍批量回傳
+  最多 100 筆 monitor 的 24h/7d/30d uptime%，避免 N+1 請求。
+- `pages/dashboard/index.vue`：grid/list 視角皆顯示「24h: xx.xx%」，資料失敗時保留舊值。
+- 驗證：build 成功；unit 52/52。待部署與線上 API／畫面驗證。
