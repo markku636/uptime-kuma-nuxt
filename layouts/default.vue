@@ -34,6 +34,13 @@
               Groups
             </NuxtLink>
             <NuxtLink
+              to="/maintenance"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              Maintenance
+            </NuxtLink>
+            <NuxtLink
               to="/settings"
               class="nav-link"
               active-class="nav-link-active"
@@ -144,6 +151,14 @@
               @click="mobileMenuOpen = false"
             >
               Groups
+            </NuxtLink>
+            <NuxtLink
+              to="/maintenance"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              Maintenance
             </NuxtLink>
             <NuxtLink
               to="/settings"

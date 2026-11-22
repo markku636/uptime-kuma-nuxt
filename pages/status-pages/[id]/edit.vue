@@ -9,7 +9,8 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 
-const isEdit = computed(() => !!route.params.id)
+// /status-pages/new/edit is the create mode of this shared editor.
+const isEdit = computed(() => !!route.params.id && route.params.id !== 'new')
 const statusPageId = computed(() => route.params.id as string)
 
 const { data: statusPage, pending: loadingStatusPage } = useFetch<any>(

@@ -1,6 +1,5 @@
 <template>
-  <transition name="slide-fade" appear>
-    <div class="status-pages">
+  <div class="status-pages">
       <h1 class="page-title">Status Pages</h1>
 
       <div class="mb-3">
@@ -108,8 +107,7 @@
           </div>
         </div>
       </div>
-    </div>
-  </transition>
+  </div>
 </template>
 
 <script setup lang="ts">
