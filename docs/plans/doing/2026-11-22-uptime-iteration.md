@@ -252,7 +252,18 @@ R19 🔵 Email 通知（原本只 `console.log` 假成功）：改為走操作�
   UI 加入 email provider 與收件人欄位，README 更新。
 - 驗證：build 成功；unit 58/58（新增 `tests/email-provider.test.ts` 3 項）。待部署。
 
-## 目前狀態（12:46 CST）
+- 部署：artifact `709fafb5f0fc0556faac706d7a638290222d3d68241f23af058aa4c1bff95e3d`
+  （202,096,595 bytes；source `be79eb9`），loader `10cea13`（rev63）→ app `2470084`（rev64）。
+- 線上驗證：Notifications > Add resource 的 Provider 下拉出現 `email`，說明文字提到
+  SMTP relay。因正式站未設 SMTP_HOST/FROM，實際寄信會死信不重試（預期）。unit 58/58。R19 ✅
+
+## 最終狀態（15:33 CST）
+R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
+release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
+剩餘：Screenshot UI 沒有任何入口也沒有 API（低優先）；origin/main 92 commits 不合併（使用者指示）。
+已無低風險高價值項目，停在乾淨狀態等待使用者指示。
+
+## 舊中途狀態（12:46 CST）
 13 輪全部已 commit 並部署到 lab 正式站，線上 revision 52、Healthy/Synced，無 console error/warning。
 Git push：已用環境中的 GitHub token 成功推送到 `origin/iterate/uptime-20261122`（2026-11-22 12:5x）。
 
