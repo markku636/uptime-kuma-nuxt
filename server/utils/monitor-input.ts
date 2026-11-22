@@ -10,6 +10,7 @@ export const createMonitorSchema = z.object({
   port: z.number().int().min(1).max(65535).optional().nullable(),
   interval: z.number().int().min(10).max(86400).default(60),
   timeout: z.number().int().min(1).max(120).default(48),
+  responseTimeThreshold: z.number().int().min(1).max(300000).optional().nullable(),
   retryInterval: z.number().int().min(1).max(3600).default(60),
   maxretries: z.number().int().min(0).max(5).default(0),
   method: z.enum(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']).default('GET'),

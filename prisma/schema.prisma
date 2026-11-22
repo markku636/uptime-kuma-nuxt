@@ -80,6 +80,7 @@ model Monitor {
   retryInterval   Int       @default(60) @map("retry_interval")
   maxretries      Int       @default(0)
   timeout         Int       @default(48)
+  responseTimeThreshold Int? @map("response_time_threshold")
   type            String    // http, tcp, ping, dns, push, docker, keyword, json-query, grpc-keyword, etc.
   url             String?
   hostname        String?

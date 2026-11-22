@@ -895,6 +895,19 @@
           />
         </div>
         <div class="form-group">
+          <label class="input-label">Alert if response time exceeds (ms)</label>
+          <input
+            v-model.number="form.responseTimeThreshold"
+            type="number"
+            min="1"
+            max="300000"
+            class="input-field"
+            :disabled="loading"
+            placeholder="Off"
+          />
+          <p class="text-xs text-secondary mt-1">Optional. Sends one alert per hour when a healthy check is slower than this.</p>
+        </div>
+        <div class="form-group">
           <label class="input-label">Retry Interval (seconds)</label>
           <input 
             v-model.number="form.retryInterval" 
@@ -1213,6 +1226,7 @@ const form = reactive({
   upsideDown: props.initialData?.upsideDown || false,
   interval: props.initialData?.interval || 60,
   timeout: props.initialData?.timeout || 48,
+  responseTimeThreshold: props.initialData?.responseTimeThreshold || null,
   retryInterval: props.initialData?.retryInterval || 60,
   maxretries: props.initialData?.maxretries || 0,
   description: props.initialData?.description || '',
@@ -1448,6 +1462,7 @@ const handleSubmit = async (trial=false) => {
     name: form.name,
     interval: form.interval,
     timeout: form.timeout,
+    responseTimeThreshold: form.responseTimeThreshold && form.responseTimeThreshold > 0 ? Number(form.responseTimeThreshold) : null,
     retryInterval: form.retryInterval,
     maxretries: form.maxretries,
     description: form.description || null,

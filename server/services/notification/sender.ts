@@ -65,6 +65,11 @@ export async function sendNotification(
   }
 
   const message = formatMessage(monitor, result)
+  if ((result as any).eventType === 'response-time') {
+    const limit = (result as any).threshold
+    message.title = `⚠️ ${monitor.name} is responding slowly`
+    message.body = `Response time ${result.ping} ms exceeded the ${limit} ms threshold`
+  }
 
   try {
     await provider.send(notification.config, message,{signal})

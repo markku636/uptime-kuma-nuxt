@@ -87,4 +87,22 @@ R3 🔵 Quick add（UptimeRobot 式「30 秒新增監控」）：
 - `pages/dashboard/index.vue`：新增 Quick add 按鈕與模態；輸入單一 URL 即自動產生名稱
   （hostname + path，去 www），以 HTTP/GET、60 秒間隔、10 秒timeout 建立監控，
   成功後 toast 並刷新列表；保留原「Add New Monitor」進階表單。
-- 驗證：build 成功；unit 49/49。待部署與線上實作驗證（建立測試監控後刪除）。
+- 部署：artifact `c6b49a610a73465906dd426c568b6f200038ecda50764d95b212005fce884534`
+  （201,965,165 bytes；source `c1fa328`）。GitOps loader `57c0326`（rev22，Job Succeeded，
+  短命 server 已停）→ migration `56f3d85`（rev23，15 migrations 無 pending）→ app `94dc332`（rev24，
+  API/worker/fixture 全 Healthy，Synced）。
+- 線上驗證：Quick add 模態開啟、輸入 `https://quickadd.example.com/health` 自動帶出名稱
+  `quickadd.example.com/health`、提交後監控數 5→6 且新監控出現在列表（interval 60s）；
+  測試監控 id=10 已透過 REST 刪除，回復 5 筆。build＋unit 49/49。R3 ✅
+
+R4 🔵 Response-time alerts（UptimeRobot「Response time alerts」）：
+- `prisma/schema.prisma` + migration `20261122113500_response_time_threshold`：Monitor 新增
+  `response_time_threshold`（ms，可空）。
+- `server/utils/monitor-input.ts`、`monitor-secrets.ts`、`components/monitor/MonitorForm.vue`：
+  Timing 區塊新增「Alert if response time exceeds (ms)」欄位，DDTO 回傳、API 驗證。
+- `server/services/monitor/commit-result.ts`：健康檢查從未超標跨到超標時，透過既有
+  notificationDedupe/outbox 建立 `response-time` 事件（每 monitor/channel/小時只發一次）。
+- `dispatcher.ts`／`sender.ts`：事件改寫通知標題為「⚠️ … is responding slowly」與閾值內文。
+- `cleanup.ts`：90 天以上的 dedupe key 定期清理，避免新 key 無界成長。
+- 驗證：build 成功；unit 52/52（新增 `tests/response-time-alert.test.ts` 3 項：跨界觸發／
+  已慢不重複／未超標不發）。待部署與線上欄位驗證。
