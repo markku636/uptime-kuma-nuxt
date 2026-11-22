@@ -10,7 +10,8 @@ export default defineEventHandler(event => {
   if (!path.startsWith('/api/') || ['/api/health','/api/v1/health','/api/health/live','/api/health/ready'].includes(path)) return
   const login = ['/api/auth/login','/api/auth/setup'].includes(path)
   const twofa = path.startsWith('/api/auth/2fa/')
-  const maximum = login ? limit('LOGIN_RATE_LIMIT',20) : twofa ? limit('TWOFA_RATE_LIMIT',30) : limit('API_RATE_LIMIT',600)
+  const unlock = /^\/api\/v1\/status-pages\/[^/]+\/unlock$/.test(path)
+  const maximum = login || unlock ? limit('LOGIN_RATE_LIMIT',20) : twofa ? limit('TWOFA_RATE_LIMIT',30) : limit('API_RATE_LIMIT',600)
   // Forwarded headers are trusted only when the deployment explicitly trusts its ingress.
   const ip = process.env.TRUST_PROXY_HEADERS === 'true'
     ? getHeader(event,'x-forwarded-for')?.split(',')[0]?.trim() || event.node.req.socket.remoteAddress
