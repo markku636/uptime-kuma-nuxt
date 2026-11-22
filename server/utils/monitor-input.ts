@@ -42,6 +42,7 @@ export const createMonitorSchema = z.object({
   kafkaSaslMechanism: z.string().max(100).optional().nullable(), kafkaUsername: z.string().max(4096).optional().nullable(), kafkaPassword: z.string().max(8192).optional().nullable(),
   rabbitmqNodes: z.array(z.string().max(8192)).max(100).optional().nullable(), rabbitmqUsername: z.string().max(4096).optional().nullable(), rabbitmqPassword: z.string().max(8192).optional().nullable(),
   redisConnectionString: z.string().max(8192).optional().nullable(), radiusSecret: z.string().max(8192).optional().nullable(),
+  radiusCalledStationId: z.string().max(256).optional().nullable(), radiusCallingStationId: z.string().max(256).optional().nullable(),
   game: z.string().max(100).optional().nullable(),
   // TLS Certificate settings
   expiryNotification: z.boolean().default(false),
@@ -53,6 +54,8 @@ export const createMonitorSchema = z.object({
   dockerHost: z.union([z.number(), z.string()]).transform(String).optional().nullable(),
   remoteBrowserId: z.number().int().positive().optional().nullable(),
   parent: z.number().int().positive().optional().nullable(),
+  nodeId: z.string().max(128).optional().nullable(),
+  assignedNode: z.string().max(128).optional().nullable(),
   dockerContainer: z.string().optional().nullable(),
   // Database settings
   databaseType: z.string().optional().nullable(),

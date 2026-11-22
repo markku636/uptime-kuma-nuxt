@@ -1663,10 +1663,10 @@ const handleSubmit = async (trial=false) => {
 
   // Node assignment (Cluster Mode)
   if (form.nodeId) {
-    data.node_id = form.nodeId
+    data.nodeId = form.nodeId
   }
   if (form.assignedNode) {
-    data.assigned_node = form.assignedNode
+    data.assignedNode = form.assignedNode
   }
 
   if(showHttpSettings.value)data.assertions=assertions.value

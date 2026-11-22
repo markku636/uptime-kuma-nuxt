@@ -17,12 +17,17 @@ const form = ref({
   isPrimary: false
 })
 
-// TODO: Get current node ID from server info
 const currentNodeId = ref<string | null>(null)
 const platformAdmin=ref(false),permissionReady=ref(false)
 
 onMounted(async () => {
-  try{platformAdmin.value=!!(await $fetch<{data?:{platformAdmin?:boolean}}>('/api/auth/session')).data?.platformAdmin;if(platformAdmin.value)await fetchNodes()}
+  try{
+    // Identify this pod from the server hostname so self-delete stays disabled.
+    const info=await $fetch<any>('/api/info').catch(()=>null)
+    currentNodeId.value=info?.primaryHostname || null
+    platformAdmin.value=!!(await $fetch<{data?:{platformAdmin?:boolean}}>('/api/auth/session')).data?.platformAdmin
+    if(platformAdmin.value)await fetchNodes()
+  }
   finally{permissionReady.value=true}
 })
 
