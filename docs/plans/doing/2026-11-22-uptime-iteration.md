@@ -319,6 +319,20 @@ R32 🔵 新增監控表單：不支援的 checker 類型在下拉直接標 `(un
   磁碟目前 82%（159GB 可用），無 disk pressure。
 - 安全審查子代理正在檢查新增 API（結果待補）。
 
+R33 🔵 OpenAPI 補 CSV 匯出端點（與 R34 一起部署）。
+R34 🔵 安全審查修正（子代理 ses_dfcb54df1ffeMC4lwWv84FfdMx）：
+  1. 高：RSS 路由繞過狀態頁密碼 → 改用 `visibleStatusPage(event)`。線上驗證：
+     匿名讀受保護頁 RSS 401、解鎖 cookie 後 200。
+  2. 中：撤銷單一 session 後閒置 socket 仍收到推送 → 新增 `disconnectSessionSockets`，
+     revoke/logout 只斷該 session 的 socket；logout 不再遞增全域 sessionVersion（避免把其他裝置登出）。
+  3. 中：`GET /api/settings` 只要求session → 改 requirePlatformAdmin（匿名 401、_owner 200）。
+  4. 中：狀態頁 PUT 會丟掉明確的 null，無法清除可空欄位 → 改為只過濾 undefined。
+  5. 低~中：API key 不應豁免狀態頁密碼 → owner 豁免限定 `authMethod === 'session'`。
+  6. 低：CSV 匯出加公式注入防護（`=+-@\t\r` 開頭加前導單引號）。
+  已知刻意設計：monitor-history 破壞性清理僅限 workspace owner，API key 不可呼叫（文件化）。
+  部署：loader `513cb57`（rev94）→ app `97bc853`（rev95），全 Healthy/Synced；
+  build 成功、unit 58/58、typecheck 52（觸摸檔案 0 error）。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
