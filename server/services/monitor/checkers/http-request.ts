@@ -137,6 +137,7 @@ async function singleRequest(...args:Parameters<typeof rawSingleRequest>){
 }
 async function follow(urlString:string,method:string,headers:Record<string,string>,body:string|undefined,monitor:any,signal:AbortSignal,start:number):Promise<HttpRequestResult>{
   let url:URL;try{url=new URL(urlString)}catch{throw new HttpCheckError('CONFIG_ERROR')}
+  if(monitor.cacheBust)url.searchParams.set('_', `${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`)
   if(url.username||url.password){
     headers.authorization='Basic '+Buffer.from(`${decodeURIComponent(url.username)}:${decodeURIComponent(url.password)}`).toString('base64');url.username='';url.password=''
   }
