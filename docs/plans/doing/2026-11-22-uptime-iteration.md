@@ -271,6 +271,25 @@ R22 🔵 DebugInfo 假資料：`components/common/DebugInfo.vue` 原本寫死 `2
   `/api/info` 補 container／serverTimezoneOffset，`database-info` 補真實 DB version。
 - 驗證：build 成功；unit 58/58；typecheck 52（觸摸檔案 0 error）。待部署線上驗證。
 
+R20–R29（16:31 CST）：全部已 commit、push、部署（release 83、Healthy/Synced）。
+- R20：`/monitors` 列表補 24h uptime／Response。
+- R21：typecheck 收斂（66→52，觸摸檔案 0 error）。
+- R22：DebugInfo 改讀真實 `/api/info`、`/api/check-update`、`/api/v1/settings/database-info`；
+  info 補 container/timezone offset，database-info 補真實 DB version。
+- R23：Status Page 新增時 password／monitors／GA ID 不再被丟；移除不支援的 Custom Domains UI。
+  線上驗證：建立頁含 password/2 monitors/GA 後讀回全部正確，測試頁已刪除。
+- R24：General 的 Status Page entry page 可選並可指定 slug（`/` 匿名轉址）、
+  移除永遠無效的 toast timeout UI、Appearance language 持久化。測試值已還原 dashboard。
+- R25：RADIUS called/calling 與 nodeId/assignedNode 不再被 API 丟棄；設定頁用 `/api/info`
+  hostname 判斷目前節點，避免自我刪除。測試值已清除。
+- R26：移除監控詳情頁打到不存在 API 的 Screenshot 按鈕。
+- R27：補 72 個 `$t()` 使用但語言檔缺的 key（en + zh-TW）。
+- R28：新增 `snmp_oid`／`snmp_version`／`cache_bust` migration 並接入 input/DTO，
+  checker 終於讀得到 SNMP OID；線上 PUT 測試 200 且已清除。
+- R29：移除此 runtime 不執行的 Ping packet count/size 與 Monitor Conditions 控制項，
+  改為明確不支援提示，避免假設定。
+- 全部 build 成功、unit 58/58。稽核來源：子代理「Audit remaining fake features」。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
