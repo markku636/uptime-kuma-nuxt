@@ -203,4 +203,14 @@ R13 🔵 Resend-while-down：原本 MonitorForm 的「Resend Notification if Dow
   傳到 API 後被忽略。新增 `monitors.resend_interval`（0–1440 分），
   `commit-result` 在持續 down 且跨過間隔時依 dedupe 每通道每間隔發一次 `STILL_DOWN`，
   sender 改寫標題為「🔁 … is still down」。
-- 驗證：build 成功；unit 55/55（新增 `tests/resend-alert.test.ts` 3 項）。待部署。
+- 部署：artifact `a0ab5a230e64f6999a98176d7f7baafd0090498392e73c0c44944217c4e84e36`
+  （201,986,676 bytes；source commit 含 resend），loader `b6cab4b`（rev50，Job Succeeded，
+  短命 server 已停）→ migration `4b3ec2b`（rev51，`20261122124500_monitor_resend_interval` 已套用）
+  → app `5bcff64`（rev52，API/worker/fixture 全 Healthy，Synced）。
+- 線上驗證：PUT `resendInterval:15` 後讀回 15，清回 0 成功；編輯頁仍有該欄位。
+  unit 55/55。R13 ✅
+
+## 目前狀態（12:46 CST）
+13 輪全部已 commit 並部署到 lab 正式站，線上 revision 52、Healthy/Synced，無 console error/warning。
+剩餘項目需使用者決定：SMTP/email 通知（刻意不支援，涉及 SSRF／憑證政策）、
+Screenshot API（UI 元件未被任何頁面使用）、origin/main 92 commits 合併（使用者已指示不合併）。
