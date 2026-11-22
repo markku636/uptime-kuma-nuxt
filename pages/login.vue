@@ -15,25 +15,41 @@
             id="username"
             v-model="form.username"
             type="text"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
             class="input-field"
             placeholder="Enter your username"
             required
             :disabled="loading"
+            autofocus
           />
         </div>
 
         <!-- Password -->
         <div class="form-group">
           <label for="password" class="input-label">Password</label>
-          <input
-            id="password"
-            v-model="form.password"
-            type="password"
-            class="input-field"
-            placeholder="Enter your password"
-            required
-            :disabled="loading"
-          />
+          <div class="relative">
+            <input
+              id="password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+              class="input-field pr-12"
+              placeholder="Enter your password"
+              required
+              :disabled="loading"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-0 flex items-center px-3 text-secondary hover:text-primary"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :title="showPassword ? 'Hide password' : 'Show password'"
+              @click="showPassword = !showPassword"
+            >
+              <UIcon :name="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <!-- Error -->
@@ -65,6 +81,7 @@ const form = reactive({
 
 const loading = ref(false)
 const error = ref('')
+const showPassword = ref(false)
 
 onMounted(async () => {
   try {

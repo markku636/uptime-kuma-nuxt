@@ -148,4 +148,14 @@ R7 🔵 dashboard hydration mismatch：
 R8 🔵 修 grid uptime 首次載入更新時機：
 - `pages/dashboard/index.vue`：uptime 狀態由兩個 `ref({})` 改為 `reactive({})` 並用
   `Object.assign` 更新，讓 Vue 追蹤個別 monitor 的數值（而非只追蹤物件替換）。
-- 驗證：build 成功；unit 52/52。待部署驗證首次載入即顯示。
+- 部署：artifact `abc8b71decb4ff5c302a5de9c52ae06d957e416238969fbbe25fd0549b1a9086`
+  （201,961,438 bytes；source `4cdf4c4`）。GitOps loader commit `f6d3b73`（rev37，Job Succeeded，
+  短命 server 已停）→ app `6335cbd`（rev38，無 schema 變更故未另跑 migration，
+  API/worker/fixture 全 Healthy，Synced）。
+- 線上驗證：dashboard 首次載入約數秒後 grid 正確顯示「30d: 100.00% / 0.00%」（先前看似未更新是
+  批量 uptime 查詢尚未回覆）；console 無錯誤。build＋unit 52/52。R8 ✅
+
+R9 🔵 操作便利性：
+- `pages/dashboard/index.vue`：grid 卡片補 Pause/Resume/Edit 快速動作（點擊不觸發卡片導覽）。
+- `pages/login.vue`：密碼顯示/隱藏切換、autocomplete、autofocus。
+- 驗證：build 成功；unit 52/52。待部署與線上驗證。

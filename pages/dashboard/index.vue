@@ -149,6 +149,29 @@
           <span v-else>Response: —</span>
           <span :title="'Recent uptime (24h, or 30d when there is no 24h data)'">{{ uptimeLabel(monitor.id) }}</span>
         </div>
+        <div v-if="canEdit" class="mt-3 flex items-center gap-2" @click.prevent>
+          <button
+            v-if="monitor.active"
+            class="action-btn"
+            :aria-label="`Pause ${monitor.name}`"
+            title="Pause"
+            @click.stop="pauseMonitor(monitor.id)"
+          >
+            <UIcon name="i-heroicons-pause" class="w-4 h-4" />
+          </button>
+          <button
+            v-else
+            class="action-btn action-btn-success"
+            :aria-label="`Resume ${monitor.name}`"
+            title="Resume"
+            @click.stop="resumeMonitor(monitor.id)"
+          >
+            <UIcon name="i-heroicons-play" class="w-4 h-4" />
+          </button>
+          <NuxtLink :to="`/monitors/${monitor.id}/edit`" class="action-btn action-btn-info" title="Edit" @click.stop>
+            <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
+          </NuxtLink>
+        </div>
         <div class="mt-auto flex items-center gap-0.5">
           <div
             v-for="(beat, i) in getRecentHeartbeats(monitor)"
