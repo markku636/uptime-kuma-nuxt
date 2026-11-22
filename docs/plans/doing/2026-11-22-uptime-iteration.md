@@ -372,6 +372,10 @@ R44 🔵 稽核小項修復：MonitorForm 父群組下拉改實際抓 `/api/v1/g
   API Docs 移除未定義的 standalone preset、Backup UI 補上 maintenances/proxies/dockerHosts 匯入開關。
   部署 revision 118、API/worker/fixture 全 Healthy。
 
+R45 🔵 監控列表大量操作：checkbox 選取、大量 pause/resume/delete（既有單筆 API 併發）、
+  「Sort this page」用戶端排序；線上驗證 25 個 checkbox 與工具列出現。revision 120、全 Healthy。
+- 再次清理 artifact releases 只留 3 個，磁碟 86%→85%。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
