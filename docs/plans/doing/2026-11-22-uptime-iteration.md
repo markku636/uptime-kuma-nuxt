@@ -192,3 +192,15 @@ R11 🔵 狀態頁密碼保護（UptimeRobot「Password protection & private pag
 - 線上驗證：設密碼後匿名 GET config 401 "Status page password required"、錯誤密碼 401、
   正確密碼 200 且 cookie 後匿名 200、擁有者 session 仍 200；清除密碼後匿名回復 200，
   測試密碼已移除。build＋unit 52/52。R11 ✅（含 R11b 修正）
+
+R12 🔵 OpenAPI 補齊新端點：`/v1/monitors/uptime-batch`、`/v1/status-pages/{slug}/unlock`、
+`/auth/sessions` 系列，以及 Monitor.responseTimeThreshold schema。
+- 部署 artifact `d7cf0015479c27534a0d3b8b6654cb985c03b61a99541f69c84cf6df4d1cb3c6`
+  （201,988,771 bytes；source `ff457e6`），loader `9797275`（rev48）→ app `d56562d`（rev49）。
+- 線上驗證：`/api/swagger-json` 共 25 個 path，5 個新 path 與 threshold schema 皆存在。R12 ✅
+
+R13 🔵 Resend-while-down：原本 MonitorForm 的「Resend Notification if Down X times」欄位
+  傳到 API 後被忽略。新增 `monitors.resend_interval`（0–1440 分），
+  `commit-result` 在持續 down 且跨過間隔時依 dedupe 每通道每間隔發一次 `STILL_DOWN`，
+  sender 改寫標題為「🔁 … is still down」。
+- 驗證：build 成功；unit 55/55（新增 `tests/resend-alert.test.ts` 3 項）。待部署。

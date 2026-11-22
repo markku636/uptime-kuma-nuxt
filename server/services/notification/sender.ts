@@ -70,6 +70,10 @@ export async function sendNotification(
     message.title = `⚠️ ${monitor.name} is responding slowly`
     message.body = `Response time ${result.ping} ms exceeded the ${limit} ms threshold`
   }
+  if ((result as any).eventType === 'resend') {
+    message.title = `🔁 ${monitor.name} is still down`
+    message.body = `Still down after ${(result as any).downMinutes ?? '?'} minutes`
+  }
 
   try {
     await provider.send(notification.config, message,{signal})

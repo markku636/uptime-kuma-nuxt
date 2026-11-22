@@ -19,7 +19,11 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
     const previousPing=Number((previous as any)?.ping)
     const slow=result.status===1&&Number.isInteger(slowThreshold)&&slowThreshold>0&&ping>slowThreshold
       &&(!Number.isFinite(previousPing)||previousPing<=slowThreshold)
-    if(previous&&changed&&[0,1].includes(result.status)||tlsWarning||slow){
+    const resendEvery=Number(monitor.resendInterval)
+    const downMs=previous?.statusChangedAt instanceof Date ? now.getTime()-previous.statusChangedAt.getTime() : 0
+    const resend=result.status===0&&!changed&&Number.isInteger(resendEvery)&&resendEvery>0
+      &&downMs>=resendEvery*60_000
+    if(previous&&changed&&[0,1].includes(result.status)||tlsWarning||slow||resend){
       const channels=await tx.notification.findMany({where:{workspaceId:monitor.workspaceId,active:true,OR:[{isDefault:true},{monitorNotifications:{some:{monitorId:monitor.id,monitor:{workspaceId:monitor.workspaceId}}}}]},select:{id:true},take:1000})
       if(previous&&changed&&[0,1].includes(result.status)&&channels.length)await tx.notificationOutbox.createMany({data:channels.map((channel:any)=>({runId:monitor.runId,eventType:'status',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,payload:{monitorId:monitor.id,name:monitor.name,status:result.status,ping,code,time:now.toISOString()},nextAttemptAt:now})),skipDuplicates:true})
       if(tlsWarning&&channels.length){
@@ -39,6 +43,13 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
         // One alert per monitor/channel per hour; only on entering the slow state.
         const bucket=Math.floor(now.getTime()/3_600_000)
         const rows=channels.map((channel:any)=>({runId:monitor.runId,eventType:'response-time',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,dedupeKey:createHash('sha256').update(`slow:${monitor.id}:${channel.id}:${bucket}`).digest('hex'),payload:{monitorId:monitor.id,name:monitor.name,status:1,ping,code:'SLOW_RESPONSE',threshold:slowThreshold,eventType:'response-time',time:now.toISOString()},nextAttemptAt:now}))
+        const fresh=await tx.notificationDedupe.createManyAndReturn({data:rows.map((row:any)=>({key:row.dedupeKey,monitorId:monitor.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,notificationId:row.notificationId})),skipDuplicates:true,select:{key:true}})
+        const keys=new Set(fresh.map((row:any)=>row.key));if(keys.size)await tx.notificationOutbox.createMany({data:rows.filter((row:any)=>keys.has(row.dedupeKey)),skipDuplicates:true})
+      }
+      if(resend&&channels.length){
+        // Repeat reminder every resendInterval minutes while the monitor stays down.
+        const bucket=Math.floor(downMs/(resendEvery*60_000))
+        const rows=channels.map((channel:any)=>({runId:monitor.runId,eventType:'resend',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,dedupeKey:createHash('sha256').update(`resend:${monitor.id}:${channel.id}:${bucket}`).digest('hex'),payload:{monitorId:monitor.id,name:monitor.name,status:0,ping,code:'STILL_DOWN',eventType:'resend',downMinutes:Math.floor(downMs/60_000),time:now.toISOString()},nextAttemptAt:now}))
         const fresh=await tx.notificationDedupe.createManyAndReturn({data:rows.map((row:any)=>({key:row.dedupeKey,monitorId:monitor.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,notificationId:row.notificationId})),skipDuplicates:true,select:{key:true}})
         const keys=new Set(fresh.map((row:any)=>row.key));if(keys.size)await tx.notificationOutbox.createMany({data:rows.filter((row:any)=>keys.has(row.dedupeKey)),skipDuplicates:true})
       }

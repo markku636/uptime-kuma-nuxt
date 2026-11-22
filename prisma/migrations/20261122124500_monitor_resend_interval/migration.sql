@@ -1,0 +1,1 @@
+ALTER TABLE "monitors" ADD COLUMN "resend_interval" INTEGER NOT NULL DEFAULT 0;
