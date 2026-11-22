@@ -376,6 +376,10 @@ R45 🔵 監控列表大量操作：checkbox 選取、大量 pause/resume/delete
   「Sort this page」用戶端排序；線上驗證 25 個 checkbox 與工具列出現。revision 120、全 Healthy。
 - 再次清理 artifact releases 只留 3 個，磁碟 86%→85%。
 
+R46 🔵 設定頁把「存了但不生效」的相容性欄位明確標示（Appearance 3 項、General 多項），
+  revision 122、全 Healthy/Synced。稽核 #1–#13 全部處理完畢；#14（未被使用的死程式）
+  與 SLA 報表／多地點探測需使用者決定是否清理／投資基礎設施。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
