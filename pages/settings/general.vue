@@ -41,6 +41,8 @@
           </div>
         </div>
 
+        <p class="text-xs text-secondary mt-2">Search engine visibility, primary base URL, Steam API key, Chrome path, DNS servers, notification checks and beta flags are stored for compatibility but are not applied by this deployment.</p>
+
         <!-- Entry Page -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Entry Page</label>

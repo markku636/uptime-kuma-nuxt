@@ -57,6 +57,7 @@
 
       <!-- Heartbeat Bar Style -->
       <div>
+        <p class="text-xs text-secondary mb-2">Compatibility setting — stored but not applied by this runtime.</p>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Heartbeat Bar Style</label>
         <div class="flex gap-4">
           <button v-for="style in heartbeatBarOptions" :key="style.value" type="button"
@@ -70,6 +71,7 @@
 
       <!-- Elapsed Time Style -->
       <div>
+        <p class="text-xs text-secondary mb-2">Compatibility setting — stored but not applied by this runtime.</p>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Elapsed Time Style</label>
         <div class="flex gap-4 flex-wrap">
           <button v-for="style in elapsedTimeOptions" :key="style.value" type="button"
@@ -83,6 +85,7 @@
 
       <!-- Show Certificate Expiry -->
       <div>
+        <p class="text-xs text-secondary mb-2">Compatibility setting — public status pages control this per page.</p>
         <label class="flex items-center gap-2 cursor-pointer">
           <input v-model="showCertificateExpiry" type="checkbox" />
           <span class="text-gray-700 dark:text-gray-300">Show Certificate Expiry Days</span>
