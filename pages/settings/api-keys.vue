@@ -40,6 +40,16 @@ async function generateKey() {
   }
 }
 
+async function toggleKey(key: any) {
+  try {
+    await $fetch(`/api/v1/api-keys/${key.id}`, { method: 'PUT', body: { active: !key.active } })
+    toast.add({ title: 'Success', description: key.active ? 'API key disabled' : 'API key enabled', color: 'success' })
+    await fetchKeys()
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to update key', color: 'error' })
+  }
+}
+
 async function deleteKey(id: number) {
   if (!confirm('Delete this API key?')) return
   try {
@@ -81,10 +91,16 @@ function copyToClipboard(text: string) {
         <div v-for="key in apiKeys" :key="key.id" class="flex justify-between items-center p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
           <div>
             <span class="font-medium text-gray-900 dark:text-white">{{ key.name }}</span>
+            <span class="text-xs ml-2 px-2 py-0.5 rounded" :class="key.active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-gray-500/20 text-gray-400'">
+              {{ key.active ? 'Active' : 'Disabled' }}
+            </span>
             <span class="text-sm ml-2">{{ key.scope }} · {{ key.environmentId ? current?.environments.find(e => e.id === key.environmentId)?.name : 'All environments' }}</span>
             <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">Created: {{ new Date(key.createdAt).toLocaleDateString() }}</span>
           </div>
-          <button v-if="canManage" class="btn btn-danger" @click="deleteKey(key.id)">Delete</button>
+          <div v-if="canManage" class="flex gap-2">
+            <button class="btn btn-secondary" @click="toggleKey(key)">{{ key.active ? 'Disable' : 'Enable' }}</button>
+            <button class="btn btn-danger" @click="deleteKey(key.id)">Delete</button>
+          </div>
         </div>
       </div>
     </div>
