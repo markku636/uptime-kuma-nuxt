@@ -182,4 +182,13 @@ R11 🔵 狀態頁密碼保護（UptimeRobot「Password protection & private pag
   `visibleStatusPage` 對有密碼的頁面要求 cookie 或同 workspace 擁有者 session。
 - `POST /api/v1/status-pages/[slug]/unlock`：bcrypt 驗證後發 cookie；PUT 設定/清除 passwordHash。
 - 編輯頁新增密碼欄位與「移除密碼保護」；公開頁遇到 401 顯示密碼表單並可解鎖後重新載入。
-- 驗證：build 成功；unit 52/52。待部署與線上端到端驗證（測試後清除密碼）。
+- 部署：schema migration `20261122122500_status_page_password` 已套用（rev46）。
+  首版 rev45（`38bc347c`）發現 unlock POST 被全域 auth middleware 擋下（anon 401 Unauthorized），
+  補 `R11b`：auth/workspace middleware 放通 unlock 與 public read 端點，unlock 改用 LOGIN_RATE_LIMIT
+  避免暴力破解；artifact `4a36c204febfe64f8f6fff4795707e90c6caa172a8545e91fb3dc7f2e5e267f7`
+  （201,971,760 bytes；source `c7ff876`），loader commit `d0e1006`（rev47）→ app `b81b4dd`（rev48?，
+  API/worker/fixture 全 Healthy，Synced；R11 首版 loader rev43／migration rev44／app rev45，
+  R11b loader rev46／app rev47）。
+- 線上驗證：設密碼後匿名 GET config 401 "Status page password required"、錯誤密碼 401、
+  正確密碼 200 且 cookie 後匿名 200、擁有者 session 仍 200；清除密碼後匿名回復 200，
+  測試密碼已移除。build＋unit 52/52。R11 ✅（含 R11b 修正）
