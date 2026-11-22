@@ -333,6 +333,13 @@ R34 🔵 安全審查修正（子代理 ses_dfcb54df1ffeMC4lwWv84FfdMx）：
   部署：loader `513cb57`（rev94）→ app `97bc853`（rev95），全 Healthy/Synced；
   build 成功、unit 58/58、typecheck 52（觸摸檔案 0 error）。
 
+R35 🔵 公開狀態頁 SEO：動態 title／description／OpenGraph meta。
+  首版把 `useRuntimeConfig()` 放在 computed 裡，SSR unhead 在 Nuxt instance 外求值導致
+  `/status/*` 500（H3Error `[nuxt] instance unavailable`）；R35b 改在 setup 時先取字串後修復。
+  部署：R35 loader `68f16cc`（rev96）→ app `db85d5d`（rev97，短暫 500）；
+  R35b loader `ee4eb77`（rev98）→ app `5e07507`（rev99），`/status/api-platform-demo` 200
+  且 og:title 存在。build 成功、unit 58/58。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
