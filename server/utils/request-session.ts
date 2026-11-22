@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { prisma } from './prisma'
 import { assertTrackedSession } from './tracked-sessions'
@@ -24,7 +24,29 @@ export async function getRequestSession(event: H3Event): Promise<RequestPrincipa
   let sessionVersion: number | undefined
   let cookieSessionId: string | undefined
   let key: Awaited<ReturnType<typeof prisma.apiKey.findFirst>> | null = null
-  if (suppliedKey) {
+  if (suppliedKey?.startsWith('gk_')) {
+    // Platform-wide key: only a SHA-256 hash is stored, never the plaintext.
+    if (!/^gk_[A-Za-z0-9_-]{24,128}$/.test(suppliedKey)) {
+      throw createError({ statusCode: 401, message: 'Invalid global API key format' })
+    }
+    const [hashSetting, ownerSetting] = await Promise.all([
+      prisma.setting.findUnique({ where: { key: 'globalApiKeyHash' }, select: { value: true } }),
+      prisma.setting.findUnique({ where: { key: 'globalApiKeyOwner' }, select: { value: true } }),
+    ])
+    const expected = Buffer.from(hashApiKey(suppliedKey))
+    const actual = Buffer.from(hashSetting?.value || '')
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
+      throw createError({ statusCode: 401, message: 'Invalid global API key' })
+    }
+    const ownerId = Number(ownerSetting?.value)
+    const owner = Number.isSafeInteger(ownerId) && ownerId > 0
+      ? await prisma.user.findFirst({ where: { id: ownerId, active: true }, select: { id: true } })
+      : await prisma.user.findFirst({ where: { active: true, platformAdmin: true }, select: { id: true }, orderBy: { id: 'asc' } })
+    if (!owner) throw createError({ statusCode: 401, message: 'Global API key owner is unavailable' })
+    event.context.globalApiKey = true
+    key = { id: 0, userId: owner.id, scope: 'write', workspaceId: null, environmentId: null, active: true } as any
+    userId = owner.id
+  } else if (suppliedKey) {
     if (!/^uk_[A-Za-z0-9_-]{24,128}$/.test(suppliedKey)) {
       throw createError({ statusCode: 401, message: 'Invalid API key format' })
     }

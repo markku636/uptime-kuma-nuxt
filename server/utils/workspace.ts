@@ -28,11 +28,15 @@ export async function resolveWorkspace(event: H3Event, user: { id: number; usern
   const requested = positiveId(routeWorkspace || (useSelection ? getHeader(event, 'x-workspace-id') || getCookie(event, 'workspace_id') : undefined))
   let workspaceId = key?.workspaceId || requested
   if (key && requested && key.workspaceId !== requested) throw createError({ statusCode: 404, message: 'Workspace not found' })
+  const globalKey = event.context.globalApiKey === true
   if (!workspaceId) {
-    const first = await prisma.workspaceMember.findFirst({ where: { userId: user.id }, orderBy: { workspaceId: 'asc' } })
-    workspaceId = first?.workspaceId || (await ensurePersonalWorkspace(user.id, user.username)).id
+    const first = globalKey
+      ? await prisma.workspace.findFirst({ where: {}, select: { id: true }, orderBy: { id: 'asc' } })
+      : await prisma.workspaceMember.findFirst({ where: { userId: user.id }, orderBy: { workspaceId: 'asc' } })
+    workspaceId = first?.id || (globalKey ? undefined : (await ensurePersonalWorkspace(user.id, user.username)).id)
   }
-  const membership = await prisma.workspaceMember.findUnique({ where: { workspaceId_userId: { workspaceId, userId: user.id } } })
+  if (!workspaceId) throw createError({ statusCode: 404, message: 'Workspace not found' })
+  const membership = globalKey ? { role: 'owner' } : await prisma.workspaceMember.findUnique({ where: { workspaceId_userId: { workspaceId, userId: user.id } } })
   if (!membership || !(membership.role in ranks)) throw createError({ statusCode: 404, message: 'Workspace not found' })
   const requestedEnvironment = positiveId(useSelection && !routeWorkspace ? getHeader(event, 'x-environment-id') || getCookie(event, 'environment_id') : undefined)
   if (key?.environmentId && requestedEnvironment && key.environmentId !== requestedEnvironment) {
@@ -46,6 +50,7 @@ export async function resolveWorkspace(event: H3Event, user: { id: number; usern
 
 export async function requireWorkspace(event: H3Event, minimum: WorkspaceRole = 'viewer') {
   const session = await requireRequestSession(event)
+  if (event.context.globalApiKey === true) return session
   if (ranks[session.role] < ranks[minimum] || (event.context.authMethod === 'api-key'
     && (minimum === 'owner' || (minimum === 'editor' && event.context.apiKey.scope !== 'write')))) {
     throw createError({ statusCode: 403, message: 'Insufficient workspace permission' })

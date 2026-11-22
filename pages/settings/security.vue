@@ -3,6 +3,44 @@ definePageMeta({ middleware: ['auth'] })
 
 const toast = useToast()
 
+// Global API key (hashed at rest; plaintext shown once)
+const globalKeyConfigured = ref(false)
+const globalKeyPrefix = ref<string | null>(null)
+const globalKeyValue = ref('')
+async function fetchGlobalKey() {
+  try {
+    const info = await $fetch<any>('/api/settings/global-api-key')
+    globalKeyConfigured.value = !!info.configured
+    globalKeyPrefix.value = info.prefix || null
+  } catch { /* platform admin only */ }
+}
+async function rotateGlobalKey() {
+  try {
+    const result = await $fetch<any>('/api/settings/global-api-key', {
+      method: 'PUT',
+      body: { action: 'generate' },
+    })
+    globalKeyValue.value = result.key
+    globalKeyConfigured.value = true
+    globalKeyPrefix.value = result.prefix
+    toast.add({ title: 'Success', description: 'Global API key generated — copy it now, it will not be shown again.', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to generate key', color: 'error' })
+  }
+}
+async function revokeGlobalKey() {
+  if (!confirm('Revoke the global API key? All integrations using it will stop working.')) return
+  try {
+    await $fetch('/api/settings/global-api-key', { method: 'PUT', body: { action: 'revoke' } })
+    globalKeyConfigured.value = false
+    globalKeyPrefix.value = null
+    globalKeyValue.value = ''
+    toast.add({ title: 'Success', description: 'Global API key revoked', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to revoke key', color: 'error' })
+  }
+}
+
 // Password change
 const passwordForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
 const changingPassword = ref(false)
@@ -27,7 +65,7 @@ const activeSessions = ref<any[]>([])
 const loadingSessions = ref(true)
 
 onMounted(async () => {
-  await Promise.all([fetchTwoFactorStatus(), fetchActiveSessions()])
+  await Promise.all([fetchTwoFactorStatus(), fetchActiveSessions(), fetchGlobalKey()])
 })
 
 async function fetchTwoFactorStatus() {
@@ -186,6 +224,22 @@ function copyToClipboard(text: string) {
 
 <template>
   <div class="space-y-6">
+    <!-- Global API key -->
+    <div class="section-card">
+      <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Global API key</h5>
+      <p class="text-sm text-secondary mb-4">A platform-wide key for integrations. Only its SHA-256 hash is stored; the plaintext is shown once when generated. Use it as <code>x-api-key: gk_...</code> on <code>/api/v1</code> endpoints.</p>
+      <div v-if="globalKeyValue" class="mb-4 p-3 rounded bg-tertiary">
+        <p class="text-xs text-secondary mb-1">Copy this key now — it will not be shown again.</p>
+        <code class="break-all text-sm">{{ globalKeyValue }}</code>
+      </div>
+      <p v-else-if="globalKeyConfigured" class="text-sm text-secondary mb-4">Configured ({{ globalKeyPrefix }}…). Generate a new key to rotate it.</p>
+      <p v-else class="text-sm text-secondary mb-4">No global API key configured.</p>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" @click="rotateGlobalKey">{{ globalKeyConfigured ? 'Rotate key' : 'Generate key' }}</button>
+        <button v-if="globalKeyConfigured" class="btn btn-danger" @click="revokeGlobalKey">Revoke key</button>
+      </div>
+    </div>
+
     <!-- Change Password -->
     <div class="section-card">
       <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Change Password</h5>
