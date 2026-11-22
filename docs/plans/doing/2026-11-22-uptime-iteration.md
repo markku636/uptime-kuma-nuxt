@@ -264,6 +264,13 @@ R20 🔵 `/monitors` 列表補上 24h uptime 與 Response（與 dashboard 一致
   清掉了（30d uptime 現在是 null），欄位顯示「—」是正確的無資料表現。此為不可逆資料遺失，
   已記錄不再探測破壞性端點。unit 58/58。R20 ✅
 
+R21 🔵 typecheck 收斂：修 R18 引入的 `canEdit` 型別、狀態頁 maintenance 時間欄位、
+EditSidebar 部分設定 prop，並補 `rss` 型別宣告。全Branch TS error 66→52，剩餘皆為既有錯誤。
+R22 🔵 DebugInfo 假資料：`components/common/DebugInfo.vue` 原本寫死 `2.0.0-beta`／PostgreSQL 15.x，
+  改為平行讀 `/api/info`、`/api/check-update`、`/api/v1/settings/database-info`；
+  `/api/info` 補 container／serverTimezoneOffset，`database-info` 補真實 DB version。
+- 驗證：build 成功；unit 58/58；typecheck 52（觸摸檔案 0 error）。待部署線上驗證。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。

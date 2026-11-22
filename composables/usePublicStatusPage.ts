@@ -20,6 +20,7 @@ interface StatusPageConfig {
   googleAnalyticsId?: string
   domainNameList?: string[]
   publicGroupList?: PublicGroup[]
+  canEdit?: boolean
 }
 
 interface Incident {
@@ -84,6 +85,8 @@ interface Maintenance {
   id: number
   title: string
   description?: string
+  startTime?: string
+  endTime?: string
   // TODO: Add more fields as needed
 }
 

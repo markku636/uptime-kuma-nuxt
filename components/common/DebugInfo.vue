@@ -36,18 +36,25 @@ const fetchDebugInfo = async () => {
   error.value = null
   
   try {
-    // In a real implementation, this would call the API
-    // For now, we'll use placeholder data
+    const [infoResult, updateResult, dbResult] = await Promise.allSettled([
+      $fetch<any>('/api/info'),
+      $fetch<any>('/api/check-update'),
+      $fetch<any>('/api/v1/settings/database-info'),
+    ])
+    const info = infoResult.status === 'fulfilled' ? infoResult.value : null
+    const update = updateResult.status === 'fulfilled' ? updateResult.value : null
+    const db = dbResult.status === 'fulfilled' ? dbResult.value : null
+    if (!info) throw new Error('Server info unavailable')
     debugData.value = {
-      version: '2.0.0-beta',
-      latestVersion: null,
-      isContainer: true,
-      primaryBaseURL: window.location.origin,
-      nodeVersion: 'Node.js 20.x (Nuxt 4)',
-      databaseType: 'PostgreSQL',
-      databaseVersion: '15.x',
-      serverTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      serverTimezoneOffset: `UTC${new Date().getTimezoneOffset() > 0 ? '-' : '+'}${Math.abs(new Date().getTimezoneOffset() / 60)}`
+      version: info.version || 'N/A',
+      latestVersion: update?.latestVersion || null,
+      isContainer: !!info.isContainer,
+      primaryBaseURL: info.appUrl || window.location.origin,
+      nodeVersion: info.nodeVersion || 'N/A',
+      databaseType: db?.type || 'N/A',
+      databaseVersion: db?.version || 'N/A',
+      serverTimezone: info.serverTimezone || 'UTC',
+      serverTimezoneOffset: info.serverTimezoneOffset || 'UTC',
     }
   } catch (err) {
     error.value = 'Failed to fetch debug information'

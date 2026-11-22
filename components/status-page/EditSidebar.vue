@@ -307,6 +307,7 @@ interface StatusPageConfig {
   icon?: string
   theme: 'auto' | 'light' | 'dark'
   autoRefreshInterval: number
+  perPage?: number
   published: boolean
   showTags: boolean
   showPoweredBy: boolean
@@ -327,7 +328,7 @@ interface PublicGroup {
 
 const props = defineProps<{
   modelValue: boolean
-  config: StatusPageConfig | null
+  config: Partial<StatusPageConfig> | null
   groups?: PublicGroup[]
   saving?: boolean
 }>()
@@ -366,6 +367,7 @@ const localConfig = ref<StatusPageConfig>({
 watch(() => props.config, (newConfig) => {
   if (newConfig) {
     localConfig.value = {
+      ...localConfig.value,
       ...newConfig,
       domainNameList: newConfig.domainNameList || [],
       publicGroupList: newConfig.publicGroupList || []

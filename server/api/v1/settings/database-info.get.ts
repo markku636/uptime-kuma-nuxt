@@ -24,8 +24,15 @@ export default defineEventHandler(async (event) => {
       dbSize = heartbeatCount * 100 // Rough estimate
     }
 
+    let version = ''
+    try {
+      const [row] = await prisma.$queryRaw<[{ version: string }]>`SELECT version() AS version`
+      version = String(row?.version || '').split(',')[0] || ''
+    } catch { /* version is optional debug metadata */ }
+
     return {
       type: 'PostgreSQL',
+      version,
       size: dbSize,
       monitors: monitorCount,
       heartbeats: heartbeatCount

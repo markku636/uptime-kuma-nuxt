@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
   // Generate RSS feed
   const baseUrl = getRequestURL(event).origin
   
-  const feed = new RSS({
+  const feed: any = new RSS({
     title: `${statusPage.title} - Status Updates`,
     description: statusPage.description || `Status updates for ${statusPage.title}`,
     feed_url: `${baseUrl}/api/status/${slug}/rss`,
