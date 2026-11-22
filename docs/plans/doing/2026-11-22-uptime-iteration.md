@@ -115,4 +115,16 @@ R5 🔵 24 小時可用率概览（UptimeRobot 首頁核心指標）：
 - `server/api/v1/monitors/uptime-batch.get.ts`：依目前 workspace/environment 範圍批量回傳
   最多 100 筆 monitor 的 24h/7d/30d uptime%，避免 N+1 請求。
 - `pages/dashboard/index.vue`：grid/list 視角皆顯示「24h: xx.xx%」，資料失敗時保留舊值。
-- 驗證：build 成功；unit 52/52。待部署與線上 API／畫面驗證。
+- 部署：artifact `e25f27eed04a0b69de503f90b3c244f250ad1005cea3cc2f216c6b03e42a0c70`
+  （201,963,264 bytes；source `d9c00b1`）。GitOps loader `3b0f937`（rev28，Job Succeeded，
+  短命 server 已停）→ migration `f143c81`（rev29，16 migrations 無 pending）→ app `42a82ca`（rev30，
+  API/worker/fixture 全 Healthy，Synced）。
+- 線上驗證：`/api/v1/monitors/uptime-batch?ids=1..5&period=30d` 回 100/100/100/100/0（資料正確）；
+  24h 對已暫停 7 天的 demo 回 null， dashboard 顯示「24h: —」為正確的無觀測值表現。
+  build＋unit 52/52。R5 ✅
+
+R6 🔵 可用率顯示與狀態頁編輯面板收斂：
+- `pages/dashboard/index.vue`：24h 無資料時改顯示 30d 可用率並標明期間；兩個批量查詢平行送出。
+- `pages/status/[slug].vue`：Edit Sidebar 改為 `v-if="canEdit && editMode && showEditSidebar"`，
+  一般瀏覽（含匿名）不再把編輯表單放進 DOM。
+- 驗證：build 成功；unit 52/52。待部署與線上驗證。

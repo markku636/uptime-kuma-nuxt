@@ -933,8 +933,9 @@ function formatLastUpdated(date: Date | null) {
       </div>
     </div>
 
-    <!-- Edit Sidebar (slides in from left) -->
+    <!-- Edit Sidebar (only rendered while an authorized editor is in edit mode) -->
     <StatusPageEditSidebar
+      v-if="canEdit && editMode && showEditSidebar"
       v-model="showEditSidebar"
       :config="draftConfig"
       :groups="draftGroups"
