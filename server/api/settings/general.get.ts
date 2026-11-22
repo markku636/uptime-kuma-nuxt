@@ -19,7 +19,9 @@ export default defineEventHandler(async (event) => {
           'dnsServers',
           'trustProxy',
           'nscd',
-          'keepDataPeriodDays'
+          'keepDataPeriodDays',
+          'checkUpdate',
+          'checkBeta'
         ]
       }
     }
@@ -37,7 +39,9 @@ export default defineEventHandler(async (event) => {
     dnsServers: '8.8.8.8\n1.1.1.1',
     trustProxy: false,
     nscd: true,
-    keepDataPeriodDays: 180
+    keepDataPeriodDays: 180,
+    checkUpdate: true,
+    checkBeta: false
   }
 
   settings.forEach(setting => {

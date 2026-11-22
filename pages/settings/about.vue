@@ -24,6 +24,11 @@ const serverInfo = ref<{
 
 onMounted(async () => {
   await fetchServerInfo()
+  try {
+    const settings = await $fetch<Record<string, any>>('/api/settings/general')
+    if (typeof settings?.checkUpdate === 'boolean') checkUpdate.value = settings.checkUpdate
+    if (typeof settings?.checkBeta === 'boolean') checkBeta.value = settings.checkBeta
+  } catch { /* defaults are fine */ }
   if (checkUpdate.value) {
     await checkForUpdates()
   }
@@ -52,7 +57,7 @@ async function checkForUpdates() {
 
 async function saveUpdateSettings() {
   try {
-    await $fetch('/api/settings', {
+    await $fetch('/api/settings/general', {
       method: 'POST',
       body: { checkUpdate: checkUpdate.value, checkBeta: checkBeta.value }
     })

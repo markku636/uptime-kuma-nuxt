@@ -212,5 +212,12 @@ R13 🔵 Resend-while-down：原本 MonitorForm 的「Resend Notification if Dow
 
 ## 目前狀態（12:46 CST）
 13 輪全部已 commit 並部署到 lab 正式站，線上 revision 52、Healthy/Synced，無 console error/warning。
+Git push：已用環境中的 GitHub token 成功推送到 `origin/iterate/uptime-20261122`（2026-11-22 12:5x）。
+
+R14 🔵 About 頁三個缺失端點：`/api/info`（runtime/版本/uptime）、
+`/api/check-update`（固定 GitHub releases URL、5 秒 timeout、失敗降級為 UNAVAILABLE）、
+`/api/settings` POST 改走既有 `/api/settings/general`，並把 checkUpdate/checkBeta 存入 DB。
+- 驗證：build 成功；unit 55/55。待部署與線上 About 頁驗證。
+
 剩餘項目需使用者決定：SMTP/email 通知（刻意不支援，涉及 SSRF／憑證政策）、
 Screenshot API（UI 元件未被任何頁面使用）、origin/main 92 commits 合併（使用者已指示不合併）。

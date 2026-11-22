@@ -13,7 +13,9 @@ const schema = z.object({
   dnsServers: z.string().optional(),
   trustProxy: z.boolean().optional(),
   nscd: z.boolean().optional(),
-  keepDataPeriodDays: z.number().min(1).optional()
+  keepDataPeriodDays: z.number().min(1).optional(),
+  checkUpdate: z.boolean().optional(),
+  checkBeta: z.boolean().optional()
 })
 
 export default defineEventHandler(async (event) => {
