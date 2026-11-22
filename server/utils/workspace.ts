@@ -27,7 +27,7 @@ export async function resolveWorkspace(event: H3Event, user: { id: number; usern
   const routeWorkspace = pathname.match(/^\/api\/v1\/workspaces\/(\d+)(?:\/|$)/)?.[1]
   const requested = positiveId(routeWorkspace || (useSelection ? getHeader(event, 'x-workspace-id') || getCookie(event, 'workspace_id') : undefined))
   let workspaceId = key?.workspaceId || requested
-  if (key && requested && key.workspaceId !== requested) throw createError({ statusCode: 404, message: 'Workspace not found' })
+  if (key && !event.context.globalApiKey && requested && key.workspaceId !== requested) throw createError({ statusCode: 404, message: 'Workspace not found' })
   const globalKey = event.context.globalApiKey === true
   if (!workspaceId) {
     const first = globalKey
