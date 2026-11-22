@@ -352,6 +352,21 @@ R39 🔵 API Key 後台補上啟用／停用開關與狀態標籤（後端 PUT �
   部署 loader `e0b565c`（rev106）→ app `fccad61`（rev107），全 Healthy/Synced。
 - 新截止時間（2026-11-23 01:12 使用者指示）：持續優化到 2026-11-24 00:00 CST。
 
+R40 🔵 Bruno monitor type：把單一 `.bru` 宣告式請求存到 monitor.body，
+  用既有 Bruno parser（自動忽略 script/tests）+ bounded HTTP transport 執行並評估 assertions。
+  新增 checker、schedule 白名單、UI textarea、R40 migration（2FA backup codes）。
+  線上驗證：建立 bruno monitor id=51 並 `/test` 回 status 1 / CHECK_OK，測試後已刪除。
+R41 🔵 Response assertions 優化：presets（status 200／2xx、response time、content-type、JSON）、
+  可讀取的規則摘要與 operator labels、custom rule；桌機改左側導覽（sidebar）、
+  快捷鍵 listener 只註冊一次、light theme header/subbar/select 配色修正。
+  線上驗證：sidebar 7 links 顯示、light 主題 header/subbar 皆白底。
+R42/R43 🔵 全域 API key：`gk_...` key，只存 SHA-256 hash/prefix/owner，
+  Settings > Security 可產生／ Rotate／Revoke，明文只顯示一次；
+  `/api/v1/*` 可用 `x-api-key: gk_...` 搭配 x-workspace-id，失敗 key 回 401。
+  首版因 synthetic key 的 workspace 一致性檢查回 404，R43 修正後實測 200；測試 key 已撤銷。
+- 應使用者要求建立測試資料：workspace 1 / 2 各 20 個 paused monitor 與 20 個 status page
+  （monitor 總數 w1=25、w2=20；status page w1=21、w2=20）。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
