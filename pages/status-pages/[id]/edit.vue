@@ -99,7 +99,7 @@ function removeDomain(index: number) {
   form.value.domainNameList.splice(index, 1)
 }
 
-function statusPagePayload(){const selected=new Set(form.value.monitors),known=new Set(originalGroups.value.flatMap(group=>group.monitorList.map((monitor:any)=>monitor.id))),groups=originalGroups.value.map(group=>({...group,monitorList:group.monitorList.filter((monitor:any)=>selected.has(monitor.id)).map((monitor:any)=>({id:monitor.id}))}));if(!groups.length)groups.push({id:0,name:'Monitors',weight:1,monitorList:[]});groups[0].monitorList.push(...form.value.monitors.filter(id=>!known.has(id)).map(id=>({id})));const {monitors,password,...metadata}=form.value;const payload:any={...metadata,publicGroupList:groups};if(password)payload.password=password;else if(clearPassword.value&&passwordProtected.value)payload.password=null;return payload}
+function statusPagePayload(){const selected=new Set(form.value.monitors),known=new Set(originalGroups.value.flatMap(group=>group.monitorList.map((monitor:any)=>monitor.id))),groups=originalGroups.value.map(group=>({...group,monitorList:group.monitorList.filter((monitor:any)=>selected.has(monitor.id)).map((monitor:any)=>({id:monitor.id}))}));if(!groups.length)groups.push({id:0,name:'Monitors',weight:1,monitorList:[]});groups[0].monitorList.push(...form.value.monitors.filter(id=>!known.has(id)).map(id=>({id})));const {monitors,password,domainNameList:_domains,...metadata}=form.value;const payload:any={...metadata,publicGroupList:groups};if(password)payload.password=password;else if(clearPassword.value&&passwordProtected.value)payload.password=null;return payload}
 async function handleSubmit() {
   loading.value = true
   try {
@@ -243,38 +243,6 @@ const previewUrl = computed(() => {
           </UFormField>
 
           <UCheckbox v-model="form.showPoweredBy" label="Show 'Powered by Uptime Kuma'" />
-        </div>
-
-        <!-- Custom Domains -->
-        <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Custom Domains</h3>
-          
-          <div class="flex items-center gap-2">
-            <UInput
-              v-model="newDomain"
-              placeholder="status.example.com"
-              class="flex-1"
-              @keyup.enter="addDomain"
-            />
-            <UButton @click="addDomain">Add</UButton>
-          </div>
-
-          <div v-if="form.domainNameList.length" class="space-y-2">
-            <div
-              v-for="(domain, index) in form.domainNameList"
-              :key="index"
-              class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
-            >
-              <span class="text-gray-900 dark:text-white">{{ domain }}</span>
-              <UButton
-                variant="ghost"
-                color="error"
-                icon="i-heroicons-trash"
-                size="xs"
-                @click="removeDomain(index)"
-              />
-            </div>
-          </div>
         </div>
 
         <!-- Analytics -->
