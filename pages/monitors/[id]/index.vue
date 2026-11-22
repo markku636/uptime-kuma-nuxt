@@ -70,6 +70,10 @@
               <UIcon name="i-heroicons-arrow-up-tray" class="w-4 h-4 mr-1" />
               Export .bru
             </button>
+            <a :href="`/api/v1/monitors/${monitorId}/heartbeats/export`" class="btn btn-secondary" download>
+              <UIcon name="i-heroicons-arrow-down-tray" class="w-4 h-4 mr-1" />
+              Export CSV
+            </a>
             <!-- Badge Generator -->
             <button @click="showBadgeGenerator = true" class="btn btn-secondary">
               <UIcon name="i-heroicons-rectangle-stack" class="w-4 h-4 mr-1" />
