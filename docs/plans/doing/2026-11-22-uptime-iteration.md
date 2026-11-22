@@ -346,6 +346,12 @@ R37 🔵 HTTP checker 真的使用 `cacheBust`（每次請求加 `_` 隨機參�
 - 最終煙霧測試（21:12 CST）：/api/info、/api/auth/sessions、uptime-batch、CSV、swagger(26 paths)、
   entry-page、/login 全部 200；兩個網域皆可達。
 
+R38 🔵 i18n：把新增 key 同步到其餘 71 個語言檔（避免切換語言時缺 key 警告），
+  build/unit 通過，部署 loader `50899fa`（rev104）→ app `f60dc71`（rev105）。
+R39 🔵 API Key 後台補上啟用／停用開關與狀態標籤（後端 PUT 早已支援），
+  部署 loader `e0b565c`（rev106）→ app `fccad61`（rev107），全 Healthy/Synced。
+- 新截止時間（2026-11-23 01:12 使用者指示）：持續優化到 2026-11-24 00:00 CST。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
