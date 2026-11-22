@@ -40,7 +40,7 @@ const localConfig = computed({
 
     <UAlert
       icon="i-heroicons-information-circle"
-      color="amber"
+      color="warning"
       variant="soft"
       title="LINE Notify Deprecation"
       description="LINE Notify will be discontinued. Consider using LINE Messaging API instead."

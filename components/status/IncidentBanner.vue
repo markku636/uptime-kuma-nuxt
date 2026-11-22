@@ -56,12 +56,12 @@
     <!-- Edit mode controls -->
     <div v-if="editMode" class="incident-actions mt-3">
       <template v-if="editIncidentMode">
-        <UButton color="white" size="sm" @click="emit('post')">
+        <UButton color="neutral" size="sm" @click="emit('post')">
           <UIcon name="i-heroicons-megaphone" class="mr-1" />
           {{ $t('Post') }}
         </UButton>
         
-        <UButton color="white" size="sm" @click="emit('cancel')">
+        <UButton color="neutral" size="sm" @click="emit('cancel')">
           <UIcon name="i-heroicons-x-mark" class="mr-1" />
           {{ $t('Cancel') }}
         </UButton>
@@ -71,7 +71,7 @@
           :items="styleOptions"
           :content="{ align: 'start' }"
         >
-          <UButton color="gray" size="sm">
+          <UButton color="neutral" size="sm">
             {{ $t('Style') }}: {{ $t(incident.style) }}
             <UIcon name="i-heroicons-chevron-down" class="ml-1" />
           </UButton>
@@ -79,12 +79,12 @@
       </template>
       
       <template v-else-if="incident.id">
-        <UButton color="white" size="sm" @click="emit('edit')">
+        <UButton color="neutral" size="sm" @click="emit('edit')">
           <UIcon name="i-heroicons-pencil" class="mr-1" />
           {{ $t('Edit') }}
         </UButton>
         
-        <UButton color="white" size="sm" @click="emit('unpin')">
+        <UButton color="neutral" size="sm" @click="emit('unpin')">
           <UIcon name="i-heroicons-link-slash" class="mr-1" />
           {{ $t('Delete') }}
         </UButton>

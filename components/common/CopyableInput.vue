@@ -28,7 +28,7 @@ async function copyToClipboard() {
     toast.add({
       title: 'Copied!',
       description: 'Value copied to clipboard',
-      color: 'green',
+      color: 'success',
       icon: 'i-heroicons-check'
     })
     setTimeout(() => {
@@ -38,7 +38,7 @@ async function copyToClipboard() {
     toast.add({
       title: 'Failed to copy',
       description: 'Could not copy to clipboard',
-      color: 'red',
+      color: 'error',
       icon: 'i-heroicons-x-mark'
     })
   }

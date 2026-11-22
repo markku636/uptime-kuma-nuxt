@@ -1,5 +1,5 @@
 // server/services/monitor/checkers/real-browser-checker.ts
-import type { CheckResult } from './index'
+import type { CheckResult } from '../checker'
 
 // Playwright chromium for browser automation
 let chromium: any = null

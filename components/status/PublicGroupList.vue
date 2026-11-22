@@ -20,7 +20,7 @@
             <UButton
               icon="i-heroicons-x-mark"
               size="xs"
-              color="red"
+              color="error"
               variant="ghost"
               class="mr-3"
               @click="emit('removeGroup', index)"

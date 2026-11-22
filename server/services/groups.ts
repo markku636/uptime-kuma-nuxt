@@ -32,7 +32,7 @@ export async function subtreeIds(db: any, workspaceId: number, id: number): Prom
       SELECT id FROM monitor_groups WHERE id=${id} AND workspace_id=${workspaceId}
       UNION ALL SELECT g.id FROM monitor_groups g JOIN tree t ON g.parent_id=t.id WHERE g.workspace_id=${workspaceId}
     ) SELECT id FROM tree`
-  return rows.map(row => row.id)
+  return rows.map((row: { id: number }) => row.id)
 }
 
 async function depthOf(db: any, workspaceId: number, id: number | null): Promise<number> {

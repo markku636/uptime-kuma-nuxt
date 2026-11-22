@@ -30,6 +30,10 @@ export interface CheckResult {
   msg: string
   code?: string
   assertionResults?: import('../../../shared/types/assertions').AssertionEvaluation
+  // Optional outbox metadata for response-time / resend notifications
+  eventType?: string
+  threshold?: number
+  downMinutes?: number
 }
 
 export async function checkMonitor(monitor: any, signal?: AbortSignal): Promise<CheckResult> {
