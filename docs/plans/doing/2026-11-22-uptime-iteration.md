@@ -210,6 +210,11 @@ R13 🔵 Resend-while-down：原本 MonitorForm 的「Resend Notification if Dow
 - 線上驗證：PUT `resendInterval:15` 後讀回 15，清回 0 成功；編輯頁仍有該欄位。
   unit 55/55。R13 ✅
 
+R15 🔵 Monitor History 清理端點：Settings > Monitor History 的兩個按鈕打不存在的 API。
+  新增 `/api/v1/monitor-history/clear`（1–3650 天，owner）與 `/clear-all`，兩者都改用既有
+   bounded `createClearHistory` job（可選 cutoff），不直接大量 DELETE；UI toast 改為「job queued」。
+- 驗證：build 成功；unit 55/55。待部署（只用非法 body 驗證路由，不在正式站觸發清理）。
+
 ## 目前狀態（12:46 CST）
 13 輪全部已 commit 並部署到 lab 正式站，線上 revision 52、Healthy/Synced，無 console error/warning。
 Git push：已用環境中的 GitHub token 成功推送到 `origin/iterate/uptime-20261122`（2026-11-22 12:5x）。

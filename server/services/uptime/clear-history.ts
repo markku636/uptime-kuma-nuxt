@@ -1,12 +1,13 @@
 import {workerPrisma} from '../../utils/worker-prisma'
 const hour=3600000
 export function clearJobDTO(job:any){return {...job,deletedRows:String(job.deletedRows)}}
-export async function createClearHistory(workspaceId:number,db:any=workerPrisma){
+export async function createClearHistory(workspaceId:number,db:any=workerPrisma,cutoffOverride?:Date){
  return db.$transaction(async(tx:any)=>{
   await tx.$queryRaw`SELECT pg_advisory_xact_lock(1420261114,5)::text AS locked`
   const existing=await tx.historyClearJob.findFirst({where:{workspaceId,status:{in:['pending','running']}}});if(existing)return existing
   const [row]=await tx.$queryRaw`SELECT clock_timestamp() AS cutoff,COALESCE(max(id),0)::int AS max_id FROM monitors WHERE workspace_id=${workspaceId}`
-  return tx.historyClearJob.create({data:{workspaceId,cutoff:row.cutoff,maxMonitorId:row.max_id}})
+  const cutoff=cutoffOverride instanceof Date&&Number.isFinite(cutoffOverride.getTime())?cutoffOverride:row.cutoff
+  return tx.historyClearJob.create({data:{workspaceId,cutoff,maxMonitorId:row.max_id}})
  },{timeout:5000,maxWait:2000})
 }
 /** One bounded transaction per chunk; new observations and self-contained current state survive. */

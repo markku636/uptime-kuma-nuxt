@@ -11,7 +11,7 @@ async function clearHistory() {
   clearing.value = true
   try {
     await $fetch('/api/v1/monitor-history/clear', { method: 'POST', body: { days: retentionDays.value } })
-    toast.add({ title: 'Success', description: 'History cleared', color: 'success' })
+    toast.add({ title: 'Success', description: 'Bounded cleanup job queued', color: 'success' })
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to clear', color: 'error' })
   } finally {
@@ -24,7 +24,7 @@ async function clearAllHistory() {
   clearing.value = true
   try {
     await $fetch('/api/v1/monitor-history/clear-all', { method: 'POST' })
-    toast.add({ title: 'Success', description: 'All history cleared', color: 'success' })
+    toast.add({ title: 'Success', description: 'Full cleanup job queued', color: 'success' })
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to clear', color: 'error' })
   } finally {
