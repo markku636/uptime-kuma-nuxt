@@ -153,9 +153,20 @@ const availableMonitorOptions = computed(() => {
   }))
 })
 
-// Page head management
+// Page head management — shareable status pages need useful social/OpenGraph metadata
+const siteTitle = computed(() => statusPage.value?.title ? `${statusPage.value.title} - Status` : 'Status')
+const siteDescription = computed(() => statusPage.value?.description || 'Live service status and incident updates')
+const shareUrl = computed(() => `${useRuntimeConfig().public.appUrl}/status/${slug.value}`)
 useHead({
-  title: computed(() => statusPage.value?.title ? `${statusPage.value.title} - Status` : 'Status'),
+  title: siteTitle,
+  meta: [
+    { name: 'description', content: siteDescription },
+    { property: 'og:title', content: siteTitle },
+    { property: 'og:description', content: siteDescription },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: shareUrl },
+    { name: 'twitter:card', content: 'summary' },
+  ],
 })
 
 // Initialize on mount
