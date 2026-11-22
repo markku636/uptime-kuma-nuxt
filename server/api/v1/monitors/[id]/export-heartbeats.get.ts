@@ -19,14 +19,19 @@ export default defineEventHandler(async (event) => {
     select: { time: true, status: true, ping: true, msg: true, checkCode: true },
   })
   const statusText = (status: number) => status === 1 ? 'UP' : status === 0 ? 'DOWN' : status === 3 ? 'MAINTENANCE' : 'PENDING'
+  // Prevent spreadsheet formula execution when opening the CSV in Excel/Sheets.
+  const cell = (value: string) => {
+    const safe = value.replace(/"/g, '""').slice(0, 200)
+    return `"${/^[=+\-@\t\r]/.test(safe) ? `'${safe}` : safe}"`
+  }
   const csv = [
     'time,status,ping_ms,message,code',
     ...rows.map(row => [
       row.time.toISOString(),
       statusText(row.status),
       row.ping ?? '',
-      `"${String(row.msg || '').replace(/"/g, '""').slice(0, 200)}"`,
-      `"${String(row.checkCode || '').replace(/"/g, '""').slice(0, 64)}"`,
+      cell(String(row.msg || '')),
+      cell(String(row.checkCode || '')),
     ].join(',')),
   ].join('\n')
 

@@ -14,7 +14,8 @@ export async function visibleStatusPage(event: H3Event) {
   let owner = false
   try {
     const session = await getRequestSession(event)
-    owner = !!session.user && 'workspaceId' in session && session.workspaceId === page.workspaceId
+    owner = !!session.user && event.context.authMethod === 'session'
+      && 'workspaceId' in session && session.workspaceId === page.workspaceId
   } catch {
     owner = false
   }

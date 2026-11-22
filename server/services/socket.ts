@@ -128,6 +128,15 @@ export function getIO() { return io }
 export const getSocketServer = getIO
 export function disconnectUserSockets(userId: number) { io?.in(`user:${userId}`).disconnectSockets(true) }
 
+/** Disconnect only sockets authenticated with a specific tracked session. */
+export function disconnectSessionSockets(userId: number, sessionId?: string) {
+  if (!io || !sessionId) return
+  for (const socket of io.sockets.sockets.values()) {
+    const data = (socket as AuthenticatedSocket).data
+    if (data.userId === userId && data.sessionId === sessionId) socket.disconnect(true)
+  }
+}
+
 // Delivery rechecks current membership and session version, including idle connections.
 async function deliver(workspaceId: number, environmentId: number | null, event: string, payload: any, monitorId?: number) {
   if (!io) return

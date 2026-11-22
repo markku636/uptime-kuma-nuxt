@@ -1,7 +1,7 @@
-import { requireRequestSession } from '../../utils/request-session'
+import { requirePlatformAdmin } from '../../utils/request-session'
 
 export default defineEventHandler(async (event) => {
-  await requireRequestSession(event)
+  await requirePlatformAdmin(event)
   const rows = await prisma.setting.findMany({
     where: { key: { in: ['cloudflareTunnelToken', 'trustProxy'] } },
     select: { key: true, value: true },

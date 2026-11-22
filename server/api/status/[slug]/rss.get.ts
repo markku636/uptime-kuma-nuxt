@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import RSS from 'rss'
-
-const prisma = new PrismaClient()
+import { visibleStatusPage } from '../../../utils/public-status'
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
@@ -13,23 +11,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Get status page with incidents
-  const statusPage = await prisma.statusPage.findUnique({
-    where: { slug },
-    include: {
-      incidents: {
-        orderBy: { createdAt: 'desc' },
-        take: 50
-      }
-    }
+  // Reuse the public gate so password-protected pages cannot leak via RSS.
+  const statusPage = await visibleStatusPage(event)
+  const incidents = await prisma.incident.findMany({
+    where: { statusPageId: statusPage.id },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
   })
-
-  if (!statusPage || !statusPage.published) {
-    throw createError({
-      statusCode: 404,
-      message: 'Status page not found'
-    })
-  }
 
   // Generate RSS feed
   const baseUrl = getRequestURL(event).origin
@@ -45,7 +33,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // Add incidents to feed
-  for (const incident of statusPage.incidents) {
+  for (const incident of incidents) {
     feed.item({
       title: incident.title,
       description: incident.content,

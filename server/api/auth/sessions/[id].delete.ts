@@ -1,5 +1,6 @@
 import { requireRequestSession } from '../../../utils/request-session'
 import { getTrackedSessionId, revokeTrackedSession } from '../../../utils/tracked-sessions'
+import { disconnectSessionSockets } from '../../../services/socket'
 
 export default defineEventHandler(async (event) => {
   const session = await requireRequestSession(event)
@@ -13,5 +14,6 @@ export default defineEventHandler(async (event) => {
   }
   const result = await revokeTrackedSession(id, session.user.id)
   if (!result.count) throw createError({ statusCode: 404, message: 'Session not found' })
+  disconnectSessionSockets(session.user.id, id)
   return { ok: true }
 })

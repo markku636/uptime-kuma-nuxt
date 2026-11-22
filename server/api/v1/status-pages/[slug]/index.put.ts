@@ -81,9 +81,10 @@ export default defineEventHandler(async (event) => {
   const { publicGroupList, domainNameList, customCSS, password, ...statusPageData } = result.data
 
   if (domainNameList?.length) throw createError({ statusCode: 400, message: 'Custom domains are not supported by this deployment' })
-  const updateData: Record<string, unknown> = Object.fromEntries(Object.entries(statusPageData).filter(([, value]) => value !== undefined && value !== null))
+  // Explicit nulls must survive so nullable fields can be cleared.
+  const updateData: Record<string, unknown> = Object.fromEntries(Object.entries(statusPageData).filter(([, value]) => value !== undefined))
   if (password !== undefined) updateData.passwordHash = password === null ? null : await hashPassword(password)
-  if (customCSS !== undefined && customCSS !== null) updateData.customCss = customCSS
+  if (customCSS !== undefined) updateData.customCss = customCSS
   const statusPage = await prisma.$transaction(async tx => {
     const current = await tx.statusPage.findFirst({ where: { slug, workspaceId: session.workspaceId } })
     if (!current) throw createError({ statusCode: 404, message: 'Status page not found' })
