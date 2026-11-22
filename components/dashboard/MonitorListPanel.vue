@@ -16,7 +16,7 @@
           <input
             v-model="searchText"
             class="search-input"
-            placeholder="Search..."
+            placeholder="Search..." data-search-input
           />
           <button v-if="searchText" class="clear-btn" @click="searchText = ''">
             <UIcon name="i-heroicons-x-mark" />

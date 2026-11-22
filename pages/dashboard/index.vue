@@ -63,7 +63,7 @@
             v-model="searchQuery"
             type="text"
             class="input-field !pl-10"
-            placeholder="Search monitors..." aria-label="Search monitors" maxlength="200"
+            placeholder="Search monitors..." aria-label="Search monitors" data-search-input maxlength="200"
           />
         </div>
         <div class="flex gap-2">
