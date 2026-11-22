@@ -290,6 +290,23 @@ R20–R29（16:31 CST）：全部已 commit、push、部署（release 83、Healt
   改為明確不支援提示，避免假設定。
 - 全部 build 成功、unit 58/58。稽核來源：子代理「Audit remaining fake features」。
 
+R30 🔵 監控心跳 CSV 匯出（bounded 10,000 列）：`/api/v1/monitors/:id/export-heartbeats`，
+  詳情頁加 Export CSV。首版路徑 `heartbeats/export` 被 `heartbeats.get.ts` 遮住回 HTML，
+  R30b 改名為 `export-heartbeats` 後正常。
+
+## ⚠️ 16:40 正式站事件（進行中）
+R30b 部署 loader 時 node `testing-machine` 被 kubelet 標 `DiskPressure`，pod evicted、
+`/login` 502。根因：每次迭代都把約 500MB 解壓 artifact 留在 PVC，34 個版本共 29GB，
+root filesystem 用到 90% 觸發 kubelet eviction。
+已處理：
+- 19:40 前清除舊 artifact releases，只保留 2 個目前/上一版，PVC 29GB→1.7GB，
+  root 90%→87%（117GB 可用）。
+- 移除短命 artifact HTTP server。
+- taint 仍未自動消失；v-terminal MCP 沒有移除 taint 的工具（k8s_node_action 只能
+  cordon/uncordon/label/drain，系統標籤不能刪）。已請使用者在 192.168.50.57 執行
+  `sudo kubectl taint node testing-machine node.kubernetes.io/disk-pressure-`。
+待使用者執行後：驗證 pod 2/2、worker 2/2、fixture 1/1 與 /login 200，再視情況重試 R30b app rollout。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
