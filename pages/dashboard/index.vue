@@ -3,10 +3,16 @@
     <div class="mb-6"><h1 class="text-2xl font-bold text-primary">Monitor overview</h1><p class="text-secondary mt-1">Health and recent events in your selected environment.</p></div>
     <!-- Header with Connection Status -->
     <div class="flex items-center justify-between mb-6">
-      <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
-        <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
-        Add New Monitor
-      </NuxtLink>
+      <div class="flex items-center gap-2">
+        <button v-if="canEdit" class="btn btn-secondary" @click="openQuickAdd">
+          <UIcon name="i-heroicons-bolt" class="w-4 h-4 mr-2" />
+          Quick add
+        </button>
+        <NuxtLink v-if="canEdit" to="/monitors/add" class="btn btn-primary">
+          <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-2" />
+          Add New Monitor
+        </NuxtLink>
+      </div>
       <div class="flex items-center gap-2 text-sm">
         <span
           class="w-2 h-2 rounded-full"
@@ -270,6 +276,33 @@
     </details>
 
   </div>
+
+  <!-- Quick add: one URL, sensible defaults, advanced form still available -->
+  <div v-if="quickAddOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="quickAddOpen = false">
+    <form class="card w-full max-w-lg p-6 space-y-4" @submit.prevent="submitQuickAdd">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold text-highlighted">Add a monitor in seconds</h2>
+          <p class="text-sm text-toned mt-1">We'll check every 60s and keep the defaults simple. Use the full form for assertions and notifications.</p>
+        </div>
+        <button type="button" class="text-toned hover:text-highlighted text-xl leading-none" aria-label="Close" @click="quickAddOpen = false">&times;</button>
+      </div>
+      <label class="block">
+        <span class="text-sm text-toned">Website URL</span>
+        <input v-model="quickAddUrl" type="url" inputmode="url" required maxlength="8192" autofocus
+          placeholder="https://example.com" aria-label="Website URL" class="input-field mt-1" />
+      </label>
+      <p class="text-sm text-toned">Name: <strong class="text-highlighted">{{ quickAddName || '—' }}</strong></p>
+      <p v-if="quickAddError" role="alert" class="text-sm text-red-400">{{ quickAddError }}</p>
+      <div class="flex flex-wrap justify-end gap-2">
+        <NuxtLink to="/monitors/add" class="btn btn-secondary">Advanced setup</NuxtLink>
+        <button type="button" class="btn btn-secondary" @click="quickAddOpen = false">Cancel</button>
+        <button type="submit" class="btn btn-primary" :disabled="quickAddBusy || !quickAddName">
+          {{ quickAddBusy ? 'Adding…' : 'Add monitor' }}
+        </button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -285,6 +318,57 @@ const { $socket } = useNuxtApp()
 const socketConnected = ref(false)
 const heartbeatsMap = ref<Record<number, any[]>>({})
 let socket:any=null
+
+// Quick add (UptimeRobot-style single URL flow)
+const toast = useToast()
+const quickAddOpen = ref(false)
+const quickAddUrl = ref('')
+const quickAddBusy = ref(false)
+const quickAddError = ref('')
+const quickAddName = computed(() => {
+  try {
+    const url = new URL(quickAddUrl.value.trim())
+    if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) return ''
+    const path = url.pathname === '/' ? '' : url.pathname.replace(/\/+$/, '')
+    return `${url.hostname.replace(/^www\./, '')}${path}`.slice(0, 200)
+  } catch {
+    return ''
+  }
+})
+function openQuickAdd() {
+  quickAddUrl.value = ''
+  quickAddError.value = ''
+  quickAddOpen.value = true
+}
+async function submitQuickAdd() {
+  if (!quickAddName.value) {
+    quickAddError.value = 'Enter a valid http(s) URL.'
+    return
+  }
+  quickAddBusy.value = true
+  quickAddError.value = ''
+  try {
+    await $fetch('/api/v1/monitors', {
+      method: 'POST',
+      body: {
+        name: quickAddName.value,
+        type: 'http',
+        url: quickAddUrl.value.trim(),
+        interval: 60,
+        timeout: 10,
+        method: 'GET',
+        active: true,
+      },
+    })
+    quickAddOpen.value = false
+    toast.add({ title: 'Monitor added', description: `${quickAddName.value} is checked every 60 seconds.`, color: 'success' })
+    await refresh()
+  } catch (error: any) {
+    quickAddError.value = error?.data?.message || error?.message || 'Could not add monitor.'
+  } finally {
+    quickAddBusy.value = false
+  }
+}
 
 // View state
 const viewMode = ref<'grid' | 'list'>('grid')

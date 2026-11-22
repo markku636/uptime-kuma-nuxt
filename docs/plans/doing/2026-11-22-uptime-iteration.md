@@ -74,4 +74,17 @@ R2 🔵 工作階段撤銷真實實作（原本 UI 打兩個不存在的 endpoin
   validSocket 檢查 row 未撤銷（舊 ticket 無 sessionId 仍相容）。
 - 驗證：`npx prisma generate`、build 成功；unit 49/49（新增 `tests/socket-ticket-session.test.ts` 3 項）。
   typecheck 仍有大量既有錯誤，但新增檔案沒有錯誤。
-- 待部署：artifact／GitOps／線上驗證完成後補上。
+- 部署：artifact `ea1c84bb1f7f59eb46e0d143b87bb172ca15f3ff80671f8cb8d0c7c2963f8641`
+  （201,950,788 bytes；source `ec6c6e1`）。GitOps：loader `3240b6a`（rev19，Job Succeeded，
+  短命 server 已停）→ migration `7871579`（rev20，第 15 個 migration `20261122111500_user_sessions`
+  已套用，runtime check passed）→ app `2038618`（rev21，API 2/2、worker 2/2、fixture 1/1）。
+- 線上驗證：三個新登入工作階段都出現在 `/api/auth/sessions`，current 旗標正確；
+  DELETE 單一 session 後該 cookie 401、其他仍 200；`revoke-all` 後其他 cookie 401、重發 cookie 的
+  目前 session 仍 200；Settings > Security UI 顯示真實 device/IP/last active 與 Revoke 按鈕，
+  點 Revoke 後列表只剩目前 session。R2 ✅
+
+R3 🔵 Quick add（UptimeRobot 式「30 秒新增監控」）：
+- `pages/dashboard/index.vue`：新增 Quick add 按鈕與模態；輸入單一 URL 即自動產生名稱
+  （hostname + path，去 www），以 HTTP/GET、60 秒間隔、10 秒timeout 建立監控，
+  成功後 toast 並刷新列表；保留原「Add New Monitor」進階表單。
+- 驗證：build 成功；unit 49/49。待部署與線上實作驗證（建立測試監控後刪除）。
