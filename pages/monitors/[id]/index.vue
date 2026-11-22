@@ -75,11 +75,6 @@
               <UIcon name="i-heroicons-rectangle-stack" class="w-4 h-4 mr-1" />
               Badge
             </button>
-            <!-- Screenshot (for real-browser type) -->
-            <button v-if="monitor.type === 'real-browser'" @click="showScreenshot = true" class="btn btn-secondary">
-              <UIcon name="i-heroicons-camera" class="w-4 h-4 mr-1" />
-              Screenshot
-            </button>
             <button @click="showDeleteConfirm = true" class="btn btn-danger">
               <UIcon name="i-heroicons-trash" class="w-4 h-4 mr-1" />
               Delete
@@ -356,12 +351,6 @@
       :monitor-name="monitor.name" 
     />
 
-    <!-- Screenshot Modal -->
-    <MonitorScreenshotModal 
-      v-if="monitor?.type === 'real-browser'"
-      v-model="showScreenshot" 
-      :monitor-id="monitorId" 
-    />
   </div>
 </template>
 
@@ -402,7 +391,6 @@ const deleting = ref(false)
 const cloning = ref(false)
 const showDeleteConfirm = ref(false)
 const showBadgeGenerator = ref(false)
-const showScreenshot = ref(false)
 const currentPage = ref(1)
 const perPage = 25
 
