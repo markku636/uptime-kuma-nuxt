@@ -367,6 +367,11 @@ R42/R43 🔵 全域 API key：`gk_...` key，只存 SHA-256 hash/prefix/owner，
 - 應使用者要求建立測試資料：workspace 1 / 2 各 20 個 paused monitor 與 20 個 status page
   （monitor 總數 w1=25、w2=20；status page w1=21、w2=20）。
 
+R44 🔵 稽核小項修復：MonitorForm 父群組下拉改實際抓 `/api/v1/groups`、
+  維護頁時間改 ClientOnly（避免 hydration mismatch）、狀態頁「Live」改誠實的 "Auto-refresh"、
+  API Docs 移除未定義的 standalone preset、Backup UI 補上 maintenances/proxies/dockerHosts 匯入開關。
+  部署 revision 118、API/worker/fixture 全 Healthy。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
