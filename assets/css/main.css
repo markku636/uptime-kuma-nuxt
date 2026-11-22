@@ -807,3 +807,20 @@ html.dark .link:hover {
 .glow-yellow {
   text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
 }
+
+/* Desktop sidebar navigation */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.sidebar-link:hover { background-color: var(--hover-bg); color: var(--text-primary); }
+.sidebar-link-active {
+  background-color: var(--uk-primary-soft);
+  color: var(--uk-primary-text);
+  font-weight: 600;
+}

@@ -14,6 +14,8 @@ interface Shortcut {
 
 const shortcuts = ref<Shortcut[]>([])
 const showHelp = ref(false)
+// Multiple components call this composable; register the global listener once.
+let listenerRegistered = false
 
 export function useKeyboardShortcuts() {
   const router = useRouter()
@@ -91,11 +93,10 @@ export function useKeyboardShortcuts() {
       }
     }
 
-    window.addEventListener('keydown', handleKeydown)
-
-    onUnmounted(() => {
-      window.removeEventListener('keydown', handleKeydown)
-    })
+    if (!listenerRegistered) {
+      listenerRegistered = true
+      window.addEventListener('keydown', handleKeydown)
+    }
   })
 
   // Add custom shortcut

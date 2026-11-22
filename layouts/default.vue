@@ -1,17 +1,35 @@
 <template>
-  <div class="layout-root">
+  <div class="layout-root lg:pl-60">
+    <!-- Desktop sidebar -->
+    <aside class="hidden lg:flex fixed inset-y-0 left-0 w-60 flex-col border-r border-default bg-[var(--bg-secondary)] z-40">
+      <NuxtLink to="/dashboard" class="h-16 flex items-center gap-2 px-5 text-primary shrink-0">
+        <img src="/icon.svg" alt="Uptime Kuma" class="h-8 w-8" />
+        <span class="text-lg font-bold whitespace-nowrap">Uptime Kuma</span>
+      </NuxtLink>
+      <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
+        <NuxtLink to="/dashboard" class="sidebar-link" active-class="sidebar-link-active">Dashboard</NuxtLink>
+        <NuxtLink to="/monitors" class="sidebar-link" :class="{ 'sidebar-link-active': monitorsActive }">Monitors</NuxtLink>
+        <NuxtLink to="/monitors/groups" class="sidebar-link" active-class="sidebar-link-active">Groups</NuxtLink>
+        <NuxtLink to="/maintenance" class="sidebar-link" active-class="sidebar-link-active">Maintenance</NuxtLink>
+        <NuxtLink to="/settings" class="sidebar-link" active-class="sidebar-link-active">Settings</NuxtLink>
+        <NuxtLink to="/status-pages" class="sidebar-link" active-class="sidebar-link-active">Status Pages</NuxtLink>
+        <NuxtLink to="/api-docs" class="sidebar-link" active-class="sidebar-link-active">API Docs</NuxtLink>
+      </nav>
+      <div class="px-5 py-4 text-xs text-tertiary border-t border-default">Monitoring made simple</div>
+    </aside>
+
     <!-- Header -->
     <header class="header-main border-b border-default bg-[var(--bg-secondary)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
-          <NuxtLink to="/dashboard" class="flex items-center gap-2 shrink-0 text-primary hover:text-emerald-500 transition-colors">
+          <NuxtLink to="/dashboard" class="lg:hidden flex items-center gap-2 shrink-0 text-primary hover:text-emerald-500 transition-colors">
             <img src="/icon.svg" alt="Uptime Kuma" class="h-8 w-8" />
             <span class="text-lg font-bold whitespace-nowrap">Uptime Kuma</span>
           </NuxtLink>
 
           <!-- Navigation -->
-          <nav class="hidden lg:flex items-center gap-3 text-sm">
+          <nav class="hidden">
             <NuxtLink
               to="/dashboard"
               class="nav-link"
@@ -90,7 +108,7 @@
             <button
               @click="showShortcutsHelp = true"
               class="header-icon-btn"
-              title="Keyboard shortcuts (Ctrl+/)"
+              title="Keyboard shortcuts (?)"
               :class="'hidden sm:inline-flex'"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
