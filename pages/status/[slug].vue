@@ -156,7 +156,8 @@ const availableMonitorOptions = computed(() => {
 // Page head management — shareable status pages need useful social/OpenGraph metadata
 const siteTitle = computed(() => statusPage.value?.title ? `${statusPage.value.title} - Status` : 'Status')
 const siteDescription = computed(() => statusPage.value?.description || 'Live service status and incident updates')
-const shareUrl = computed(() => `${useRuntimeConfig().public.appUrl}/status/${slug.value}`)
+const appUrl = useRuntimeConfig().public.appUrl
+const shareUrl = computed(() => `${appUrl}/status/${slug.value}`)
 useHead({
   title: siteTitle,
   meta: [
