@@ -1,8 +1,8 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
-export interface SocketTicket { userId: number; sessionVersion: number; workspaceId: number; environmentId: number; expiresAt: number; nonce: string }
+export interface SocketTicket { userId: number; sessionVersion: number; workspaceId: number; environmentId: number; sessionId?: string; expiresAt: number; nonce: string }
 
-export function signSocketTicket(identity: Pick<SocketTicket, 'userId' | 'sessionVersion' | 'workspaceId' | 'environmentId'>, secret: string, now = Date.now()) {
+export function signSocketTicket(identity: Pick<SocketTicket, 'userId' | 'sessionVersion' | 'workspaceId' | 'environmentId' | 'sessionId'>, secret: string, now = Date.now()) {
   const payload = Buffer.from(JSON.stringify({ ...identity, expiresAt: now + 60_000,
     nonce: randomBytes(16).toString('hex') } satisfies SocketTicket)).toString('base64url')
   return `${payload}.${createHmac('sha256', secret).update(payload).digest('base64url')}`
@@ -19,7 +19,8 @@ export function verifySocketTicket(ticket: unknown, secret: string, now = Date.n
   if (!Number.isSafeInteger(parsed.userId) || parsed.userId <= 0 || !Number.isSafeInteger(parsed.sessionVersion)
     || !Number.isSafeInteger(parsed.workspaceId) || parsed.workspaceId <= 0
     || !Number.isSafeInteger(parsed.environmentId) || parsed.environmentId <= 0
-    || !Number.isFinite(parsed.expiresAt) || parsed.expiresAt <= now || parsed.expiresAt > now + 60_000) {
+    || !Number.isFinite(parsed.expiresAt) || parsed.expiresAt <= now || parsed.expiresAt > now + 60_000
+    || (parsed.sessionId !== undefined && (typeof parsed.sessionId !== 'string' || !/^[A-Za-z0-9_-]{8,64}$/.test(parsed.sessionId)))) {
     throw new Error('Expired or invalid socket ticket')
   }
   return parsed

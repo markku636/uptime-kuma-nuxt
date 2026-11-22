@@ -1,41 +1,20 @@
-// server/api/auth/sessions.get.ts
-import { prisma } from '~/server/utils/prisma'
+import { requireRequestSession } from '../../utils/request-session'
+import { getTrackedSessionId, listTrackedSessions } from '../../utils/tracked-sessions'
 
 export default defineEventHandler(async (event) => {
-  const session = await getRequestSession(event)
-  
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  // Get current session ID from cookie or header
-  const currentSessionId = getCookie(event, 'session_id') || ''
-
-  // Try to get sessions from database if session table exists
-  try {
-    const sessions = await prisma.$queryRaw`
-      SELECT id, user_agent as userAgent, ip, last_active as lastActive, created_at as createdAt
-      FROM session
-      WHERE user_id = ${session.user.id}
-      ORDER BY last_active DESC
-      LIMIT 10
-    ` as any[]
-
-    return sessions.map((s: any) => ({
-      ...s,
-      current: s.id === currentSessionId
-    }))
-  } catch (error) {
-    // If session table doesn't exist, return mock current session
-    return [{
-      id: currentSessionId || 'current',
+  const session = await requireRequestSession(event)
+  const rows = await listTrackedSessions(session.user.id, getTrackedSessionId(event))
+  if (!rows.some(row => row.current)) {
+    // A cookie issued before session tracking was introduced: show it as the
+    // current session but do not pretend the old row is revocable.
+    rows.unshift({
+      id: 'current',
       userAgent: getHeader(event, 'user-agent') || 'Unknown',
       ip: getRequestIP(event) || 'Unknown',
-      lastActive: new Date().toISOString(),
-      current: true
-    }]
+      createdAt: new Date(),
+      lastActive: new Date(),
+      current: true,
+    })
   }
+  return rows
 })

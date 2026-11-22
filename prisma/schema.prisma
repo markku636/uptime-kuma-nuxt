@@ -25,8 +25,23 @@ model User {
   monitors      Monitor[]
   notifications Notification[]
   apiKeys       ApiKey[]
+  sessions      UserSession[]
 
   @@map("users")
+}
+
+model UserSession {
+  id         String    @id @default(cuid())
+  userId     Int       @map("user_id")
+  userAgent  String?   @map("user_agent") @db.VarChar(512)
+  ip         String?   @db.VarChar(64)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastActive DateTime  @default(now()) @map("last_active")
+  revokedAt  DateTime? @map("revoked_at")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lastActive])
+  @@map("user_sessions")
 }
 
 model Monitor {

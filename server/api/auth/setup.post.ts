@@ -1,6 +1,7 @@
 // server/api/auth/setup.post.ts
 import { z } from 'zod'
 import { hashPassword } from '../../utils/password'
+import { createTrackedSession } from '../../utils/tracked-sessions'
 
 const setupSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').max(100),
@@ -31,8 +32,10 @@ export default defineEventHandler(async (event) => {
   })
   await ensurePersonalWorkspace(user.id, user.username)
 
-  // Set session
+  // Set session with a revocable server-side record
+  const sessionId = await createTrackedSession(event, user.id)
   await setUserSession(event, {
+    sessionId,
     user: {
       id: user.id,
       username: user.username,

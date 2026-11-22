@@ -1,6 +1,7 @@
 // server/api/auth/login.post.ts
 import { z } from 'zod'
 import { verifyPassword } from '../../utils/password'
+import { createTrackedSession } from '../../utils/tracked-sessions'
 import { verifyTwoFactorToken } from '../../services/auth/two-factor'
 
 const loginSchema = z.object({
@@ -83,8 +84,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Set session
+  // Set session with a revocable server-side record
+  const sessionId = await createTrackedSession(event, user.id)
   await setUserSession(event, {
+    sessionId,
     user: {
       id: user.id,
       username: user.username,

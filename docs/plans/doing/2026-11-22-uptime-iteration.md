@@ -51,4 +51,27 @@ R1 🔵 狀態頁與導覽修復 — 分支 `iterate/uptime-20261122`：
 - `pages/status-pages/[id]/edit.vue`：`new` 視為新增模式。
 - `layouts/default.vue`：桌面與手機導覽補 Maintenance（頁面原本存在但沒有入口）。
 - 驗證：`npm run build` 成功；unit 46/46。上線前 workspace/environment 名稱短暫空白為 Hydration 前的取樣假象，非 bug，未改程式。
-- 待部署：artifact／GitOps 完成後補上。
+- 部署：artifact `a511878d58789b7f5cb2f028b48d6370111a8dc707d0b4348dbc87b09f4df609`
+  （201,964,245 bytes；source `f03f781`；workingTree `f3579463…`）。GitOps lab
+  `uptime-api-demo-20261114/uptime-api`：loader commit `32957ba`（rev16，Job Succeeded，
+  短命 artifact server 已停）→ migration commit `3a1c47d`（rev17，14 migrations 無 pending，
+  Node24.22.0/Prisma6.19.1 runtime check passed）→ application commit `09e1d76`（rev18，
+  API 2/2、worker 2/2、fixture 1/1 Healthy，Synced）。
+- 線上驗證：`/status-pages` 正確顯示 "Status Pages / New Status Page / API monitoring demo"，
+  沒有惰性 `<template>` 包裹；`/status-pages/add` 導向 `/status-pages/new/edit` 並顯示完整新增表單；
+  導覽列出現 Maintenance；console 無錯誤。R1 ✅
+
+R2 🔵 工作階段撤銷真實實作（原本 UI 打兩個不存在的 endpoint，只彈成功 toast）：
+- `prisma/schema.prisma` + migration `20261122111500_user_sessions`：新增 `UserSession`
+  （id/user_agent/ip/created_at/last_active/revoked_at，FK users ON DELETE CASCADE）。
+- `server/utils/tracked-sessions.ts`：建立／驗證／列出／撤銷單一或全部 session；lastActive 60 秒節流。
+- `server/api/auth/login.post.ts`、`setup.post.ts`：登入時建立 row 並把 `sessionId` 寫入加密 cookie。
+- `server/utils/request-session.ts`：所有 session 請求驗證 row 未撤銷（API key 不受影響）。
+- `server/api/auth/sessions.get.ts`、`sessions/[id].delete.ts`、`sessions/revoke-all.post.ts`：
+  真實列表／撤銷單一／撤銷其他並提升 sessionVersion 後重發目前 cookie；disconnect 舊 sockets。
+- `logout.post.ts`、`change-password.post.ts`：登出撤銷目前 row；改密碼撤銷全部 row。
+- `socket-ticket.ts`／`socket-ticket.post.ts`／`services/socket.ts`：ticket 綁 sessionId，
+  validSocket 檢查 row 未撤銷（舊 ticket 無 sessionId 仍相容）。
+- 驗證：`npx prisma generate`、build 成功；unit 49/49（新增 `tests/socket-ticket-session.test.ts` 3 項）。
+  typecheck 仍有大量既有錯誤，但新增檔案沒有錯誤。
+- 待部署：artifact／GitOps／線上驗證完成後補上。

@@ -1,6 +1,7 @@
 // server/api/auth/change-password.post.ts
 import { z } from 'zod'
 import { verifyPassword, hashPassword } from '../../utils/password'
+import { revokeAllTrackedSessions } from '../../utils/tracked-sessions'
 
 const schema = z.object({
   currentPassword: z.string().min(1),
@@ -40,6 +41,7 @@ export default defineEventHandler(async (event) => {
     where: { id: session.user.id },
     data: { password: hashedPassword, sessionVersion: { increment: 1 } }
   })
+  await revokeAllTrackedSessions(session.user.id)
 
   return { success: true }
 })

@@ -9,13 +9,18 @@ import {stateHeartbeat} from '../utils/monitor-query'
 import { getMonitorTypeListForClient } from './monitor/types'
 
 let io: SocketServer | null = null
-interface AuthenticatedSocket extends Socket { data: { userId: number; sessionVersion: number; workspaceId: number; environmentId: number } }
+interface AuthenticatedSocket extends Socket { data: { userId: number; sessionVersion: number; workspaceId: number; environmentId: number; sessionId?: string } }
 
 async function validSocket(socket: AuthenticatedSocket) {
   const membership = await prisma.workspaceMember.findUnique({ where: { workspaceId_userId: {
     workspaceId: socket.data.workspaceId, userId: socket.data.userId } }, include: { user: { select: { active: true, sessionVersion: true } } } })
-  return !!membership?.user.active && membership.user.sessionVersion === socket.data.sessionVersion
-    && !!await prisma.environment.findFirst({ where: { id: socket.data.environmentId, workspaceId: socket.data.workspaceId }, select: { id: true } })
+  if (!membership?.user.active || membership.user.sessionVersion !== socket.data.sessionVersion) return false
+  if (socket.data.sessionId) {
+    const tracked = await prisma.userSession.findFirst({
+      where: { id: socket.data.sessionId, userId: socket.data.userId, revokedAt: null }, select: { id: true } })
+    if (!tracked) return false
+  }
+  return !!await prisma.environment.findFirst({ where: { id: socket.data.environmentId, workspaceId: socket.data.workspaceId }, select: { id: true } })
 }
 
 export function initSocketServer(server: HTTPServer) {
@@ -32,6 +37,7 @@ export function initSocketServer(server: HTTPServer) {
       socket.data.sessionVersion = ticket.sessionVersion
       socket.data.workspaceId = ticket.workspaceId
       socket.data.environmentId = ticket.environmentId
+      socket.data.sessionId = ticket.sessionId
       if (!await validSocket(socket)) throw new Error('Session expired')
       next()
     } catch { next(new Error('Unauthorized')) }

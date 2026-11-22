@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { prisma } from './prisma'
+import { assertTrackedSession } from './tracked-sessions'
 import { resolveWorkspace, type WorkspaceScope } from './workspace'
 
 export interface RequestPrincipal extends WorkspaceScope {
@@ -21,6 +22,7 @@ export async function getRequestSession(event: H3Event): Promise<RequestPrincipa
 
   let userId: number | undefined
   let sessionVersion: number | undefined
+  let cookieSessionId: string | undefined
   let key: Awaited<ReturnType<typeof prisma.apiKey.findFirst>> | null = null
   if (suppliedKey) {
     if (!/^uk_[A-Za-z0-9_-]{24,128}$/.test(suppliedKey)) {
@@ -36,6 +38,7 @@ export async function getRequestSession(event: H3Event): Promise<RequestPrincipa
     const session = await getUserSession(event)
     userId = session.user?.id as number | undefined
     sessionVersion = (session.user as { sessionVersion?: number } | undefined)?.sessionVersion ?? 0
+    cookieSessionId = (session as { sessionId?: unknown }).sessionId as string | undefined
   }
   if (!userId) return { user: null }
 
@@ -45,6 +48,7 @@ export async function getRequestSession(event: H3Event): Promise<RequestPrincipa
   if (!user?.active || (!key && sessionVersion !== user.sessionVersion)) {
     throw createError({ statusCode: 401, message: 'Session is no longer valid' })
   }
+  if (!key) await assertTrackedSession(event, user.id, cookieSessionId)
   event.context.authMethod = key ? 'api-key' : 'session'
   event.context.apiKey = key
   const scope = await resolveWorkspace(event, user, key)
