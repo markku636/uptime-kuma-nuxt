@@ -153,6 +153,13 @@ model Monitor {
   radiusSecret    String?   @map("radius_secret")
   radiusCalledStationId String? @map("radius_called_station_id")
   radiusCallingStationId String? @map("radius_calling_station_id")
+
+  // SNMP specific
+  snmpOid     String?   @map("snmp_oid")
+  snmpVersion String?   @default("2c") @map("snmp_version")
+
+  // HTTP request options
+  cacheBust   Boolean   @default(false) @map("cache_bust")
   
   // Game server specific
   game            String?

@@ -43,6 +43,8 @@ export const createMonitorSchema = z.object({
   rabbitmqNodes: z.array(z.string().max(8192)).max(100).optional().nullable(), rabbitmqUsername: z.string().max(4096).optional().nullable(), rabbitmqPassword: z.string().max(8192).optional().nullable(),
   redisConnectionString: z.string().max(8192).optional().nullable(), radiusSecret: z.string().max(8192).optional().nullable(),
   radiusCalledStationId: z.string().max(256).optional().nullable(), radiusCallingStationId: z.string().max(256).optional().nullable(),
+  snmpOid: z.string().max(512).optional().nullable(), snmpVersion: z.enum(['1', '2c', '3']).optional().nullable(),
+  cacheBust: z.boolean().optional(),
   game: z.string().max(100).optional().nullable(),
   // TLS Certificate settings
   expiryNotification: z.boolean().default(false),
