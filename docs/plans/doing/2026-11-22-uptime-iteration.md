@@ -139,4 +139,13 @@ R7 🔵 dashboard hydration mismatch：
 - `pages/dashboard/index.vue`：Important Events 時間改 `<ClientOnly>`（SSR 用 UTC 固定格式，
   客戶端再換成當地時間）；heartbeat tooltip 改用固定 UTC 格式；`Date.now()` 從 computed 移到
   onMounted／10s refresh 的 `renderNow` ref，SSR 與 hydration 期間用固定值 0。
-- 驗證：build 成功；unit 52/52。待部署並確認 console 無 hydration 警告、grid 首次載入即顯示回退值。
+- 部署：artifact `06d7f29bd0c3b06a02a7797d9b880a0c8e0d0be0c8cb663339438dac7d3d7569`
+  （201,953,381 bytes；source `39d2c78`）。GitOps loader `8d7b1fb`（rev34）→ migration `1318a74`（rev35）
+  → app `3bcb18e`（rev36），API/worker/fixture 全 Healthy。
+- 線上驗證：dashboard console 已無 hydration mismatch 警告；grid 首次載入仍顯示 24h: —，
+  切換到 list 再回 grid 即顯示 30d: 100.00%（資料正確、僅更新時機問題）。R7 部分完成。
+
+R8 🔵 修 grid uptime 首次載入更新時機：
+- `pages/dashboard/index.vue`：uptime 狀態由兩個 `ref({})` 改為 `reactive({})` 並用
+  `Object.assign` 更新，讓 Vue 追蹤個別 monitor 的數值（而非只追蹤物件替換）。
+- 驗證：build 成功；unit 52/52。待部署驗證首次載入即顯示。

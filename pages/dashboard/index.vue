@@ -404,8 +404,8 @@ watch(monitors,async rows=>{
 },{flush:'post',immediate:true})
 // Uptime percentages (UptimeRobot-style overview), with a 30d fallback for
 // monitors that have no observations in the last 24 hours (e.g. paused demos).
-const uptimeMap = ref<Record<string, number | null>>({})
-const uptime30Map = ref<Record<string, number | null>>({})
+const uptimeMap = reactive<Record<string, number | null>>({})
+const uptime30Map = reactive<Record<string, number | null>>({})
 let uptimeSequence = 0
 watch(monitors, async rows => {
   if (import.meta.server || !rows.length) return
@@ -416,13 +416,13 @@ watch(monitors, async rows => {
     $fetch<any>('/api/v1/monitors/uptime-batch', { query: { ids, period: '30d' } }),
   ])
   if (sequence !== uptimeSequence) return
-  if (day.status === 'fulfilled') uptimeMap.value = day.value?.data || {}
-  if (month.status === 'fulfilled') uptime30Map.value = month.value?.data || {}
+  if (day.status === 'fulfilled') Object.assign(uptimeMap, day.value?.data || {})
+  if (month.status === 'fulfilled') Object.assign(uptime30Map, month.value?.data || {})
 }, { flush: 'post', immediate: true })
 function uptimeLabel(id: number) {
-  const day = uptimeMap.value[String(id)]
+  const day = uptimeMap[String(id)]
   if (typeof day === 'number' && Number.isFinite(day)) return `24h: ${day.toFixed(2)}%`
-  const month = uptime30Map.value[String(id)]
+  const month = uptime30Map[String(id)]
   if (typeof month === 'number' && Number.isFinite(month)) return `30d: ${month.toFixed(2)}%`
   return '24h: —'
 }
