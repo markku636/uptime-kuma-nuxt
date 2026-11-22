@@ -242,6 +242,16 @@ R18 🔵 公開狀態頁的 Edit Mode 原本只判断 loggedIn；改由伺服器
   owner/editor 角色回傳 `canEdit`，viewer/匿名不再看到編輯入口。
 - 驗證：build 成功；unit 55/55。待部署與線上驗證（owner 有、匿名沒有）。
 
+- 部署：artifact `dced3a55bfd7672d7591781280059fe0a55c2e6c349bd7ee8575e7953a08207f`
+  （201,988,146 bytes；source `e2ed703`），loader `35a1686`（rev61）→ app `457fa4a`（rev62）。
+- 線上驗證：owner session 讀 public config `canEdit:true`，匿名 `canEdit:false`。R18 ✅
+
+R19 🔵 Email 通知（原本只 `console.log` 假成功）：改為走操作者設定的 SMTP relay
+  （SMTP_HOST/PORT/FROM + 選擇性 USER/PASS），收件者由通知資源提供並嚴格驗證（防 header injection）；
+  host/憑證不接受使用者輸入以避免 SSRF；未設定 relay 時回 `UNSUPPORTED_PROVIDER` 不重試。
+  UI 加入 email provider 與收件人欄位，README 更新。
+- 驗證：build 成功；unit 58/58（新增 `tests/email-provider.test.ts` 3 項）。待部署。
+
 ## 目前狀態（12:46 CST）
 13 輪全部已 commit 並部署到 lab 正式站，線上 revision 52、Healthy/Synced，無 console error/warning。
 Git push：已用環境中的 GitHub token 成功推送到 `origin/iterate/uptime-20261122`（2026-11-22 12:5x）。

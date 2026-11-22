@@ -4,7 +4,7 @@ const emit=defineEmits<{save:[input:any];cancel:[]}>()
 const form=reactive<Record<string,any>>({}),clear=ref<string[]>([]),replaceConfig=ref(false),headers=ref('{}'),testing=ref(false),result=ref('')
 const paths={notification:'notifications',proxy:'proxies',dockerHost:'docker-hosts',remoteBrowser:'remote-browsers'}
 const secretFields=computed(()=>props.kind==='notification'?['config']:props.kind==='proxy'?['host','username','password']:props.kind==='dockerHost'?['dockerDaemon','connectionUrl']:['url'])
-const configFields=computed(()=>form.type==='webhook'?[['url','Webhook URL'],['body','Custom body (optional)']]:form.type==='discord'?[['webhookUrl','Discord webhook URL'],['username','Bot display name']]:form.type==='slack'?[['webhookUrl','Slack webhook URL'],['channel','Channel']]:form.type==='telegram'?[['botToken','Bot token'],['chatId','Chat ID']]:[['channelAccessToken','Channel access token'],['userId','User ID']])
+const configFields=computed(()=>form.type==='webhook'?[['url','Webhook URL'],['body','Custom body (optional)']]:form.type==='discord'?[['webhookUrl','Discord webhook URL'],['username','Bot display name']]:form.type==='slack'?[['webhookUrl','Slack webhook URL'],['channel','Channel']]:form.type==='telegram'?[['botToken','Bot token'],['chatId','Chat ID']]:form.type==='email'?[['to','Recipient emails (comma separated)']]:[['channelAccessToken','Channel access token'],['userId','User ID']])
 const editing=computed(()=>!!props.resource?.id)
 watch(()=>props.resource,()=>{
   for(const key of Object.keys(form))delete form[key]
@@ -32,8 +32,8 @@ async function test(){testing.value=true;result.value='';try{
   <p class="text-sm">Stored credentials are write-only. Leave blank to keep them, enter replacement values, or select a field to clear.</p>
   <label v-if="kind!=='proxy'" class="block">Name<input v-model="form.name" aria-label="Name" required maxlength="200" class="input-field mt-1" /></label>
   <template v-if="kind==='notification'">
-    <label class="block">Provider<select v-model="form.type" aria-label="Provider" class="select-field mt-1"><option v-for="value in ['webhook','discord','slack','telegram','line']" :key="value" :value="value">{{value}}</option><option v-if="!['webhook','discord','slack','telegram','line'].includes(form.type)" :value="form.type">{{form.type}} (unsupported)</option></select></label>
-    <p class="text-sm">Supported delivery: webhook, Discord, Slack, Telegram and LINE Messaging API. SMTP and other providers are unavailable.</p>
+    <label class="block">Provider<select v-model="form.type" aria-label="Provider" class="select-field mt-1"><option v-for="value in ['webhook','discord','slack','telegram','line','email']" :key="value" :value="value">{{value}}</option><option v-if="!['webhook','discord','slack','telegram','line','email'].includes(form.type)" :value="form.type">{{form.type}} (unsupported)</option></select></label>
+    <p class="text-sm">Supported delivery: webhook, Discord, Slack, Telegram, LINE Messaging API and email (requires operator-configured SMTP relay). Other providers are unavailable.</p>
     <label v-if="editing" class="flex gap-2"><input v-model="replaceConfig" type="checkbox" aria-label="Replace stored configuration" />Replace stored configuration</label>
     <fieldset v-if="replaceConfig" class="space-y-3">
       <label v-for="field in configFields" :key="field[0]" class="block">{{field[1]}}<input v-model="form.config[field[0]!]" :aria-label="field[1]" :type="/token/i.test(field[0]!)?'password':'text'" autocomplete="off" maxlength="8192" class="input-field mt-1" /></label>

@@ -34,7 +34,11 @@
 
 ### 🔔 通知渠道
 
-Webhook、Discord、Slack、Telegram、Microsoft Teams 透過 bounded transport 與 durable outbox 發送。SMTP/email 目前明確 unsupported；通知送出後本機 ACK 前故障仍可能重送，不承諾外部 exactly-once。
+Webhook、Discord、Slack、Telegram、LINE 與 email 透過 bounded transport 與 durable outbox 發送。
+Email 僅能走操作者設定的 SMTP relay（`SMTP_HOST`／`SMTP_PORT`／`SMTP_FROM`，選擇性
+`SMTP_USER`／`SMTP_PASS`）；收件者寫在通知資源內，SMTP host/憑證不接受使用者輸入以避免 SSRF。
+未設定 relay 時 email 通知會標記為 `UNSUPPORTED_PROVIDER` 而不重試。其他提供者仍明確 unsupported。
+通知送出後本機 ACK 前故障仍可能重送，不承諾外部 exactly-once。
 
 ### 📊 功能亮點
 - 📈 多語言支援 (70+ 語言)
