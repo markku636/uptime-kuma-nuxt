@@ -21,6 +21,17 @@
 
 舊 TCP、Ping、DNS、Docker、gRPC、database、MQTT、Kafka、RabbitMQ、GameDig 等配置可保留，但目前分散 worker 沒有對應 bounded adapter，會顯示 unsupported；不要視為已可排程。HTTP proxy、NTLM/mTLS 同樣未支援，不會悄悄改成直接連線。
 
+2026-11-22 迭代新增：
+- **Quick add**：首頁輸入單一 URL 即以 HTTP/GET、60 秒間隔建立監控；進階表單仍保留完整選項。
+- **24 小時可用率**：首頁卡片與列表顯示近期 uptime%（無 24h 觀測值時回退顯示 30d 並標明期間），
+  透過 `/api/v1/monitors/uptime-batch` 以 workspace/environment 範圍批量查詢。
+- **Response-time alerts**：監控 Timing 可設「Alert if response time exceeds (ms)」。
+  健康檢查從未超標跨到超標時，經既有 durable outbox 發出通知，每個監控/通道每小時最多一次；
+  90 天以上的 dedupe key 由 cleanup 定期移除。
+- **可撤銷工作階段**：登入會建立伺服器端 session record；Settings > Security 可列出裝置/IP/最後活動、
+  撤銷單一或撤銷其他所有工作階段（後者同時提升 sessionVersion 並重發目前 cookie）；
+  改密碼與登出會撤銷對應 record，WebSocket ticket 亦綁定 session record。
+
 ### 🔔 通知渠道
 
 Webhook、Discord、Slack、Telegram、Microsoft Teams 透過 bounded transport 與 durable outbox 發送。SMTP/email 目前明確 unsupported；通知送出後本機 ACK 前故障仍可能重送，不承諾外部 exactly-once。

@@ -158,4 +158,12 @@ R8 🔵 修 grid uptime 首次載入更新時機：
 R9 🔵 操作便利性：
 - `pages/dashboard/index.vue`：grid 卡片補 Pause/Resume/Edit 快速動作（點擊不觸發卡片導覽）。
 - `pages/login.vue`：密碼顯示/隱藏切換、autocomplete、autofocus。
-- 驗證：build 成功；unit 52/52。待部署與線上驗證。
+- 部署：artifact `712e4dea16490ab5250af2e41729ace60323a89b3128c68bae0448214389202b`
+  （201,965,609 bytes；source `8610614`）。GitOps loader commit `99bab6d`（rev39，Job Succeeded，
+  短命 server 已停）→ app `60e4c39`（rev40，無 schema 變更，API/worker/fixture 全 Healthy，Synced）。
+- 線上驗證：登入頁出現 Show/Hide password 切換且 password input 有 `autocomplete="current-password"`；
+  dashboard grid 卡片出現 Resume/Edit 快速動作（ hydrated 後）。build＋unit 52/52。R9 ✅
+
+文件：README 已補上 Quick add、24h uptime、response-time alerts、可撤銷工作階段說明。
+分支推送：本機 git 沒有 GitHub 憑證，`git push` 失敗；9 個 commit 都在本機
+`iterate/uptime-20261122`，正式站以部署的 immutable artifact 為準。
