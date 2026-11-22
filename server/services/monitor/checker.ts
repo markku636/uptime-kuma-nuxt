@@ -4,6 +4,7 @@ import {
   checkHttp,
   checkKeyword,
   checkJsonQuery,
+  checkBruno,
   checkGrpcKeyword,
   checkMongoDB,
   checkMySQL,
@@ -50,6 +51,9 @@ export async function checkMonitor(monitor: any, signal?: AbortSignal): Promise<
       
       case 'json-query':
         return await checkJsonQuery(monitor, startTime, signal)
+
+      case 'bruno':
+        return await checkBruno(monitor, startTime, signal)
       
       case 'grpc-keyword':
         return await checkGrpcKeyword(monitor, startTime)

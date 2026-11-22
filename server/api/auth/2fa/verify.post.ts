@@ -59,10 +59,9 @@ export default defineEventHandler(async (event) => {
     
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { 
+      data: {
         twofaStatus: true,
-        // Store backup codes as JSON (hashed in production)
-        // For simplicity, storing as comma-separated string
+        twofaBackupCodes: backupCodes,
       }
     })
 

@@ -7,7 +7,7 @@ export async function claimMonitors(owner:string,limit:number,leaseMs:number,db:
     const ids=await tx.$queryRaw(Prisma.sql`
       WITH due AS MATERIALIZED (
         SELECT id,origin_hint,next_check_at FROM monitors
-        WHERE active AND type IN ('http','keyword','json-query')
+        WHERE active AND type IN ('http','keyword','json-query','bruno')
           ${excludeIds.length?Prisma.sql`AND id NOT IN (${Prisma.join(excludeIds)})`:Prisma.empty}
           ${excludeOrigins.length?Prisma.sql`AND (origin_hint IS NULL OR origin_hint NOT IN (${Prisma.join(excludeOrigins)}))`:Prisma.empty}
           AND next_check_at<=statement_timestamp()

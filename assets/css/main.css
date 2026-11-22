@@ -94,6 +94,23 @@ html.dark {
   background-color: var(--bg-primary);
 }
 
+/* Native select popups ignore inherited theme in some browsers unless the
+   control itself declares the color scheme and option colors. */
+select, select option {
+  color-scheme: light;
+  background-color: #fff;
+  color: #111827;
+}
+html.dark select, html.dark select option {
+  color-scheme: dark;
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+html.dark select option:checked {
+  background-color: var(--uk-primary, #10b981);
+  color: #fff;
+}
+
 body {
   background-color: var(--bg-primary) !important;
   color: var(--text-primary) !important;

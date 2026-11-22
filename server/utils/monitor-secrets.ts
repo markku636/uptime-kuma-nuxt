@@ -65,7 +65,7 @@ export function monitorEditorDTO(monitor:any) {
   result.tlsConfigured=typeof hydrated.url==='string'&&hydrated.url.startsWith('https://')
   result.configuredSecrets=configuredSecrets
   result.pushTokenConfigured=!!monitor.pushToken
-  result.scheduleSupported=['http','keyword','json-query'].includes(monitor.type)
+  result.scheduleSupported=['http','keyword','json-query','bruno'].includes(monitor.type)
   result.runtimeStatus=monitor.type==='push'?'push':!monitor.active?'paused':result.scheduleSupported?'scheduled':'unsupported'
   return result
 }

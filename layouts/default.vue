@@ -1,7 +1,7 @@
 <template>
   <div class="layout-root">
     <!-- Header -->
-    <header class="header-main">
+    <header class="header-main border-b border-default bg-[var(--bg-secondary)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
@@ -189,7 +189,7 @@
       </div>
     </header>
 
-    <div class="border-b border-default bg-white/60 dark:bg-slate-900/60"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3"><ClientOnly><LayoutWorkspaceSelector /></ClientOnly></div></div>
+    <div class="border-b border-default bg-[var(--bg-secondary)]"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3"><ClientOnly><LayoutWorkspaceSelector /></ClientOnly></div></div>
     <!-- Main content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <slot />

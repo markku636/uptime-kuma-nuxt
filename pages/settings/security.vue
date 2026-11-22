@@ -54,7 +54,11 @@ async function fetchActiveSessions() {
 async function startTwoFactorSetup() {
   try {
     const result = await $fetch('/api/auth/2fa/setup', { method: 'POST' }) as any
-    twoFactorSetupData.value = { secret: result.secret, qrCode: result.qrCode, backupCodes: result.backupCodes }
+    twoFactorSetupData.value = {
+      secret: result.data?.manualEntryKey || result.data?.secret || '',
+      qrCode: result.data?.qrCode || '',
+      backupCodes: [],
+    }
     showTwoFactorSetup.value = true
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to setup 2FA', color: 'error' })
@@ -68,12 +72,11 @@ async function verifyAndEnableTwoFactor() {
   }
   settingUpTwoFactor.value = true
   try {
-    await $fetch('/api/auth/2fa/verify', { method: 'POST', body: { token: twoFactorToken.value, secret: twoFactorSetupData.value?.secret } })
+    const result = await $fetch<any>('/api/auth/2fa/verify', { method: 'POST', body: { token: twoFactorToken.value } })
+    if (twoFactorSetupData.value) twoFactorSetupData.value.backupCodes = result?.data?.backupCodes || []
     toast.add({ title: 'Success', description: 'Two-factor authentication enabled', color: 'success' })
     twoFactorEnabled.value = true
-    showTwoFactorSetup.value = false
     twoFactorToken.value = ''
-    twoFactorSetupData.value = null
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Invalid verification code', color: 'error' })
   } finally {

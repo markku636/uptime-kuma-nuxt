@@ -69,6 +69,20 @@
       </div>
     </div>
 
+    <!-- Bruno declarative request -->
+    <div v-if="form.type === 'bruno'" class="section-card space-y-3">
+      <h2 class="section-title">Bruno request</h2>
+      <p class="text-sm text-secondary">Paste a single declarative <code>.bru</code> request. Scripts, tests and post-response variables are ignored. Variables use this environment's variables/secrets.</p>
+      <textarea
+        v-model="form.body"
+        class="input-field font-mono text-xs"
+        rows="14"
+        maxlength="131072"
+        spellcheck="false"
+        placeholder="meta {&#10;  name: Example&#10;}&#10;get {&#10;  url: https://example.com/health&#10;}&#10;assert {&#10;  res.status: eq 200&#10;}"
+      />
+    </div>
+
     <!-- HTTP Settings -->
     <div v-if="showHttpSettings" class="section-card">
       <h2 class="section-title">HTTP Settings</h2>
@@ -1285,6 +1299,7 @@ const monitorTypes = [
   { value: 'http', label: 'HTTP(s)' },
   { value: 'keyword', label: 'HTTP(s) - Keyword' },
   { value: 'json-query', label: 'HTTP(s) - JSON Query' },
+  { value: 'bruno', label: 'Bruno (.bru request)' },
   { value: 'grpc-keyword', label: 'gRPC(s) - Keyword' },
   { value: 'tcp', label: 'TCP Port' },
   { value: 'ping', label: 'Ping' },
@@ -1462,7 +1477,9 @@ const handleSubmit = async (trial=false) => {
     }
     
     // Request body
-    if (form.body && ['POST', 'PUT', 'PATCH'].includes(form.method)) {
+    if (form.type === 'bruno') {
+      data.body = form.body
+    } else if (form.body && ['POST', 'PUT', 'PATCH'].includes(form.method)) {
       data.body = form.body
     }
 

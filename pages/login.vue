@@ -52,6 +52,22 @@
           </div>
         </div>
 
+        <!-- 2FA step -->
+        <div v-if="requiresTwoFactor" class="form-group">
+          <label for="twofa" class="input-label">2FA code or backup code</label>
+          <input
+            id="twofa"
+            v-model="twoFactorCode"
+            type="text"
+            class="input-field text-center tracking-widest"
+            autocomplete="one-time-code"
+            maxlength="9"
+            placeholder="000000 or XXXX-XXXX"
+            required
+          />
+          <p class="text-xs text-secondary mt-1">Enter the 6-digit code from your authenticator app, or a backup code.</p>
+        </div>
+
         <!-- Error -->
         <div v-if="error" class="alert alert-danger">
           {{ error }}
@@ -82,6 +98,8 @@ const form = reactive({
 const loading = ref(false)
 const error = ref('')
 const showPassword = ref(false)
+const requiresTwoFactor = ref(false)
+const twoFactorCode = ref('')
 
 onMounted(async () => {
   try {
@@ -101,12 +119,15 @@ const handleLogin = async () => {
   try {
     const response = await $fetch('/api/auth/login', {
       method: 'POST',
-      body: form,
+      body: { ...form, ...(requiresTwoFactor.value ? { token: twoFactorCode.value } : {}) },
     })
 
     if (response.ok) {
       await refreshSession()
       navigateTo('/dashboard')
+    } else if ((response as any)?.tokenRequired) {
+      requiresTwoFactor.value = true
+      error.value = ''
     }
   } catch (e: any) {
     error.value = e.data?.message || 'Login failed'

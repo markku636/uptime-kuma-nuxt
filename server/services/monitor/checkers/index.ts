@@ -1,6 +1,7 @@
 // server/services/monitor/checkers/index.ts
 export { checkHttp, checkKeyword } from './http-checker'
 export { checkJsonQuery } from './json-query-checker'
+export { checkBruno } from './bruno-checker'
 export { checkGrpcKeyword } from './grpc-checker'
 export { checkMongoDB, checkMySQL, checkPostgres, checkSqlServer, checkRedis } from './database-checker'
 export { checkDocker } from './docker-checker'

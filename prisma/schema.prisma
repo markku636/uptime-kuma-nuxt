@@ -19,6 +19,7 @@ model User {
   timezone      String         @default("UTC")
   twofaStatus   Boolean        @default(false) @map("twofa_status")
   twofaSecret   String?        @map("twofa_secret")
+  twofaBackupCodes Json?       @map("twofa_backup_codes")
   createdAt     DateTime       @default(now()) @map("created_at")
 
   memberships   WorkspaceMember[]

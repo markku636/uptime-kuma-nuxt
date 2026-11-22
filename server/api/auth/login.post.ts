@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { verifyPassword } from '../../utils/password'
 import { createTrackedSession } from '../../utils/tracked-sessions'
-import { verifyTwoFactorToken } from '../../services/auth/two-factor'
+import { verifyTwoFactorToken, verifyBackupCode } from '../../services/auth/two-factor'
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required').max(100),
@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
       timezone: true,
       twofaStatus: true,
       twofaSecret: true,
+      twofaBackupCodes: true,
       sessionVersion: true
     }
   })
@@ -74,13 +75,19 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Verify 2FA token
-    const verification = verifyTwoFactorToken(token, user.twofaSecret)
-    if (!verification.valid) {
-      throw createError({
-        statusCode: 401,
-        message: 'Invalid 2FA token'
-      })
+    // Verify 2FA token: 6-digit TOTP or a one-time backup code
+    let verified = verifyTwoFactorToken(token, user.twofaSecret).valid
+    if (!verified && /^[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(token.toUpperCase())) {
+      const codes = Array.isArray(user.twofaBackupCodes) ? user.twofaBackupCodes as string[] : []
+      const backup = verifyBackupCode(token.toUpperCase(), codes)
+      if (backup.valid) {
+        verified = true
+        const remaining = codes.filter((_, index) => index !== backup.usedIndex)
+        await prisma.user.update({ where: { id: user.id }, data: { twofaBackupCodes: remaining } })
+      }
+    }
+    if (!verified) {
+      throw createError({ statusCode: 401, message: 'Invalid 2FA token' })
     }
   }
 

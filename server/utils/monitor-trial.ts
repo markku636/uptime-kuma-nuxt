@@ -3,7 +3,7 @@ const active=new Set<number>(), windows=new Map<number,{time:number,count:number
 let total=0
 /** Trials share the actual checker, but never write history or dispatch notifications. */
 export async function trialMonitor(userId:number,monitor:any) {
-  if(!['http','keyword','json-query'].includes(monitor.type))throw createError({statusCode:400,message:'Trial supports HTTP monitors'})
+  if(!['http','keyword','json-query','bruno'].includes(monitor.type))throw createError({statusCode:400,message:'Trial supports HTTP monitors'})
   const now=Date.now(),window=windows.get(userId)
   const current=window&&now-window.time<60000?window:{time:now,count:0}
   if(current.count>=10||active.has(userId)||total>=8)throw createError({statusCode:429,message:'Trial capacity reached; retry shortly'})

@@ -25,7 +25,7 @@ export default defineEventHandler(async event => {
       SELECT count(*)::int AS scheduled,
              (count(*) FILTER (WHERE next_check_at <= statement_timestamp() AND (lease_until IS NULL OR lease_until <= statement_timestamp())))::int AS due,
              (EXTRACT(EPOCH FROM statement_timestamp() - min(next_check_at) FILTER (WHERE next_check_at <= statement_timestamp() AND (lease_until IS NULL OR lease_until <= statement_timestamp()))) * 1000)::int AS "oldestDueMs"
-      FROM monitors WHERE active AND type IN ('http','keyword','json-query')`,
+      FROM monitors WHERE active AND type IN ('http','keyword','json-query','bruno')`,
   ])
   const now = Date.now()
   const instances = rows.map(row => {
