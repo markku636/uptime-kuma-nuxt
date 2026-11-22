@@ -1,6 +1,7 @@
 // server/api/v1/status-pages/[slug]/index.put.ts
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
+import { hashPassword } from '~/server/utils/password'
 
 const groupMonitorSchema = z.object({
   id: z.number()
@@ -19,6 +20,7 @@ const updateStatusPageSchema = z.object({
   icon: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
   published: z.boolean().optional(),
+  password: z.string().min(6).max(200).nullable().optional(),
   showTags: z.boolean().optional(),
   showPoweredBy: z.boolean().optional(),
   showCertificateExpiry: z.boolean().optional(),
@@ -76,10 +78,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { publicGroupList, domainNameList, customCSS, ...statusPageData } = result.data
+  const { publicGroupList, domainNameList, customCSS, password, ...statusPageData } = result.data
 
   if (domainNameList?.length) throw createError({ statusCode: 400, message: 'Custom domains are not supported by this deployment' })
-  const updateData = Object.fromEntries(Object.entries(statusPageData).filter(([, value]) => value !== undefined && value !== null))
+  const updateData: Record<string, unknown> = Object.fromEntries(Object.entries(statusPageData).filter(([, value]) => value !== undefined && value !== null))
+  if (password !== undefined) updateData.passwordHash = password === null ? null : await hashPassword(password)
   if (customCSS !== undefined && customCSS !== null) updateData.customCss = customCSS
   const statusPage = await prisma.$transaction(async tx => {
     const current = await tx.statusPage.findFirst({ where: { slug, workspaceId: session.workspaceId } })

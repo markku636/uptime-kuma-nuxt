@@ -42,6 +42,9 @@ const {
   // UI State
   loading,
   error,
+  passwordRequired,
+  passwordError,
+  unlockStatusPage,
   
   // Computed
   overallStatus,
@@ -80,6 +83,17 @@ const {
 // Other state
 const showEditSidebar = ref(false)
 const showDeleteConfirm = ref(false)
+const statusPassword = ref('')
+const unlocking = ref(false)
+async function submitPassword() {
+  unlocking.value = true
+  try {
+    await unlockStatusPage(statusPassword.value)
+    statusPassword.value = ''
+  } finally {
+    unlocking.value = false
+  }
+}
 
 // Active group tab - use group ID instead of index for proper API calls
 const activeGroupId = ref<number | null>(null)
@@ -590,6 +604,27 @@ function formatLastUpdated(date: Date | null) {
             Go Home
           </NuxtLink>
         </div>
+      </div>
+
+      <!-- Password gate -->
+      <div v-else-if="passwordRequired" class="flex items-center justify-center min-h-screen px-4">
+        <form class="w-full max-w-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-lg" @submit.prevent="submitPassword">
+          <h1 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Password required</h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">This status page is protected. Enter the password to view it.</p>
+          <input
+            v-model="statusPassword"
+            type="password"
+            autocomplete="current-password"
+            aria-label="Status page password"
+            placeholder="Password"
+            required
+            class="w-full rounded border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-gray-900 dark:text-white mb-3"
+          />
+          <p v-if="passwordError" role="alert" class="text-sm text-red-500 mb-3">{{ passwordError }}</p>
+          <button type="submit" :disabled="unlocking" class="w-full rounded bg-emerald-500 px-4 py-2 font-medium text-white hover:bg-emerald-600 disabled:opacity-60">
+            {{ unlocking ? 'Checking…' : 'View status page' }}
+          </button>
+        </form>
       </div>
 
       <!-- Main Status Page Content -->

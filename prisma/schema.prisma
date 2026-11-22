@@ -260,6 +260,7 @@ model StatusPage {
   icon                  String?
   theme                 String    @default("auto")
   published             Boolean   @default(true)
+  passwordHash          String?   @map("password_hash")
   showTags              Boolean   @default(false) @map("show_tags")
   showPoweredBy         Boolean   @default(true) @map("show_powered_by")
   showCertificateExpiry Boolean   @default(false) @map("show_certificate_expiry")

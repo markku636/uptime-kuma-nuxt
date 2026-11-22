@@ -4,16 +4,24 @@ import { prisma } from './prisma'
 import {parseMonitorIds,recentHeartbeats} from './monitor-query'
 import {rawUptimeWindows} from '../services/uptime/queries'
 import { getRequestSession } from './request-session'
+import { hasStatusUnlock } from './status-password'
 
 export async function visibleStatusPage(event: H3Event) {
   const slug = getRouterParam(event, 'slug')
   const page = slug && await prisma.statusPage.findUnique({ where: { slug } })
   if (!page) throw createError({ statusCode: 404, message: 'Status page not found' })
-  if (!page.published) {
-    try {
-      const session = await getRequestSession(event)
-      if (!session.user || !('workspaceId' in session) || session.workspaceId !== page.workspaceId) throw new Error('No access')
-    } catch { throw createError({ statusCode: 404, message: 'Status page not found' }) }
+
+  let owner = false
+  try {
+    const session = await getRequestSession(event)
+    owner = !!session.user && 'workspaceId' in session && session.workspaceId === page.workspaceId
+  } catch {
+    owner = false
+  }
+
+  if (!page.published && !owner) throw createError({ statusCode: 404, message: 'Status page not found' })
+  if (page.passwordHash && !owner && !hasStatusUnlock(event, page.id, page.passwordHash)) {
+    throw createError({ statusCode: 401, message: 'Status page password required' })
   }
   return page
 }
@@ -28,6 +36,7 @@ export function statusConfig(page: any) {
   return { id: page.id, slug: page.slug, title: page.title, description: page.description,
     icon: page.icon, theme: page.theme, published: page.published, showTags: page.showTags,
     showPoweredBy: page.showPoweredBy, showCertificateExpiry: page.showCertificateExpiry,
+    passwordProtected: !!page.passwordHash,
     perPage: page.perPage, autoRefreshInterval: page.autoRefreshInterval, customCSS: page.customCss,
     customCss: page.customCss, footerText: page.footerText, googleAnalyticsId: page.googleAnalyticsId }
 }

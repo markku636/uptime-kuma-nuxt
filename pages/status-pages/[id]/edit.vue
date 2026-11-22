@@ -31,6 +31,7 @@ const form = ref({
   icon: '',
   theme: 'auto' as 'light' | 'dark' | 'auto',
   published: true,
+  password: '' as string | null,
   showTags: false,
   domainNameList: [] as string[],
   customCss: '',
@@ -41,6 +42,8 @@ const form = ref({
 })
 
 const originalGroups=ref<any[]>([]),selectedMetadata=ref<any[]>([])
+const passwordProtected=ref(false)
+const clearPassword=ref(false)
 const loading = ref(false)
 const newDomain = ref('')
 
@@ -49,6 +52,7 @@ watch(statusPage, (response) => {
   const val=response?.data
   if (val) {
     originalGroups.value=val.publicGroupList||[];selectedMetadata.value=originalGroups.value.flatMap(group=>group.monitorList)
+    passwordProtected.value=!!val.passwordProtected
     form.value = {
       title: val.title,
       slug: val.slug,
@@ -56,6 +60,7 @@ watch(statusPage, (response) => {
       icon: val.icon || '',
       theme: val.theme || 'auto',
       published: val.published,
+      password: '',
       showTags: val.showTags || false,
       domainNameList: val.domainNameList || [],
       customCss: val.customCss || '',
@@ -94,7 +99,7 @@ function removeDomain(index: number) {
   form.value.domainNameList.splice(index, 1)
 }
 
-function statusPagePayload(){const selected=new Set(form.value.monitors),known=new Set(originalGroups.value.flatMap(group=>group.monitorList.map((monitor:any)=>monitor.id))),groups=originalGroups.value.map(group=>({...group,monitorList:group.monitorList.filter((monitor:any)=>selected.has(monitor.id)).map((monitor:any)=>({id:monitor.id}))}));if(!groups.length)groups.push({id:0,name:'Monitors',weight:1,monitorList:[]});groups[0].monitorList.push(...form.value.monitors.filter(id=>!known.has(id)).map(id=>({id})));const {monitors,...metadata}=form.value;return {...metadata,publicGroupList:groups}}
+function statusPagePayload(){const selected=new Set(form.value.monitors),known=new Set(originalGroups.value.flatMap(group=>group.monitorList.map((monitor:any)=>monitor.id))),groups=originalGroups.value.map(group=>({...group,monitorList:group.monitorList.filter((monitor:any)=>selected.has(monitor.id)).map((monitor:any)=>({id:monitor.id}))}));if(!groups.length)groups.push({id:0,name:'Monitors',weight:1,monitorList:[]});groups[0].monitorList.push(...form.value.monitors.filter(id=>!known.has(id)).map(id=>({id})));const {monitors,password,...metadata}=form.value;const payload:any={...metadata,publicGroupList:groups};if(password)payload.password=password;else if(clearPassword.value&&passwordProtected.value)payload.password=null;return payload}
 async function handleSubmit() {
   loading.value = true
   try {
@@ -285,8 +290,12 @@ const previewUrl = computed(() => {
         </div>
 
         <!-- Publishing -->
-        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <UCheckbox v-model="form.published" label="Publish this status page" />
+          <UFormField label="Password protection" hint="Leave blank to keep the current password; enter at least 6 characters to require one.">
+            <UInput v-model="form.password" type="password" autocomplete="new-password" placeholder="Optional password" />
+          </UFormField>
+          <UCheckbox v-if="isEdit && passwordProtected" v-model="clearPassword" label="Remove password protection" />
         </div>
 
         <!-- Actions -->

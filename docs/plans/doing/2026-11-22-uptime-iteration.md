@@ -170,4 +170,16 @@ R9 🔵 操作便利性：
 
 R10 🔵 PWA 警告收斂：補上 manifest 參考但缺失的 `public/icon-192.png`／`icon-512.png`、
 `browserconfig.xml`，並加入 `mobile-web-app-capable` meta（保留 Apple 舊 tag）。
-- 驗證：build 成功；unit 52/52。待部署確認 console 無 PWA 警告。
+- 部署：artifact `305d1beaf23bfbbcb1d7d0f23ad6a440b415cbce94b944cbee965193db40b683`
+  （201,965,822 bytes；source `174d6f8`）。GitOps loader commit `8353e41`（rev41）→ app `7f42c51`（rev42，
+  無 schema 變更，API/worker/fixture 全 Healthy，Synced）。
+- 線上驗證：icon-192/512/browserconfig 皆 200，`mobile-web-app-capable` meta 存在，
+  console 0 errors / 0 warnings。R10 ✅
+
+R11 🔵 狀態頁密碼保護（UptimeRobot「Password protection & private pages」）：
+- schema/migration `20261122122500_status_page_password`：StatusPage.passwordHash。
+- `server/utils/status-password.ts`：HMAC 簽章的 30 天 unlock cookie（httpOnly/secure/sameSite=lax）；
+  `visibleStatusPage` 對有密碼的頁面要求 cookie 或同 workspace 擁有者 session。
+- `POST /api/v1/status-pages/[slug]/unlock`：bcrypt 驗證後發 cookie；PUT 設定/清除 passwordHash。
+- 編輯頁新增密碼欄位與「移除密碼保護」；公開頁遇到 401 顯示密碼表單並可解鎖後重新載入。
+- 驗證：build 成功；unit 52/52。待部署與線上端到端驗證（測試後清除密碼）。

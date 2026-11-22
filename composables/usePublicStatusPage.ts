@@ -109,6 +109,8 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
   // UI State
   const loading = ref(true)
   const error = ref<string | null>(null)
+  const passwordRequired = ref(false)
+  const passwordError = ref('')
   const activeTab = ref<number | null>(null)
   const page = ref(1)
   const perPage = ref(5)
@@ -209,10 +211,31 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
         }
       }
     } catch (e: any) {
-      error.value = e.data?.message || e.message || 'Failed to load status page'
-      console.error('Failed to load status page:', e)
+      if (e?.statusCode === 401 && /password/i.test(e?.data?.message || e?.message || '')) {
+        passwordRequired.value = true
+        error.value = null
+      } else {
+        error.value = e.data?.message || e.message || 'Failed to load status page'
+        console.error('Failed to load status page:', e)
+      }
     } finally {
       loading.value = false
+    }
+  }
+
+  async function unlockStatusPage(password: string) {
+    passwordError.value = ''
+    try {
+      await $fetch(`/api/v1/status-pages/${slugRef.value}/unlock`, {
+        method: 'POST',
+        body: { password },
+      })
+      passwordRequired.value = false
+      await loadData()
+      return true
+    } catch (e: any) {
+      passwordError.value = e?.data?.message || e?.message || 'Could not unlock status page'
+      return false
     }
   }
 
@@ -617,6 +640,9 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     // UI State
     loading,
     error,
+    passwordRequired,
+    passwordError,
+    unlockStatusPage,
     activeTab,
     page,
     perPage,
