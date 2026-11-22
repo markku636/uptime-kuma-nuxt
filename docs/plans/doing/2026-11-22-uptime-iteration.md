@@ -127,4 +127,16 @@ R6 🔵 可用率顯示與狀態頁編輯面板收斂：
 - `pages/dashboard/index.vue`：24h 無資料時改顯示 30d 可用率並標明期間；兩個批量查詢平行送出。
 - `pages/status/[slug].vue`：Edit Sidebar 改為 `v-if="canEdit && editMode && showEditSidebar"`，
   一般瀏覽（含匿名）不再把編輯表單放進 DOM。
-- 驗證：build 成功；unit 52/52。待部署與線上驗證。
+- 部署：artifact `07aee4c70ef551c1416d71d637452051b0c9f7e771b4ce614334a30ee3a0e5c3`
+  （201,972,549 bytes；source `43dde02`）。GitOps loader `1d44dd0`（rev31）→ migration `5c32759`（rev32）
+  → app `8f47e9d`（rev33），API/worker/fixture 全 Healthy。
+- 線上驗證：狀態頁一般瀏覽已無 Edit Sidebar／Danger Zone；list view 正確顯示
+  「30d: 100.00%」回退標籤。grid view 首次載入仍顯示 24h: —，經查是 hydration mismatch
+  造成後續文字節點未被 patch（console 有 "Hydration completed but contains mismatches"）。
+  R6 部分完成，R7 接手修 hydration。
+
+R7 🔵 dashboard hydration mismatch：
+- `pages/dashboard/index.vue`：Important Events 時間改 `<ClientOnly>`（SSR 用 UTC 固定格式，
+  客戶端再換成當地時間）；heartbeat tooltip 改用固定 UTC 格式；`Date.now()` 從 computed 移到
+  onMounted／10s refresh 的 `renderNow` ref，SSR 與 hydration 期間用固定值 0。
+- 驗證：build 成功；unit 52/52。待部署並確認 console 無 hydration 警告、grid 首次載入即顯示回退值。

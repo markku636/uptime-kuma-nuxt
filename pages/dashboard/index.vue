@@ -155,7 +155,7 @@
             :key="i"
             class="h-6 w-1.5 rounded-full transition-all"
             :class="getHeartbeatClass(beat)"
-            :title="beat ? `${formatDateTime(beat.time)} - ${beat.ping || 0}ms` : 'No data'"
+            :title="beat ? `${formatUtc(beat.time)} - ${beat.ping || 0}ms UTC` : 'No data'"
           ></div>
         </div>
       </NuxtLink>
@@ -264,7 +264,12 @@
                   {{ getStatusText(beat.status) }}
                 </span>
               </td>
-              <td class="text-secondary">{{ formatDateTime(beat.time) }}</td>
+              <td class="text-secondary">
+                <ClientOnly>
+                  {{ formatDateTime(beat.time) }}
+                  <template #fallback>{{ formatUtc(beat.time) }}</template>
+                </ClientOnly>
+              </td>
               <td class="text-secondary max-w-xs truncate">{{ beat.msg || '-' }}</td>
             </tr>
             <tr v-if="importantHeartbeats.length === 0">
@@ -320,6 +325,8 @@ definePageMeta({
 const { $socket } = useNuxtApp()
 const socketConnected = ref(false)
 const heartbeatsMap = ref<Record<number, any[]>>({})
+// Hydration must not depend on wall-clock time; the browser fills this after mount.
+const renderNow = ref<number | null>(null)
 let socket:any=null
 
 // Quick add (UptimeRobot-style single URL flow)
@@ -381,7 +388,7 @@ const typeFilter = ref('all')
 
 const {monitors,pending,error,page,summary:stats,next,back,canBack,refresh}=useMonitorPageForDashboard()
 function useMonitorPageForDashboard(){const result=useMonitorPage();watch(searchQuery,value=>result.search.value=value);watch(statusFilter,value=>result.status.value=value);watch(typeFilter,value=>result.type.value=value);return result}
-const monitorsWithLiveData=computed(()=>monitors.value.map((m:any)=>{const beats=heartbeatsMap.value[m.id]||m.heartbeats||[],latest=beats[0],fresh=latest&&Date.now()-new Date(latest.time).getTime()<=Math.max(m.interval*2,m.interval+m.timeout)*1000;return {...m,viewStatus:!m.active?'paused':!latest?'pending':!fresh?'stale':latest.status===1?'up':latest.status===0?'down':latest.status===3?'maintenance':'pending',heartbeats:beats}}))
+const monitorsWithLiveData=computed(()=>monitors.value.map((m:any)=>{const beats=heartbeatsMap.value[m.id]||m.heartbeats||[],latest=beats[0],now=renderNow.value??0,fresh=latest&&now-new Date(latest.time).getTime()<=Math.max(m.interval*2,m.interval+m.timeout)*1000;return {...m,viewStatus:!m.active?'paused':!latest?'pending':!fresh?'stale':latest.status===1?'up':latest.status===0?'down':latest.status===3?'maintenance':'pending',heartbeats:beats}}))
 const filteredMonitors=monitorsWithLiveData
 const {data:eventData,refresh:refreshEvents}=await useFetch<any>('/api/v1/monitors/events',{headers:useRequestHeaders(['cookie'])})
 let historySequence=0
@@ -450,6 +457,11 @@ const importantHeartbeats=computed<any[]>(()=>eventData.value?.data||[])
 
 const formatDateTime = (time: string) => {
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
+// Deterministic SSR fallback; the browser replaces it with the local-time format.
+const formatUtc = (time: string) => {
+  const date = new Date(time)
+  return Number.isNaN(date.getTime()) ? '—' : date.toISOString().slice(0, 19).replace('T', ' ')
 }
 
 const getStatusClass = (status: number) => {
@@ -604,8 +616,9 @@ onMounted(() => {
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
+  renderNow.value = Date.now()
   // Auto-refresh every 30 seconds as fallback
-  refreshInterval=setInterval(()=>{refresh();refreshEvents()},15000)
+  refreshInterval=setInterval(()=>{renderNow.value=Date.now();refresh();refreshEvents()},15000)
 })
 
 onUnmounted(() => {
