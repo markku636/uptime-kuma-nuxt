@@ -227,6 +227,21 @@ R16 🔵 Reverse Proxy 設定持久化：`/api/settings` GET/PUT 原本不存在
   UI 顯示「Configured — leave blank to keep」並可明確清除。
 - 驗證：build 成功；unit 55/55。待部署與線上驗證（不實際啟動 cloudflared）。
 
+- 部署：artifact `9dda33830769178d3f95aef8d89597bb0242adb419ed0a405a27a88764bdd245`
+  （201,975,834 bytes；source `90ffabb`），loader `60b2469`（rev57）→ app `c765a72`（rev58）。
+- 線上驗證：`GET /api/settings` 回 `{cloudflareTunnelTokenConfigured:false,trustProxy:false}`，
+  `PUT` 回 `{ok:true}`。R16 ✅
+
+R17 🔵 Keyboard shortcut `/` 宣稱 Focus search，但沒有任何 input 有 `data-search-input`。
+  已加在 dashboard／monitors／MonitorListPanel 的搜尋框。
+- 部署：artifact `c539f1f76ed8b974ff3117e2856c957156bd8907a9dc53ad74473b92c8ef1b58`
+  （201,986,890 bytes；source `d937eb6`），loader `e9e628f`（rev59）→ app `47971e7`（rev60）。
+- 線上驗證：按 `/` 後 activeElement 為 aria-label "Search monitors" 的輸入框。R17 ✅
+
+R18 🔵 公開狀態頁的 Edit Mode 原本只判断 loggedIn；改由伺服器依該頁 workspace 的
+  owner/editor 角色回傳 `canEdit`，viewer/匿名不再看到編輯入口。
+- 驗證：build 成功；unit 55/55。待部署與線上驗證（owner 有、匿名沒有）。
+
 ## 目前狀態（12:46 CST）
 13 輪全部已 commit 並部署到 lab 正式站，線上 revision 52、Healthy/Synced，無 console error/warning。
 Git push：已用環境中的 GitHub token 成功推送到 `origin/iterate/uptime-20261122`（2026-11-22 12:5x）。

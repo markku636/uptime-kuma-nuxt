@@ -14,9 +14,6 @@
  * - Theme switching (auto/light/dark)
  */
 
-// Explicit import for useUserSession to ensure it's available
-import { useUserSession } from '#imports'
-
 // Public status page - no auth required for viewing
 definePageMeta({
   layout: false
@@ -113,10 +110,8 @@ const allMonitors = ref<any[]>([])
 const selectedGroupForMonitor = ref<number | null>(null)
 const selectedMonitorToAdd = ref<{ label: string; value: number; tags?: any[] } | null>(null)
 
-// Check if user has edit permission
-// useUserSession must be called at setup top-level (not in onMounted)
-const { loggedIn } = useUserSession()
-const canEdit = computed(() => loggedIn.value)
+// Edit permission is decided by the server for this status page's workspace.
+const canEdit = computed(() => !!statusPage.value?.canEdit)
 
 // Computed for backwards compatibility
 const incidents = computed(() => incident.value ? [incident.value] : [])
