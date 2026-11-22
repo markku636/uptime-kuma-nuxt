@@ -1,4 +1,4 @@
-import { requireRequestSession } from '../../../../../utils/request-session'
+import { requireRequestSession } from '../../../../utils/request-session'
 
 const MAX_ROWS = 10_000
 
