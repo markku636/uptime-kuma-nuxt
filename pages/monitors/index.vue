@@ -55,6 +55,10 @@
           <div v-if="monitor.url" class="text-gray-600 dark:text-gray-400 text-sm mt-1 ml-6 truncate">
             {{ monitor.url }}
           </div>
+          <div class="mt-1 ml-6 flex flex-wrap gap-x-4 gap-y-1 text-xs text-secondary">
+            <span>24h: {{ uptimeLabel(monitor.id) }}</span>
+            <span v-if="latestPing(monitor)">Response: {{ latestPing(monitor) }}ms</span>
+          </div>
         </NuxtLink>
       </div>
     </div>
@@ -68,6 +72,26 @@ definePageMeta({
 
 const {search,status,type,monitors,pending,error,page,summary,next,back,canBack}=useMonitorPage()
 const {canEdit}=useWorkspace()
+const uptimeMap=reactive<Record<string,number|null>>({}),uptime30Map=reactive<Record<string,number|null>>({})
+let uptimeSequence=0
+watch(monitors,async rows=>{
+  if(import.meta.server||!rows.length)return
+  const sequence=++uptimeSequence,ids=rows.map((m:any)=>m.id).join(',')
+  const [day,month]=await Promise.allSettled([
+    $fetch<any>('/api/v1/monitors/uptime-batch',{query:{ids,period:'24h'}}),
+    $fetch<any>('/api/v1/monitors/uptime-batch',{query:{ids,period:'30d'}}),
+  ])
+  if(sequence!==uptimeSequence)return
+  if(day.status==='fulfilled')Object.assign(uptimeMap,day.value?.data||{})
+  if(month.status==='fulfilled')Object.assign(uptime30Map,month.value?.data||{})
+},{flush:'post',immediate:true})
+function uptimeLabel(id:number){
+  const day=uptimeMap[String(id)]
+  if(typeof day==='number'&&Number.isFinite(day))return `${day.toFixed(2)}%`
+  const month=uptime30Map[String(id)]
+  return typeof month==='number'&&Number.isFinite(month)?`${month.toFixed(2)}% (30d)`:'—'
+}
+function latestPing(monitor:any){return monitor.heartbeats?.[0]?.ping||null}
 function getLatestStatus(monitor: any) {
   return monitor.heartbeats?.[0]?.status ?? -1
 }
