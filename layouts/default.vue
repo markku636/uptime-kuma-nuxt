@@ -11,6 +11,7 @@
         <NuxtLink to="/monitors" class="sidebar-link" :class="{ 'sidebar-link-active': monitorsActive }">Monitors</NuxtLink>
         <NuxtLink to="/monitors/groups" class="sidebar-link" active-class="sidebar-link-active">Groups</NuxtLink>
         <NuxtLink to="/maintenance" class="sidebar-link" active-class="sidebar-link-active">Maintenance</NuxtLink>
+        <NuxtLink to="/reports" class="sidebar-link" active-class="sidebar-link-active">Reports</NuxtLink>
         <NuxtLink to="/settings" class="sidebar-link" active-class="sidebar-link-active">Settings</NuxtLink>
         <NuxtLink to="/status-pages" class="sidebar-link" active-class="sidebar-link-active">Status Pages</NuxtLink>
         <NuxtLink to="/api-docs" class="sidebar-link" active-class="sidebar-link-active">API Docs</NuxtLink>
@@ -177,6 +178,14 @@
               @click="mobileMenuOpen = false"
             >
               Maintenance
+            </NuxtLink>
+            <NuxtLink
+              to="/reports"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              Reports
             </NuxtLink>
             <NuxtLink
               to="/settings"

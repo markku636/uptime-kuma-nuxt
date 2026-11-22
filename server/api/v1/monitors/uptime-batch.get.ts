@@ -1,7 +1,7 @@
 import { requireRequestSession } from '../../../utils/request-session'
 import { uptimeWindows } from '../../../services/uptime/rollup-reader'
 
-const periods = { '24h': 24, '7d': 168, '30d': 720 } as const
+const periods = { '24h': 24, '7d': 168, '30d': 720, '1y': 8760 } as const
 
 export default defineEventHandler(async (event) => {
   const session = await requireRequestSession(event)
@@ -32,6 +32,17 @@ export default defineEventHandler(async (event) => {
   const start = new Date(end.getTime() - periods[period] * 3_600_000)
   const values = await uptimeWindows(allowed, [{ key: period, start, end }])
   const data: Record<string, number | null> = {}
-  for (const id of allowed) data[String(id)] = values.get(`${id}:${period}`)?.uptime ?? null
-  return { ok: true, data }
+  const details: Record<string, { uptime: number | null; downtimeMinutes: number; upCount: number; downCount: number; coverage: number }> = {}
+  for (const id of allowed) {
+    const result = values.get(`${id}:${period}`)
+    data[String(id)] = result?.uptime ?? null
+    details[String(id)] = {
+      uptime: result?.uptime ?? null,
+      downtimeMinutes: Math.round((result?.downtimeMs || 0) / 60000),
+      upCount: result?.upCount || 0,
+      downCount: result?.downCount || 0,
+      coverage: result?.coverage || 0,
+    }
+  }
+  return { ok: true, data, details }
 })
