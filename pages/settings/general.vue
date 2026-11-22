@@ -50,9 +50,13 @@
               <span class="text-gray-700 dark:text-gray-200">Dashboard</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
-              <input v-model="form.entryPage" type="radio" name="entryPage" value="statusPage" class="text-green-500" />
+              <input v-model="form.entryPage" type="radio" name="entryPage" value="status" class="text-green-500" />
               <span class="text-gray-700 dark:text-gray-200">Status Page</span>
             </label>
+            <select v-if="form.entryPage === 'status'" v-model="form.statusPageSlug" aria-label="Status page" class="input-field">
+              <option value="" disabled>Select a status page</option>
+              <option v-for="page in statusPages" :key="page.id" :value="page.slug">{{ page.title }}</option>
+            </select>
           </div>
         </div>
 
@@ -96,28 +100,6 @@
       </form>
     </div>
 
-    <!-- Toast Message Timeout -->
-    <div class="section-card">
-      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Toast Message Timeout</h4>
-      <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">Set to -1 to make toast messages permanent.</p>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Success Toast (seconds)</label>
-          <input v-model.number="form.toastSuccessTimeout" type="number" class="input-field" min="-1" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Error Toast (seconds)</label>
-          <input v-model.number="form.toastErrorTimeout" type="number" class="input-field" min="-1" />
-        </div>
-      </div>
-      
-      <div class="pt-4">
-        <button type="button" class="btn btn-primary" :disabled="loading" @click="saveSettings">
-          Save
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -135,11 +117,11 @@ const form = reactive({
   steamAPIKey: '',
   chromeExecutable: '',
   dnsServers: '',
-  toastSuccessTimeout: 5,
-  toastErrorTimeout: -1
+  statusPageSlug: ''
 })
 
 const loading = ref(false)
+const statusPages = ref<any[]>([])
 const guessTimezone = computed(() => Intl.DateTimeFormat().resolvedOptions().timeZone)
 
 const timezones = [
@@ -192,7 +174,8 @@ const saveSettings = async () => {
         primaryBaseUrl: form.primaryBaseURL,
         steamApiKey: form.steamAPIKey,
         chromePath: form.chromeExecutable,
-        dnsServers: form.dnsServers
+        dnsServers: form.dnsServers,
+        statusPageSlug: form.entryPage === 'status' ? form.statusPageSlug : undefined
       }
     })
     toast.add({ title: 'Success', description: 'Settings saved', color: 'success' })
@@ -215,7 +198,10 @@ onMounted(async () => {
       form.steamAPIKey = settings.steamApiKey || ''
       form.chromeExecutable = settings.chromePath || ''
       form.dnsServers = settings.dnsServers || '8.8.8.8\n1.1.1.1'
+      form.statusPageSlug = settings.statusPageSlug || ''
     }
+    const pages = await $fetch<any>('/api/v1/status-pages')
+    statusPages.value = pages?.data || []
   } catch (error) {
     console.error('Failed to load settings:', error)
   }

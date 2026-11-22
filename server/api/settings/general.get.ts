@@ -21,7 +21,8 @@ export default defineEventHandler(async (event) => {
           'nscd',
           'keepDataPeriodDays',
           'checkUpdate',
-          'checkBeta'
+          'checkBeta',
+          'statusPageSlug'
         ]
       }
     }
@@ -41,7 +42,8 @@ export default defineEventHandler(async (event) => {
     nscd: true,
     keepDataPeriodDays: 180,
     checkUpdate: true,
-    checkBeta: false
+    checkBeta: false,
+    statusPageSlug: ''
   }
 
   settings.forEach(setting => {

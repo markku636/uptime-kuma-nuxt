@@ -38,6 +38,11 @@ async function checkEntryPage() {
       return navigateTo('/dashboard', { replace: true })
     }
 
+    // Anonymous visitors can land on the configured public status page
+    if (entry.entryPage === 'status' && entry.statusPageSlug) {
+      return navigateTo(`/status/${entry.statusPageSlug}`, { replace: true })
+    }
+
     // Not logged in, go to login
     return navigateTo('/login', { replace: true })
   } catch (error) {

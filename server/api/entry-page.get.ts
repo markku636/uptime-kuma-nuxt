@@ -22,7 +22,9 @@ export default defineEventHandler(async (event) => {
 
   // Get default status page if entry page is set to status page
   const statusPageSetting = await prisma.setting.findUnique({
-    where: { key: 'defaultStatusPage' }
+    where: { key: 'entryPageStatusSlug' }
+  }) || await prisma.setting.findUnique({
+    where: { key: 'statusPageSlug' }
   })
 
   // Get first published status page as fallback

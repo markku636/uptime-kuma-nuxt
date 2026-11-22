@@ -8,7 +8,8 @@ const schema = z.object({
   uptimeDisplayStyle: z.enum(['percentage', 'nines']).optional(),
   heartbeatBarStyle: z.enum(['normal', 'bottom', 'none']).optional(),
   elapsedTimeStyle: z.enum(['no-line', 'with-line', 'none']).optional(),
-  showCertificateExpiry: z.boolean().optional()
+  showCertificateExpiry: z.boolean().optional(),
+  language: z.string().max(20).optional()
 })
 
 export default defineEventHandler(async (event) => {

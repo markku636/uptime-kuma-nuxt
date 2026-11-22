@@ -14,7 +14,8 @@ export default defineEventHandler(async (event) => {
           'uptimeDisplayStyle',
           'heartbeatBarStyle',
           'elapsedTimeStyle',
-          'showCertificateExpiry'
+          'showCertificateExpiry',
+          'language'
         ]
       }
     }
@@ -27,7 +28,8 @@ export default defineEventHandler(async (event) => {
     uptimeDisplayStyle: 'percentage',
     heartbeatBarStyle: 'normal',
     elapsedTimeStyle: 'no-line',
-    showCertificateExpiry: true
+    showCertificateExpiry: true,
+    language: 'en'
   }
 
   settings.forEach(setting => {
