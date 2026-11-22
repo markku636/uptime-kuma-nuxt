@@ -7,6 +7,8 @@ const toast = useToast()
 const cloudflaredInstalled = ref<boolean | null>(null)
 const cloudflaredRunning = ref(false)
 const cloudflareTunnelToken = ref('')
+const tokenConfigured = ref(false)
+const clearToken = ref(false)
 const cloudflaredMessage = ref('')
 const currentPassword = ref('')
 const loading = ref(false)
@@ -36,7 +38,7 @@ async function fetchCloudflaredStatus() {
 async function fetchSettings() {
   try {
     const result = await $fetch('/api/settings') as any
-    cloudflareTunnelToken.value = result.cloudflareTunnelToken || ''
+    tokenConfigured.value = !!result.cloudflareTunnelTokenConfigured
     trustProxy.value = result.trustProxy || false
   } catch (error) {
     console.error('Failed to fetch settings')
@@ -44,7 +46,7 @@ async function fetchSettings() {
 }
 
 async function startCloudflared() {
-  if (!cloudflareTunnelToken.value) {
+  if (!cloudflareTunnelToken.value && !tokenConfigured.value) {
     toast.add({ title: 'Error', description: 'Please enter a Cloudflare Tunnel token', color: 'error' })
     return
   }
@@ -84,6 +86,7 @@ async function stopCloudflared() {
 
 async function removeToken() {
   cloudflareTunnelToken.value = ''
+  clearToken.value = true
   await saveSettings()
 }
 
@@ -91,11 +94,13 @@ async function saveSettings() {
   try {
     await $fetch('/api/settings', {
       method: 'PUT',
-      body: { 
-        cloudflareTunnelToken: cloudflareTunnelToken.value,
+      body: {
+        ...(clearToken.value || cloudflareTunnelToken.value ? { cloudflareTunnelToken: cloudflareTunnelToken.value } : {}),
         trustProxy: trustProxy.value
       }
     })
+    tokenConfigured.value = !!cloudflareTunnelToken.value
+    clearToken.value = false
     toast.add({ title: 'Success', description: 'Settings saved', color: 'success' })
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to save settings', color: 'error' })
@@ -146,7 +151,7 @@ async function saveSettings() {
             v-model="cloudflareTunnelToken"
             type="password"
             :disabled="cloudflaredRunning"
-            placeholder="Enter your Cloudflare Tunnel token"
+            :placeholder="tokenConfigured ? 'Configured — leave blank to keep' : 'Enter your Cloudflare Tunnel token'"
           />
           <template #hint>
             <div class="text-xs text-tertiary mt-1">

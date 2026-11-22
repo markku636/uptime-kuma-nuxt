@@ -215,6 +215,18 @@ R15 🔵 Monitor History 清理端點：Settings > Monitor History 的兩個按�
    bounded `createClearHistory` job（可選 cutoff），不直接大量 DELETE；UI toast 改為「job queued」。
 - 驗證：build 成功；unit 55/55。待部署（只用非法 body 驗證路由，不在正式站觸發清理）。
 
+- 部署：artifact `a923452f7582587eac3b8a496a55f2bc1bf7c0952e53bd062f116be1f23816ec`
+  （201,986,908 bytes；source `26ba9f5`），loader `fc7e5d6`（rev55）→ app `7110914`（rev56）。
+- 線上驗證：`clear` 非法 days 回 400（路由存在）； probe 時誤觸 `clear-all`，
+  建立 job `4f704ffb…` 並完成，但 `deletedRows=0`，**沒有資料被刪除**（已查明，不再探測破壞性端點）。
+  R15 ✅
+
+R16 🔵 Reverse Proxy 設定持久化：`/api/settings` GET/PUT 原本不存在，頁面存檔 silently fail。
+  新增 GET（僅回傳是否有 token／trustProxy）與 PUT（admin，token 用 APP_ENCRYPTION_KEY AES-GCM
+  加密存入 setting）；cloudflared/start 在前端沒帶 token 時改用store的 token；
+  UI 顯示「Configured — leave blank to keep」並可明確清除。
+- 驗證：build 成功；unit 55/55。待部署與線上驗證（不實際啟動 cloudflared）。
+
 ## 目前狀態（12:46 CST）
 13 輪全部已 commit 並部署到 lab 正式站，線上 revision 52、Healthy/Synced，無 console error/warning。
 Git push：已用環境中的 GitHub token 成功推送到 `origin/iterate/uptime-20261122`（2026-11-22 12:5x）。

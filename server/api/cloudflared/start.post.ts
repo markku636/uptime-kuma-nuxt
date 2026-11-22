@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import { decryptSecret } from '../../utils/variables'
 import { 
   getCloudflaredProcess, 
   setCloudflaredProcess, 
@@ -8,7 +9,13 @@ import {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { token } = body
+  let token = typeof body?.token === 'string' ? body.token.trim() : ''
+  if (!token) {
+    const stored = await prisma.setting.findUnique({ where: { key: 'cloudflareTunnelToken' }, select: { value: true } })
+    if (stored?.value?.startsWith('enc:v1:')) {
+      try { token = decryptSecret(stored.value, 'settings:v1:cloudflare-tunnel-token') } catch { token = '' }
+    }
+  }
 
   if (!token) {
     throw createError({
