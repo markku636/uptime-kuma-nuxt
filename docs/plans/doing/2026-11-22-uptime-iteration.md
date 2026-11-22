@@ -312,6 +312,13 @@ API/worker/fixture 全 Healthy）；CSV endpoint 回 200 且 content-type 為 te
 並在 chart 新增 `templates/artifact-prune.yaml`（每日 03:17 清理，只留最近 3 個 release），
 已 commit/push/sync 到 deploy repo，避免再次塞爆節點。
 
+R31 🔵 zh-TW 翻譯：把 R27 補的 75 個 key 從英文 fallback 換成繁體中文。
+  部署：loader `44248e0`（rev90）→ app `c1cc7fe`（rev91），全 Healthy。
+R32 🔵 新增監控表單：不支援的 checker 類型在下拉直接標 `(unsupported)`。
+  部署：loader `50831f9`（rev92）→ app `21c0d45`（rev93），全 Healthy，兩域 /login 200。
+  磁碟目前 82%（159GB 可用），無 disk pressure。
+- 安全審查子代理正在檢查新增 API（結果待補）。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
