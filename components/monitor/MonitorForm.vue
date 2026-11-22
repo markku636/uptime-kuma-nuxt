@@ -816,42 +816,7 @@
     <!-- Ping Settings -->
     <div v-if="form.type === 'ping'" class="section-card">
       <h2 class="section-title">Ping Settings</h2>
-      
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="form-group">
-          <label class="input-label">Packet Count</label>
-          <input 
-            v-model.number="form.pingCount" 
-            type="number" 
-            class="input-field" 
-            min="1"
-            max="100"
-            :disabled="loading"
-          />
-        </div>
-
-        <div class="form-group">
-          <label class="input-label">Packet Size (bytes)</label>
-          <input 
-            v-model.number="form.packetSize" 
-            type="number" 
-            class="input-field" 
-            min="1"
-            max="65500"
-            :disabled="loading"
-          />
-        </div>
-
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input 
-            v-model="form.pingNumeric" 
-            type="checkbox" 
-            class="checkbox"
-            :disabled="loading"
-          />
-          <span class="text-gray-700 dark:text-gray-300">Use Numeric Output (no DNS lookup)</span>
-        </label>
-      </div>
+      <p class="text-sm text-secondary">Packet count, packet size and numeric output are not executed by the distributed worker in this deployment. Use an external probe if you need them.</p>
     </div>
 
     <div v-if="showHttpSettings" class="section-card space-y-4">
@@ -860,15 +825,10 @@
       <p v-if="trialError" role="alert" class="text-red-400">{{ trialError }}</p>
       <div v-if="trialResult"><p>{{ trialResult.status===1?'Check passed':'Check failed' }} · {{ trialResult.code }} · {{ Math.round(trialResult.ping) }} ms</p><MonitorAssertionResults :result="trialResult.assertionResults" /></div>
     </div>
-    <!-- Monitor Conditions (for supported monitor types) -->
+    <!-- Monitor Conditions are not evaluated by this runtime -->
     <div v-if="supportsConditions" class="section-card">
       <h2 class="section-title">Monitor Conditions</h2>
-      <p class="text-sm text-gray-400 mb-4">Define custom conditions to determine monitor status based on response data</p>
-      <MonitorConditions
-        v-model="form.conditions"
-        :monitor-type="form.type"
-        :disabled="loading"
-      />
+      <p class="text-sm text-secondary">Custom conditions are not evaluated for this monitor type in this deployment. Use HTTP response assertions (available for HTTP-based monitors) instead.</p>
     </div>
 
     <!-- Timing -->
@@ -1622,13 +1582,6 @@ const handleSubmit = async (trial=false) => {
     data.radiusCallingStationId = form.radiusCallingStationId || undefined
   }
 
-  // Ping specific
-  if (form.type === 'ping') {
-    data.ping_count = form.pingCount
-    data.packetSize = form.packetSize
-    data.ping_numeric = form.pingNumeric
-  }
-
   // Max redirects for HTTP
   if (showHttpSettings.value) {
     data.maxRedirects = form.maxRedirects
@@ -1638,11 +1591,6 @@ const handleSubmit = async (trial=false) => {
     if (form.type === 'keyword' && form.useRemoteBrowser) {
       data.remote_browser = form.remoteBrowser
     }
-  }
-
-  // Monitor Conditions
-  if (supportsConditions.value && form.conditions.length > 0) {
-    data.conditions = form.conditions
   }
 
   data.notifications=Object.keys(form.notificationIDList).filter(id=>form.notificationIDList[Number(id)]).map(Number)
