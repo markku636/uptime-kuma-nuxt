@@ -14,7 +14,7 @@
           <label class="input-label">Monitor Type <span class="text-red-400">*</span></label>
           <select v-model="form.type" class="select-field" :disabled="loading">
             <option v-for="type in monitorTypes" :key="type.value" :value="type.value">
-              {{ type.label }}
+              {{ type.label }}{{ ['http','keyword','json-query','push'].includes(type.value) ? '' : ' (unsupported)' }}
             </option>
           </select>
           <p v-if="!['http','keyword','json-query','push'].includes(form.type)" role="status" class="text-sm mt-2">This checker is stored for compatibility but is not scheduled by the bounded PostgreSQL worker yet. HTTP, keyword and JSON query checks are supported.</p>
