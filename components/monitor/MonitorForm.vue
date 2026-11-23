@@ -18,6 +18,7 @@
             </option>
           </select>
           <p v-if="!['http','keyword','json-query','push'].includes(form.type)" role="status" class="text-sm mt-2">This checker is stored for compatibility but is not scheduled by the bounded PostgreSQL worker yet. HTTP, keyword and JSON query checks are supported.</p>
+          <p v-if="form.type === 'push'" role="status" class="text-sm mt-2">A missed-heartbeat alert is raised after twice the check interval (at least 60 seconds) without a push.</p>
         </div>
 
         <div class="form-group md:col-span-2">
