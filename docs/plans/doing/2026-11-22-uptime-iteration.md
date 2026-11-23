@@ -406,6 +406,10 @@ R57/R58 🔵 Push monitor 遺漏心跳偵測：worker 啟動 `PushWatchdog`，�
   利用 monitor row lock 避免多 worker 重複告警。線上實測：push→UP、逾時→PUSH_MISSED、
   再 push→UP，測試 monitor 已刪除。revision 144、全 Healthy。
 
+R59 🔵 時區設定開始生效：`useDisplayTimezone()` 依 General 的 displayTimezone
+  （未提供時退回使用者 profile timezone）格式化 `Datetime` 與監控詳情頁時間。
+  線上驗證監控詳情頁正常渲染，revision 148、全 Healthy。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。

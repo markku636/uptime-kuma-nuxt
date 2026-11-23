@@ -20,7 +20,7 @@ export function useDisplayTimezone() {
   function format(value: string | Date | number, withSeconds = true) {
     const date = value instanceof Date ? value : new Date(value)
     if (Number.isNaN(date.getTime())) return '—'
-    return new Intl.DateTimeFormat(undefined, {
+    const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: timezone.value,
       year: 'numeric',
       month: '2-digit',
@@ -28,8 +28,11 @@ export function useDisplayTimezone() {
       hour: '2-digit',
       minute: '2-digit',
       ...(withSeconds ? { second: '2-digit' } : {}),
-      hour12: false,
-    }).format(date)
+      hourCycle: 'h23',
+    }).formatToParts(date)
+    const part = (type: string) => parts.find(item => item.type === type)?.value || ''
+    const stamp = `${part('hour')}:${part('minute')}${withSeconds ? `:${part('second')}` : ''}`
+    return `${part('year')}-${part('month')}-${part('day')} ${stamp}`
   }
 
   return { timezone, format }
