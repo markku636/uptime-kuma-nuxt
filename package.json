@@ -13,7 +13,8 @@
     "test": "node scripts/test-unit.mjs",
     "test:integration": "node scripts/test-integration.mjs",
     "typecheck": "nuxt typecheck",
-    "start:worker": "node scripts/start-worker.mjs"
+    "start:worker": "node scripts/start-worker.mjs",
+    "bruno:smoke": "node scripts/bruno-smoke.mjs"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.11.0",

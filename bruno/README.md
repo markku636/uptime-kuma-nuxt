@@ -31,6 +31,18 @@ bru run --env Production --tags smoke
 bru run --env Local
 ```
 
+## Node smoke runner (no Bruno CLI needed)
+
+```bash
+npm run bruno:smoke                       # public requests only
+BRUNO_COOKIE='nuxt-session=...; workspace_id=1; environment_id=1' npm run bruno:smoke
+BRUNO_API_KEY=gk_... npm run bruno:smoke  # global key for /api/v1 requests
+```
+
+`BRUNO_BASE_URL` overrides the Production environment's `baseUrl`;
+`BRUNO_USERNAME` / `BRUNO_PASSWORD` enable the Login request. Requests that need
+credentials are skipped when none are supplied.
+
 ## In-app Bruno monitors
 
 The application's Bruno monitor type stores one declarative `.bru` request per
