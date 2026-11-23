@@ -100,7 +100,7 @@
 
 
           <!-- Right side -->
-          <div class="flex items-center gap-1 sm:gap-3">
+          <div class="flex items-center gap-1 sm:gap-3 ml-auto">
             <!-- Node Selector (Cluster Mode) -->
 
             

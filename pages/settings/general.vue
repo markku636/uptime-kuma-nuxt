@@ -26,6 +26,15 @@
           </select>
         </div>
 
+        <!-- Runtime hints -->
+        <div>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input v-model="form.showRuntimeHints" type="checkbox" class="text-green-500" />
+            <span class="text-sm text-gray-700 dark:text-gray-200">Show runtime hints (ⓘ) on Nodes and monitor pages</span>
+          </label>
+          <p class="text-xs text-gray-500 mt-1">When disabled, the explanation icons are hidden. Text is localized with the selected language.</p>
+        </div>
+
         <!-- Search Engine Visibility -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Search Engine Visibility</label>
@@ -119,7 +128,8 @@ const form = reactive({
   steamAPIKey: '',
   chromeExecutable: '',
   dnsServers: '',
-  statusPageSlug: ''
+  statusPageSlug: '',
+  showRuntimeHints: true
 })
 
 const loading = ref(false)
@@ -177,7 +187,8 @@ const saveSettings = async () => {
         steamApiKey: form.steamAPIKey,
         chromePath: form.chromeExecutable,
         dnsServers: form.dnsServers,
-        statusPageSlug: form.entryPage === 'status' ? form.statusPageSlug : undefined
+        statusPageSlug: form.entryPage === 'status' ? form.statusPageSlug : undefined,
+        showRuntimeHints: form.showRuntimeHints
       }
     })
     toast.add({ title: 'Success', description: 'Settings saved', color: 'success' })
@@ -195,6 +206,7 @@ onMounted(async () => {
       form.displayTimezone = settings.displayTimezone || 'auto'
       form.serverTimezone = settings.serverTimezone || 'UTC'
       form.searchEngineIndex = settings.searchEngineIndex ?? true
+      form.showRuntimeHints = settings.showRuntimeHints ?? true
       form.entryPage = settings.entryPage || 'dashboard'
       form.primaryBaseURL = settings.primaryBaseUrl || ''
       form.steamAPIKey = settings.steamApiKey || ''

@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
           'keepDataPeriodDays',
           'checkUpdate',
           'checkBeta',
+          'showRuntimeHints',
           'statusPageSlug'
         ]
       }
@@ -43,6 +44,7 @@ export default defineEventHandler(async (event) => {
     keepDataPeriodDays: 180,
     checkUpdate: true,
     checkBeta: false,
+    showRuntimeHints: true,
     statusPageSlug: ''
   }
 

@@ -1287,5 +1287,18 @@
   "Downtime": "停機時間",
   "Checks (up/total)": "檢查次數（成功/總計）",
   "Unable to load report": "無法載入報表",
-  "Uptime, downtime and check counts across your monitors (first 200).": "顯示工作區內最多 200 個監控的可用率、停機時間與檢查次數。"
+  "Uptime, downtime and check counts across your monitors (first 200).": "顯示工作區內最多 200 個監控的可用率、停機時間與檢查次數。",
+  "runtimeHintApi": "API — 提供網頁 UI、REST API 與即時更新，本身不執行檢查。",
+  "runtimeHintWorker": "Worker — 從共享的 PostgreSQL 佇列認領到期檢查並執行。",
+  "runtimeHintSlots": "使用中的 slots — 目前執行中的檢查數除以所有 worker 的檢查 slot 總數（例如 0/64）。一個檢查會佔用一個 slot 直到結束。",
+  "runtimeHintPods": "Pods：",
+  "runtimeHintNow": "目前：",
+  "runtimeHintLoading": "正在載入執行環境資訊…",
+  "runtimeHintNoPermission": "Pod 名稱需要平台管理員權限。",
+  "settingsFind": "搜尋設定…",
+  "settingsNoMatch": "沒有符合的設定。",
+  "settingsDeliveryLog": "投遞紀錄",
+  "settingsDeliveryLogHint": "最近的通知投遞嘗試。不會顯示 payload 或整合網址。",
+  "settingsIncidentHistory": "事件歷史",
+  "dashboardAllGroups": "所有群組（僅本頁）"
 }

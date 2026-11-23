@@ -1252,5 +1252,18 @@
   "Downtime": "Downtime",
   "Checks (up/total)": "Checks (up/total)",
   "Unable to load report": "Unable to load report",
-  "Uptime, downtime and check counts across your monitors (first 200).": "Uptime, downtime and check counts across your monitors (first 200)."
+  "Uptime, downtime and check counts across your monitors (first 200).": "Uptime, downtime and check counts across your monitors (first 200).",
+  "runtimeHintApi": "API — serves the web UI, REST API and live updates. It never runs checks.",
+  "runtimeHintWorker": "Worker — pulls due checks from the shared PostgreSQL queue and runs them.",
+  "runtimeHintSlots": "Slots in use — checks running now divided by the total check slots across all workers (for example 0/64). One check occupies one slot until it finishes.",
+  "runtimeHintPods": "Pods:",
+  "runtimeHintNow": "Now:",
+  "runtimeHintLoading": "Loading runtime details…",
+  "runtimeHintNoPermission": "Pod names require platform administrator permission.",
+  "settingsFind": "Find a setting…",
+  "settingsNoMatch": "No matching settings.",
+  "settingsDeliveryLog": "Delivery log",
+  "settingsDeliveryLogHint": "Recent notification attempts. Payloads and integration URLs are never shown.",
+  "settingsIncidentHistory": "Incident history",
+  "dashboardAllGroups": "All groups (this page)"
 }

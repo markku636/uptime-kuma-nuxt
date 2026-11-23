@@ -21,7 +21,8 @@ const schema = z.object({
   nscd: z.boolean().optional(),
   keepDataPeriodDays: z.number().min(1).optional(),
   checkUpdate: z.boolean().optional(),
-  checkBeta: z.boolean().optional()
+  checkBeta: z.boolean().optional(),
+  showRuntimeHints: z.boolean().optional()
 })
 
 export default defineEventHandler(async (event) => {

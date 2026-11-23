@@ -79,7 +79,7 @@
             <option value="paused">Paused</option><option value="stale">Stale</option>
           </select>
           <select v-model="groupFilter" class="select-field" aria-label="Group filter">
-            <option value="">All groups (this page)</option>
+            <option value="">{{ $t('dashboardAllGroups') }}</option>
             <option v-for="group in groups" :key="group.id" :value="String(group.id)">{{ group.name }}</option>
           </select>
           <select v-model="typeFilter" class="select-field">
