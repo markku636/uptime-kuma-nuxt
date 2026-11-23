@@ -470,6 +470,11 @@ R69 🔵 整合測試（88 項）與修復：
   線上建立 5 個 paused Bruno 測試監控（Entry page／Login／Public status page／PWA icon／Health），
   全部使用 `{{baseUrl}}` 環境變數且 `/test` 回 CHECK_OK；全域金鑰產生→呼叫→撤銷亦驗證通過。
 
+R73 🔵 UI/UX：桌面版主內容由置中改為靠左（最大寬 1600px，左側仍有 240px sidebar），
+  header／workspace 列的容器同步靠左；monitor/maintenance/status-page 表單頁改為靠左；
+  sidebar 加入與競品一致的圖示。線上 1920px 驗證 main.left=240、icons 正常渲染。
+  build/unit 61/61、typecheck 0；integration 單獨跑該商業流程測試 3/3 通過（全套另有 1 項 drag 測試偶發 flaky，單獨執行皆通過）。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
