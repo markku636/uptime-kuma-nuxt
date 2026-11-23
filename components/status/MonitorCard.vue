@@ -40,14 +40,15 @@
         </a>
         <span v-else class="monitor-name">{{ monitor.name }}</span>
         
-        <!-- Settings button (edit mode) -->
+        <!-- Toggle public URL link (edit mode) -->
         <UButton
           v-if="editMode"
-          icon="i-heroicons-cog-6-tooth"
+          :icon="monitor.sendUrl ? 'i-heroicons-link' : 'i-heroicons-link-slash'"
           size="xs"
-          color="neutral"
+          :color="monitor.sendUrl ? 'primary' : 'neutral'"
           variant="ghost"
-          @click="emit('settings')"
+          :title="monitor.sendUrl ? 'Hide URL on public status page' : 'Show URL on public status page'"
+          @click="emit('update:sendUrl', !monitor.sendUrl)"
         />
       </div>
       
@@ -127,6 +128,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'remove'): void
   (e: 'settings'): void
+  (e: 'update:sendUrl', value: boolean): void
 }>()
 
 const { t } = useI18n()

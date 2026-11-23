@@ -104,8 +104,12 @@ export default defineEventHandler(async (event) => {
           ? await tx.statusPageGroup.update({ where: { id: group.id, statusPageId: current.id }, data })
           : await tx.statusPageGroup.create({ data: { ...data, statusPageId: current.id } })
         await tx.statusPageMonitor.deleteMany({ where: { groupId: saved.id } })
-        const ids = [...new Set(group.monitorList.map(monitor => monitor.id))]
-        if (ids.length) await tx.statusPageMonitor.createMany({ data: ids.map(monitorId => ({ groupId: saved.id, monitorId, sendUrl: false })) })
+        const monitors = [...new Map(group.monitorList.map((monitor: any) => [monitor.id, monitor])).values()]
+        if (monitors.length) await tx.statusPageMonitor.createMany({ data: monitors.map((monitor: any) => ({
+          groupId: saved.id,
+          monitorId: monitor.id,
+          sendUrl: monitor.sendUrl === true,
+        })) })
       }
     }
     return tx.statusPage.update({ where: { id: current.id, workspaceId: session.workspaceId }, data: updateData })

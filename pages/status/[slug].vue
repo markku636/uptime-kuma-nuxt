@@ -852,6 +852,7 @@ function formatLastUpdated(date: Date | null) {
           @update:groups="handleGroupUpdate"
           @removeGroup="handleRemoveGroup"
           @removeMonitor="handleRemoveMonitor"
+          @monitorSettings="unsavedChanges = true"
           @renameGroup="handleRenameGroup"
           @reorderMonitors="handleReorderMonitors"
         />

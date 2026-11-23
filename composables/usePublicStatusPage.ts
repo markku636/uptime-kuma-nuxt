@@ -415,7 +415,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
           id: g.id,
           name: g.name,
           weight: g.weight ?? index + 1,
-          monitorList: g.monitorList.map(m => ({ id: m.id }))
+          monitorList: g.monitorList.map(m => ({ id: m.id, sendUrl: m.sendUrl === true }))
         }))
       }
       

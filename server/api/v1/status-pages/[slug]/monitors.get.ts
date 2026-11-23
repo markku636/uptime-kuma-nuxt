@@ -228,6 +228,10 @@ function formatMonitor(spm: any, showTags: boolean) {
     id: monitor.id,
     name: monitor.name,
     sendUrl: spm.sendUrl,
+    // Only expose the target URL when the status page owner opted in.
+    ...(spm.sendUrl && ['http', 'keyword', 'json-query'].includes(monitor.type) && monitor.url
+      ? { url: monitor.url }
+      : {}),
 
     type: monitor.type,
     tags: showTags && monitor.tags ? monitor.tags.map((mt: any) => ({

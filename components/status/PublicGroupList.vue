@@ -58,6 +58,7 @@
                   :show-certificate-expiry="showCertificateExpiry"
                   @remove="emit('removeMonitor', index, monitorIndex)"
                   @settings="emit('monitorSettings', group, monitor)"
+                  @update:sendUrl="(value: boolean) => { monitor.sendUrl = value; emit('monitorSettings', group, monitor) }"
                 />
               </template>
             </Draggable>
