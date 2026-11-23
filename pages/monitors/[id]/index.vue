@@ -50,7 +50,7 @@
           
           <!-- Actions -->
           <div v-if="canEdit" class="flex items-center gap-2 flex-wrap">
-            <button v-if="monitor.active" @click="checkNow" :disabled="checkingNow" class="btn btn-secondary">
+            <button @click="checkNow" :disabled="checkingNow" class="btn btn-secondary">
               <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-1" />
               {{ checkingNow ? 'Queuing…' : 'Check now' }}
             </button>
@@ -691,8 +691,8 @@ const getStatusText = (status: number) => {
 const checkNow = async () => {
   checkingNow.value = true
   try {
-    await $fetch(`/api/v1/monitors/${monitorId.value}/check-now`, { method: 'POST' })
-    toast.add({ title: 'Check queued', color: 'success' })
+    const result = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/check-now`, { method: 'POST' })
+    toast.add({ title: result.message || 'Check queued', description: result.data?.code, color: 'success' })
   } catch (e: any) {
     toast.add({ title: 'Error', description: e.data?.message || 'Failed to queue check', color: 'error' })
   } finally {
