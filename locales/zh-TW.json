@@ -1300,5 +1300,6 @@
   "settingsDeliveryLog": "投遞紀錄",
   "settingsDeliveryLogHint": "最近的通知投遞嘗試。不會顯示 payload 或整合網址。",
   "settingsIncidentHistory": "事件歷史",
-  "dashboardAllGroups": "所有群組（僅本頁）"
+  "dashboardAllGroups": "所有群組（僅本頁）",
+  "runtimeHintOverview": "關於 API、worker 與檢查 slots"
 }

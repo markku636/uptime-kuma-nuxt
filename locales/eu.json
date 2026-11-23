@@ -1289,5 +1289,6 @@
   "settingsDeliveryLog": "Delivery log",
   "settingsDeliveryLogHint": "Recent notification attempts. Payloads and integration URLs are never shown.",
   "settingsIncidentHistory": "Incident history",
-  "dashboardAllGroups": "All groups (this page)"
+  "dashboardAllGroups": "All groups (this page)",
+  "runtimeHintOverview": "About API, workers and check slots"
 }

@@ -225,6 +225,13 @@ function removeCustomCss() {
 
 // Calculate overall status from all monitors
 const overallStatusConfig = computed(() => {
+  const hasMonitors = publicGroupList.value.some(group => (group.monitorList || []).length > 0)
+  if (!hasMonitors) {
+    return { text: 'No monitors configured', icon: 'ℹ', bgClass: 'bg-slate-500', textClass: 'text-white' }
+  }
+  if (overallStatusType.value === 'unknown') {
+    return { text: 'Waiting for first check', icon: '◷', bgClass: 'bg-slate-500', textClass: 'text-white' }
+  }
   switch (overallStatusType.value) {
     case 'operational':
       return { 
@@ -705,10 +712,10 @@ function formatLastUpdated(date: Date | null) {
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
               <span>Auto-refresh</span>
             </div>
-            <span class="text-gray-300 dark:text-gray-600">•</span>
-            <span v-if="lastUpdated">
-              Updated: {{ formatLastUpdated(lastUpdated) }}
-            </span>
+            <template v-if="lastUpdated">
+              <span class="text-gray-300 dark:text-gray-600">•</span>
+              <span>Updated: {{ formatLastUpdated(lastUpdated) }}</span>
+            </template>
           </div>
         </header>
 
@@ -974,12 +981,14 @@ function formatLastUpdated(date: Date | null) {
           v-if="!editMode && publicGroupList.length === 0 && hasLoaded"
           class="empty-state-card"
         >
-          <div class="text-6xl mb-4">📊</div>
+          <div class="mx-auto mb-4 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+            <UIcon name="i-heroicons-chart-bar" class="w-7 h-7 text-primary" aria-hidden="true" />
+          </div>
           <h3 class="text-xl font-medium mb-2 empty-state-title">
             No monitors configured
           </h3>
           <p class="empty-state-text">
-            This status page doesn't have any monitors yet.
+            This status page doesn't have any monitors yet. Once monitors are added, their live status and uptime will appear here.
           </p>
         </div>
 

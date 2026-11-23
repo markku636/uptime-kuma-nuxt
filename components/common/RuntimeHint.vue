@@ -6,7 +6,6 @@ type Kind = 'api' | 'worker' | 'slots' | 'overview'
 const props = withDefaults(defineProps<{ kind?: Kind }>(), { kind: 'overview' })
 
 const { load } = useRuntimeHint()
-const { t } = (useI18n as any)()
 const hintsEnabled = useState<boolean>('show-runtime-hints', () => true)
 const hintsLoaded = useState<boolean>('show-runtime-hints-loaded', () => false)
 if (import.meta.client && !hintsLoaded.value) {
@@ -16,11 +15,11 @@ if (import.meta.client && !hintsLoaded.value) {
 const open = ref(false)
 const data = ref<RuntimeHintData | null>(null)
 
-const label = computed(() => {
-  if (props.kind === 'api') return t('runtimeHintApi')
-  if (props.kind === 'worker') return t('runtimeHintWorker')
-  if (props.kind === 'slots') return t('runtimeHintSlots')
-  return `${t('runtimeHintApi')} ${t('runtimeHintWorker')}`
+const labelKey = computed(() => {
+  if (props.kind === 'api') return 'runtimeHintApi'
+  if (props.kind === 'worker') return 'runtimeHintWorker'
+  if (props.kind === 'slots') return 'runtimeHintSlots'
+  return 'runtimeHintOverview'
 })
 
 async function onOpen(value: boolean) {
@@ -38,7 +37,7 @@ function podList(pods: string[]): string {
     <button
       type="button"
       class="inline-flex shrink-0 items-center justify-center align-middle rounded-full text-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors"
-      :aria-label="label"
+      :aria-label="$t(labelKey)"
     >
       <UIcon name="i-heroicons-information-circle" class="w-4 h-4 pointer-events-none" aria-hidden="true" />
     </button>
@@ -46,22 +45,22 @@ function podList(pods: string[]): string {
     <template #content>
       <div class="runtime-hint-content max-w-[22rem] space-y-1.5 text-xs leading-relaxed">
         <template v-if="kind === 'api' || kind === 'overview'">
-          <p>{{ t('runtimeHintApi') }}</p>
-          <p v-if="data?.available">{{ t('runtimeHintPods') }} <span class="font-mono">{{ podList(data.api) }}</span></p>
+          <p>{{ $t('runtimeHintApi') }}</p>
+          <p v-if="data?.available">{{ $t('runtimeHintPods') }} <span class="font-mono">{{ podList(data.api) }}</span></p>
         </template>
 
         <template v-if="kind === 'worker' || kind === 'overview'">
-          <p>{{ t('runtimeHintWorker') }}</p>
-          <p v-if="data?.available">{{ t('runtimeHintPods') }} <span class="font-mono">{{ podList(data.worker) }}</span></p>
+          <p>{{ $t('runtimeHintWorker') }}</p>
+          <p v-if="data?.available">{{ $t('runtimeHintPods') }} <span class="font-mono">{{ podList(data.worker) }}</span></p>
         </template>
 
         <template v-if="kind === 'slots' || kind === 'overview'">
-          <p>{{ t('runtimeHintSlots') }}</p>
-          <p v-if="data?.available">{{ t('runtimeHintNow') }} <span class="font-mono">{{ data.inflight }}/{{ data.slots }}</span></p>
+          <p>{{ $t('runtimeHintSlots') }}</p>
+          <p v-if="data?.available">{{ $t('runtimeHintNow') }} <span class="font-mono">{{ data.inflight }}/{{ data.slots }}</span></p>
         </template>
 
-        <p v-if="!data">{{ t('runtimeHintLoading') }}</p>
-        <p v-else-if="!data.available" class="text-secondary">{{ t('runtimeHintNoPermission') }}</p>
+        <p v-if="!data">{{ $t('runtimeHintLoading') }}</p>
+        <p v-else-if="!data.available" class="text-secondary">{{ $t('runtimeHintNoPermission') }}</p>
       </div>
     </template>
   </UTooltip>
