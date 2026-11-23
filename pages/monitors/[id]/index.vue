@@ -365,7 +365,6 @@
 <script setup lang="ts">
 const { canEdit, canManage } = useWorkspace()
 const { pathOf, load: loadGroups } = useMonitorGroups()
-import dayjs from 'dayjs'
 
 definePageMeta({
   middleware: ['auth']
@@ -465,7 +464,7 @@ const refreshCertInfo = async () => {
 
 const formatDate = (date: string | Date | null) => {
   if (!date) return 'N/A'
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+  return formatInTimezone(date)
 }
 
 const uptimeData=ref<any>(null),historyCursor=ref<string|null>(null),loadingHistory=ref(false)
@@ -652,7 +651,8 @@ const paginatedHeartbeats = computed(() => {
 })
 
 // Methods
-const formatDateTime = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+const { format: formatInTimezone } = useDisplayTimezone()
+const formatDateTime = (time: string) => formatInTimezone(time)
 
 const getChartHeight = (beat: any) => {
   if (!beat || !beat.ping) return '5%'

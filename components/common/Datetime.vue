@@ -10,24 +10,13 @@ const props = withDefaults(defineProps<Props>(), {
   showTime: true
 })
 
+const { format: formatInTimezone } = useDisplayTimezone()
+
 const dateObj = computed(() => {
   return typeof props.date === 'string' ? new Date(props.date) : props.date
 })
 
-const absoluteFormat = computed(() => {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }
-  
-  if (props.showTime) {
-    options.hour = '2-digit'
-    options.minute = '2-digit'
-  }
-  
-  return dateObj.value.toLocaleDateString(undefined, options)
-})
+const absoluteFormat = computed(() => formatInTimezone(dateObj.value, props.showTime))
 
 const relativeFormat = computed(() => {
   const now = new Date()
