@@ -425,7 +425,7 @@ R62 🔵 型別債清零（typecheck 23→0）：補 Pinia persist 宣告、opti
   同時補上真正缺少的 `PUT /api/v1/status-pages/:slug/incidents/:id`（原 UI 編輯 incident
   打到不存在的路由），並改 owner/editor 權限。build/unit 60/60 通過。
 
-## 最終狀態（15:33 CST）
+## 舊最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
 剩餘：Screenshot UI 沒有任何入口也沒有 API（低優先）；origin/main 92 commits 不合併（使用者指示）。
@@ -442,3 +442,12 @@ R14 🔵 About 頁三個缺失端點：`/api/info`（runtime/版本/uptime）、
 
 剩餘項目需使用者決定：SMTP/email 通知（刻意不支援，涉及 SSRF／憑證政策）、
 Screenshot API（UI 元件未被任何頁面使用）、origin/main 92 commits 合併（使用者已指示不合併）。
+
+## 目前狀態（2026-11-23 09:20 CST）
+
+R1–R62 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
+revision 154、Synced、API/worker/fixture 全 Healthy，兩個網域 /login 回 200；
+build 成功、unit 60/60、typecheck **0 error**。artifact PVC 保持在 3 個 release（約 2.6GB），
+root filesystem 83%。線上驗證包含：Reports CSV、Check now、TLS 設定讀寫與權限、
+狀態頁 sendUrl 開關、push 心跳逾時→DOWN→恢復、維護窗口抑制誤報、時區格式化、
+incident 編輯端點。測試用 monitor／status page／incident 皆已清除。
