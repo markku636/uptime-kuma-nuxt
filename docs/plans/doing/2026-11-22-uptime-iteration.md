@@ -425,6 +425,12 @@ R62 🔵 型別債清零（typecheck 23→0）：補 Pinia persist 宣告、opti
   同時補上真正缺少的 `PUT /api/v1/status-pages/:slug/incidents/:id`（原 UI 編輯 incident
   打到不存在的路由），並改 owner/editor 權限。build/unit 60/60 通過。
 
+R63 🔵 API Docs 增加 CDN 失敗时的內建端點清單 fallback（直接讀 `/api/swagger-json`）。
+R64 🔵 最後一輪假控制項稽核修正：Remote Browser 欄位改用後端實際接受且回傳的
+  `remoteBrowserId`；Trust Proxy 明確標為相容性設定；About 的 beta 選項接到
+  `/api/check-update?beta=true`（改抓 `/releases` 並過濾 prerelease）。
+  build/unit 60/60、typecheck 0。
+
 ## 舊最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。

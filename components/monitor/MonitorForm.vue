@@ -154,6 +154,7 @@
           <span class="text-gray-700 dark:text-gray-300">Use Remote Browser</span>
         </label>
         <p class="text-xs text-gray-400 mb-2">Use a Chromium-based browser to render JavaScript content before checking for keyword</p>
+        <p class="text-xs text-amber-500 mb-2">Compatibility field: this deployment stores the selection but the bounded keyword checker does not execute remote browsers.</p>
         
         <div v-if="form.useRemoteBrowser" class="mt-2">
           <label class="input-label">Remote Browser</label>
@@ -1290,8 +1291,8 @@ const form = reactive({
   // Cache Bust
   cacheBust: props.initialData?.cacheBust || false,
   // Remote Browser
-  useRemoteBrowser: !!props.initialData?.remote_browser,
-  remoteBrowser: props.initialData?.remote_browser || props.initialData?.remoteBrowser || null,
+  useRemoteBrowser: !!props.initialData?.remoteBrowserId,
+  remoteBrowser: props.initialData?.remoteBrowserId ?? null,
   // Monitor Conditions
   conditions: props.initialData?.conditions || [],
   // Node Assignment (Cluster Mode)
@@ -1614,7 +1615,7 @@ const handleSubmit = async (trial=false) => {
     
     // Remote Browser (for keyword monitoring)
     if (form.type === 'keyword' && form.useRemoteBrowser) {
-      data.remote_browser = form.remoteBrowser
+      data.remoteBrowserId = form.remoteBrowser == null ? null : Number(form.remoteBrowser)
     }
   }
 

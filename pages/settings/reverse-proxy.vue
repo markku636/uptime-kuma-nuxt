@@ -208,6 +208,7 @@ async function saveSettings() {
       <h4 class="text-lg font-semibold text-primary mb-4">HTTP Headers</h4>
       
       <UFormField label="Trust Proxy">
+        <p class="text-xs text-amber-500 mb-2">Compatibility setting — stored but not applied by this runtime. Client IP handling is managed by the ingress/proxy configuration.</p>
         <div class="space-y-2">
           <label class="flex items-center gap-2 cursor-pointer">
             <input v-model="trustProxy" type="radio" name="trustProxy" :value="true" class="checkbox" />
@@ -220,7 +221,7 @@ async function saveSettings() {
         </div>
         <template #hint>
           <p class="text-xs text-tertiary mt-2">
-            If you are behind a reverse proxy (nginx, Apache, etc.), enable this to correctly detect the client IP address from X-Forwarded-For header.
+            Legacy preference kept for configuration compatibility; this deployment does not read it when resolving client addresses.
           </p>
         </template>
       </UFormField>

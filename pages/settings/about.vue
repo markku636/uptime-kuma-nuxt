@@ -45,7 +45,7 @@ async function fetchServerInfo() {
 async function checkForUpdates() {
   checkingUpdate.value = true
   try {
-    const result = await $fetch('/api/check-update') as any
+    const result = await $fetch('/api/check-update', { query: { beta: checkBeta.value ? 'true' : 'false' } }) as any
     latestVersion.value = result?.latestVersion || null
     hasUpdate.value = result?.hasUpdate || false
   } catch (error) {
