@@ -20,6 +20,7 @@ export const openapi={
   '/v1/monitors/{id}/pause':{post:operation('Pause and invalidate in-flight result','Monitors',{parameters:[id,...scope]})},'/v1/monitors/{id}/resume':{post:operation('Resume with distributed scheduling jitter','Monitors',{parameters:[id,...scope]})},
   '/v1/monitors/{id}/test':{post:operation('Bounded trial with safe assertion summaries; secrets never returned','Monitors',{parameters:[id,...scope],requestBody:body({type:'object'})})},
   '/v1/monitors/{id}/check-now':{post:operation('Queue the next check for an active monitor or run one bounded trial on a paused monitor; no history or notifications for paused checks','Monitors',{parameters:[id,...scope]})},
+  '/v1/monitors/{id}/push-url':{get:operation('Read the push heartbeat URL for a push monitor (editor only)','Monitors',{parameters:[id,...scope]})},
   '/v1/monitors/{id}/heartbeats':{get:operation('History ordered by time/id descending; cursor bound to filters','Monitors',{parameters:[id,...scope,parameter('limit','integer','query',{default:50,maximum:200}),parameter('cursor','string'),parameter('from','string','query',{format:'date-time'}),parameter('to','string','query',{format:'date-time'})]})},
   '/v1/monitors/summary':{get:operation('Complete selected environment status counts','Monitors',{parameters:scope})},
   '/v1/monitors/state':{get:operation('Current states, at most200 scoped IDs','Monitors',{parameters:[...scope,parameter('ids','string')]})},

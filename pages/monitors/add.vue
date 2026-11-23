@@ -16,7 +16,7 @@ async function handleSubmit(body:any){
 <template>
   <div class="max-w-4xl mx-auto space-y-6">
     <h1 class="text-2xl font-bold">Add Monitor</h1>
-    <div v-if="provisioning" class="section-card space-y-3"><p>Save this push URL now. Its token is shown once.</p><code class="break-all">{{ provisioning }}</code><UButton to="/dashboard">Continue to dashboard</UButton></div>
+    <div v-if="provisioning" class="section-card space-y-3"><p>Save this push URL. Editors can view it again on the monitor detail page.</p><code class="break-all">{{ provisioning }}</code><UButton to="/dashboard">Continue to dashboard</UButton></div>
     <MonitorForm v-else :loading="loading" @submit="handleSubmit" />
   </div>
 </template>

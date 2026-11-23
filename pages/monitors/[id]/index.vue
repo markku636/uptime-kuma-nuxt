@@ -169,6 +169,20 @@
         </div>
       </div>
 
+      <!-- Push endpoint -->
+      <div v-if="monitor?.type === 'push'" class="card card-body mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Push URL</h3>
+            <p class="text-sm text-gray-500 mt-1">Send GET or POST requests here to record a heartbeat. Treat this URL as a secret.</p>
+          </div>
+          <button v-if="canEdit" class="btn btn-secondary" @click="copyPushUrl">Copy URL</button>
+        </div>
+        <p v-if="pushUrlLoading" class="text-sm text-secondary mt-3">Loading…</p>
+        <code v-else-if="pushUrl" class="block break-all text-sm text-primary mt-3">{{ pushUrl }}</code>
+        <p v-else-if="pushUrlError" role="alert" class="text-sm text-red-400 mt-3">{{ pushUrlError }}</p>
+      </div>
+
       <!-- Response Time Chart -->
       <div class="card card-body mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Response Time (Last 24 Hours)</h3>
@@ -397,6 +411,9 @@ const loading = ref(true)
 const deleting = ref(false)
 const cloning = ref(false)
 const checkingNow = ref(false)
+const pushUrl = ref('')
+const pushUrlLoading = ref(false)
+const pushUrlError = ref('')
 const showDeleteConfirm = ref(false)
 const showBadgeGenerator = ref(false)
 const currentPage = ref(1)
@@ -481,7 +498,8 @@ onMounted(async () => {
     historyCursor.value=heartbeatsRes.page.nextCursor
     monitor.value = monitorRes.data || monitorRes
     heartbeats.value = heartbeatsRes.data || heartbeatsRes || []
-    
+    void loadPushUrl()
+
     // Fetch certificate info for HTTPS monitors
     if (monitor.value?.tlsConfigured) {
       refreshCertInfo()
@@ -685,6 +703,31 @@ const getStatusText = (status: number) => {
     case 0: return 'DOWN'
     case 3: return 'MAINTENANCE'
     default: return 'UNKNOWN'
+  }
+}
+
+async function loadPushUrl() {
+  if (monitor.value?.type !== 'push' || !canEdit.value) return
+  pushUrlLoading.value = true
+  pushUrlError.value = ''
+  try {
+    const result = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/push-url`)
+    pushUrl.value = result?.url || ''
+  } catch (e: any) {
+    pushUrlError.value = e.data?.message || 'Unable to load push URL'
+  } finally {
+    pushUrlLoading.value = false
+  }
+}
+
+async function copyPushUrl() {
+  if (!pushUrl.value) await loadPushUrl()
+  if (!pushUrl.value) return
+  try {
+    await navigator.clipboard.writeText(pushUrl.value)
+    toast.add({ title: 'Push URL copied', color: 'success' })
+  } catch {
+    toast.add({ title: 'Copy failed', description: 'Select the URL and copy it manually.', color: 'error' })
   }
 }
 

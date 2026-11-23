@@ -431,6 +431,10 @@ R64 🔵 最後一輪假控制項稽核修正：Remote Browser 欄位改用後�
   `/api/check-update?beta=true`（改抓 `/releases` 並過濾 prerelease）。
   build/unit 60/60、typecheck 0。
 
+R65 🔵 About 頁顯示更新檢查失敗訊息，Release 連結指向本 fork；更新端點在無 release 時明確降級。
+R66 🔵 Push monitor 詳情頁可讀取／複製 Push URL（editor-only endpoint
+  `/api/v1/monitors/:id/push-url`），新增時不再說 token 只顯示一次。
+
 ## 舊最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。
