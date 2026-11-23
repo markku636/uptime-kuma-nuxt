@@ -1,6 +1,9 @@
 <template>
   <div class="page-container">
-    <div class="mb-6"><h1 class="text-2xl font-bold text-primary">Monitor overview</h1><p class="text-secondary mt-1">Health and recent events in your selected environment.</p></div>
+    <div class="mb-6">
+      <div class="flex items-center gap-2"><h1 class="text-2xl font-bold text-primary">Monitor overview</h1><CommonRuntimeHint /></div>
+      <p class="text-secondary mt-1">Health and recent events in your selected environment.</p>
+    </div>
     <!-- Header with Connection Status -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-2">

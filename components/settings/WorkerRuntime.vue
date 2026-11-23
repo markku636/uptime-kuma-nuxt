@@ -117,7 +117,7 @@ function usage(row: RuntimeInstance) {
     <template v-if="value">
       <div class="runtime-flow" role="group" aria-label="Request and check flow">
         <div class="flow-box">
-          <span class="flow-label">API</span>
+          <span class="flow-label-row"><span class="flow-label">API</span><CommonRuntimeHint kind="api" /></span>
           <strong class="flow-value">{{ value.summary.api }}</strong>
           <span class="flow-unit">{{ value.summary.api === 1 ? 'instance' : 'instances' }}</span>
           <p class="flow-note">Serve the UI, REST API and live updates. Never run checks.</p>
@@ -131,7 +131,7 @@ function usage(row: RuntimeInstance) {
         </div>
         <div class="flow-arrow" aria-hidden="true">←</div>
         <div class="flow-box">
-          <span class="flow-label">Workers</span>
+          <span class="flow-label-row"><span class="flow-label">Workers</span><CommonRuntimeHint kind="worker" /></span>
           <strong class="flow-value">{{ value.summary.workers }}</strong>
           <span class="flow-unit">{{ value.summary.workers === 1 ? 'instance' : 'instances' }}<template v-if="slotFormula"> · {{ slotFormula }} slots</template></span>
           <p class="flow-note">{{ value.summary.inflight }} of {{ value.summary.slots }} check slots in use.</p>
@@ -141,7 +141,7 @@ function usage(row: RuntimeInstance) {
       <p class="runtime-answer" role="status">{{ answer }}</p>
 
       <dl class="runtime-stats">
-        <div><dt>Check slots in use</dt><dd>{{ value.summary.inflight }} / {{ value.summary.slots }}</dd></div>
+        <div><dt><span class="flow-label-row">Check slots in use <CommonRuntimeHint kind="slots" /></span></dt><dd>{{ value.summary.inflight }} / {{ value.summary.slots }}</dd></div>
         <div><dt>Oldest waiting check</dt><dd>{{ duration(value.queue.oldestDueMs) }}</dd></div>
         <div><dt>Kubernetes nodes</dt><dd>{{ value.summary.nodes || '—' }}</dd></div>
         <div><dt>Notification outbox</dt><dd>{{ value.outbox.pending }} pending<template v-if="value.outbox.dead"> · <span class="text-danger">{{ value.outbox.dead }} failed</span></template></dd></div>
@@ -150,7 +150,7 @@ function usage(row: RuntimeInstance) {
       <h4 class="runtime-section-title">Workers <span class="count">{{ workers.length }}</span></h4>
       <div class="overflow-auto">
         <table class="table runtime-table">
-          <thead><tr><th>Pod</th><th>Node</th><th>Slots in use</th><th class="num">Checks done</th><th class="num">Failures</th><th>Last seen</th></tr></thead>
+          <thead><tr><th>Pod</th><th>Node</th><th><span class="flow-label-row">Slots in use <CommonRuntimeHint kind="slots" /></span></th><th class="num">Checks done</th><th class="num">Failures</th><th>Last seen</th></tr></thead>
           <tbody>
             <tr v-for="row in workers" :key="row.instanceId">
               <td><span class="mono" :title="row.instanceId">{{ podName(row) }}</span><span v-if="row.role === 'all'" class="role-tag">API + worker</span></td>
@@ -227,6 +227,8 @@ function usage(row: RuntimeInstance) {
 .flow-box { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.9rem 1rem; border: 1px solid var(--border-color); border-radius: 0.6rem; background: var(--bg-tertiary); }
 .flow-box-queue { border-style: dashed; }
 .flow-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+.flow-label-row { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 1.1rem; }
+.flow-label-row :deep(svg) { width: 0.85rem; height: 0.85rem; }
 .flow-value { font-size: 1.75rem; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--text-primary); }
 .flow-unit { font-size: 0.85rem; color: var(--text-secondary); }
 .flow-note { margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-tertiary); }

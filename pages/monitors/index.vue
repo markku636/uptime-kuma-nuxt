@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="flex justify-between items-center mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Monitors</h1>
+        <div class="flex items-center gap-2"><h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Monitors</h1><CommonRuntimeHint /></div>
         <p class="text-gray-600 dark:text-gray-400">Manage your monitors</p>
       </div>
       <div class="flex gap-2 shrink-0">
