@@ -19,7 +19,6 @@ async function load() {
     const result = await $fetch<any>('/api/v1/monitors', { query: { limit: 200 } })
     const monitors = result?.data || []
     if (!monitors.length) { rows.value = []; return }
-    const ids = monitors.map((m: any) => m.id).join(',')
     // Batches of 100 keep the endpoint within its bounded fan-out.
     const batches: string[] = []
     for (let i = 0; i < monitors.length; i += 100) batches.push(monitors.slice(i, i + 100).map((m: any) => m.id).join(','))
@@ -47,6 +46,32 @@ async function load() {
   }
 }
 
+function csvCell(value: unknown) {
+  const text = String(value ?? '')
+  // Spreadsheet formula injection guard.
+  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text
+  return `"${safe.replace(/"/g, '""')}"`
+}
+
+function exportCsv() {
+  if (!rows.value.length) return
+  const header = ['Monitor', 'Type', 'Status', 'Uptime', 'Downtime', 'Checks (up/total)', 'Coverage']
+  const lines = [header.map(csvCell).join(',')]
+  for (const row of rows.value) {
+    lines.push([row.name, row.type, row.active ? 'active' : 'paused', row.uptime,
+      row.downtime, row.checks, row.coverage].map(csvCell).join(','))
+  }
+  const blob = new Blob(['\uFEFF', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `availability-${period.value}-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 onMounted(load)
 watch(period, load)
 </script>
@@ -58,10 +83,13 @@ watch(period, load)
         <h1 class="text-2xl font-bold text-highlighted">Availability report</h1>
         <p class="text-sm text-toned mt-1">Uptime, downtime and check counts across your monitors (first 200).</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button v-for="item in periods" :key="item.value" class="btn btn-secondary"
           :class="period === item.value ? 'ring-2 ring-primary' : ''" @click="period = item.value">
           {{ item.label }}
+        </button>
+        <button class="btn btn-primary" :disabled="!rows.length || loading" @click="exportCsv">
+          Export CSV
         </button>
       </div>
     </div>

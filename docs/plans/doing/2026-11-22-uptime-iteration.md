@@ -1,6 +1,6 @@
 # Uptime 226network 持續迭代紀錄
 
-**截止時間：2026-11-22 20:00 CST（台北）** — 來源：使用者「持續優化迭代這系統到晚上8pm」。
+**截止時間：2026-11-24 00:00 CST（台北）** — 來源：使用者「持續優化到 11am」後再延長。
 **起始時間：2026-11-22 10:53 CST。**
 
 ## 範圍與邊界
@@ -379,6 +379,20 @@ R45 🔵 監控列表大量操作：checkbox 選取、大量 pause/resume/delete
 R46 🔵 設定頁把「存了但不生效」的相容性欄位明確標示（Appearance 3 項、General 多項），
   revision 122、全 Healthy/Synced。稽核 #1–#13 全部處理完畢；#14（未被使用的死程式）
   與 SLA 報表／多地點探測需使用者決定是否清理／投資基礎設施。
+
+R47 🔵 新增 Reports（SLA／可用性）頁：`/api/v1/monitors/uptime-batch` 增加 `1y`
+  與 `details`（uptime／downtime 分鐘／up-down 次數／coverage），Reports 頁依 24h/7d/30d/1y
+  以 100 筆為一批查詢並排序，側欄與行動導覽加入入口。revision 124、全 Healthy。
+R48 🔵 OpenAPI 補 `period=1y` 與 `details` 參數說明，revision 126、全 Healthy。
+R49 🔵 清除未被任何頁面引用的死程式（PingChart／ScreenshotDialog／ScreenshotModal、
+  useAuth／useMaintenances／useMonitors／useSettings／useStatusPages），
+  build/unit 通過，revision 128、全 Healthy。
+R50 🔵 型別修復：補 `@usebruno/lang`／`gamedig`／`snmp-native` 宣告、Tag 型別、
+  ConfirmDialog 色彩與若干 method 大小寫；typecheck 66→23，revision 130、全 Healthy。
+R51/R52 🔵 監控詳情頁新增「Check now」：`POST /api/v1/monitors/:id/check-now`；
+  執行中的 monitor 提前 `nextCheckAt`，paused monitor 則走既有 bounded `trialMonitor`
+  做一次性探測（不寫歷史、不發通知）。線上實測 paused monitor 回 `CHECK_OK`，
+  UI toast 顯示「Check completed／CHECK_OK」。revision 134、API/worker/fixture 全 Healthy。
 
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
