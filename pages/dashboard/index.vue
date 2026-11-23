@@ -78,6 +78,10 @@
             <option value="unknown">Pending</option>
             <option value="paused">Paused</option><option value="stale">Stale</option>
           </select>
+          <select v-model="groupFilter" class="select-field" aria-label="Group filter">
+            <option value="">All groups (this page)</option>
+            <option v-for="group in groups" :key="group.id" :value="String(group.id)">{{ group.name }}</option>
+          </select>
           <select v-model="typeFilter" class="select-field">
             <option value="all">All Types</option>
             <option value="http">HTTP(s)</option>
@@ -415,7 +419,9 @@ const typeFilter = ref('all')
 const {monitors,pending,error,page,summary:stats,next,back,canBack,refresh}=useMonitorPageForDashboard()
 function useMonitorPageForDashboard(){const result=useMonitorPage();watch(searchQuery,value=>result.search.value=value);watch(statusFilter,value=>result.status.value=value);watch(typeFilter,value=>result.type.value=value);return result}
 const monitorsWithLiveData=computed(()=>monitors.value.map((m:any)=>{const beats=heartbeatsMap.value[m.id]||m.heartbeats||[],latest=beats[0],now=renderNow.value??0,fresh=latest&&now-new Date(latest.time).getTime()<=Math.max(m.interval*2,m.interval+m.timeout)*1000;return {...m,viewStatus:!m.active?'paused':!latest?'pending':!fresh?'stale':latest.status===1?'up':latest.status===0?'down':latest.status===3?'maintenance':'pending',heartbeats:beats}}))
-const filteredMonitors=monitorsWithLiveData
+const groups=ref<any[]>([]),groupFilter=ref('')
+onMounted(async()=>{try{const result=await $fetch<any>('/api/v1/groups');groups.value=Array.isArray(result)?result:(result?.data?.groups||[])}catch{groups.value=[]}})
+const filteredMonitors=computed(()=>groupFilter.value?monitorsWithLiveData.value.filter((m:any)=>String(m.groupId||'')===groupFilter.value):monitorsWithLiveData.value)
 const {data:eventData,refresh:refreshEvents}=await useFetch<any>('/api/v1/monitors/events',{headers:useRequestHeaders(['cookie'])})
 let historySequence=0
 watch(monitors,async rows=>{
@@ -461,6 +467,7 @@ const clearFilters = () => {
   searchQuery.value = ''
   statusFilter.value = 'all'
   typeFilter.value = 'all'
+  groupFilter.value = ''
 }
 
 const getLatestStatus = (monitor: any) => {
