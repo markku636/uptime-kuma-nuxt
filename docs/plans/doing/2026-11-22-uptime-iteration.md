@@ -475,6 +475,15 @@ R73 🔵 UI/UX：桌面版主內容由置中改為靠左（最大寬 1600px，�
   sidebar 加入與競品一致的圖示。線上 1920px 驗證 main.left=240、icons 正常渲染。
   build/unit 61/61、typecheck 0；integration 單獨跑該商業流程測試 3/3 通過（全套另有 1 項 drag 測試偶發 flaky，單獨執行皆通過）。
 
+R74 🔵 競品差距盤點前三項：公開狀態頁 incident history（bounded 20 則、保留單筆 editor 相容、
+  markdown 仍走 DOMPurify）、登入 Remember me（30 天 cookie，實測 Set-Cookie Expires）、
+  監控列表可依 uptime／response 排序（僅本頁，標示清楚）。
+R75 🔵 通知 Delivery log：`GET /api/v1/notifications/outbox`（平台管理員、bounded cursor、
+  不回 payload／webhook URL），Settings > Notifications 顯示時間/監控/通道/狀態/錯誤。
+R76 🔵 Response Time 圖表改為服務端聚合 `GET /api/v1/monitors/:id/ping-series?period=24h|7d|30d`，
+  固定約 60 個桶、下鑽不傳原始歷史；實測 push 心跳 123ms 正確落入 24h 桶。
+R77 🔵 Dashboard 增加群組篩選（僅本頁，標示清楚）。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
