@@ -493,6 +493,12 @@ R78–R81 🔵 介面／品牌：
     登入頁與選單 logo 使用 SealWatch 吉祥物樣式。
   build/unit 61/61、typecheck 0；integration 87 pass / 0 fail / 1 skipped。
 
+R82/R83 🔵 品牌與圖表：
+  - 全站品牌 SealWatch：登入頁主視覺、選單深色橫幅 logo、方形 App icon（SVG，文字用字型渲染避免亂碼）。
+  - Response Time 圖表由長條改為 SVG 折線＋面積圖，含網格、時間軸與資料點 tooltip。
+  線上驗證 monitor 32 的 24h 圖表有 3 個資料點與時間標籤；build/unit 61/61、typecheck 0、
+  integration 86 pass / 0 fail / 1 skipped。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
