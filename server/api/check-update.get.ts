@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
     if (!response.ok) throw new Error(`GitHub responded ${response.status}`)
     const payload = await response.json() as any
     const releases: any[] = Array.isArray(payload) ? payload : [payload]
+    if (!releases.length) throw new Error('NO_RELEASES')
     const release: { tag_name?: string; html_url?: string; prerelease?: boolean } =
       (beta ? releases.find(item => item && typeof item.tag_name === 'string') : releases.find(item => item && !item.prerelease))
       || releases[0]

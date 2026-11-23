@@ -9,6 +9,7 @@ const latestVersion = ref<string | null>(null)
 const currentVersion = ref('2.0.0-nuxt')
 const hasUpdate = ref(false)
 const checkingUpdate = ref(false)
+const updateError = ref('')
 
 // Server info
 const serverInfo = ref<{
@@ -48,8 +49,9 @@ async function checkForUpdates() {
     const result = await $fetch('/api/check-update', { query: { beta: checkBeta.value ? 'true' : 'false' } }) as any
     latestVersion.value = result?.latestVersion || null
     hasUpdate.value = result?.hasUpdate || false
+    updateError.value = result?.error === 'UNAVAILABLE' ? 'Update information is unavailable right now.' : ''
   } catch (error) {
-    // Silent fail
+    updateError.value = 'Update information is unavailable right now.'
   } finally {
     checkingUpdate.value = false
   }
@@ -152,7 +154,7 @@ function formatUptime(seconds: number): string {
             <p class="text-green-400 font-medium">🎉 New version available: {{ latestVersion }}</p>
             <p class="text-gray-400 text-sm">Current: {{ currentVersion }}</p>
           </div>
-          <a href="https://github.com/louislam/uptime-kuma/releases" target="_blank" class="btn btn-primary">
+          <a href="https://github.com/markku636/uptime-kuma-nuxt/releases" target="_blank" class="btn btn-primary">
             View Release
           </a>
         </div>
@@ -193,6 +195,7 @@ function formatUptime(seconds: number): string {
           {{ checkingUpdate ? 'Checking...' : 'Check Now' }}
         </button>
       </div>
+      <p v-if="updateError" role="status" class="text-sm text-amber-500 mt-3">{{ updateError }}</p>
     </div>
 
     <!-- Links -->
