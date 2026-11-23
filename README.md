@@ -15,7 +15,8 @@
 ### 🖥️ 監控與 API 能力
 
 - HTTP(s)、關鍵字與安全 JSON 查詢；支援 status/header/body/JSON/response-time 宣告式回應斷言與試跑。
-- Push 回報；workspace／environment 隔離、API key 權限、加密且不可回讀的 request／環境 secrets。
+- Push 回報與漏報偵測（超過間隔兩倍、至少 60 秒沒回報就轉為 DOWN 並發通知）；
+  workspace／environment 隔離、API key 權限、加密且不可回讀的 request／環境 secrets。
 - Bruno `.bru` 宣告式子集 preview／原子 paused import／placeholder export。JavaScript scripts/tests、未支援 auth 與格式會明確拒絕，見 [相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
 - PostgreSQL lease/fencing、多 API／worker、Kubernetes 多節點部署設定。
 
@@ -60,10 +61,14 @@ Email 僅能走操作者設定的 SMTP relay（`SMTP_HOST`／`SMTP_PORT`／`SMTP
 - 狀態頁：可選密碼保護（防 RSS 繞過）、新增時正確保存 monitor／GA／密碼、公開頁有 SEO meta。
 - 監控詳情可匯出最近 10,000 筆心跳為 CSV；心跳欄位若含試算表公式字元會自動转义。
 - Debug Info 顯示真實版本／DB version／容器狀態；設定頁的無效欄位已移除或改為真正生效。
+- **Reports**：24h／7d／30d／1y 可用性與 SLA 報表，可排序並匯出 CSV。
+- 監控詳情 **Check now**：執行中的 monitor 提前下一次檢查；paused monitor 做一次性 bounded 檢查（不寫歷史、不發通知）。
+- 狀態頁可切換個別 monitor 是否顯示目標網址；全域 API key（`gk_`）可在 Settings 產生／Rotate／Revoke。
+- TLS 到期通知天數的全域設定現在與通知引擎使用同一設定鍵；時區設定套用於通用時間元件與監控詳情。
 
 不支援（畫面已明確標示）：Real Browser screenshot、Ping packet count/size、
 Monitor Conditions、自訂網域、舊類型 checker（TCP/Ping/DNS/SNMP 等可保存但不排程）。
-JVM 式 SLA 報表、多地點探測、SMS/voice 通知不在本部署範圍。
+多地點探測、SMS/voice 通知不在本部署範圍。
 
 ## 📁 專案結構
 

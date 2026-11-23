@@ -36,14 +36,7 @@ const updateStatusPageSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await requireRequestSession(event)
-  
-  if (!session?.user) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
+  const scope = await requireWorkspace(event, 'editor')
 
   const slug = getRouterParam(event, 'slug')
 
@@ -55,7 +48,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existing = await prisma.statusPage.findFirst({
-    where: { slug, workspaceId: session.workspaceId }
+    where: { slug, workspaceId: scope.workspaceId }
   })
 
   if (!existing) {
@@ -87,7 +80,7 @@ export default defineEventHandler(async (event) => {
   if (password !== undefined) updateData.passwordHash = password === null ? null : await hashPassword(password)
   if (customCSS !== undefined) updateData.customCss = customCSS
   const statusPage = await prisma.$transaction(async tx => {
-    const current = await tx.statusPage.findFirst({ where: { slug, workspaceId: session.workspaceId } })
+    const current = await tx.statusPage.findFirst({ where: { slug, workspaceId: scope.workspaceId } })
     if (!current) throw createError({ statusCode: 404, message: 'Status page not found' })
     if (publicGroupList) {
       if (publicGroupList.length > 100) throw createError({ statusCode: 400, message: 'Too many groups' })
@@ -97,7 +90,7 @@ export default defineEventHandler(async (event) => {
       if (requestedIds.some(id => !existingIds.has(id)) || new Set(requestedIds).size !== requestedIds.length) {
         throw createError({ statusCode: 404, message: 'Group not found' })
       }
-      await assertWorkspaceIds(tx, 'monitor', publicGroupList.flatMap(group => group.monitorList.map(monitor => monitor.id)), session.workspaceId)
+      await assertWorkspaceIds(tx, 'monitor', publicGroupList.flatMap(group => group.monitorList.map(monitor => monitor.id)), scope.workspaceId)
       await tx.statusPageGroup.deleteMany({ where: { statusPageId: current.id, id: { notIn: requestedIds } } })
       for (const [index, group] of publicGroupList.entries()) {
         const data = { name: group.name, weight: group.weight ?? index + 1 }
@@ -113,7 +106,7 @@ export default defineEventHandler(async (event) => {
         })) })
       }
     }
-    return tx.statusPage.update({ where: { id: current.id, workspaceId: session.workspaceId }, data: updateData })
+    return tx.statusPage.update({ where: { id: current.id, workspaceId: scope.workspaceId }, data: updateData })
   })
   return { ok: true, data: statusPage }
 })

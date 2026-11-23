@@ -410,6 +410,16 @@ R59 🔵 時區設定開始生效：`useDisplayTimezone()` 依 General 的 displ
   （未提供時退回使用者 profile timezone）格式化 `Datetime` 與監控詳情頁時間。
   線上驗證監控詳情頁正常渲染，revision 148、全 Healthy。
 
+R60 🔵 OpenAPI 補 `/v1/monitors/{id}/check-now`；README 更新近期能力。
+R61 🔵 安全審查修正（子代理 ses_dfa1f856fffeGbo7P1CCNt5m7u）：
+  1. P1 TLS 到期全域設定 GET/PUT 改 requirePlatformAdmin（原任何登入者可改）。
+  2. P1 狀態頁 PUT 改 requireWorkspace(editor)，封住 viewer／read-only key 開啟 sendUrl 外洩網址。
+  3. P1 push watchdog 寫 DOWN 前檢查 maintenance window，避免維護期間誤報。
+  4. P1 displayTimezone 加 IANA 驗證與前端 try/catch fallback，防止無效值打掛 UI。
+  5. P2 check-now 遇正在 lease 的 monitor 回 409；watchdog 逐筆容錯；
+     commit-result 保留 checker 的 msg；CSV 公式防護涵蓋前導空白。
+  build/unit 60/60 通過。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。

@@ -49,7 +49,7 @@ async function load() {
 function csvCell(value: unknown) {
   const text = String(value ?? '')
   // Spreadsheet formula injection guard.
-  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text
+  const safe = /^[\s=+\-@]/.test(text) ? `'${text}` : text
   return `"${safe.replace(/"/g, '""')}"`
 }
 

@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   // Prevent spreadsheet formula execution when opening the CSV in Excel/Sheets.
   const cell = (value: string) => {
     const safe = value.replace(/"/g, '""').slice(0, 200)
-    return `"${/^[=+\-@\t\r]/.test(safe) ? `'${safe}` : safe}"`
+    return `"${/^[\s=+\-@]/.test(safe) ? `'${safe}` : safe}"`
   }
   const csv = [
     'time,status,ping_ms,message,code',

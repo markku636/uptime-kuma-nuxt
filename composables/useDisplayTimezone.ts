@@ -20,19 +20,25 @@ export function useDisplayTimezone() {
   function format(value: string | Date | number, withSeconds = true) {
     const date = value instanceof Date ? value : new Date(value)
     if (Number.isNaN(date.getTime())) return '—'
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone.value,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      ...(withSeconds ? { second: '2-digit' } : {}),
-      hourCycle: 'h23',
-    }).formatToParts(date)
-    const part = (type: string) => parts.find(item => item.type === type)?.value || ''
-    const stamp = `${part('hour')}:${part('minute')}${withSeconds ? `:${part('second')}` : ''}`
-    return `${part('year')}-${part('month')}-${part('day')} ${stamp}`
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone.value,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        ...(withSeconds ? { second: '2-digit' } : {}),
+        hourCycle: 'h23',
+      }).formatToParts(date)
+      const part = (type: string) => parts.find(item => item.type === type)?.value || ''
+      const stamp = `${part('hour')}:${part('minute')}${withSeconds ? `:${part('second')}` : ''}`
+      return `${part('year')}-${part('month')}-${part('day')} ${stamp}`
+    } catch {
+      // A stale/invalid timezone must never crash the UI.
+      return new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+        .toISOString().slice(0, 19).replace('T', ' ')
+    }
   }
 
   return { timezone, format }

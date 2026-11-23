@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import { workerPrisma } from '../../utils/worker-prisma'
 import { commitMonitorResult } from './commit-result'
+import { isMonitorUnderMaintenance } from '../maintenance/scheduler'
 
 /** Push monitors are expected to check in every `interval` seconds; allow 2x + a 60s floor. */
 export function pushGraceMs(intervalSeconds: number) {
@@ -40,7 +41,13 @@ export class PushWatchdog {
         WHERE m.type = 'push' AND m.active AND s.status <> 0
           AND s.checked_at < clock_timestamp() - (GREATEST(60, m.interval * 2) * INTERVAL '1 second')
         ORDER BY s.checked_at ASC LIMIT 100`
-      for (const row of rows) await this.markDown(Number(row.id))
+      for (const row of rows) {
+        try {
+          await this.markDown(Number(row.id))
+        } catch (error) {
+          console.warn('[PushWatchdog] failed to mark missed heartbeat', row.id, error)
+        }
+      }
     } catch {
       // Transient DB failures are retried on the next poll.
     } finally {
@@ -57,6 +64,8 @@ export class PushWatchdog {
       const monitor = await tx.monitor.findUniqueOrThrow({ where: { id } })
       const state = await tx.monitorState.findUnique({ where: { monitorId: id } })
       if (!state || state.status === 0) return
+      // Planned downtime suppresses missed-heartbeat alerts just like active checks.
+      if (await isMonitorUnderMaintenance(id, monitor.workspaceId, tx)) return
       const now = (await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp() AS now`)[0]!.now
       if (!isPushStale(monitor.interval, state.checkedAt, now.getTime())) return
       await commitMonitorResult(tx, { ...monitor, runId: randomUUID(), scheduledFor: now }, {

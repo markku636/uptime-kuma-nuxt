@@ -2,9 +2,14 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 
+const timezone = z.string().max(100).refine(value => {
+  if (value === 'auto') return true
+  try { new Intl.DateTimeFormat('en', { timeZone: value }); return true } catch { return false }
+}, 'Invalid IANA timezone')
+
 const schema = z.object({
-  displayTimezone: z.string().optional(),
-  serverTimezone: z.string().optional(),
+  displayTimezone: timezone.optional(),
+  serverTimezone: timezone.optional(),
   searchEngineIndex: z.boolean().optional(),
   entryPage: z.enum(['dashboard', 'status', 'statusPage']).optional(),
   statusPageSlug: z.string().max(200).optional(),

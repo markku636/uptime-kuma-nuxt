@@ -8,7 +8,7 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  await requireRequestSession(event)
+  await requirePlatformAdmin(event)
   const body = await readValidatedBody(event, schema.parse)
   const days = parseTlsExpiryDays(body.days)
   const value = JSON.stringify(days)

@@ -18,6 +18,9 @@ export default defineEventHandler(async (event) => {
     const result = await trialMonitor(scope.user.id, monitor)
     return { ok: true, message: 'Check completed', data: result.data }
   }
+  if (monitor.leaseOwner && monitor.leaseUntil && monitor.leaseUntil.getTime() > Date.now()) {
+    throw createError({ statusCode: 409, message: 'A check is already running for this monitor' })
+  }
   await prisma.monitor.update({
     where: { id },
     data: { nextCheckAt: new Date(Date.now() - 1000) },
