@@ -7,21 +7,37 @@
         <span class="text-lg font-bold whitespace-nowrap">Uptime Kuma</span>
       </NuxtLink>
       <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
-        <NuxtLink to="/dashboard" class="sidebar-link" active-class="sidebar-link-active">Dashboard</NuxtLink>
-        <NuxtLink to="/monitors" class="sidebar-link" :class="{ 'sidebar-link-active': monitorsActive }">Monitors</NuxtLink>
-        <NuxtLink to="/monitors/groups" class="sidebar-link" active-class="sidebar-link-active">Groups</NuxtLink>
-        <NuxtLink to="/maintenance" class="sidebar-link" active-class="sidebar-link-active">Maintenance</NuxtLink>
-        <NuxtLink to="/reports" class="sidebar-link" active-class="sidebar-link-active">Reports</NuxtLink>
-        <NuxtLink to="/settings" class="sidebar-link" active-class="sidebar-link-active">Settings</NuxtLink>
-        <NuxtLink to="/status-pages" class="sidebar-link" active-class="sidebar-link-active">Status Pages</NuxtLink>
-        <NuxtLink to="/api-docs" class="sidebar-link" active-class="sidebar-link-active">API Docs</NuxtLink>
+        <NuxtLink to="/dashboard" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-squares-2x2" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Dashboard</span>
+        </NuxtLink>
+        <NuxtLink to="/monitors" class="sidebar-link" :class="{ 'sidebar-link-active': monitorsActive }"><UIcon name="i-heroicons-server" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Monitors</span>
+        </NuxtLink>
+        <NuxtLink to="/monitors/groups" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-folder" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Groups</span>
+        </NuxtLink>
+        <NuxtLink to="/maintenance" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-wrench-screwdriver" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Maintenance</span>
+        </NuxtLink>
+        <NuxtLink to="/reports" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-chart-bar" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Reports</span>
+        </NuxtLink>
+        <NuxtLink to="/settings" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-cog-6-tooth" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Settings</span>
+        </NuxtLink>
+        <NuxtLink to="/status-pages" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-globe-alt" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Status Pages</span>
+        </NuxtLink>
+        <NuxtLink to="/api-docs" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-book-open" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>API Docs</span>
+        </NuxtLink>
       </nav>
       <div class="px-5 py-4 text-xs text-tertiary border-t border-default">Monitoring made simple</div>
     </aside>
 
     <!-- Header -->
     <header class="header-main border-b border-default bg-[var(--bg-secondary)]">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="w-full max-w-[1600px] mr-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <NuxtLink to="/dashboard" class="lg:hidden flex items-center gap-2 shrink-0 text-primary hover:text-emerald-500 transition-colors">
@@ -216,9 +232,9 @@
       </div>
     </header>
 
-    <div class="border-b border-default bg-[var(--bg-secondary)]"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3"><ClientOnly><LayoutWorkspaceSelector /></ClientOnly></div></div>
+    <div class="border-b border-default bg-[var(--bg-secondary)]"><div class="w-full max-w-[1600px] mr-auto px-4 sm:px-6 lg:px-8 py-3"><ClientOnly><LayoutWorkspaceSelector /></ClientOnly></div></div>
     <!-- Main content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="w-full max-w-[1600px] mr-auto px-4 sm:px-6 lg:px-8 py-8">
       <slot />
     </main>
 

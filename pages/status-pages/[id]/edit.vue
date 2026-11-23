@@ -142,7 +142,7 @@ const previewUrl = computed(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="max-w-4xl mr-auto px-4 py-8">
     <div class="mb-6">
       <NuxtLink
         to="/status-pages"

@@ -60,7 +60,7 @@ async function handleSubmit(formData: any) {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
+  <div class="max-w-4xl mr-auto">
     <div class="mb-6">
       <UButton
         to="/monitors"
