@@ -191,26 +191,33 @@
             <button v-for="p in chartPeriods" :key="p.value" class="btn btn-secondary text-xs" :class="chartPeriod===p.value?'ring-2 ring-primary':''" @click="chartPeriod=p.value">{{ p.label }}</button>
           </div>
         </div>
-        <div class="h-48 relative pl-14">
-          <div class="absolute inset-0 pl-14 flex items-end gap-0.5">
-            <div
-              v-for="(beat, i) in chartHeartbeats"
-              :key="i"
-              class="chart-bar flex-1 rounded-t transition-all hover:opacity-80 cursor-pointer"
-              :class="beat?.status === 1 ? 'bg-emerald-500' : beat?.status === 0 ? 'bg-red-500' : 'bg-gray-700'"
-              :style="{ 
-                height: getChartHeight(beat),
-                animationDelay: `${i * 10}ms`
-              }"
-              :title="beat ? `${formatDateTime(beat.time)}: ${beat.ping || 0}ms` : 'No data'"
-            ></div>
-          </div>
-          <!-- Y-axis labels -->
-          <div class="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500">
+        <div v-if="chartPoints" class="relative pl-14">
+          <svg viewBox="0 0 800 180" preserveAspectRatio="none" class="w-full h-48 overflow-visible" role="img" aria-label="Response time chart">
+            <defs>
+              <linearGradient id="responseTimeFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#5cdd8b" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="#5cdd8b" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <line v-for="y in [20, 65, 110, 155]" :key="y" x1="0" :y1="y" x2="800" :y2="y" stroke="currentColor" stroke-opacity="0.12" stroke-width="1" />
+            <path :d="chartPoints.area" fill="url(#responseTimeFill)" />
+            <path :d="chartPoints.line" fill="none" stroke="#5cdd8b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+            <circle v-for="(point, i) in chartPoints.points" :key="i" :cx="point.x" :cy="point.y" r="3.5" :fill="point.down ? '#f87171' : '#5cdd8b'" stroke="#0b1622" stroke-width="1.5">
+              <title>{{ point.label }}: {{ point.ping }}ms</title>
+            </circle>
+          </svg>
+          <div class="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500 pointer-events-none">
             <span>{{ maxPing }}ms</span>
             <span>{{ Math.round(maxPing / 2) }}ms</span>
             <span>0ms</span>
           </div>
+        </div>
+        <div v-else class="h-48 flex items-center justify-center text-sm text-secondary">
+          No response data in this period.
+        </div>
+        <div v-if="chartPoints" class="flex justify-between text-xs text-gray-500 pl-14 mt-1">
+          <span>{{ chartPoints.startLabel }}</span>
+          <span>{{ chartPoints.endLabel }}</span>
         </div>
       </div>
 
@@ -686,6 +693,31 @@ async function loadPingSeries() {
   }
 }
 watch(chartPeriod, loadPingSeries)
+
+const chartPoints = computed(() => {
+  const beats = chartHeartbeats.value.filter((beat: any) => beat && Number.isFinite(Number(beat.ping)))
+  if (!beats.length) return null
+  const max = Math.max(maxPing.value, 1)
+  const top = 14, bottom = 158
+  const xOf = (index: number) => beats.length === 1 ? 400 : (index / (beats.length - 1)) * 800
+  const yOf = (value: number) => top + (1 - Math.min(value, max) / max) * (bottom - top)
+  const points = beats.map((beat: any, index: number) => ({
+    x: xOf(index),
+    y: yOf(Number(beat.ping)),
+    ping: Math.round(Number(beat.ping)),
+    down: beat.status === 0,
+    label: formatDateTime(beat.time),
+  }))
+  const line = points.map((point, index) => `${index ? 'L' : 'M'}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ')
+  const area = `${line} L800,${bottom} L0,${bottom} Z`
+  return {
+    points,
+    line,
+    area,
+    startLabel: points[0]?.label || '',
+    endLabel: points[points.length - 1]?.label || '',
+  }
+})
 
 const importantHeartbeats = computed(() => {
   return heartbeats.value.filter(h => h.important || h.status === 0 || h.status === 3)
