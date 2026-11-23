@@ -6,20 +6,7 @@ interface EnvironmentInfo {
   secretNames: string[]
 }
 
-const PLACEHOLDER = /\{\{\s*([\w.-]+)\s*\}\}/g
-
-export function previewEnvironmentVariables(text: string, variables: Record<string, string>, secretNames: string[]) {
-  const secrets = new Set(secretNames)
-  const missing: string[] = []
-  const preview = text.replace(PLACEHOLDER, (match, name: string) => {
-    if (Object.prototype.hasOwnProperty.call(variables, name)) {
-      return secrets.has(name) ? '••••••' : variables[name]
-    }
-    missing.push(name)
-    return match
-  })
-  return { preview, missing: [...new Set(missing)] }
-}
+export { previewEnvironmentVariables } from '~/utils/variable-preview'
 
 /** Live preview of {{variables}} for the currently selected workspace environment. */
 export function useEnvironmentVariablePreview(text: Ref<string | null | undefined>) {
