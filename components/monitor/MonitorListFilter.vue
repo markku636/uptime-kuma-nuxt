@@ -124,12 +124,12 @@ const emit = defineEmits<{
   (e: 'filter', filters: FilterState): void
 }>()
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 const searchQuery = ref('')
 const statusFilter = ref('')
 const typeFilter = ref('')
-const tagFilter = ref<string | number>('')
+const tagFilter = ref<string>('')
 const activeFilter = ref('')
 const sortBy = ref('name')
 const sortOrder = ref<'asc' | 'desc'>('asc')
@@ -185,7 +185,7 @@ const tagOptions = computed(() => {
   
   if (props.tags?.length) {
     props.tags.forEach(tag => {
-      options.push({ value: tag.id, label: tag.name })
+      options.push({ value: String(tag.id), label: tag.name })
     })
   }
   

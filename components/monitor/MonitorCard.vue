@@ -97,7 +97,7 @@ const uptimePercentage = computed(() => {
 })
 
 const uptimeColor = computed(() => {
-  const uptime = parseFloat(uptimePercentage.value)
+  const uptime = parseFloat(String(uptimePercentage.value))
   if (uptime >= 99) return 'text-success'
   if (uptime >= 95) return 'text-warning'
   return 'text-danger'

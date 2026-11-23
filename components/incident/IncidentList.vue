@@ -115,7 +115,7 @@ const emit = defineEmits<{
   (e: 'loadMore'): void
 }>()
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 function getBorderColor(status: string): string {
   switch (status) {

@@ -99,7 +99,7 @@ const props = withDefaults(defineProps<{
   showSummary: true,
 })
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 const selectedRange = ref(props.defaultRange)
 

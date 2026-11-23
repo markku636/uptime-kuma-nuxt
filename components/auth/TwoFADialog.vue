@@ -246,7 +246,7 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { default: false })
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 const verificationCode = ref('')
 const currentPassword = ref('')

@@ -149,7 +149,7 @@ const emit = defineEmits<{
   (e: 'toggle', id: number, active: boolean): void
 }>()
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 const filter = ref<'all' | 'active' | 'scheduled' | 'ended'>('all')
 

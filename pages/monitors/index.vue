@@ -104,7 +104,7 @@ async function bulkAction(action:'pause'|'resume'|'delete'){
   if(!ids.length)return
   if((action==='delete'||ids.length>5)&&!confirm(`${action.toUpperCase()} ${ids.length} monitor(s)?`))return
   bulkBusy.value=true
-  const results=await Promise.allSettled(ids.map(id=>$fetch(`/api/v1/monitors/${id}${action==='delete'?'':'/'+action}`,{method:action==='delete'?'delete':'post'})))
+  const results=await Promise.allSettled(ids.map(id=>$fetch(`/api/v1/monitors/${id}${action==='delete'?'':'/'+action}`,{method:(action==='delete'?'DELETE':'POST') as any})))
   bulkBusy.value=false
   const ok=results.filter(r=>r.status==='fulfilled').length
   toast.add({title:'Bulk action',description:`${ok}/${ids.length} succeeded`,color:ok===ids.length?'success':'error'})

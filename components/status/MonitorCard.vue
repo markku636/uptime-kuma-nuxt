@@ -131,7 +131,7 @@ const emit = defineEmits<{
   (e: 'update:sendUrl', value: boolean): void
 }>()
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 // Show link only for http/keyword/json-query types
 const showLink = computed(() => {

@@ -130,7 +130,7 @@ const emit = defineEmits<{
   (e: 'styleChange', style: string): void
 }>()
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 const titleRef = ref<HTMLElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)

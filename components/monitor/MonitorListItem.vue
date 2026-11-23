@@ -121,7 +121,7 @@ const emit = defineEmits<{
   (e: 'resume', monitor: Monitor): void
 }>()
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 // Computed status based on latest heartbeat
 const monitorStatus = computed(() => {

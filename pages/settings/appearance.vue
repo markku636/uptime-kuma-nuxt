@@ -104,7 +104,7 @@
 <script setup lang="ts">
 const toast = useToast()
 const { appearanceSettings, loadAppearanceSettings, saveAppearanceSettings, applyAppearance } = useAppearanceSettings()
-const { locale } = useI18n()
+const { locale } = (useI18n as any)()
 
 // Local form state so users can edit without immediately persisting
 const theme = ref<'light' | 'dark' | 'system' | 'auto'>('system')
@@ -147,19 +147,19 @@ const themeOptions = [
   { value: 'light', label: 'Light', icon: '☀️' },
   { value: 'dark', label: 'Dark', icon: '🌙' },
   { value: 'system', label: 'Auto', icon: '💻' }
-]
+] as const
 
 const heartbeatBarOptions = [
   { value: 'normal', label: 'Normal' },
   { value: 'bottom', label: 'Bottom' },
   { value: 'none', label: 'None' }
-]
+] as const
 
 const elapsedTimeOptions = [
   { value: 'no-line', label: 'No Line' },
   { value: 'with-line', label: 'With Line' },
   { value: 'none', label: 'None' }
-]
+] as const
 
 const colorOptions = [
   { value: 'green', label: 'Green', hex: '#5cdd8b' },

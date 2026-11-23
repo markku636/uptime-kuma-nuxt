@@ -420,6 +420,11 @@ R61 🔵 安全審查修正（子代理 ses_dfa1f856fffeGbo7P1CCNt5m7u）：
      commit-result 保留 checker 的 msg；CSV 公式防護涵蓋前導空白。
   build/unit 60/60 通過。
 
+R62 🔵 型別債清零（typecheck 23→0）：補 Pinia persist 宣告、optional module 宣告、
+  i18n 大型 generated union 的安全 cast、若干元件 prop/method 型別修正。
+  同時補上真正缺少的 `PUT /api/v1/status-pages/:slug/incidents/:id`（原 UI 編輯 incident
+  打到不存在的路由），並改 owner/editor 權限。build/unit 60/60 通過。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。

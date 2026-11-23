@@ -165,7 +165,7 @@ async function handleSubmit() {
     let result
     if (isEdit.value && props.incident?.id) {
       result = await $fetch(`/api/v1/status-pages/${props.statusPageSlug}/incidents/${props.incident.id}`, {
-        method: 'put',
+        method: 'PUT',
         body: formData.value
       })
       toast.add({

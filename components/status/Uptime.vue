@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
   displayStyle: 'percentage'
 })
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 const { appearanceSettings, loadAppearanceSettings } = useAppearanceSettings()
 
 // Ensure appearance settings are loaded so display style follows preference

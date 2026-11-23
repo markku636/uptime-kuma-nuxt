@@ -92,10 +92,11 @@ async function handleSubmit() {
       }
     })
 
+    const created = (result as any)?.data || result
     emit('created', {
-      id: result.id,
-      name: result.name,
-      description: result.description
+      id: created.id,
+      name: created.name,
+      description: created.description
     })
     
     toast.add({

@@ -70,7 +70,7 @@ const emit = defineEmits<{
 
 const isOpen = defineModel<boolean>('open', { default: false })
 const toast = useToast()
-const { addTag, updateTag } = useTags()
+const { createTag, updateTag } = useTags()
 const loading = ref(false)
 
 const isEdit = computed(() => !!props.tag?.id)
@@ -122,7 +122,7 @@ async function handleSubmit() {
         color: 'success'
       })
     } else {
-      result = await addTag(formData.value)
+      result = await createTag(formData.value)
       toast.add({
         title: 'Success',
         description: 'Tag created successfully',

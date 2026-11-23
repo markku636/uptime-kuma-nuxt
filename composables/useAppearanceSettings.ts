@@ -74,9 +74,9 @@ function applyTheme(theme: ThemeOption) {
 
 function applyLanguage(language?: string) {
   if (!language) return
-  const { locale, setLocale } = useI18n()
+  const { locale, setLocale } = (useI18n as any)()
   if (locale.value !== language) {
-    setLocale(language)
+    setLocale(language as Parameters<typeof setLocale>[0])
   }
 }
 

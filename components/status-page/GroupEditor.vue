@@ -170,14 +170,15 @@ function availableMonitors(groupIndex: number): Monitor[] {
   return props.monitors.filter(m => !usedIds.has(m.id))
 }
 
-function addMonitorToGroup(groupIndex: number, monitor: Monitor | null) {
-  if (!monitor) return
+function addMonitorToGroup(groupIndex: number, monitor: Monitor | number | null) {
+  if (monitor === null || monitor === undefined) return
   
   if (!localGroups.value[groupIndex].monitorList) {
     localGroups.value[groupIndex].monitorList = []
   }
   
-  localGroups.value[groupIndex].monitorList.push(monitor.id)
+  const monitorId = typeof monitor === 'number' ? monitor : monitor.id
+  localGroups.value[groupIndex].monitorList.push(monitorId)
   emitUpdate()
 }
 

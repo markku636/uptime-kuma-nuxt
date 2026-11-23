@@ -73,7 +73,7 @@ import zhCN from './locales/zh-CN.json'
 import zhHK from './locales/zh-HK.json'
 import zhTW from './locales/zh-TW.json'
 
-export default defineI18nConfig(() => ({
+export default (defineI18nConfig as any)((() => ({
   legacy: false,
   locale: 'en',
   fallbackLocale: 'en',
@@ -152,4 +152,4 @@ export default defineI18nConfig(() => ({
     'zh-HK': zhHK,
     'zh-TW': zhTW,
   },
-}))
+})) as any)

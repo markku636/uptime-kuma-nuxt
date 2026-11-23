@@ -64,7 +64,7 @@ const props = withDefaults(defineProps<{
   showDetails: false,
 })
 
-const { t } = useI18n()
+const { t } = (useI18n as any)()
 
 const statusText = computed(() => {
   switch (props.status) {
