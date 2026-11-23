@@ -470,11 +470,15 @@ R69 🔵 整合測試（88 項）與修復：
   線上建立 5 個 paused Bruno 測試監控（Entry page／Login／Public status page／PWA icon／Health），
   全部使用 `{{baseUrl}}` 環境變數且 `/test` 回 CHECK_OK；全域金鑰產生→呼叫→撤銷亦驗證通過。
 
-## 目前狀態（2026-11-23 09:54 CST）
+## 目前狀態（2026-11-23 22:52 CST）
 
-R1–R67 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
-revision 164、Healthy/Synced、API/worker/fixture 全 Healthy，兩個網域 /login 回 200；
-build 成功、unit 60/60、typecheck **0 error**。artifact PVC 保持在 3 個 release（約 2.6GB），
+R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
+revision 174、Healthy/Synced、API/worker/fixture 全 Healthy，兩個網域 /login 回 200；
+build 成功、unit 61/61、integration 87 pass / 0 fail / 1 skipped、typecheck **0 error**。
+環境變數：workspace 1 / environment 1 有 `baseUrl`，Bruno monitor 與 `/test` 皆會解析；
+表單即時預覽 `{{var}}`（secret 顯示 ••••••）。全域金鑰 `gk_...` 產生→呼叫→撤銷已驗證。
+Bruno：移植精選 collection + Local/Production 環境 + `npm run bruno:smoke`；
+線上建立 5 個 paused Bruno 測試監控，全部 CHECK_OK。artifact PVC 保持在 3 個 release（約 2.6GB），
 root filesystem 83%。線上驗證包含：Reports CSV、Check now、TLS 設定讀寫與權限、
 狀態頁 sendUrl 開關、push 心跳逾時→DOWN→恢復、維護窗口抑制誤報、時區格式化、
 incident 編輯端點。測試用 monitor／status page／incident 皆已清除。
