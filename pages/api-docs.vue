@@ -13,7 +13,24 @@
       </div>
     </div>
     
-    <p v-if="loadError" role="alert" class="p-4 text-red-400">Interactive documentation could not load. <a :href="swaggerJsonUrl">OpenAPI JSON remains available.</a></p>
+    <div v-if="loadError" class="card p-5">
+      <p role="alert" class="text-amber-500 mb-4">
+        Interactive UI could not load from the CDN. Showing the embedded endpoint list; the
+        <a :href="swaggerJsonUrl" class="link">full OpenAPI JSON</a> is also available.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead><tr><th>Method</th><th>Path</th><th>Summary</th></tr></thead>
+          <tbody>
+            <tr v-for="endpoint in endpoints" :key="endpoint.method + endpoint.path">
+              <td><span class="uppercase text-xs font-semibold text-primary">{{ endpoint.method }}</span></td>
+              <td class="font-mono text-sm">{{ endpoint.path }}</td>
+              <td class="text-secondary">{{ endpoint.summary }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <div id="swagger-ui" class="swagger-wrapper"></div>
   </div>
 </template>
@@ -30,9 +47,27 @@ definePageMeta({
 const swaggerJsonUrl = '/api/swagger-json'
 
 const loadError=ref(false)
+const endpoints=ref<{ method: string; path: string; summary: string }[]>([])
 let swaggerUIBundle: any = null
 
+const methods = ['get', 'post', 'put', 'patch', 'delete']
+
+async function loadFallbackEndpoints() {
+  try {
+    const spec = await $fetch<any>(swaggerJsonUrl)
+    endpoints.value = Object.entries(spec?.paths || {}).flatMap(([path, operations]: [string, any]) =>
+      methods.filter(method => operations?.[method]).map(method => ({
+        method,
+        path,
+        summary: operations[method]?.summary || '',
+      })))
+  } catch {
+    endpoints.value = []
+  }
+}
+
 onMounted(async () => {
+  void loadFallbackEndpoints()
   // Dynamically load Swagger UI CSS
   const cssLink = document.createElement('link')
   cssLink.rel = 'stylesheet'
