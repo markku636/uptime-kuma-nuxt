@@ -52,7 +52,7 @@
           <div v-if="canEdit" class="flex items-center gap-2 flex-wrap">
             <button @click="checkNow" :disabled="checkingNow" class="btn btn-secondary">
               <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-1" />
-              {{ checkingNow ? 'Queuing…' : 'Check now' }}
+              {{ checkingNow ? $t('Queuing…') : $t('Check now') }}
             </button>
             <button v-if="monitor.active" @click="pauseMonitor" class="btn btn-secondary">
               <UIcon name="i-heroicons-pause" class="w-4 h-4 mr-1" />
@@ -176,7 +176,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Push URL</h3>
             <p class="text-sm text-gray-500 mt-1">Send GET or POST requests here to record a heartbeat. Treat this URL as a secret.</p>
           </div>
-          <button v-if="canEdit" class="btn btn-secondary" @click="copyPushUrl">Copy URL</button>
+          <button v-if="canEdit" class="btn btn-secondary" @click="copyPushUrl">{{ $t('Copy URL') }}</button>
         </div>
         <p v-if="pushUrlLoading" class="text-sm text-secondary mt-3">Loading…</p>
         <code v-else-if="pushUrl" class="block break-all text-sm text-primary mt-3">{{ pushUrl }}</code>
@@ -387,6 +387,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { t } = (useI18n as any)()
 const { $socket } = useNuxtApp()
 
 const monitorId = computed(() => Number(route.params.id))
@@ -725,7 +726,7 @@ async function copyPushUrl() {
   if (!pushUrl.value) return
   try {
     await navigator.clipboard.writeText(pushUrl.value)
-    toast.add({ title: 'Push URL copied', color: 'success' })
+    toast.add({ title: t('Push URL copied'), color: 'success' })
   } catch {
     toast.add({ title: 'Copy failed', description: 'Select the URL and copy it manually.', color: 'error' })
   }
@@ -735,9 +736,9 @@ const checkNow = async () => {
   checkingNow.value = true
   try {
     const result = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/check-now`, { method: 'POST' })
-    toast.add({ title: result.message || 'Check queued', description: result.data?.code, color: 'success' })
+    toast.add({ title: result.message === 'Check queued' ? t('Check queued') : (result.message || t('Check queued')), description: result.data?.code, color: 'success' })
   } catch (e: any) {
-    toast.add({ title: 'Error', description: e.data?.message || 'Failed to queue check', color: 'error' })
+    toast.add({ title: 'Error', description: e.data?.message || t('A check is already running for this monitor'), color: 'error' })
   } finally {
     checkingNow.value = false
   }
