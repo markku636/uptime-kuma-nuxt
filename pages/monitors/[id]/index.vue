@@ -50,6 +50,10 @@
           
           <!-- Actions -->
           <div v-if="canEdit" class="flex items-center gap-2 flex-wrap">
+            <button v-if="monitor.active" @click="checkNow" :disabled="checkingNow" class="btn btn-secondary">
+              <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-1" />
+              {{ checkingNow ? 'Queuing…' : 'Check now' }}
+            </button>
             <button v-if="monitor.active" @click="pauseMonitor" class="btn btn-secondary">
               <UIcon name="i-heroicons-pause" class="w-4 h-4 mr-1" />
               Pause
@@ -393,6 +397,7 @@ const heartbeats = ref<any[]>([])
 const loading = ref(true)
 const deleting = ref(false)
 const cloning = ref(false)
+const checkingNow = ref(false)
 const showDeleteConfirm = ref(false)
 const showBadgeGenerator = ref(false)
 const currentPage = ref(1)
@@ -680,6 +685,18 @@ const getStatusText = (status: number) => {
     case 0: return 'DOWN'
     case 3: return 'MAINTENANCE'
     default: return 'UNKNOWN'
+  }
+}
+
+const checkNow = async () => {
+  checkingNow.value = true
+  try {
+    await $fetch(`/api/v1/monitors/${monitorId.value}/check-now`, { method: 'POST' })
+    toast.add({ title: 'Check queued', color: 'success' })
+  } catch (e: any) {
+    toast.add({ title: 'Error', description: e.data?.message || 'Failed to queue check', color: 'error' })
+  } finally {
+    checkingNow.value = false
   }
 }
 
