@@ -4,7 +4,8 @@ import { prisma } from '~/server/utils/prisma'
 import { hashPassword } from '~/server/utils/password'
 
 const groupMonitorSchema = z.object({
-  id: z.number()
+  id: z.number(),
+  sendUrl: z.boolean().optional()
 })
 
 const groupSchema = z.object({
