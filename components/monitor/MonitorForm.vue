@@ -45,6 +45,10 @@
           <p class="text-xs text-gray-400 mt-1">
             Supports <code>&#123;&#123;variable&#125;&#125;</code> placeholders resolved from the workspace environment variables in Settings → Workspaces.
           </p>
+          <p v-if="urlVariablePreview" class="text-xs mt-1" :class="urlVariablePreview.missing.length ? 'text-amber-500' : 'text-emerald-500'">
+            Resolved: <code class="break-all">{{ urlVariablePreview.preview }}</code>
+            <span v-if="urlVariablePreview.missing.length"> · Unknown: {{ urlVariablePreview.missing.join(', ') }}</span>
+          </p>
         </div>
 
         <!-- Hostname for TCP/Ping/DNS monitors -->
@@ -1302,6 +1306,8 @@ const form = reactive({
   nodeId: props.initialData?.node_id || props.initialData?.nodeId || null,
   assignedNode: props.initialData?.assigned_node || props.initialData?.assignedNode || null,
 })
+
+const urlVariablePreview = useEnvironmentVariablePreview(toRef(form, 'url'))
 
 const monitorTypes = [
   { value: 'http', label: 'HTTP(s)' },
