@@ -484,6 +484,15 @@ R76 🔵 Response Time 圖表改為服務端聚合 `GET /api/v1/monitors/:id/pin
   固定約 60 個桶、下鑽不傳原始歷史；實測 push 心跳 123ms 正確落入 24h 桶。
 R77 🔵 Dashboard 增加群組篩選（僅本頁，標示清楚）。
 
+R78–R81 🔵 介面／品牌：
+  - Settings 改為靠左全寬、分組導覽＋搜尋；header 控制項推到右側。
+  - 公開狀態頁優化 empty/pending 狀態（「No monitors configured」／「Waiting for first check」），
+    移除多餘的「•」，並把測試狀態頁 `test-s-2-20-1795368798` 補上 4 個 monitor 與描述。
+  - Nodes 頁移除無消费者的 Legacy instance metadata UI；RuntimeHint 提示多語系化且可在 General 關閉。
+  - 全站品牌由 Uptime Kuma 改為 SealWatch（SVG logo／favicon／title／manifest／通知文字），
+    登入頁與選單 logo 使用 SealWatch 吉祥物樣式。
+  build/unit 61/61、typecheck 0；integration 87 pass / 0 fail / 1 skipped。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。

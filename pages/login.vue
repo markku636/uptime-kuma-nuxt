@@ -2,10 +2,13 @@
   <div class="login-page">
     <div class="w-full max-w-sm">
       <form @submit.prevent="handleLogin" class="space-y-6">
-        <!-- Logo -->
-        <div class="text-center">
-          <img src="/icon.svg" alt="SealWatch" width="64" height="64" class="mx-auto" />
-          <h1 class="text-2xl font-bold text-primary mt-3">SealWatch</h1>
+        <!-- Brand -->
+        <div class="login-brand">
+          <img src="/sealwatch-mark.svg" alt="SealWatch" class="login-brand-mark" />
+          <div>
+            <h1 class="login-brand-title">Seal<span>Watch</span></h1>
+            <p class="login-brand-tagline">MONITOR · ALERT · STATUS</p>
+          </div>
         </div>
 
         <!-- Username -->
@@ -146,11 +149,51 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-page {
+  position: relative;
+  overflow: hidden;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--bg-primary);
   padding: 1rem;
+}
+.login-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 15% 20%, rgba(92, 221, 139, 0.16), transparent 45%),
+              radial-gradient(circle at 85% 85%, rgba(92, 221, 139, 0.1), transparent 40%);
+  pointer-events: none;
+}
+.login-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+.login-brand-mark { width: 4rem; height: 4rem; flex-shrink: 0; }
+.login-brand-title {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0b2545;
+}
+:global(.dark) .login-brand-title { color: #e8f6ee; }
+.login-brand-title span {
+  background: linear-gradient(90deg, #5cdd8b, #20b26b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.login-brand-tagline {
+  margin-top: 0.25rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+  color: var(--text-tertiary);
 }
 </style>
