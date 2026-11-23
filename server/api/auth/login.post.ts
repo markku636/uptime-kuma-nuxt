@@ -8,6 +8,7 @@ const loginSchema = z.object({
   username: z.string().min(1, 'Username is required').max(100),
   password: z.string().min(1, 'Password is required').max(200),
   token: z.string().optional(), // 2FA token (optional, required if 2FA enabled)
+  remember: z.boolean().optional().default(false),
 })
 
 export default defineEventHandler(async (event) => {
@@ -93,6 +94,7 @@ export default defineEventHandler(async (event) => {
 
   // Set session with a revocable server-side record
   const sessionId = await createTrackedSession(event, user.id)
+  const remember = result.data.remember
   await setUserSession(event, {
     sessionId,
     user: {
@@ -101,7 +103,7 @@ export default defineEventHandler(async (event) => {
       timezone: user.timezone,
       sessionVersion: user.sessionVersion,
     }
-  })
+  }, remember ? { maxAge: 60 * 60 * 24 * 30 } : undefined)
 
   return {
     ok: true,

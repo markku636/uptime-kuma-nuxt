@@ -52,6 +52,12 @@
           </div>
         </div>
 
+        <!-- Remember me -->
+        <label class="flex items-center gap-2 text-sm text-secondary cursor-pointer">
+          <input v-model="form.remember" type="checkbox" class="checkbox" />
+          {{ $t('Remember me') }}
+        </label>
+
         <!-- 2FA step -->
         <div v-if="requiresTwoFactor" class="form-group">
           <label for="twofa" class="input-label">2FA code or backup code</label>
@@ -93,6 +99,7 @@ const { fetch: refreshSession } = useUserSession()
 const form = reactive({
   username: '',
   password: '',
+  remember: false,
 })
 
 const loading = ref(false)

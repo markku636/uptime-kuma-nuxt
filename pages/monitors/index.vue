@@ -24,7 +24,7 @@
       <button class="btn btn-secondary" :disabled="!selected.size||bulkBusy" @click="bulkAction('resume')">Resume</button>
       <button class="btn btn-danger" :disabled="!selected.size||bulkBusy" @click="bulkAction('delete')">Delete</button>
       <label class="ml-auto text-sm">Sort this page
-        <select v-model="pageSort" class="select-field ml-2"><option value="id">ID</option><option value="name">Name</option><option value="type">Type</option></select>
+        <select v-model="pageSort" class="select-field ml-2"><option value="id">ID</option><option value="name">Name</option><option value="type">Type</option><option value="uptime">Uptime</option><option value="response">Response time</option></select>
       </label>
     </div>
     <p v-if="error" role="alert">Unable to load monitors.</p>
@@ -87,11 +87,20 @@ const {canEdit}=useWorkspace()
 const toast=useToast()
 const selected=ref<Set<number>>(new Set())
 const bulkBusy=ref(false)
-const pageSort=ref<'id'|'name'|'type'>('id')
+const pageSort=ref<'id'|'name'|'type'|'uptime'|'response'>('id')
 const sortedMonitors=computed(()=>{
   const rows=[...monitors.value]
   if(pageSort.value==='name')rows.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')))
   if(pageSort.value==='type')rows.sort((a,b)=>String(a.type||'').localeCompare(String(b.type||''))||Number(a.id)-Number(b.id))
+  if(pageSort.value==='uptime')rows.sort((a,b)=>{
+    const av=uptimeMap[String(a.id)]??uptime30Map[String(a.id)]
+    const bv=uptimeMap[String(b.id)]??uptime30Map[String(b.id)]
+    return (typeof bv==='number'?bv:-1)-(typeof av==='number'?av:-1)||Number(a.id)-Number(b.id)
+  })
+  if(pageSort.value==='response')rows.sort((a,b)=>{
+    const av=latestPing(a),bv=latestPing(b)
+    return (typeof bv==='number'?bv:-1)-(typeof av==='number'?av:-1)||Number(a.id)-Number(b.id)
+  })
   return rows
 })
 function toggleSelect(id:number){

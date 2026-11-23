@@ -19,6 +19,21 @@ definePageMeta({
   layout: false
 })
 
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+import dayjs from 'dayjs'
+
+function incidentContentHtml(item: any) {
+  return item?.content ? DOMPurify.sanitize(marked(String(item.content)) as string) : ''
+}
+
+function incidentDate(item: any) {
+  const value = item?.createdDate || item?.lastUpdatedDate
+  if (!value) return ''
+  const date = new Date(value)
+  return Number.isFinite(date.getTime()) ? dayjs(date).format('YYYY-MM-DD HH:mm') : ''
+}
+
 const route = useRoute()
 const router = useRouter()
 const slug = computed(() => route.params.slug as string)
@@ -30,6 +45,7 @@ const {
   groups: publicGroupList,
   groupTabs,
   incident,
+  incidents,
   maintenanceList,
   lastUpdateTime: lastUpdated,
   updateCountdownText: countdown,
@@ -113,8 +129,6 @@ const selectedMonitorToAdd = ref<{ label: string; value: number; tags?: any[] } 
 // Edit permission is decided by the server for this status page's workspace.
 const canEdit = computed(() => !!statusPage.value?.canEdit)
 
-// Computed for backwards compatibility
-const incidents = computed(() => incident.value ? [incident.value] : [])
 const connected = ref(true)
 const hasLoaded = computed(() => !loading.value)
 
@@ -742,6 +756,28 @@ function formatLastUpdated(date: Date | null) {
             @post="handleIncidentPost"
             @unpin="handleUnpinIncident"
           />
+        </div>
+
+        <!-- Incident history (UptimeRobot-style timeline) -->
+        <div v-if="!editMode && incidents.length > 1" class="mb-8">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Incident history</h2>
+          <div class="space-y-3">
+            <article
+              v-for="item in incidents.slice(1)"
+              :key="item.id"
+              class="rounded-lg border border-default bg-white dark:bg-gray-900 p-4 shadow-sm"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ item.title }}</h3>
+                <span class="text-xs text-gray-500">{{ incidentDate(item) }}</span>
+              </div>
+              <div
+                v-if="incidentContentHtml(item)"
+                class="incident-history-content text-sm text-gray-600 dark:text-gray-400 mt-2 prose dark:prose-invert prose-sm max-w-none"
+                v-html="incidentContentHtml(item)"
+              />
+            </article>
+          </div>
         </div>
 
         <!-- Edit Mode Controls -->

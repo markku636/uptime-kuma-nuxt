@@ -103,6 +103,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
   const config = ref<StatusPageConfig | null>(null)
   const groups = ref<PublicGroup[]>([])
   const incident = ref<Incident | null>(null)
+  const incidents = ref<Incident[]>([])
   const maintenanceList = ref<Maintenance[]>([])
   const heartbeatList = ref<Record<number, Heartbeat[]>>({})
   const uptimeList = ref<Record<string, number>>({})
@@ -199,6 +200,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
       if (response.ok && response.data) {
         config.value = response.data.config
         incident.value = response.data.incident
+        incidents.value = response.data.incidents || (response.data.incident ? [response.data.incident] : [])
         groups.value = response.data.publicGroupList || []
         groupTabs.value = response.data.groupTabs || []
         pagination.value = response.data.pagination
@@ -486,6 +488,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
           lastUpdatedDate: response.data.lastUpdatedDate || response.data.updatedAt
         }
         incident.value = mapped
+        incidents.value = [mapped, ...incidents.value.filter(item => item.id !== mapped.id)].slice(0, 20)
         draftIncident.value = mapped
         return { success: true, incident: mapped }
       } else {
@@ -509,7 +512,9 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
       })
 
       if (response.ok) {
+        const removedId = incident.value?.id
         incident.value = null
+        incidents.value = incidents.value.filter(item => item.id !== removedId)
         draftIncident.value = null
         return { success: true }
       } else {
@@ -634,6 +639,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     config,
     groups,
     incident,
+    incidents,
     maintenanceList,
     heartbeatList,
     uptimeList,

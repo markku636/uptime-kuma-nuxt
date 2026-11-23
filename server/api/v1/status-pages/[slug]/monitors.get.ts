@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
   const noPagination = query.no_pagination === 'true' || query.no_pagination === '1'
 
   const basicPage = await visibleStatusPage(event)
-  const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 1 }) }
+  const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 20 }) }
   // Editing is a session capability; API keys never unlock the public editor.
   const session = await getRequestSession(event)
   let editAllowed = false
@@ -103,6 +103,7 @@ export default defineEventHandler(async (event) => {
       data: {
         config: formatConfig(statusPage, editAllowed),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        incidents: statusPage.incidents.map(formatIncident),
         publicGroupList,
         groupTabs,
         pagination: null
@@ -119,6 +120,7 @@ export default defineEventHandler(async (event) => {
       data: {
         config: formatConfig(statusPage, editAllowed),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        incidents: statusPage.incidents.map(formatIncident),
         publicGroupList: [],
         groupTabs,
         pagination: {
@@ -141,6 +143,7 @@ export default defineEventHandler(async (event) => {
       data: {
         config: formatConfig(statusPage, editAllowed),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        incidents: statusPage.incidents.map(formatIncident),
         publicGroupList: [],
         groupTabs,
         pagination: {
@@ -187,6 +190,7 @@ export default defineEventHandler(async (event) => {
     data: {
       config: formatConfig(statusPage, editAllowed),
       incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
+        incidents: statusPage.incidents.map(formatIncident),
       publicGroupList,
       groupTabs,
       pagination: {
