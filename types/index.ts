@@ -7,6 +7,14 @@ export * from './status-page'
 export * from './socket'
 export * from './cluster'
 
+export interface Tag {
+  id: number
+  name: string
+  color?: string
+  workspaceId?: number
+  createdAt?: Date
+}
+
 export interface User {
   id: number
   username: string

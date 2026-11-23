@@ -50,9 +50,9 @@ const iconConfig = computed(() => {
 const confirmButtonColor = computed(() => {
   switch (props.type) {
     case 'danger':
-      return 'red'
+      return 'error'
     case 'warning':
-      return 'yellow'
+      return 'warning'
     default:
       return 'primary'
   }

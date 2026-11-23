@@ -33,7 +33,8 @@ export async function resolveWorkspace(event: H3Event, user: { id: number; usern
     const first = globalKey
       ? await prisma.workspace.findFirst({ where: {}, select: { id: true }, orderBy: { id: 'asc' } })
       : await prisma.workspaceMember.findFirst({ where: { userId: user.id }, orderBy: { workspaceId: 'asc' } })
-    workspaceId = first?.id || (globalKey ? undefined : (await ensurePersonalWorkspace(user.id, user.username)).id)
+    const foundId = first ? ('id' in first ? first.id : first.workspaceId) : undefined
+    workspaceId = foundId || (globalKey ? undefined : (await ensurePersonalWorkspace(user.id, user.username)).id)
   }
   if (!workspaceId) throw createError({ statusCode: 404, message: 'Workspace not found' })
   const membership = globalKey ? { role: 'owner' } : await prisma.workspaceMember.findUnique({ where: { workspaceId_userId: { workspaceId, userId: user.id } } })

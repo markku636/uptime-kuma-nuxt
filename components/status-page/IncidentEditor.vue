@@ -145,7 +145,7 @@ const styles = [
   { value: 'primary', label: 'Primary' },
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' }
-]
+] as const
 
 // Computed
 const contentHtml = computed(() => {
