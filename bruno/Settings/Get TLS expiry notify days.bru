@@ -1,0 +1,24 @@
+meta {
+  name: Get TLS expiry notify days
+  type: http
+  seq: 5
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/settings/tls-expiry
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  取得 TLS 到期設定
+
+  Requires a platform administrator session cookie from **Auth / Login**. API keys are not accepted.
+}

@@ -453,6 +453,14 @@ R14 🔵 About 頁三個缺失端點：`/api/info`（runtime/版本/uptime）、
 剩餘項目需使用者決定：SMTP/email 通知（刻意不支援，涉及 SSRF／憑證政策）、
 Screenshot API（UI 元件未被任何頁面使用）、origin/main 92 commits 合併（使用者已指示不合併）。
 
+R68 🔵 環境變數／全域金鑰／Bruno 通盤補齊：
+  - 監控試跑端點先套用 `resolveMonitorConfig`，讓 `{{variable}}` 在 `/test` 與
+    排程檢查行為一致。
+  - Monitor 表單提示環境變數用法；工作區環境 1 加入 `baseUrl` 變數。
+  - 從 origin/main 移植精選 Bruno collection（Local／Production 環境、smoke、
+    monitor/tag CRUD、global `gk_` key 的 pre-request script）與 README。
+  build/unit 60/60、typecheck 0。
+
 ## 目前狀態（2026-11-23 09:54 CST）
 
 R1–R67 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。

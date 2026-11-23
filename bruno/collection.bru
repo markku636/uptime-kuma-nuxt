@@ -1,0 +1,34 @@
+script:pre-request {
+  // Send the global API key secret on /api/v1/* when it is set.
+  // Leave apiKey empty to use the session cookie from Auth / Login instead.
+  const apiKey = bru.getEnvVar("apiKey");
+  const url = req.getUrl();
+  if (apiKey && url.includes("/api/v1/") && !url.includes("/api/v1/api-keys")) {
+    req.setHeader("X-API-Key", apiKey);
+  }
+}
+
+docs {
+  # Uptime Kuma Nuxt API — Bruno collection
+
+  A small, curated smoke/CRUD collection for this deployment. Requests tagged
+  `smoke` are read-only; create/update/delete requests are intended for the
+  Local environment only.
+
+  1. Select **Local** (http://localhost:32400) or **Production**
+     (https://uptime.226network.com). Use Production for `smoke` requests only.
+  2. Authenticate either by:
+     - setting the `password` secret and running **Auth / Login** (Bruno keeps
+       the `nuxt-session` cookie), or
+     - setting the `apiKey` secret (`gk_...`, from Settings → Security → Global API key).
+       It is sent as `X-API-Key` on `/api/v1/*` only. Auth, settings and
+       API-key management endpoints still require the session cookie.
+  3. "Create ..." requests store the new id in a variable (`monitorId`, `tagId`)
+     used by the matching get/delete requests.
+
+  Read-only smoke run: `bru run --env Production --tags smoke`
+
+  Note: the in-app Bruno monitor type runs declarative `.bru` requests only —
+  scripts and tests are stripped by the parser. Use the Bruno CLI for the
+  pre-request script and assertions in this collection.
+}

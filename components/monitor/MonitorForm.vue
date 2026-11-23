@@ -39,9 +39,12 @@
             v-model="form.url" 
             type="text" 
             class="input-field" 
-            placeholder="https://example.com"
+            placeholder="https://example.com or {{baseUrl}}/health"
             :disabled="loading"
           />
+          <p class="text-xs text-gray-400 mt-1">
+            Supports <code>&#123;&#123;variable&#125;&#125;</code> placeholders resolved from the workspace environment variables in Settings → Workspaces.
+          </p>
         </div>
 
         <!-- Hostname for TCP/Ping/DNS monitors -->

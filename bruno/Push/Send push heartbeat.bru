@@ -1,0 +1,29 @@
+meta {
+  name: Send push heartbeat
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/push/:token?status=up&msg=OK&ping=100
+  body: none
+  auth: none
+}
+
+params:query {
+  status: up
+  msg: OK
+  ping: 100
+}
+
+params:path {
+  token: {{pushToken}}
+}
+
+docs {
+  發送 Push 心跳
+
+  The token is the `pushToken` of a push monitor. Any HTTP method is accepted.
+
+  Public — no login required.
+}

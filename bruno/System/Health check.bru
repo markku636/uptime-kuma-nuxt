@@ -1,0 +1,24 @@
+meta {
+  name: Health check
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/health
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  健康檢查
+
+  Public — no login required.
+}
