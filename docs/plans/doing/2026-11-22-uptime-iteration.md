@@ -453,10 +453,10 @@ R14 🔵 About 頁三個缺失端點：`/api/info`（runtime/版本/uptime）、
 剩餘項目需使用者決定：SMTP/email 通知（刻意不支援，涉及 SSRF／憑證政策）、
 Screenshot API（UI 元件未被任何頁面使用）、origin/main 92 commits 合併（使用者已指示不合併）。
 
-## 目前狀態（2026-11-23 09:20 CST）
+## 目前狀態（2026-11-23 09:54 CST）
 
-R1–R62 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
-revision 154、Synced、API/worker/fixture 全 Healthy，兩個網域 /login 回 200；
+R1–R67 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
+revision 164、Healthy/Synced、API/worker/fixture 全 Healthy，兩個網域 /login 回 200；
 build 成功、unit 60/60、typecheck **0 error**。artifact PVC 保持在 3 個 release（約 2.6GB），
 root filesystem 83%。線上驗證包含：Reports CSV、Check now、TLS 設定讀寫與權限、
 狀態頁 sendUrl 開關、push 心跳逾時→DOWN→恢復、維護窗口抑制誤報、時區格式化、
