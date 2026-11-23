@@ -1,23 +1,23 @@
 // server/api/v1/settings/tls-expiry.put.ts
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
+import { TLS_EXPIRY_SETTING_KEY, parseTlsExpiryDays } from '../../../utils/tls-expiry-settings'
 
 const schema = z.object({
   days: z.array(z.number().min(1))
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await requireRequestSession(event)
+  await requireRequestSession(event)
   const body = await readValidatedBody(event, schema.parse)
-
-  // Sort days in ascending order
-  const sortedDays = [...body.days].sort((a, b) => a - b)
+  const days = parseTlsExpiryDays(body.days)
+  const value = JSON.stringify(days)
 
   await prisma.setting.upsert({
-    where: { key: 'tlsExpiryDays' },
-    update: { value: JSON.stringify(sortedDays), type: 'json' },
-    create: { key: 'tlsExpiryDays', value: JSON.stringify(sortedDays), type: 'json' }
+    where: { key: TLS_EXPIRY_SETTING_KEY },
+    update: { value, type: 'json' },
+    create: { key: TLS_EXPIRY_SETTING_KEY, value, type: 'json' }
   })
 
-  return { success: true, days: sortedDays }
+  return { success: true, days }
 })

@@ -199,10 +199,10 @@
           type="number" 
           class="input-field w-32" 
           min="0"
-          max="100"
+          max="10"
           :disabled="loading"
         />
-        <p class="text-xs text-gray-400 mt-1">Maximum number of redirects to follow. Set to 0 to disable.</p>
+        <p class="text-xs text-gray-400 mt-1">Maximum number of redirects to follow (0–10). Set to 0 to disable.</p>
       </div>
 
       <!-- HTTP Headers -->
@@ -929,7 +929,7 @@
 
       <!-- Resend Notification Interval -->
       <div class="mt-4">
-        <label class="input-label">Resend Notification if Down X times consecutively</label>
+        <label class="input-label">Resend Notification After N Minutes Still Down</label>
         <input 
           v-model.number="form.resendInterval" 
           type="number" 
@@ -937,7 +937,7 @@
           min="0"
           :disabled="loading"
         />
-        <p class="text-xs text-gray-400 mt-1">Set to 0 to resend every time</p>
+        <p class="text-xs text-gray-400 mt-1">Repeats every N minutes while the monitor stays down. Set to 0 to disable reminders (range 0–1440).</p>
       </div>
     </div>
 
@@ -1031,7 +1031,10 @@
     <!-- Node Assignment (Cluster Mode) -->
     <div v-if="clusterNodes.length > 0" class="section-card">
       <h2 class="section-title">Node Assignment</h2>
-      
+      <p class="text-xs text-amber-500 dark:text-amber-400 mb-3">
+        Compatibility fields only: this deployment schedules checks with a shared work queue, so these values are stored but do not choose the executing node.
+      </p>
+
       <div class="grid gap-4 md:grid-cols-2">
         <div class="form-group">
           <label class="input-label">Primary Node</label>
@@ -1045,7 +1048,7 @@
               {{ node.name || node.id }}
             </option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">The node where this monitor will be executed</p>
+          <p class="text-xs text-gray-400 mt-1">Stored for compatibility; not used for scheduling</p>
         </div>
 
         <div class="form-group">
@@ -1060,7 +1063,7 @@
               {{ node.name || node.id }}
             </option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">Override for failover/load balancing</p>
+          <p class="text-xs text-gray-400 mt-1">Stored for compatibility; failover is automatic</p>
         </div>
       </div>
     </div>

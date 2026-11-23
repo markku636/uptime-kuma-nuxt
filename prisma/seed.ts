@@ -23,7 +23,7 @@ async function main() {
   const defaultSettings = [
     { key: 'primaryBaseURL', value: '' },
     { key: 'steamAPIKey', value: '' },
-    { key: 'tlsExpiryNotifyDays', value: '7,14,21' },
+    { key: 'tlsExpiryNotifyDays', value: '[7,14,21]', type: 'json' },
     { key: 'entryPage', value: 'dashboard' },
     { key: 'searchEngineIndex', value: 'false' },
     { key: 'checkUpdate', value: 'true' },

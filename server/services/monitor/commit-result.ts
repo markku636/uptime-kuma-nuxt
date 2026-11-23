@@ -1,6 +1,7 @@
 import {Prisma} from '@prisma/client'
 import {createHash} from 'node:crypto'
 import type {CheckResult} from './checker'
+import {TLS_EXPIRY_SETTING_KEY,parseTlsExpiryDays} from '../../utils/tls-expiry-settings'
 function safeCode(code:unknown){return typeof code==='string'&&/^[A-Z0-9_]{1,64}$/.test(code)?code:'CHECK_COMPLETE'}
 function safeAssertions(input:any){
   if(!input||!Array.isArray(input.rules))return undefined
@@ -28,8 +29,8 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
       if(previous&&changed&&[0,1].includes(result.status)&&channels.length)await tx.notificationOutbox.createMany({data:channels.map((channel:any)=>({runId:monitor.runId,eventType:'status',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,payload:{monitorId:monitor.id,name:monitor.name,status:result.status,ping,code,time:now.toISOString()},nextAttemptAt:now})),skipDuplicates:true})
       if(tlsWarning&&channels.length){
         let days=monitor.tlsExpiryDays
-        if(!Array.isArray(days)||!days.length){const setting=await tx.setting.findUnique({where:{key:'tlsExpiryNotifyDays'}});try{days=setting?JSON.parse(setting.value):[7,14,21]}catch{days=[7,14,21]}}
-        const thresholds=[...new Set((Array.isArray(days)?days:[]).filter((day:any)=>Number.isInteger(day)&&day>0&&day<=365))] as number[]
+        if(!Array.isArray(days)||!days.length){const setting=await tx.setting.findUnique({where:{key:TLS_EXPIRY_SETTING_KEY}});days=parseTlsExpiryDays(setting?.value)}
+        const thresholds=parseTlsExpiryDays(days)
         const reached=thresholds.filter(day=>tls.daysRemaining<=day)
         // Send the most urgent crossed threshold once per certificate and channel.
         const threshold=reached.length?Math.min(...reached):undefined
