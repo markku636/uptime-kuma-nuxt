@@ -185,7 +185,12 @@
 
       <!-- Response Time Chart -->
       <div class="card card-body mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Response Time (Last 24 Hours)</h3>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Response Time ({{ chartPeriodLabel }})</h3>
+          <div class="flex gap-1">
+            <button v-for="p in chartPeriods" :key="p.value" class="btn btn-secondary text-xs" :class="chartPeriod===p.value?'ring-2 ring-primary':''" @click="chartPeriod=p.value">{{ p.label }}</button>
+          </div>
+        </div>
         <div class="h-48 relative pl-14">
           <div class="absolute inset-0 pl-14 flex items-end gap-0.5">
             <div
@@ -500,6 +505,7 @@ onMounted(async () => {
     monitor.value = monitorRes.data || monitorRes
     heartbeats.value = heartbeatsRes.data || heartbeatsRes || []
     void loadPushUrl()
+    void loadPingSeries()
 
     // Fetch certificate info for HTTPS monitors
     if (monitor.value?.tlsConfigured) {
@@ -620,7 +626,8 @@ const lastPing = computed(() => lastHeartbeat.value?.ping ?? null)
 const avgPing = computed(() => uptimeData.value?.['24h']?.avgPing ?? null)
 
 const maxPing = computed(() => {
-  const max = Math.max(...heartbeats.value.map(h => h.ping || 0), 100)
+  const source = pingSeries.value.length ? pingSeries.value : heartbeats.value
+  const max = Math.max(...source.map((h: any) => h.ping || 0), 100)
   return Math.ceil(max / 100) * 100
 })
 
@@ -651,12 +658,34 @@ const displayHeartbeats = computed(() => {
 })
 
 const chartHeartbeats = computed(() => {
+  if (pingSeries.value.length) {
+    return pingSeries.value.map(row => ({ time: row.time, ping: row.ping, status: row.down > 0 ? 0 : 1 }))
+  }
   const result = []
   for (let i = 0; i < 100; i++) {
     result.push(heartbeats.value[i] || null)
   }
   return result.reverse()
 })
+
+const chartPeriods = [
+  { value: '24h', label: '24h' },
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+] as const
+const chartPeriod = ref<'24h' | '7d' | '30d'>('24h')
+const chartPeriodLabel = computed(() => chartPeriod.value === '24h' ? 'Last 24 Hours' : chartPeriod.value === '7d' ? 'Last 7 Days' : 'Last 30 Days')
+const pingSeries = ref<Array<{ time: string; ping: number; count: number; down: number }>>([])
+
+async function loadPingSeries() {
+  try {
+    const result = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/ping-series`, { query: { period: chartPeriod.value } })
+    pingSeries.value = result?.data || []
+  } catch {
+    pingSeries.value = []
+  }
+}
+watch(chartPeriod, loadPingSeries)
 
 const importantHeartbeats = computed(() => {
   return heartbeats.value.filter(h => h.important || h.status === 0 || h.status === 3)
