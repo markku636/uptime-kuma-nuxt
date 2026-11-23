@@ -22,7 +22,7 @@ test('browser creates typed assertions, tests pass/fail, reloads masked config a
     await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(button=>button.textContent?.trim()==='Create Monitor'&&!button.disabled))
     await page.getByPlaceholder('My Monitor',{exact:true}).fill('Browser assertion monitor')
     await page.getByPlaceholder('https://example.com',{exact:true}).fill(`http://127.0.0.1:${(fixture.address() as any).port}/`)
-    await page.getByRole('button',{name:'Add assertion',exact:false}).click()
+    await page.getByLabel('Quick add').selectOption({label:'JSON field success is true'})
     await page.getByRole('button',{name:'Test request and assertions',exact:true}).click()
     await page.getByText('Assertions: Passed',{exact:true}).waitFor({timeout:5000}).catch(async error=>{console.info((await page.locator('form').innerText()).slice(-4000));throw error})
     success=false

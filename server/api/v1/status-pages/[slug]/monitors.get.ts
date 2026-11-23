@@ -1,4 +1,5 @@
 import { visibleStatusPage } from '../../../../utils/public-status'
+import { getRequestSession } from '../../../../utils/request-session'
 // server/api/v1/status-pages/[slug]/monitors.get.ts
 import { prisma } from '~/server/utils/prisma'
 
@@ -30,6 +31,16 @@ export default defineEventHandler(async (event) => {
 
   const basicPage = await visibleStatusPage(event)
   const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 1 }) }
+  // Editing is a session capability; API keys never unlock the public editor.
+  const session = await getRequestSession(event)
+  let editAllowed = false
+  if (session.user && event.context.authMethod === 'session') {
+    const member = await prisma.workspaceMember.findFirst({
+      where: { workspaceId: statusPage.workspaceId, userId: session.user.id },
+      select: { role: true },
+    })
+    editAllowed = session.user.platformAdmin || (!!member && ['editor', 'owner'].includes(member.role))
+  }
   const limit = queryLimit || statusPage.perPage || 5
   if (noPagination) {
     const scope = await requireWorkspace(event, 'editor')
@@ -90,7 +101,7 @@ export default defineEventHandler(async (event) => {
     return {
       ok: true,
       data: {
-        config: formatConfig(statusPage),
+        config: formatConfig(statusPage, editAllowed),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
         publicGroupList,
         groupTabs,
@@ -106,7 +117,7 @@ export default defineEventHandler(async (event) => {
     return {
       ok: true,
       data: {
-        config: formatConfig(statusPage),
+        config: formatConfig(statusPage, editAllowed),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
         publicGroupList: [],
         groupTabs,
@@ -128,7 +139,7 @@ export default defineEventHandler(async (event) => {
     return {
       ok: true,
       data: {
-        config: formatConfig(statusPage),
+        config: formatConfig(statusPage, editAllowed),
         incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
         publicGroupList: [],
         groupTabs,
@@ -174,7 +185,7 @@ export default defineEventHandler(async (event) => {
   return {
     ok: true,
     data: {
-      config: formatConfig(statusPage),
+      config: formatConfig(statusPage, editAllowed),
       incident: statusPage.incidents[0] ? formatIncident(statusPage.incidents[0]) : null,
       publicGroupList,
       groupTabs,
@@ -191,9 +202,10 @@ export default defineEventHandler(async (event) => {
 })
 
 // Helper functions
-function formatConfig(statusPage: any) {
+function formatConfig(statusPage: any, canEdit = false) {
   return {
     slug: statusPage.slug,
+    canEdit,
     title: statusPage.title,
     description: statusPage.description,
     icon: statusPage.icon || '/icon.svg',

@@ -39,7 +39,7 @@
             v-model="form.url" 
             type="text" 
             class="input-field" 
-            placeholder="https://example.com or {{baseUrl}}/health"
+            placeholder="https://example.com"
             :disabled="loading"
           />
           <p class="text-xs text-gray-400 mt-1">

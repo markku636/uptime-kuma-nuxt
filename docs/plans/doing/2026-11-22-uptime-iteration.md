@@ -461,6 +461,15 @@ R68 🔵 環境變數／全域金鑰／Bruno 通盤補齊：
     monitor/tag CRUD、global `gk_` key 的 pre-request script）與 README。
   build/unit 60/60、typecheck 0。
 
+R69 🔵 整合測試（88 項）與修復：
+  - 跑起 88 項 integration tests，修正 4 項失敗：回滯心跳 msg 改回 'Up'、
+    URL placeholder 保持原值（兩項為我先前改動造成的 regression）。
+  - 更新過期的瀏覽器測試（assertion presets、CI socket Offline 容忍）。
+  - 修復公開狀態頁 API 從未回傳 `canEdit`，導致 Edit Mode 按鈕永遠不出現。
+  最終 full run 87 pass / 0 fail / 1 skipped；unit 60/60、typecheck 0。
+  線上建立 5 個 paused Bruno 測試監控（Entry page／Login／Public status page／PWA icon／Health），
+  全部使用 `{{baseUrl}}` 環境變數且 `/test` 回 CHECK_OK；全域金鑰產生→呼叫→撤銷亦驗證通過。
+
 ## 目前狀態（2026-11-23 09:54 CST）
 
 R1–R67 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
