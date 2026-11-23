@@ -1,6 +1,6 @@
 # Instructions
 
-快速上手 Uptime Kuma Nuxt 專案指南。
+快速上手 SealWatch Nuxt 專案指南。
 
 ---
 

@@ -20,7 +20,7 @@ export async function send(
   
   const data = {
     pushkey: config.pushdeerKey,
-    text: `## ${statusEmoji} Uptime Kuma: ${title}`,
+    text: `## ${statusEmoji} SealWatch: ${title}`,
     desp: message.replace(/\n/g, '\n\n'),
     type: 'markdown'
   }

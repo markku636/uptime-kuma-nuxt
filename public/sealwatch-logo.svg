@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 64" role="img" aria-label="SealWatch">
+  <defs>
+    <linearGradient id="fur" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bfe6ff"/>
+      <stop offset="1" stop-color="#7fb6e8"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5cdd8b"/>
+      <stop offset="1" stop-color="#20b26b"/>
+    </linearGradient>
+    <linearGradient id="word" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#5cdd8b"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="#0b1622"/>
+  <ellipse cx="32" cy="39" rx="15" ry="14" fill="url(#fur)"/>
+  <ellipse cx="32" cy="47" rx="11" ry="6" fill="#dff4ff"/>
+  <circle cx="25" cy="30" r="3.2" fill="#0b1622"/>
+  <circle cx="39" cy="30" r="3.2" fill="#0b1622"/>
+  <circle cx="26" cy="29" r="1" fill="#fff"/>
+  <circle cx="40" cy="29" r="1" fill="#fff"/>
+  <ellipse cx="32" cy="35" rx="2.8" ry="2" fill="#0b1622"/>
+  <path d="M27 39q5 4 10 0" fill="none" stroke="#0b1622" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="46" cy="18" r="9" fill="url(#green)"/>
+  <path d="M42 18l2.8 2.8 5.5 -5.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="72" y="31" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="25" font-weight="800" fill="url(#word)">SealWatch</text>
+  <text x="73" y="47" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="8.5" font-weight="600" letter-spacing="2.6" fill="#9fb3c8">MONITOR · ALERT · STATUS</text>
+</svg>

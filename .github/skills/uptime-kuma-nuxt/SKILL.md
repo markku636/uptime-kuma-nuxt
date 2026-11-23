@@ -1,8 +1,8 @@
-# Uptime Kuma Nuxt - Copilot Skill
+# SealWatch Nuxt - Copilot Skill
 
 ## 專案概述
 
-這是使用 **Nuxt.js 4** 重構的 Uptime Kuma 監控系統，支援高可用集群架構。
+這是使用 **Nuxt.js 4** 重構的 SealWatch 監控系統，支援高可用集群架構。
 
 ### 核心技術棧
 

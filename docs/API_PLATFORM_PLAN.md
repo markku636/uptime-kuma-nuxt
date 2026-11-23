@@ -161,7 +161,7 @@ Tag／badge／群組拖曳修正已經GitOps部署revision12，線上REST驗證�
 
 ## 2026-11-15 Tenon 雙域 HTTPS 交付追記
 
-`uptime.226network.com`（Tenon route 71）與 `uptime.markkulab.net`（route 72）已透過 V-TERMINAL admin MCP 建立，均由 agent 2 連至 `127.0.0.1:32480`，公開 DNS 為 A `161.33.213.93`。API release revision 12 為 Healthy／Synced，API 2/2、worker 2/2。兩域各連續三次通過可信 TLS `/login` HTTP 200 且包含 Uptime Kuma 內容；CUA 一般帳密登入、dashboard Live、原 5 paused demos 與 reload 保持登入均通過，第二域 hydration 後恢復 Live。第二域最終截圖為完整 5 筆列表，使用者 tab 保留已登入 dashboard。
+`uptime.226network.com`（Tenon route 71）與 `uptime.markkulab.net`（route 72）已透過 V-TERMINAL admin MCP 建立，均由 agent 2 連至 `127.0.0.1:32480`，公開 DNS 為 A `161.33.213.93`。API release revision 12 為 Healthy／Synced，API 2/2、worker 2/2。兩域各連續三次通過可信 TLS `/login` HTTP 200 且包含 SealWatch 內容；CUA 一般帳密登入、dashboard Live、原 5 paused demos 與 reload 保持登入均通過，第二域 hydration 後恢復 Live。第二域最終截圖為完整 5 筆列表，使用者 tab 保留已登入 dashboard。
 
 兩域另以 Python 標準 `http.cookiejar` 各登入 HTTP 200，確認 Set-Cookie 屬性 `Path=/; HttpOnly; Secure; SameSite=Lax`；後續 `/api/_auth/session` 均為 HTTP 200 且有 user，沒有輸出 Cookie 值。原 HTTP NodePort 登入循環的根因為 Secure cookie 不隨 HTTP 回送；公開 HTTPS 已通過，Secure cookie 全程維持，沒有產品 rollout。
 

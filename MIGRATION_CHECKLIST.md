@@ -1,7 +1,7 @@
-# Uptime Kuma → Nuxt.js 完整功能遷移盤點
+# SealWatch → Nuxt.js 完整功能遷移盤點
 
 > 最後更新: 2026-01-06  
-> 本文件詳細列出原版 Uptime Kuma 的所有功能，並標記遷移狀態
+> 本文件詳細列出原版 SealWatch 的所有功能，並標記遷移狀態
 
 ---
 
@@ -767,7 +767,7 @@ nuxtjs/components/notification/providers/
 
 ## 📝 技術差異說明
 
-| 項目 | 原版 Uptime Kuma | Nuxt.js 版 |
+| 項目 | 原版 SealWatch | Nuxt.js 版 |
 |------|------------------|------------|
 | 後端框架 | Express.js | Nitro (H3) |
 | 資料庫 | SQLite / MariaDB (better-sqlite3) | PostgreSQL (Prisma) |

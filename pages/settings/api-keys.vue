@@ -75,7 +75,7 @@ function copyToClipboard(text: string) {
     </div>
 
     <div class="alert alert-info mb-6">
-      API keys allow external applications to access the Uptime Kuma API. Keep your keys secure.
+      API keys allow external applications to access the SealWatch API. Keep your keys secure.
     </div>
 
     <p v-if="!canManage" class="text-muted mb-4">Workspace owners manage API keys.</p>

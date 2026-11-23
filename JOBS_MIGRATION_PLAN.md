@@ -2,7 +2,7 @@
 
 ## 📋 概述
 
-原版 Uptime Kuma (`server/jobs.js`) 定義了 3 個背景定時任務，需要遷移到 NuxtJS 版本。
+原版 SealWatch (`server/jobs.js`) 定義了 3 個背景定時任務，需要遷移到 NuxtJS 版本。
 
 ---
 

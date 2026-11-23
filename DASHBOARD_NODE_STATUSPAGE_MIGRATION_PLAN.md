@@ -1,7 +1,7 @@
 # Dashboard 列表排版、節點切換、Public Status Page 遷移計畫
 
 > 建立日期: 2026-01-24
-> 目的: 將原版 Uptime Kuma 的 Dashboard 列表排版、節點切換功能、Public Status Page 完整遷移至 Nuxt 版
+> 目的: 將原版 SealWatch 的 Dashboard 列表排版、節點切換功能、Public Status Page 完整遷移至 Nuxt 版
 
 ---
 

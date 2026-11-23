@@ -37,7 +37,7 @@ export async function send(
   const data = {
     personalizations: [personalizations],
     from: { email: config.sendgridFromEmail.trim() },
-    subject: config.sendgridSubject || title || 'Notification from Uptime Kuma',
+    subject: config.sendgridSubject || title || 'Notification from SealWatch',
     content: [{
       type: 'text/plain',
       value: message

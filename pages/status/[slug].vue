@@ -1003,12 +1003,12 @@ function formatLastUpdated(date: Date | null) {
           <p v-if="statusPage?.showPoweredBy !== false" class="flex items-center justify-center gap-1">
             Powered by
             <a 
-              href="https://github.com/louislam/uptime-kuma" 
+              href="https://github.com/markku636/uptime-kuma-nuxt" 
               target="_blank" 
               rel="noopener noreferrer"
               class="text-primary-500 hover:text-primary-600 hover:underline inline-flex items-center gap-1"
             >
-              Uptime Kuma
+              SealWatch
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
               </svg>
@@ -1324,7 +1324,7 @@ function formatLastUpdated(date: Date | null) {
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
 }
 
-/* Pagination - Uptime Kuma style */
+/* Pagination - SealWatch style */
 .pagination-btn {
   display: inline-flex;
   align-items: center;
@@ -1351,7 +1351,7 @@ function formatLastUpdated(date: Date | null) {
   min-width: 40px;
 }
 
-/* Active page - Uptime Kuma green (#5cdd8b) */
+/* Active page - SealWatch green (#5cdd8b) */
 .pagination-btn-active {
   color: #ffffff;
   background-color: #5cdd8b;

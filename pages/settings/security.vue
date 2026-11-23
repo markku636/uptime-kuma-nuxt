@@ -386,7 +386,7 @@ function copyToClipboard(text: string) {
         <h3 class="text-xl font-bold text-red-500 dark:text-red-400 mb-4">⚠️ Warning: Disable Authentication</h3>
         <div class="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-4">
           <p class="text-red-400 text-sm">
-            This will allow <strong>anyone</strong> to access your Uptime Kuma dashboard without logging in. 
+            This will allow <strong>anyone</strong> to access your SealWatch dashboard without logging in. 
             Only do this if you're sure your instance is not publicly accessible.
           </p>
         </div>

@@ -41,7 +41,7 @@ export default defineEventHandler(async event => {
     secretNames: Object.keys((environment?.secrets || {}) as Record<string, string>),
   }
 
-  let rootGroupId: number | null = null, collectionName = workspace?.name || 'Uptime Kuma'
+  let rootGroupId: number | null = null, collectionName = workspace?.name || 'SealWatch'
   const where: Record<string, unknown> = {workspaceId: scope.workspaceId, environmentId: scope.environmentId}
   if (ids) where.id = {in: ids}
   if (parsed.data.groupId) {

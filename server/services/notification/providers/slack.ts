@@ -15,7 +15,7 @@ export const slackProvider = {
       signal:options.signal,
       body: {
         channel: config.channel,
-        username: 'Uptime Kuma',
+        username: 'SealWatch',
         attachments: [{
           color,
           title: message.title,
@@ -32,7 +32,7 @@ export const slackProvider = {
               short: true
             }
           ],
-          footer: 'Uptime Kuma',
+          footer: 'SealWatch',
           ts: Math.floor(new Date(message.time).getTime() / 1000)
         }]
       }

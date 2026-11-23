@@ -63,7 +63,7 @@ const channelTypeOptions = [
     <UFormField label="Bot Display Name">
       <UInput
         v-model="config.discordUsername"
-        placeholder="Uptime Kuma"
+        placeholder="SealWatch"
       />
     </UFormField>
 

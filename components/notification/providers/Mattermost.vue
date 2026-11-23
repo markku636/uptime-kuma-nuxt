@@ -35,7 +35,7 @@ const config = computed({
     <UFormField label="Username">
       <UInput
         v-model="config.mattermostusername"
-        placeholder="Uptime Kuma"
+        placeholder="SealWatch"
       />
     </UFormField>
 

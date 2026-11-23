@@ -14,7 +14,7 @@ export async function send(
   const statusEmoji = status === 'down' ? '🔴 Down' : status === 'up' ? '✅ Up' : 'ℹ️ Info'
   
   const formData = {
-    title: status === 'info' ? 'Uptime Kuma Message' : `UptimeKuma 「${title}」 is ${status === 'up' ? 'Up' : 'Down'}`,
+    title: status === 'info' ? 'SealWatch Message' : `UptimeKuma 「${title}」 is ${status === 'up' ? 'Up' : 'Down'}`,
     content: `[${statusEmoji}] ${message}`
   }
 

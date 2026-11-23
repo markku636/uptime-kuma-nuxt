@@ -1,5 +1,5 @@
 // server/services/monitor-distributor.ts
-// Monitor distribution service for Uptime Kuma cluster mode
+// Monitor distribution service for SealWatch cluster mode
 // Handles node assignment for monitors based on capacity and load balancing
 
 import { prisma } from '../utils/prisma'

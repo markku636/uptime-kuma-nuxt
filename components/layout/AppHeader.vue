@@ -7,7 +7,7 @@
           <NuxtLink to="/" class="flex items-center space-x-2">
             <UIcon name="i-heroicons-chart-bar" class="w-8 h-8 text-primary-500" />
             <span class="text-xl font-bold text-gray-900 dark:text-white">
-              Uptime Kuma
+              SealWatch
             </span>
           </NuxtLink>
         </div>

@@ -55,7 +55,7 @@ Bruno 自己的階層是：**Workspace → Collection → Folder（可巢狀）�
 `monitors` 新增可為空的 `group_id`；`bruno_sources` 新增 `group_id` 與 `source_format`（`bru`／`yml`）。
 全部是**只加不刪**的 migration，既有監測 `group_id` 為空，行為不變，可直接回滾程式不必回滾資料。
 
-既有的 `monitors.parent`（舊 Uptime Kuma 的「群組型監測」）目前前端是空殼（選單永遠是空陣列）。
+既有的 `monitors.parent`（舊 SealWatch 的「群組型監測」）目前前端是空殼（選單永遠是空陣列）。
 不沿用它：群組型監測會被當成一筆監測排程、算進數量與可用率，語意不對。保留欄位不動。
 
 ## 匯入／匯出：一筆和多筆

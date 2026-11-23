@@ -39,7 +39,7 @@ const headersPlaceholder = `{
 }`
 
 const customBodyPlaceholder = `{
-    "Title": "Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}",
+    "Title": "SealWatch Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}",
     "Body": "{{ msg }}",
     "Status": "{{ heartbeatJSON['status'] }}"
 }`

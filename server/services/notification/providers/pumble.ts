@@ -15,7 +15,7 @@ export async function send(
 
   const data = {
     attachments: [{
-      title: status === 'info' ? 'Uptime Kuma Alert' : `${title} is ${status}`,
+      title: status === 'info' ? 'SealWatch Alert' : `${title} is ${status}`,
       text: message,
       color
     }]

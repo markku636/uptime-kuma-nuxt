@@ -15,7 +15,7 @@ export async function send(
   const url = 'https://api.notifery.com/event'
   
   const data: Record<string, any> = {
-    title: config.notiferyTitle || title || 'Uptime Kuma Alert',
+    title: config.notiferyTitle || title || 'SealWatch Alert',
     message,
     code: status === 'up' ? 0 : 1
   }

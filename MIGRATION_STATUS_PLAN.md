@@ -1,7 +1,7 @@
-# Uptime Kuma Nuxt.js 遷移狀態與計劃
+# SealWatch Nuxt.js 遷移狀態與計劃
 
 > 最後更新：2026-01-25  
-> 參考文件：[實作 Uptime Kuma Cluster Vibe Coding](https://blog.markkulab.net/implement-uptime-kuma-cluster-vibe-coding/)
+> 參考文件：[實作 SealWatch Cluster Vibe Coding](https://blog.markkulab.net/implement-uptime-kuma-cluster-vibe-coding/)
 
 ## 📊 總覽
 

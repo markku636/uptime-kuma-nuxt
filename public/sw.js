@@ -1,4 +1,4 @@
-// Service Worker for Uptime Kuma PWA
+// Service Worker for SealWatch PWA
 const CACHE_NAME = 'uptime-kuma-v1'
 const OFFLINE_URL = '/offline.html'
 
@@ -115,7 +115,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Uptime Kuma', options)
+    self.registration.showNotification(data.title || 'SealWatch', options)
   )
 })
 

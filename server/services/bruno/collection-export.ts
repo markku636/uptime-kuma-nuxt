@@ -61,7 +61,7 @@ function monitorDocs(monitor: any) {
   if (monitor.ignoreTls) settings.push('TLS verification off')
   if (monitor.upsideDown) settings.push('upside-down mode')
   if ((monitor.maxRedirects ?? 10) !== 10) settings.push(`max ${monitor.maxRedirects} redirects`)
-  return `Exported from Uptime Kuma monitor #${monitor.id}: ${settings.join(', ')}.`
+  return `Exported from SealWatch monitor #${monitor.id}: ${settings.join(', ')}.`
 }
 
 /** One request as .bru text; throws BrunoExportError when the monitor cannot be expressed in Bruno. */

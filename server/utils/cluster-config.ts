@@ -1,5 +1,5 @@
 // server/utils/cluster-config.ts
-// Centralized cluster configuration for Uptime Kuma
+// Centralized cluster configuration for SealWatch
 // Supports Docker Compose, Kubernetes, and standalone environments
 
 import type { ClusterConfig, ClusterEnvironment, K8sConfig } from '~~/types/cluster'

@@ -1,6 +1,6 @@
-# Uptime Kuma Nuxt
+# SealWatch Nuxt
 
-基於 [Uptime Kuma](https://github.com/louislam/uptime-kuma) 設計理念，使用 **Nuxt.js 4** 重新開發的現代化監控系統。
+基於 [SealWatch](https://github.com/louislam/uptime-kuma) 設計理念，使用 **Nuxt.js 4** 重新開發的現代化監控系統。
 
 ![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=flat-square&logo=nuxt.js)
 ![Vue](https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js)
@@ -261,7 +261,7 @@ MIT License
 
 ## 🙏 致謝
 
-- [Uptime Kuma](https://github.com/louislam/uptime-kuma) - 原始專案靈感來源
+- [SealWatch](https://github.com/louislam/uptime-kuma) - 原始專案靈感來源
 - [Nuxt](https://nuxt.com) - Vue.js 全端框架
 - [Prisma](https://prisma.io) - 現代化 ORM
 - [Nuxt UI](https://ui.nuxt.com) - UI 元件庫 

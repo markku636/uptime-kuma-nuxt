@@ -3,8 +3,8 @@
     <!-- Desktop sidebar -->
     <aside class="hidden lg:flex fixed inset-y-0 left-0 w-60 flex-col border-r border-default bg-[var(--bg-secondary)] z-40">
       <NuxtLink to="/dashboard" class="h-16 flex items-center gap-2 px-5 text-primary shrink-0">
-        <img src="/icon.svg" alt="Uptime Kuma" class="h-8 w-8" />
-        <span class="text-lg font-bold whitespace-nowrap">Uptime Kuma</span>
+        <img src="/sealwatch-logo.svg" alt="SealWatch" class="h-8 w-auto" />
+        <span class="text-lg font-bold whitespace-nowrap">SealWatch</span>
       </NuxtLink>
       <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
         <NuxtLink to="/dashboard" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-squares-2x2" class="w-4 h-4 shrink-0 opacity-70" />
@@ -32,7 +32,7 @@
           <span>API Docs</span>
         </NuxtLink>
       </nav>
-      <div class="px-5 py-4 text-xs text-tertiary border-t border-default">Monitoring made simple</div>
+      <div class="px-5 py-4 text-xs text-tertiary border-t border-default">Monitor · Alert · Status</div>
     </aside>
 
     <!-- Header -->
@@ -41,8 +41,8 @@
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <NuxtLink to="/dashboard" class="lg:hidden flex items-center gap-2 shrink-0 text-primary hover:text-emerald-500 transition-colors">
-            <img src="/icon.svg" alt="Uptime Kuma" class="h-8 w-8" />
-            <span class="text-lg font-bold whitespace-nowrap">Uptime Kuma</span>
+            <img src="/sealwatch-logo.svg" alt="SealWatch" class="h-8 w-auto" />
+            <span class="text-lg font-bold whitespace-nowrap">SealWatch</span>
           </NuxtLink>
 
           <!-- Navigation -->

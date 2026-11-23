@@ -28,7 +28,7 @@ export async function send(
     },
     body: JSON.stringify({
       to: config.sevenioTo,
-      from: config.sevenioSender || 'Uptime Kuma',
+      from: config.sevenioSender || 'SealWatch',
       text
     })
   })

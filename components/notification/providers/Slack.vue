@@ -46,7 +46,7 @@ const config = computed({
     <UFormField label="Username">
       <UInput
         v-model="config.slackusername"
-        placeholder="Uptime Kuma"
+        placeholder="SealWatch"
       />
       <template #help>
         <p class="text-sm text-gray-500">

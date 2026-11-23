@@ -5,7 +5,7 @@
 
 ## 範圍與邊界
 
-- 目標站：`https://uptime.226network.com`（Nuxt 重構版 Uptime Kuma）。
+- 目標站：`https://uptime.226network.com`（Nuxt 重構版 SealWatch）。
 - 實際部署分支判定：線上 UI 的 Quick Stats 為 Up/Down/Maintenance/Pending/Paused/Stale 六格，
   與本機 `codex/api-monitoring-platform-20261114`（HEAD `852fee4`）一致；`origin/main`（`0b4a275`）是五格
   （Up/Down/Maintenance/Unknown/Paused）＋ Variables 功能，**不是目前線上的程式碼**。

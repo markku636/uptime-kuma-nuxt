@@ -122,7 +122,7 @@ const showDkim = ref(false)
     <UFormField label="From Email" required>
       <UInput
         v-model="config.smtpFrom"
-        placeholder='"Uptime Kuma" <alerts@example.com>'
+        placeholder='"SealWatch" <alerts@example.com>'
         required
       />
       <template #help>
@@ -168,7 +168,7 @@ const showDkim = ref(false)
     <UFormField label="Custom Subject">
       <UInput
         v-model="config.customSubject"
-        placeholder="[Uptime Kuma] {{ monitorJSON.name }} is {{ msg }}"
+        placeholder="[SealWatch] {{ monitorJSON.name }} is {{ msg }}"
       />
       <template #help>
         <p class="text-sm text-gray-500">

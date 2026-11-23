@@ -27,7 +27,7 @@ export async function send(
       tokens: [config.gorushDeviceToken],
       platform: platformMapping[config.gorushPlatform],
       message,
-      title: config.gorushTitle || 'Uptime Kuma',
+      title: config.gorushTitle || 'SealWatch',
       priority: config.gorushPriority,
       retry: config.gorushRetry || 0,
       topic: config.gorushTopic

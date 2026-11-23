@@ -57,7 +57,7 @@ const localConfig = computed({
     <UFormField label="Notification Title">
       <UInput
         v-model="localConfig.appriseTitle"
-        placeholder="Uptime Kuma Alert"
+        placeholder="SealWatch Alert"
       />
     </UFormField>
   </div>

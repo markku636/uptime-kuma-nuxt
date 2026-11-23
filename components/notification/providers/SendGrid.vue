@@ -45,7 +45,7 @@ const localConfig = computed({
     <UFormField label="From Name">
       <UInput
         v-model="localConfig.sendgridFromName"
-        placeholder="Uptime Kuma"
+        placeholder="SealWatch"
       />
     </UFormField>
 

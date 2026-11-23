@@ -72,7 +72,7 @@ const getUpdatesUrl = computed(() => {
 })
 
 const templatePlaceholder = `Example:
-Uptime Kuma Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
+SealWatch Alert{% if monitorJSON %} - {{ monitorJSON['name'] }}{% endif %}
 
 {{ msg }}`
 </script>

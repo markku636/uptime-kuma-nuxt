@@ -76,7 +76,7 @@ const soundItems = soundOptions.map(s => ({ label: s, value: s }))
     <UFormField label="Message Title">
       <UInput
         v-model="config.pushovertitle"
-        placeholder="Uptime Kuma Alert"
+        placeholder="SealWatch Alert"
       />
     </UFormField>
 

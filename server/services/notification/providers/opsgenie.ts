@@ -32,7 +32,7 @@ export const opsgenieProvider = {
         alias: `uptime-kuma-${message.monitorName}`.replace(/[^a-zA-Z0-9_-]/g, '-'),
         description: message.body,
         priority: config.priority || 'P3',
-        source: 'Uptime Kuma',
+        source: 'SealWatch',
         tags: ['uptime-kuma', message.monitorName],
         details: {
           monitor: message.monitorName,

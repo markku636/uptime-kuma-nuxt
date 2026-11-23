@@ -14,7 +14,7 @@ export const discordProvider = {
       method: 'POST',
       signal:options.signal,
       body: {
-        username: config.username || 'Uptime Kuma',
+        username: config.username || 'SealWatch',
         embeds: [{
           title: message.title,
           description: message.body,
@@ -38,7 +38,7 @@ export const discordProvider = {
           ],
           timestamp: message.time,
           footer: {
-            text: 'Uptime Kuma'
+            text: 'SealWatch'
           }
         }]
       }

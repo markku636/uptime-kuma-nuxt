@@ -12,7 +12,7 @@ export async function send(
   _status: 'up' | 'down' | 'info'
 ): Promise<void> {
   // Stackfield formatting: + for underline, * for bold
-  let textMsg = '+Uptime Kuma Alert+'
+  let textMsg = '+SealWatch Alert+'
 
   if (title) {
     textMsg += `\n*${title}*`

@@ -1,5 +1,5 @@
 // server/services/dynamic-node-discovery.ts
-// Dynamic node discovery service for Uptime Kuma cluster mode
+// Dynamic node discovery service for SealWatch cluster mode
 // Supports database-based discovery and K8s headless service DNS resolution
 
 import { prisma } from '../utils/prisma'

@@ -242,7 +242,7 @@ const previewUrl = computed(() => {
             />
           </UFormField>
 
-          <UCheckbox v-model="form.showPoweredBy" label="Show 'Powered by Uptime Kuma'" />
+          <UCheckbox v-model="form.showPoweredBy" label="Show 'Powered by SealWatch'" />
         </div>
 
         <!-- Analytics -->

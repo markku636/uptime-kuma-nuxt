@@ -1,10 +1,10 @@
-# AI Context - Uptime Kuma Nuxt
+# AI Context - SealWatch Nuxt
 
 > 此文件專為 AI 工具（如 GitHub Copilot、ChatGPT）設計，提供專案快速理解脈絡。
 
 ## 專案定位
 
-**Uptime Kuma Nuxt** 是使用 **Nuxt.js 4** 重構的 Uptime Kuma 監控系統，支援高可用多節點集群架構。
+**SealWatch Nuxt** 是使用 **Nuxt.js 4** 重構的 SealWatch 監控系統，支援高可用多節點集群架構。
 
 ### 技術特點
 

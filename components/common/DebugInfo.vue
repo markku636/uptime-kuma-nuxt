@@ -102,7 +102,7 @@ const languageInfo = computed(() => {
 // Copy to clipboard
 const copyToClipboard = async () => {
   const info = `
-Uptime Kuma Debug Info
+SealWatch Debug Info
 ======================
 Version: ${debugData.value?.version || 'N/A'}
 Latest Version: ${debugData.value?.latestVersion || 'N/A'}

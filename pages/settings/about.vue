@@ -91,10 +91,10 @@ function formatUptime(seconds: number): string {
     <div class="section-card">
       <div class="flex items-center gap-4 mb-6">
         <div class="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center">
-          <img src="/icon.svg" alt="Uptime Kuma" class="w-10 h-10" />
+          <img src="/icon.svg" alt="SealWatch" class="w-10 h-10" />
         </div>
         <div>
-          <h4 class="text-2xl font-bold text-gray-900 dark:text-white">Uptime Kuma</h4>
+          <h4 class="text-2xl font-bold text-gray-900 dark:text-white">SealWatch</h4>
           <span class="text-gray-600 dark:text-gray-400">A fancy self-hosted monitoring tool</span>
         </div>
       </div>
@@ -229,7 +229,7 @@ function formatUptime(seconds: number): string {
     <div class="section-card">
       <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Credits</h5>
       <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
-        Uptime Kuma is created by <a href="https://github.com/louislam" target="_blank" class="text-green-600 dark:text-green-400 hover:underline">Louis Lam</a> 
+        SealWatch is created by <a href="https://github.com/louislam" target="_blank" class="text-green-600 dark:text-green-400 hover:underline">Louis Lam</a> 
         and maintained by the open source community.
       </p>
       <p class="text-gray-500 text-xs">

@@ -37,14 +37,14 @@ onMounted(() => {
 
 // PWA meta tags
 useHead({
-  title: 'Uptime Kuma',
+  title: 'SealWatch',
   meta: [
     { name: 'description', content: 'A fancy self-hosted monitoring tool' },
     { name: 'theme-color', content: '#10b981' },
     { name: 'mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
-    { name: 'apple-mobile-web-app-title', content: 'Uptime Kuma' },
+    { name: 'apple-mobile-web-app-title', content: 'SealWatch' },
     { name: 'msapplication-TileColor', content: '#10b981' },
     { name: 'msapplication-config', content: '/browserconfig.xml' }
   ],

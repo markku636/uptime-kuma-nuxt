@@ -1,5 +1,5 @@
 // server/services/node-health-checker.ts
-// Node health check service for Uptime Kuma cluster mode
+// Node health check service for SealWatch cluster mode
 // Periodically checks node health and redistributes monitors on failure
 
 import { prisma } from '../utils/prisma'

@@ -1,5 +1,5 @@
 // types/cluster.ts
-// Type definitions for cluster/node management in Uptime Kuma
+// Type definitions for cluster/node management in SealWatch
 
 /**
  * Cluster runtime environment

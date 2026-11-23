@@ -64,7 +64,7 @@ const originTypeOptions = [
     <UFormField label="Originator">
       <UInput
         v-model="localConfig.cellsyntOriginator"
-        placeholder="Uptime Kuma"
+        placeholder="SealWatch"
       />
     </UFormField>
   </div>

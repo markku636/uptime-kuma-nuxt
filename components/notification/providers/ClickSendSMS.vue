@@ -51,7 +51,7 @@ const localConfig = computed({
     <UFormField label="Sender Name">
       <UInput
         v-model="localConfig.clickSendSmsSenderName"
-        placeholder="Uptime Kuma"
+        placeholder="SealWatch"
       />
       <template #hint>
         <span class="text-xs text-gray-500">

@@ -15,7 +15,7 @@ export async function send(
   
   const params = new URLSearchParams({
     user_id: config.bitrix24UserID,
-    message: '[B]Uptime Kuma[/B]',
+    message: '[B]SealWatch[/B]',
     'ATTACH[COLOR]': color,
     'ATTACH[BLOCKS][0][MESSAGE]': message
   })

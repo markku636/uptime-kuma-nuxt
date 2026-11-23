@@ -11,7 +11,7 @@ API release revision 12 為 GitOps Healthy／Synced，API 2/2、worker 2/2。本
 | https://uptime.226network.com | 71 | 2 | 127.0.0.1:32480 | A 161.33.213.93 |
 | https://uptime.markkulab.net | 72 | 2 | 127.0.0.1:32480 | A 161.33.213.93 |
 
-兩域均各連續三次通過可信 TLS 的 `/login` HTTP 200 檢查，回應包含 Uptime Kuma 內容。公開 DNS／TLS／登入頁可達性、登入後 session 與瀏覽器 Socket.IO 分別驗證如下。
+兩域均各連續三次通過可信 TLS 的 `/login` HTTP 200 檢查，回應包含 SealWatch 內容。公開 DNS／TLS／登入頁可達性、登入後 session 與瀏覽器 Socket.IO 分別驗證如下。
 
 ## 登入與 session 驗證
 

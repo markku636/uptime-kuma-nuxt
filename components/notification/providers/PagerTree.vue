@@ -30,7 +30,7 @@ const localConfig = computed({
       />
       <template #hint>
         <span class="text-xs text-gray-500">
-          Get this from PagerTree → Integrations → Add Integration → Uptime Kuma
+          Get this from PagerTree → Integrations → Add Integration → SealWatch
         </span>
       </template>
     </UFormField>

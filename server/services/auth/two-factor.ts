@@ -16,7 +16,7 @@ export interface TwoFactorVerifyResult {
 /**
  * Generate a new 2FA secret and QR code for setup
  */
-export async function generateTwoFactorSetup(username: string, issuer: string = 'Uptime Kuma'): Promise<TwoFactorSetup> {
+export async function generateTwoFactorSetup(username: string, issuer: string = 'SealWatch'): Promise<TwoFactorSetup> {
   // Generate secret
   const secret = authenticator.generateSecret()
   

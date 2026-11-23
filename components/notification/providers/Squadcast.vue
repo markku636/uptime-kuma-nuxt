@@ -29,7 +29,7 @@ const localConfig = computed({
       />
       <template #hint>
         <span class="text-xs text-gray-500">
-          Get the webhook URL from Squadcast service → Integrations → Uptime Kuma
+          Get the webhook URL from Squadcast service → Integrations → SealWatch
         </span>
       </template>
     </UFormField>

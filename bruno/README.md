@@ -1,7 +1,7 @@
 # Bruno collection
 
 This folder is a ready-to-use [Bruno](https://www.usebruno.com/) collection for the
-Uptime Kuma Nuxt API.
+SealWatch Nuxt API.
 
 ## Environments
 

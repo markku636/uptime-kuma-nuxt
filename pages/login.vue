@@ -4,8 +4,8 @@
       <form @submit.prevent="handleLogin" class="space-y-6">
         <!-- Logo -->
         <div class="text-center">
-          <img src="/icon.svg" alt="Uptime Kuma" width="64" height="64" class="mx-auto" />
-          <h1 class="text-2xl font-bold text-primary mt-3">Uptime Kuma</h1>
+          <img src="/icon.svg" alt="SealWatch" width="64" height="64" class="mx-auto" />
+          <h1 class="text-2xl font-bold text-primary mt-3">SealWatch</h1>
         </div>
 
         <!-- Username -->
