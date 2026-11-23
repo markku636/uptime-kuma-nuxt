@@ -394,6 +394,18 @@ R51/R52 🔵 監控詳情頁新增「Check now」：`POST /api/v1/monitors/:id/c
   做一次性探測（不寫歷史、不發通知）。線上實測 paused monitor 回 `CHECK_OK`，
   UI toast 顯示「Check completed／CHECK_OK」。revision 134、API/worker/fixture 全 Healthy。
 
+R53 🔵 Reports 頁新增 Export CSV（含試算表公式注入防護），revision 136、全 Healthy。
+R54 🔵 稽核修復：TLS 到期通知天數設定改寫入引擎實際讀取的 `tlsExpiryNotifyDays`
+  （新 util 同時相容舊逗號格式），resend 文案改為「每 N 分鐘」、max redirects 上限改 10、
+  Node Assignment 明確標為相容性欄位。新增 unit test 59/59，revision 138、全 Healthy。
+R55/R56 🔵 公開狀態頁「顯示網址」開關：edit mode 的連結圖示可切換 `sendUrl`，
+  PUT schema 與 composable 保留該欄位、公開 API 只在開啟時回傳 url。
+  線上 realod 驗證開→DB true、關→false，revision 142、全 Healthy。
+R57/R58 🔵 Push monitor 遺漏心跳偵測：worker 啟動 `PushWatchdog`，每 30 秒掃描未被認領的
+  push monitor，超過 interval 兩倍（至少 60 秒）沒回報就寫入 DOWN 心跳並觸發既有通知；
+  利用 monitor row lock 避免多 worker 重複告警。線上實測：push→UP、逾時→PUSH_MISSED、
+  再 push→UP，測試 monitor 已刪除。revision 144、全 Healthy。
+
 ## 最終狀態（15:33 CST）
 R1–R19 共 19 輪全部 commit、push 到 `origin/iterate/uptime-20261122`、並部署正式站。
 release revision 64、Synced、API 2/2、worker 2/2、fixture 1/1 Healthy；build 成功；unit 58/58。

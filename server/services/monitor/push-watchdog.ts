@@ -38,7 +38,7 @@ export class PushWatchdog {
         SELECT m.id FROM monitors m
         JOIN monitor_states s ON s.monitor_id = m.id
         WHERE m.type = 'push' AND m.active AND s.status <> 0
-          AND s.checked_at < clock_timestamp() - (GREATEST(m.interval, 60) * INTERVAL '2 seconds')
+          AND s.checked_at < clock_timestamp() - (GREATEST(60, m.interval * 2) * INTERVAL '1 second')
         ORDER BY s.checked_at ASC LIMIT 100`
       for (const row of rows) await this.markDown(Number(row.id))
     } catch {
