@@ -508,6 +508,10 @@ R85–R89 🔵 品牌／設定／狀態頁：
   - 新增斷言 UI 整合測試 2 項（preset/custom/any-all、response time、invalid JSON）。
   build/unit 61/61、integration 89 pass / 0 fail / 1 skipped、typecheck 0。
 
+R90 🔵 作品集與驗證：blog.markkulab.net/works 新增 SealWatch 作品項目（原圖截圖 5 張、
+  依「技術債重的 Uptime Kuma → 全新 Nuxt 重寫」角度撰寫），CI／GitOps 已部署成功並在線上看到。
+  Logout 下拉選單實測可導回登入頁；狀態頁搜尋／分頁與完整 URL 顯示已驗證。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
