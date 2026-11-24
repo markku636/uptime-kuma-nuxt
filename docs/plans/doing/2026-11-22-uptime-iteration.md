@@ -518,6 +518,9 @@ R90 🔵 最終稽核修正：light 主題監控名稱字色、STALE 狀態的�
   曾嘗試讓 73 個語言檔真正載入，但 build OOM，已退回；翻譯未載入是既有行為，
   故刻意使用字面英文避免出現原始 key。build/unit 61/61、integration 88 pass / 1 skipped、typecheck 0。
 
+R91 🔵 修正 workspace／environment 下拉選單高度與比例（固定 h-8、3:2 寬度比）；
+  暫停測試用 Bruno monitor #61，避免正式站持續顯示 DOWN。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
