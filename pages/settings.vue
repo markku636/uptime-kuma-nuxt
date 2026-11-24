@@ -82,6 +82,7 @@ const settingsNav = [
   { label: 'Proxies', to: '/settings/proxies', icon: 'i-heroicons-server' },
   { label: 'Docker Hosts', to: '/settings/docker-hosts', icon: 'i-heroicons-cube' },
   { label: 'Remote Browsers', to: '/settings/remote-browsers', icon: 'i-heroicons-globe-alt' },
+  { label: 'Variables & Keys', to: '/settings/secrets', icon: 'i-heroicons-key' },
   { label: 'API Keys', to: '/settings/api-keys', icon: 'i-heroicons-key' },
   { label: 'Backup / Restore', to: '/settings/backup', icon: 'i-heroicons-arrow-down-tray' },
   { label: 'About', to: '/settings/about', icon: 'i-heroicons-information-circle' },
