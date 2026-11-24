@@ -499,6 +499,15 @@ R82/R83 🔵 品牌與圖表：
   線上驗證 monitor 32 的 24h 圖表有 3 個資料點與時間標籤；build/unit 61/61、typecheck 0、
   integration 86 pass / 0 fail / 1 skipped。
 
+R85–R89 🔵 品牌／設定／狀態頁：
+  - 改為使用分享連結中的 SealWatch 原圖，產出登入、sidebar、mascot、favicon、SW、單色六種版本。
+  - 桌面 page-container 改靠左；Workspaces 頁環境變數改動態 key/value 編輯（仍存 JSON）。
+  - 新增 Settings → Variables & Keys 集中管理頁；Security 頁加入 Log out 備援按鈕。
+  - 狀態頁 API 加入 bounded `search`，UI 有搜尋框與分頁；monitor 顯示完整 URL。
+  - StatusPageForm 補 icon／footer／每頁筆數／更新間隔／憑證到期／powered by 等參數。
+  - 新增斷言 UI 整合測試 2 項（preset/custom/any-all、response time、invalid JSON）。
+  build/unit 61/61、integration 89 pass / 0 fail / 1 skipped、typecheck 0。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
