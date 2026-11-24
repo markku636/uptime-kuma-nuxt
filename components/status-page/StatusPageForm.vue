@@ -9,6 +9,12 @@ interface StatusPage {
   showTags: boolean
   customCSS: string | null
   googleAnalyticsId: string | null
+  icon?: string | null
+  footerText?: string | null
+  showPoweredBy?: boolean
+  showCertificateExpiry?: boolean
+  perPage?: number
+  autoRefreshInterval?: number
   monitorIds?: number[]
 }
 
@@ -47,6 +53,12 @@ const form = ref<StatusPage>({
   showTags: true,
   customCSS: '',
   googleAnalyticsId: '',
+  icon: '',
+  footerText: '',
+  showPoweredBy: true,
+  showCertificateExpiry: false,
+  perPage: 5,
+  autoRefreshInterval: 300,
   monitorIds: []
 })
 
@@ -62,6 +74,12 @@ onMounted(() => {
       showTags: props.statusPage.showTags,
       customCSS: props.statusPage.customCSS || '',
       googleAnalyticsId: props.statusPage.googleAnalyticsId || '',
+      icon: props.statusPage.icon || '',
+      footerText: props.statusPage.footerText || '',
+      showPoweredBy: props.statusPage.showPoweredBy ?? true,
+      showCertificateExpiry: props.statusPage.showCertificateExpiry ?? false,
+      perPage: props.statusPage.perPage ?? 5,
+      autoRefreshInterval: props.statusPage.autoRefreshInterval ?? 300,
       monitorIds: props.statusPage.monitorIds || []
     }
   }
@@ -173,6 +191,29 @@ function handleSubmit() {
           placeholder="e.g., G-XXXXXXXXXX"
         />
       </UFormField>
+    </div>
+
+    <!-- Display settings -->
+    <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <h3 class="font-medium">Display & branding</h3>
+      <UFormField label="Icon URL">
+        <UInput v-model="form.icon" placeholder="/icon.svg" />
+      </UFormField>
+      <UFormField label="Footer text">
+        <UTextarea v-model="form.footerText" :rows="2" placeholder="Optional footer message" />
+      </UFormField>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <UFormField label="Monitors per page">
+          <UInput v-model.number="form.perPage" type="number" min="1" max="50" />
+        </UFormField>
+        <UFormField label="Auto refresh (seconds)">
+          <UInput v-model.number="form.autoRefreshInterval" type="number" min="0" max="3600" />
+        </UFormField>
+      </div>
+      <div class="flex flex-wrap gap-4">
+        <UCheckbox v-model="form.showCertificateExpiry" label="Show certificate expiry" />
+        <UCheckbox v-model="form.showPoweredBy" label="Show powered by" />
+      </div>
     </div>
 
     <!-- Publish Status -->

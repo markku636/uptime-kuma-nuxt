@@ -15,6 +15,9 @@ const createStatusPageSchema = z.object({
   customCss: z.string().optional(),
   footerText: z.string().optional(),
   googleAnalyticsId: z.string().max(200).nullable().optional(),
+  showCertificateExpiry: z.boolean().optional(),
+  perPage: z.number().min(1).max(50).optional(),
+  autoRefreshInterval: z.number().min(0).max(3600).optional(),
   password: z.union([z.literal(''), z.string().min(6).max(200)]).optional(),
   monitors: z.array(z.number().int().positive()).max(4000).optional(),
 })
