@@ -730,8 +730,10 @@ html.dark .btn-secondary:hover {
   }
 }
 
+/* A steady red badge is clearer than a flashing one; repeated 1s pulses made
+   the monitor detail page feel unstable during socket updates. */
 .status-down {
-  animation: status-pulse-red 1s infinite;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
 }
 
 /* Chart bar animation */

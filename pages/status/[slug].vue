@@ -814,7 +814,8 @@ function formatLastUpdated(date: Date | null) {
               searchable
               class="monitor-select"
               value-key="value"
-              :ui="{ base: 'w-full' }"
+              :content="{ side: 'bottom', sideOffset: 6, collisionPadding: 12 }"
+              :ui="{ base: 'w-full', content: 'z-50 max-h-72 overflow-y-auto w-[var(--reka-select-trigger-width)]' }"
             >
               <template #item="{ item }">
                 <div class="flex items-center gap-2 py-1">

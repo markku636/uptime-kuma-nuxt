@@ -2,7 +2,7 @@ import {originHint} from '../../utils/origin-hint'
 import {workerPrisma} from '../../utils/worker-prisma'
 import {resolveMonitorConfig} from '../../utils/monitor-config'
 import type {CheckResult} from './checker'
-import {checkHttp} from './checkers/http-checker'
+import {checkMonitor} from './checker'
 import {claimMonitors,renewMonitorLease,relinquishMonitorLease,deferMonitorLease,type MonitorLease} from './leases'
 import {completeMonitorRun} from './completion'
 import {runtimeOptions,workerInstanceId} from './runtime-config'
@@ -54,18 +54,21 @@ export class MonitorWorker {
       if(controller.signal.aborted)return
       try{
         monitor=await resolveMonitorConfig(lease,controller.signal,this.db)
-        origin=new URL(monitor.url).origin
-        if((this.origins.get(origin)||0)>=this.options.perOrigin){await deferMonitorLease(lease,Math.max(250,this.options.pollMs*2),this.db,originHint(origin));this.metrics.deferred++;deferred=true;origin=undefined;return}
-        this.origins.set(origin,(this.origins.get(origin)||0)+1)
-        lease.originHint=originHint(origin)
+        // Not every scheduled type has a URL (e.g. Bruno stores a declarative request in body).
+        if(monitor.url){try{origin=new URL(monitor.url).origin}catch{origin=undefined}}
+        if(origin){
+          if((this.origins.get(origin)||0)>=this.options.perOrigin){await deferMonitorLease(lease,Math.max(250,this.options.pollMs*2),this.db,originHint(origin));this.metrics.deferred++;deferred=true;origin=undefined;return}
+          this.origins.set(origin,(this.origins.get(origin)||0)+1)
+          lease.originHint=originHint(origin)
+        }
       }catch{if(controller.signal.aborted)return;result={status:0,ping:Date.now()-start,msg:'Invalid configuration',code:'CONFIG_ERROR'}}
-      if(monitor&&origin){
+      if(monitor){
         if(await isMonitorUnderMaintenance(lease.id,lease.workspaceId,this.db))result={status:3,ping:0,msg:'Under maintenance',code:'MAINTENANCE'}
         else{
           const maxRetries=Math.min(10,Math.max(0,lease.maxretries||0));let retry=0
           for(;;){
             if(controller.signal.aborted)return
-            result=await checkHttp(monitor,Date.now(),controller.signal)
+            result=await checkMonitor(monitor,controller.signal)
             if(result.status===1||retry>=maxRetries||controller.signal.aborted)break
             retry++
             const delay=Math.max(100,Math.min(60000,(lease.retryInterval||60)*1000))
