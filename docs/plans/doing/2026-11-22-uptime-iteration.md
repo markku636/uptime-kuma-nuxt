@@ -512,6 +512,12 @@ R90 🔵 作品集與驗證：blog.markkulab.net/works 新增 SealWatch 作品�
   依「技術債重的 Uptime Kuma → 全新 Nuxt 重寫」角度撰寫），CI／GitOps 已部署成功並在線上看到。
   Logout 下拉選單實測可導回登入頁；狀態頁搜尋／分頁與完整 URL 顯示已驗證。
 
+R90 🔵 最終稽核修正：light 主題監控名稱字色、STALE 狀態的琥珀色標記、
+  General 存檔後立即同步 useState（時區／runtime hints）、公開狀態頁全站狀態橫幅
+  （後端回傳 config.overallStatus，不隨分頁／搜尋跳動）。
+  曾嘗試讓 73 個語言檔真正載入，但 build OOM，已退回；翻譯未載入是既有行為，
+  故刻意使用字面英文避免出現原始 key。build/unit 61/61、integration 88 pass / 1 skipped、typecheck 0。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
