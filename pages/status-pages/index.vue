@@ -23,7 +23,7 @@
             rel="noopener noreferrer"
             class="item"
           >
-            <img src="/icon.svg" alt="" class="logo" />
+            <img src="/sealwatch-mascot.png" alt="" class="logo" />
             <div class="info">
               <div class="title">
                 {{ page.title }}

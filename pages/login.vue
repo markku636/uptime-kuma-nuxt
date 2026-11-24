@@ -4,11 +4,7 @@
       <form @submit.prevent="handleLogin" class="space-y-6">
         <!-- Brand -->
         <div class="login-brand">
-          <img src="/sealwatch-mark.svg" alt="SealWatch" class="login-brand-mark" />
-          <div>
-            <h1 class="login-brand-title">Seal<span>Watch</span></h1>
-            <p class="login-brand-tagline">MONITOR · ALERT · STATUS</p>
-          </div>
+          <img src="/sealwatch-login.png" alt="SealWatch" class="login-brand-image" />
         </div>
 
         <!-- Username -->
@@ -174,26 +170,11 @@ const handleLogin = async () => {
   gap: 0.75rem;
   margin-bottom: 2rem;
 }
-.login-brand-mark { width: 4rem; height: 4rem; flex-shrink: 0; }
-.login-brand-title {
-  font-size: 2rem;
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: #0b2545;
-}
-:global(.dark) .login-brand-title { color: #e8f6ee; }
-.login-brand-title span {
-  background: linear-gradient(90deg, #5cdd8b, #20b26b);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.login-brand-tagline {
-  margin-top: 0.25rem;
-  font-size: 0.625rem;
-  letter-spacing: 0.22em;
-  font-weight: 600;
-  color: var(--text-tertiary);
+.login-brand-image {
+  display: block;
+  width: 18rem;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
 }
 </style>

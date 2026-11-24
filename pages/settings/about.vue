@@ -91,7 +91,7 @@ function formatUptime(seconds: number): string {
     <div class="section-card">
       <div class="flex items-center gap-4 mb-6">
         <div class="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center">
-          <img src="/icon.svg" alt="SealWatch" class="w-10 h-10" />
+          <img src="/sealwatch-mascot.png" alt="SealWatch" class="w-10 h-10" />
         </div>
         <div>
           <h4 class="text-2xl font-bold text-gray-900 dark:text-white">SealWatch</h4>

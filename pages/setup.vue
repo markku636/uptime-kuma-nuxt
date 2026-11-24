@@ -4,7 +4,7 @@
       <form @submit.prevent="handleSetup" class="space-y-6">
         <!-- Logo -->
         <div class="text-center">
-          <img src="/icon.svg" alt="SealWatch" width="64" height="64" class="mx-auto" />
+          <img src="/sealwatch-mascot.png" alt="SealWatch" width="64" height="64" class="mx-auto" />
           <h1 class="text-2xl font-bold text-primary mt-3">SealWatch</h1>
           <p class="text-muted mt-2">Create your admin account</p>
         </div>

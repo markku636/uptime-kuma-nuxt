@@ -212,7 +212,7 @@ function formatConfig(statusPage: any, canEdit = false) {
     canEdit,
     title: statusPage.title,
     description: statusPage.description,
-    icon: statusPage.icon || '/icon.svg',
+    icon: statusPage.icon || '/sealwatch-mascot.png',
     theme: statusPage.theme,
     published: statusPage.published,
     showTags: statusPage.showTags,

@@ -1,7 +1,7 @@
 <template>
   <div class="loading-container">
     <div class="text-center">
-      <img src="/icon.svg" alt="SealWatch" width="64" height="64" class="mb-3" />
+      <img src="/sealwatch-mascot.png" alt="SealWatch" width="64" height="64" class="mb-3" />
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
