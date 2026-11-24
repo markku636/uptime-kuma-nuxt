@@ -15,6 +15,7 @@ interface StatusPageConfig {
   showTags: boolean
   showPoweredBy: boolean
   showCertificateExpiry: boolean
+  overallStatus?: string
   customCSS?: string
   footerText?: string
   googleAnalyticsId?: string
@@ -161,6 +162,10 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
   })
 
   const overallStatusType = computed(() => {
+    // Backend computes this from all monitors on the page; fall back to the
+    // current page aggregate for older cached responses.
+    const serverStatus = config.value?.overallStatus
+    if (serverStatus && ['operational', 'partial-outage', 'major-outage', 'maintenance', 'unknown'].includes(serverStatus)) return serverStatus
     switch (overallStatus.value) {
       case STATUS_PAGE_ALL_UP: return 'operational'
       case STATUS_PAGE_PARTIAL_DOWN: return 'partial-outage'

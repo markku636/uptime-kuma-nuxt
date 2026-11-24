@@ -517,6 +517,7 @@ const getStatusText = (status: number) => {
 
 const getMonitorStatusClass = (monitor: any) => {
   if (!monitor.active) return 'bg-gray-700 text-gray-400'
+  if (monitor.viewStatus === 'stale') return 'badge-warning'
   const status = getLatestStatus(monitor)
   switch (status) {
     case 1: return 'badge-success'

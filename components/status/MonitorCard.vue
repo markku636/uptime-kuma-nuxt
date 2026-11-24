@@ -268,7 +268,7 @@ const certExpiryText = computed(() => {
   color: var(--text-tertiary);
 }
 
-.monitor-name {
+.dark .monitor-name {
   color: #e2e8f0;
 }
 

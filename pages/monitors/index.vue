@@ -157,6 +157,7 @@ function getStatusText(monitor: any) {
 
 function getStatusDotClass(monitor: any) {
   if (!monitor.active) return 'bg-gray-500'
+  if (monitor.viewStatus === 'stale') return 'bg-amber-500'
   const status = getLatestStatus(monitor)
   switch (status) {
     case 1: return 'bg-emerald-500'
@@ -168,6 +169,7 @@ function getStatusDotClass(monitor: any) {
 
 function getStatusBadgeClass(monitor: any) {
   if (!monitor.active) return 'bg-gray-700 text-gray-400'
+  if (monitor.viewStatus === 'stale') return 'badge-warning'
   const status = getLatestStatus(monitor)
   switch (status) {
     case 1: return 'badge-success'

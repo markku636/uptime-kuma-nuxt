@@ -191,6 +191,11 @@ const saveSettings = async () => {
         showRuntimeHints: form.showRuntimeHints
       }
     })
+    // Reflect the new values immediately instead of waiting for a reload.
+    useState('display-timezone').value = form.displayTimezone
+    useState('display-timezone-loaded').value = true
+    useState('show-runtime-hints').value = form.showRuntimeHints
+    useState('show-runtime-hints-loaded').value = true
     toast.add({ title: 'Success', description: 'Settings saved', color: 'success' })
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || 'Failed to save settings', color: 'error' })
