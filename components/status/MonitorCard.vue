@@ -28,17 +28,21 @@
           pill
         />
         
-        <!-- Monitor name with optional link -->
-        <a
-          v-if="showLink && monitor.url"
-          :href="monitor.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="monitor-name"
-        >
-          {{ monitor.name }}
-        </a>
-        <span v-else class="monitor-name">{{ monitor.name }}</span>
+        <!-- Monitor name with optional link and full URL -->
+        <div class="min-w-0">
+          <a
+            v-if="showLink && monitor.url"
+            :href="monitor.url"
+            :title="monitor.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="monitor-name block"
+          >
+            {{ monitor.name }}
+          </a>
+          <span v-else class="monitor-name block">{{ monitor.name }}</span>
+          <code v-if="showLink && monitor.url" class="monitor-url">{{ monitor.url }}</code>
+        </div>
         
         <!-- Toggle public URL link (edit mode) -->
         <UButton
@@ -235,6 +239,16 @@ const certExpiryText = computed(() => {
   opacity: 1;
 }
 
+.monitor-url {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
 .monitor-name {
   font-weight: 500;
   color: #1e293b;
@@ -244,7 +258,17 @@ const certExpiryText = computed(() => {
   text-overflow: ellipsis;
 }
 
-.dark .monitor-name {
+.dark .monitor-url {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.monitor-name {
   color: #e2e8f0;
 }
 

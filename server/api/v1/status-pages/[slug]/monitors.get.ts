@@ -28,6 +28,11 @@ export default defineEventHandler(async (event) => {
   const page = Math.max(1, Number(query.page) || 1)
   const queryLimit = query.limit ? Math.min(50, Math.max(1, Number(query.limit))) : null
   const noPagination = query.no_pagination === 'true' || query.no_pagination === '1'
+  const search = typeof query.search === 'string' ? query.search.trim().slice(0, 200) : ''
+  const monitorFilter = (workspaceId: number) => ({
+    workspaceId,
+    ...(search ? { name: { contains: search, mode: 'insensitive' as const } } : {}),
+  })
 
   const basicPage = await visibleStatusPage(event)
   const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 20 }) }
@@ -161,7 +166,7 @@ export default defineEventHandler(async (event) => {
   // Database-level pagination - only fetch the monitors we need
   const offset = (page - 1) * limit
   const paginatedMonitors = await prisma.statusPageMonitor.findMany({
-    where: { groupId: targetGroupId, monitor: { workspaceId: statusPage.workspaceId } },
+    where: { groupId: targetGroupId, monitor: monitorFilter(statusPage.workspaceId) },
     skip: offset,
     take: limit,
     include: {
@@ -175,7 +180,9 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  const totalMonitors = targetGroup._count.monitors
+  const totalMonitors = search
+    ? await prisma.statusPageMonitor.count({ where: { groupId: targetGroupId, monitor: monitorFilter(statusPage.workspaceId) } })
+    : targetGroup._count.monitors
   const totalPages = Math.ceil(totalMonitors / limit)
 
   const publicGroupList = [{

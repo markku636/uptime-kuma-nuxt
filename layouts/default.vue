@@ -136,7 +136,7 @@
               :items="profileMenuItems"
               :content="{ align: 'end' }"
             >
-              <button class="header-icon-btn">
+              <button class="header-icon-btn" aria-label="Open account menu">
                 <div class="w-8 h-8 bg-tertiary rounded-full flex items-center justify-center">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
@@ -285,11 +285,15 @@ async function handleLogout() {
   try {
     await $fetch('/api/auth/logout', { method: 'POST' })
   } catch {
+    // The session cookie is cleared locally even if the API call fails.
+  }
+  try {
+    await clear()
+  } catch {
     // ignore
   }
-  await clear()
-  // Force a full page reload to clear all state
-  window.location.replace('/login')
+  // Force a full page reload so no cached auth state survives.
+  window.location.assign('/login')
 }
 </script>
 

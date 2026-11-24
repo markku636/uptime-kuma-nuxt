@@ -538,8 +538,8 @@ html.dark .btn-secondary:hover {
 
 /* Page container */
 .page-container {
-  max-width: 80rem;
-  margin: 0 auto;
+  max-width: 100rem;
+  margin: 0;
   padding: 1.5rem 1rem;
 }
 

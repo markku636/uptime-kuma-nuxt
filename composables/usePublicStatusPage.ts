@@ -117,6 +117,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
   const passwordError = ref('')
   const activeTab = ref<number | null>(null)
   const page = ref(1)
+  const search = ref('')
   const perPage = ref(5)
   const lastUpdateTime = ref<Date | null>(null)
   const updateCountdownText = ref('')
@@ -173,6 +174,8 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     return groups.value.reduce((sum, group) => sum + group.monitorList.length, 0)
   })
 
+  watch(search, () => { page.value = 1; void loadData() })
+
   // Methods
   async function loadData(options: { noPagination?: boolean; groupId?: number } = {}) {
     try {
@@ -192,6 +195,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
         }
         params.append('page', String(page.value))
         params.append('limit', String(perPage.value))
+        if (search.value.trim()) params.append('search', search.value.trim())
       }
 
       const url = `/api/v1/status-pages/${slugRef.value}/monitors${params.toString() ? '?' + params.toString() : ''}`
@@ -656,6 +660,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     unlockStatusPage,
     activeTab,
     page,
+    search,
     perPage,
     lastUpdateTime,
     updateCountdownText,

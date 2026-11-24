@@ -51,6 +51,7 @@ const {
   updateCountdownText: countdown,
   pagination,
   page,
+  search,
   
   // UI State
   loading,
@@ -767,7 +768,7 @@ function formatLastUpdated(date: Date | null) {
 
         <!-- Incident history (UptimeRobot-style timeline) -->
         <div v-if="!editMode && incidents.length > 1" class="mb-8">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ $t('settingsIncidentHistory') }}</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ 'Incident history' }}</h2>
           <div class="space-y-3">
             <article
               v-for="item in incidents.slice(1)"
@@ -860,6 +861,22 @@ function formatLastUpdated(date: Date | null) {
             No monitors available. 
             <NuxtLink to="/monitors/add" class="text-primary-500 hover:underline">Add one</NuxtLink>
           </div>
+        </div>
+
+        <!-- Search (view mode only) -->
+        <div v-if="!editMode && publicGroupList.length" class="mb-4">
+          <label class="relative block max-w-sm">
+            <span class="sr-only">Search monitors</span>
+            <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
+            <input
+              v-model="search"
+              type="search"
+              placeholder="Search monitors…"
+              aria-label="Search monitors"
+              maxlength="200"
+              class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-9 pr-3 py-2 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </label>
         </div>
 
         <!-- Group Tabs (if multiple groups) -->

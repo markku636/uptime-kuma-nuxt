@@ -12,7 +12,7 @@
         <div class="settings-sidebar">
           <label class="settings-search">
             <UIcon name="i-heroicons-magnifying-glass" class="w-4 h-4 opacity-60" />
-            <input v-model="navSearch" type="search" :placeholder="$t('settingsFind')" aria-label="Find a setting" />
+            <input v-model="navSearch" type="search" :placeholder="'Find a setting…'" aria-label="Find a setting" />
           </label>
           <div v-for="group in visibleGroups" :key="group.label" class="settings-group">
             <p class="settings-group-label">{{ group.label }}</p>
@@ -29,7 +29,7 @@
               </NuxtLink>
             </nav>
           </div>
-          <p v-if="!visibleGroups.length" class="text-xs text-secondary px-3 py-4">{{ $t('settingsNoMatch') }}</p>
+          <p v-if="!visibleGroups.length" class="text-xs text-secondary px-3 py-4">{{ 'No matching settings.' }}</p>
         </div>
       </div>
 

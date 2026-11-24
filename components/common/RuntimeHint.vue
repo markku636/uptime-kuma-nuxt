@@ -16,10 +16,10 @@ const open = ref(false)
 const data = ref<RuntimeHintData | null>(null)
 
 const labelKey = computed(() => {
-  if (props.kind === 'api') return 'runtimeHintApi'
-  if (props.kind === 'worker') return 'runtimeHintWorker'
-  if (props.kind === 'slots') return 'runtimeHintSlots'
-  return 'runtimeHintOverview'
+  if (props.kind === 'api') return 'API — serves the web UI, REST API and live updates. It never runs checks.'
+  if (props.kind === 'worker') return 'Worker — pulls due checks from the shared PostgreSQL queue and runs them.'
+  if (props.kind === 'slots') return 'Slots in use — checks running now divided by the total check slots across all workers (for example 0/64). One check occupies one slot until it finishes.'
+  return 'About API, workers and check slots'
 })
 
 async function onOpen(value: boolean) {
@@ -45,22 +45,22 @@ function podList(pods: string[]): string {
     <template #content>
       <div class="runtime-hint-content max-w-[22rem] space-y-1.5 text-xs leading-relaxed">
         <template v-if="kind === 'api' || kind === 'overview'">
-          <p>{{ $t('runtimeHintApi') }}</p>
-          <p v-if="data?.available">{{ $t('runtimeHintPods') }} <span class="font-mono">{{ podList(data.api) }}</span></p>
+          <p>{{ 'API — serves the web UI, REST API and live updates. It never runs checks.' }}</p>
+          <p v-if="data?.available">{{ 'Pods:' }} <span class="font-mono">{{ podList(data.api) }}</span></p>
         </template>
 
         <template v-if="kind === 'worker' || kind === 'overview'">
-          <p>{{ $t('runtimeHintWorker') }}</p>
-          <p v-if="data?.available">{{ $t('runtimeHintPods') }} <span class="font-mono">{{ podList(data.worker) }}</span></p>
+          <p>{{ 'Worker — pulls due checks from the shared PostgreSQL queue and runs them.' }}</p>
+          <p v-if="data?.available">{{ 'Pods:' }} <span class="font-mono">{{ podList(data.worker) }}</span></p>
         </template>
 
         <template v-if="kind === 'slots' || kind === 'overview'">
-          <p>{{ $t('runtimeHintSlots') }}</p>
-          <p v-if="data?.available">{{ $t('runtimeHintNow') }} <span class="font-mono">{{ data.inflight }}/{{ data.slots }}</span></p>
+          <p>{{ 'Slots in use — checks running now divided by the total check slots across all workers (for example 0/64). One check occupies one slot until it finishes.' }}</p>
+          <p v-if="data?.available">{{ 'Now:' }} <span class="font-mono">{{ data.inflight }}/{{ data.slots }}</span></p>
         </template>
 
-        <p v-if="!data">{{ $t('runtimeHintLoading') }}</p>
-        <p v-else-if="!data.available" class="text-secondary">{{ $t('runtimeHintNoPermission') }}</p>
+        <p v-if="!data">{{ 'Loading runtime details…' }}</p>
+        <p v-else-if="!data.available" class="text-secondary">{{ 'Pod names require platform administrator permission.' }}</p>
       </div>
     </template>
   </UTooltip>

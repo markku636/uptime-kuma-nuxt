@@ -75,8 +75,8 @@ async function fetchOutbox(reset = true) {
 <section v-if="platformAdmin" class="section-card space-y-3">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h3 class="font-semibold">{{ $t('settingsDeliveryLog') }}</h3>
-      <p class="text-sm text-secondary">{{ $t('settingsDeliveryLogHint') }}</p>
+      <h3 class="font-semibold">{{ 'Delivery log' }}</h3>
+      <p class="text-sm text-secondary">{{ 'Recent notification attempts. Payloads and integration URLs are never shown.' }}</p>
     </div>
     <div class="flex items-center gap-2">
       <select v-model="outboxStatus" class="select-field" @change="fetchOutbox()">
