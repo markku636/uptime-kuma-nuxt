@@ -273,6 +273,17 @@ const overallStatusConfig = computed(() => {
 })
 
 // Active group (for tab navigation) - uses activeGroupId
+// Summary of the monitors currently visible (one group/page).
+const visibleMonitors = computed(() => publicGroupList.value.flatMap(group => group.monitorList || []))
+const groupSummaries = computed(() => publicGroupList.value.map(group => {
+  const rows = group.monitorList || []
+  const up = rows.filter(row => row.heartbeats?.at(-1)?.status === 1).length
+  const down = rows.filter(row => row.heartbeats?.at(-1)?.status === 0).length
+  const uptime = rows.map(row => row.uptime24).filter((value): value is number => typeof value === 'number')
+  const avgUptime = uptime.length ? uptime.reduce((sum, value) => sum + value, 0) / uptime.length : null
+  return { id: group.id, name: group.name, total: rows.length, up, down, avgUptime }
+}))
+
 const activeGroup = computed(() => {
   if (groupSource.value.length === 0) return null
   if (!activeGroupId.value) return groupSource.value[0]
@@ -734,6 +745,28 @@ function formatLastUpdated(date: Date | null) {
           </div>
         </div>
 
+        <!-- At-a-glance summary (Uptime Kuma style) -->
+        <div v-if="!editMode && visibleMonitors.length" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="stat-card">
+            <div class="stat-label">Monitors</div>
+            <div class="stat-value">{{ visibleMonitors.length }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Up now</div>
+            <div class="stat-value text-emerald-500">{{ groupSummaries.reduce((sum, group) => sum + group.up, 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Down now</div>
+            <div class="stat-value" :class="groupSummaries.some(group => group.down) ? 'text-red-500' : ''">{{ groupSummaries.reduce((sum, group) => sum + group.down, 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">24h uptime (avg)</div>
+            <div class="stat-value">
+              {{ (() => { const vals = groupSummaries.map(g => g.avgUptime).filter((v): v is number => v !== null); return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) + '%' : '—' })() }}
+            </div>
+          </div>
+        </div>
+
         <!-- Maintenance Banner -->
         <div
           v-for="maintenance in maintenanceList"
@@ -815,7 +848,8 @@ function formatLastUpdated(date: Date | null) {
               class="monitor-select"
               value-key="value"
               :content="{ side: 'bottom', sideOffset: 6, collisionPadding: 12 }"
-              :ui="{ base: 'w-full', content: 'z-50 max-h-72 overflow-y-auto w-[var(--reka-select-trigger-width)]' }"
+              search-placeholder="Search monitors…"
+              :ui="{ base: 'w-full', content: 'z-50 max-h-72 overflow-y-auto w-[var(--reka-select-trigger-width)]', item: 'cursor-pointer' }"
             >
               <template #item="{ item }">
                 <div class="flex items-center gap-2 py-1">
