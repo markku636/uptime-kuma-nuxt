@@ -521,6 +521,15 @@ R90 🔵 最終稽核修正：light 主題監控名稱字色、STALE 狀態的�
 R91 🔵 修正 workspace／environment 下拉選單高度與比例（固定 h-8、3:2 寬度比）；
   暫停測試用 Bruno monitor #61，避免正式站持續顯示 DOWN。
 
+R92/R93 🔵 正確性與 UX：
+  - 修正 worker 對所有 monitor 類型都呼叫 checkHttp、且用 new URL(url) 計算 origin
+    的問題：Bruno monitor 沒有 url，排程檢查一直 CONFIG_ERROR。改為依 monitor.type 分派
+    checkMonitor，origin 改為可選。線上 resume #61 後立即得到 CHECK_OK（已驗證）。
+  - DOWN 徽章由 1 秒無限 pulse 改為穩定紅色框，避免「一直閃」。
+  - Language／monitor picker 改為可搜尋 USelectMenu，統一往下展開、z-50、限高；
+    公開狀態頁加 Monitors / Up / Down / 24h uptime 摘要卡。
+  build/unit 61/61、integration 89 pass / 0 fail / 1 skipped、typecheck 0。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
