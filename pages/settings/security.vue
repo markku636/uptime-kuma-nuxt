@@ -2,6 +2,13 @@
 definePageMeta({ middleware: ['auth'] })
 
 const toast = useToast()
+const { clear } = useUserSession()
+
+async function logout() {
+  try { await $fetch('/api/auth/logout', { method: 'POST' }) } catch { /* ignore */ }
+  try { await clear() } catch { /* ignore */ }
+  window.location.assign('/login')
+}
 
 // Global API key (hashed at rest; plaintext shown once)
 const globalKeyConfigured = ref(false)
@@ -224,6 +231,9 @@ function copyToClipboard(text: string) {
 
 <template>
   <div class="space-y-6">
+    <div class="flex justify-end">
+      <button class="btn btn-secondary" @click="logout">Log out</button>
+    </div>
     <!-- Global API key -->
     <div class="section-card">
       <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Global API key</h5>
