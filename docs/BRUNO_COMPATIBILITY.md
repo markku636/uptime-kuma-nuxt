@@ -43,11 +43,12 @@ source environment變更與監測寫入同一transaction。Monitor request配置
 | Params | query/path 類型切換、增刪列、Bulk Edit（`name: value` 每行，`~` 代表停用） |
 | Body | none / json / text / form-url-encoded |
 | Headers / Auth / Vars | 表頭與 basic/bearer 憑證、pre-request vars、環境變數清單與插入 |
-| Script / Tests / Settings | 原文唯讀；worker 永不執行，但存檔會原樣保留 |
+| Script / Tests / Settings | 可直接編輯保留的 block；worker 永不執行，存檔原樣保留 |
 | Assert | Expr / Operator / Value / Description，完整安全 operator 下拉 |
 | Docs | `docs {}` block 可讀寫 |
 
 - `{{` 在任何欄位會彈出環境變數自動完成；secret 只顯示 `••••••`。
 - Ctrl/⌘+Enter 立即 Send；結果面板顯示 status / elapsed / Headers / Body / Assertions（含 actual）。
 - Raw 模式可 Copy / Download `.bru`，或 Reset 回到已儲存版本。
+- Bruno monitor 可用於單檔與 ZIP 匯出，以及 redacted manifest；字面值會轉成 secret placeholder。
 - 既有 `.bru` 原文只對互動式 editor+ session 可讀；API key 維持 write-only。

@@ -254,7 +254,7 @@ R43 ✅ 三次完整整合全綠（驗證輪，不部署） — 三次皆 103 pa
 
 | # | 差距 | 建議 |
 |---|------|------|
-| N1 | Script / Tests 內容只能唯讀，不能在 UI 直接編集 | 需在不破壞「永不執行」政策下設計雙向 block 編輯，優先留在 Raw |
+| N1 | Script / Tests / Settings 在 UI 直接編集 | ✅ R48（仍永不執行） |
 | N2 | multipart/form-data、file、GraphQL、XML、OAuth/digest/NTLM/mTLS | 原計劃明確排除；若要支援需新的安全邊界與測試 |
 | N3 | 正式站使用者人工驗收（monitor 61） | 需要持有人在 https://uptime.markkulab.net 登入後確認 Raw/UI、env dialog、Send 畫面 |
 R46 ✅ 匯出完整去識別 — commit `f0b4802`：
