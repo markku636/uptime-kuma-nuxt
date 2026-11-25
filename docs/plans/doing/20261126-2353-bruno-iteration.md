@@ -112,3 +112,9 @@ R14 ✅ Script / Tests 唯讀分頁 — commit `5c2c735`：
 - 驗證：unit 140/140、typecheck 0 errors、build 成功、Bruno browser 3/3。
 - 部署：artifact `31978a7fde8d65b2d8e10ad444167e8d2cdebbcd1c702ee3d93e5785eec8bcbe`（source `5c2c735`）；
   loader rev249 → app rev250，Healthy/Synced。
+R15 ✅ Path param 與 URL  token 對帳 — commit `8a17ae1`：
+- `modelToSource()` 與 `buildRequest()` 都拒絕 URL 沒有對應 `:name` 的启用 path param，避免靜默忽略。
+- 新增正反兩側測試（UI model 與直接 parser）。
+- 驗證：unit 141/141、typecheck 0 errors、build 成功、完整整合 97 pass / 1 skip。
+- 部署：artifact `044bf17922a1cbdd6307d28f1cf0465995ef0b566b204ae999a81109e963cc16`（source `8a17ae1`）；
+  loader rev251 → app rev252，最終 Healthy/Synced。
