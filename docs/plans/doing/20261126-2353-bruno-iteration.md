@@ -216,3 +216,9 @@ R34 ✅ 匯出支援所有 operator — commit `52fbf53`：
 - 驗證：unit 147/147、typecheck 0 errors、build 成功；完整整合 101 pass / 1 fail（既有 group drag flaky，單獨跑通過）。
 - 部署：artifact `1ae7e119abe588bf2cc0f565aaad0ebb4dc2cc60e8e2e722773b0d39a7571391`（source `52fbf53`）；
   loader rev281 → app rev282，最終 Healthy/Synced。
+R35 ✅ Bruno monitor 可匯出 — commit `8da6f2d`：
+- `monitorToBru()` 對 type=bruno 直接輸出 stored `.bru`（owner-only download 本來就照存放值輸出），單檔與 collection ZIP 都納入。
+- 新增 3 個 unit 測試：原文原樣、collection 收錄、空 body 安全拒絕。
+- 驗證：unit 150/150、typecheck 0 errors、build 成功、Bruno 整合 8 pass / 1 skip；完整整合的 group drag 仍為既有 flaky。
+- 部署：artifact `5ab8b523e889c6bb49580456fabc8f5c47df8e8910a0033a7fec14c1405b9f1a`（source `8da6f2d`）；
+  loader rev283 → app rev284，最終 Healthy/Synced。
