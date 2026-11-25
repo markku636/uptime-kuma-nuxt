@@ -431,7 +431,7 @@ async function callApi(path: string, body: Record<string, unknown>) {
   error.value = ''
   busy.value = true
   try {
-    const response = await $fetch<{ data: { model?: BrunoRequestModel | null; source?: string | null; issues: Array<{ code: string; field?: string }> } }>(path, { method: 'POST', body })
+    const response = await $fetch<{ data: { model?: BrunoRequestModel | null; source?: string | null; issues: Array<{ code: string; field?: string }> } }>(path, { method: 'POST', body, signal: AbortSignal.timeout(10000) })
     if (response.data?.issues?.length) throw new Error(response.data.issues.map(issueMessage).join(' '))
     return response.data
   } finally { busy.value = false }
