@@ -187,7 +187,7 @@ watch(tab, value => { if (value === 'keys') void loadKeys() })
 </script>
 
 <template>
-  <div class="space-y-6 max-w-4xl">
+  <div class="space-y-6 max-w-6xl">
     <div class="card card-body">
       <h1 class="text-xl font-semibold">Variables & Keys</h1>
       <p class="text-sm text-secondary mt-1">Manage environment variables, secrets and API keys for {{ current?.name || 'this workspace' }} in one place.</p>

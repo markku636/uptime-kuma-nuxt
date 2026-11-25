@@ -70,7 +70,25 @@ async function fetchOutbox(reset = true) {
 </script>
 <template>
 <div class="space-y-8"><SettingsResourceSettings kind="notification" title="Notifications" />
-<section v-if="platformAdmin" class="section-card space-y-3"><h3 class="font-semibold">TLS certificate expiry notifications</h3><p>Global notification days before expiry</p><div class="flex flex-wrap gap-2"><button v-for="day in tlsExpiryDays" class="btn btn-secondary" @click="removeTlsExpiryDay(day)">{{day}} days ×</button></div><label>Days<input v-model.number="newTlsExpiryDay" type="number" min="1" max="365" class="input-field" /></label><div class="flex gap-2"><button class="btn btn-secondary" @click="addTlsExpiryDay">Add day</button><button class="btn btn-primary" @click="saveTlsExpirySettings">Save TLS settings</button></div></section>
+<section v-if="platformAdmin" class="section-card space-y-5">
+  <div>
+    <h3 class="font-semibold text-lg">TLS certificate expiry notifications</h3>
+    <p class="text-sm text-secondary mt-1">Global notification days before expiry</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <button v-for="day in tlsExpiryDays" :key="day" class="btn btn-secondary" @click="removeTlsExpiryDay(day)">{{day}} days ×</button>
+    <span v-if="!tlsExpiryDays.length" class="text-sm text-secondary">No thresholds configured.</span>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-end">
+    <label class="block">Days
+      <input v-model.number="newTlsExpiryDay" type="number" min="1" max="365" class="input-field mt-1 max-w-xs" placeholder="e.g. 30" />
+    </label>
+    <div class="flex flex-wrap gap-2">
+      <button class="btn btn-secondary" @click="addTlsExpiryDay">Add day</button>
+      <button class="btn btn-primary" @click="saveTlsExpirySettings">Save TLS settings</button>
+    </div>
+  </div>
+</section>
 
 <section v-if="platformAdmin" class="section-card space-y-3">
   <div class="flex flex-wrap items-center justify-between gap-3">

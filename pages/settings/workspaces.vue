@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 max-w-4xl">
+  <div class="space-y-6 max-w-6xl">
     <div class="card card-body">
       <h2 class="text-lg font-semibold">Workspaces</h2>
       <p class="text-sm text-secondary mt-1">Workspaces separate monitors and settings. Each monitor belongs to one environment.</p>

@@ -8,7 +8,7 @@ onMounted(()=>{interactive.value=true;if(profile.value?.createdAt)createdLabel.v
 async function save(){if(!interactive.value||saving.value)return;saving.value=true;saveError.value='';saved.value=false;try{await $fetch('/api/auth/profile',{method:'PUT',body:{timezone:timezone.value}});await refresh();saved.value=true}catch(e:any){saveError.value=e.data?.message||'Unable to save profile'}finally{saving.value=false}}
 </script>
 <template>
- <div class="max-w-3xl space-y-6">
+ <div class="max-w-6xl space-y-6">
   <p v-if="pending" role="status">Loading profile…</p>
   <div v-else-if="error" role="alert" class="section-card space-y-3"><p>Unable to load your profile.</p><button class="btn btn-secondary" @click="refresh()">Retry</button></div>
   <template v-else-if="profile">
