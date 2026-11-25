@@ -93,6 +93,15 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByText('{{EDITOR_VAR}}').waitFor()
     assert.ok((await page.getByRole('button', {name:'Insert', exact:true}).count()) > 0)
 
+    await page.getByRole('tab', {name:/Params/}).click()
+    const urlField = page.getByPlaceholder('https://example.com/health', {exact:true})
+    await urlField.click()
+    await urlField.press('End')
+    await urlField.type('{{ED')
+    await page.getByRole('option', {name:/EDITOR_VAR/}).click()
+    assert.match(await urlField.inputValue(), /\{\{EDITOR_VAR\}\}$/)
+    await urlField.fill((await urlField.inputValue()).replace('{{EDITOR_VAR}}', ''))
+
     await page.getByRole('tab', {name:/Assert/}).click()
     assert.ok((await page.locator('select.bruno-cell').count()) > 0, 'assertion operator selector is rendered')
 

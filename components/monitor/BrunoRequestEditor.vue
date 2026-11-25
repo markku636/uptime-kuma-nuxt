@@ -1,5 +1,5 @@
 <template>
-  <div class="bruno-editor space-y-3" @focusin="rememberFocus" @keydown.ctrl.enter.prevent="$emit('send')" @keydown.meta.enter.prevent="$emit('send')">
+  <div ref="root" class="bruno-editor space-y-3" @focusin="rememberFocus" @input="trackAutocomplete" @keydown.esc="autocompleteOpen = false" @keydown.ctrl.enter.prevent="$emit('send')" @keydown.meta.enter.prevent="$emit('send')">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="inline-flex rounded-lg border border-[color-mix(in_srgb,currentColor_20%,transparent)] p-0.5">
         <button type="button" class="bruno-toggle" :class="mode === 'raw' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('raw')">Raw (.bru)</button>
@@ -253,6 +253,13 @@
       <p v-else class="text-sm text-secondary">No assertion details returned for this request.</p>
     </div>
 
+    <div v-if="autocompleteOpen && autocompleteMatches.length" class="bruno-autocomplete" :style="autocompleteStyle" role="listbox">
+      <button v-for="name in autocompleteMatches" :key="name" type="button" role="option" class="block w-full text-left px-2 py-1 text-xs hover:bg-elevated" @mousedown.prevent="applyAutocomplete(name)">
+        <code>{{ variableToken(name) }}</code>
+        <span v-if="envSecrets.includes(name)" class="ml-2 text-secondary">••••••</span>
+      </button>
+    </div>
+
     <EnvironmentVariablesDialog v-model:open="envDialogOpen" :environment-id="resolvedEnvironmentId" @insert="insertVariable" @saved="loadEnv(); emit('refreshVariables')" />
   </div>
 </template>
@@ -454,6 +461,38 @@ function serializableModel() {
   }
 }
 
+const root = ref<HTMLElement | null>(null)
+const autocompleteOpen = ref(false), autocompleteQuery = ref(''), autocompleteTarget = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+const autocompleteMatches = computed(() => environmentNames.value.filter(name => name.toLowerCase().startsWith(autocompleteQuery.value.toLowerCase())).slice(0, 8))
+const autocompleteStyle = computed(() => {
+  const target = autocompleteTarget.value, container = root.value
+  if (!target || !container) return {}
+  const box = target.getBoundingClientRect(), parent = container.getBoundingClientRect()
+  return {left: `${box.left - parent.left}px`, top: `${box.bottom - parent.top + 4}px`}
+})
+function trackAutocomplete(event: Event) {
+  const target = event.target
+  if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) || typeof target.value !== 'string') {
+    autocompleteOpen.value = false
+    return
+  }
+  const match = /\{\{([^{}]*)$/.exec(target.value.slice(0, target.selectionStart ?? target.value.length))
+  autocompleteTarget.value = match ? target : null
+  autocompleteQuery.value = match?.[1]?.trim() || ''
+  autocompleteOpen.value = !!match
+}
+function applyAutocomplete(name: string) {
+  const target = autocompleteTarget.value
+  if (!target) return
+  const cursor = target.selectionStart ?? target.value.length
+  const before = target.value.slice(0, cursor).replace(/\{\{[^{}]*$/, `{{${name}}}`)
+  target.value = before + target.value.slice(cursor)
+  target.dispatchEvent(new Event('input', {bubbles: true}))
+  target.focus()
+  target.setSelectionRange(before.length, before.length)
+  autocompleteOpen.value = false
+}
+
 let focused: HTMLElement | null = null
 function rememberFocus(event: FocusEvent) { focused = event.target instanceof HTMLElement ? event.target : null }
 function insertVariable(token: string) {
@@ -487,6 +526,7 @@ defineExpose({ mode, source: rawSource, sync })
 </script>
 
 <style scoped>
+.bruno-editor { position: relative; }
 .bruno-toggle { padding: .3rem .75rem; font-size: .8125rem; border-radius: .5rem; color: var(--text-secondary); }
 .bruno-toggle-active { background: color-mix(in srgb, var(--text-primary) 12%, transparent); color: var(--text-primary); font-weight: 600; }
 .bruno-tabs { display: flex; flex-wrap: wrap; gap: .15rem; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
@@ -499,4 +539,5 @@ defineExpose({ mode, source: rawSource, sync })
 .bruno-cell:focus { outline: none; border-color: rgb(16 185 129); }
 .bruno-icon { color: var(--text-secondary); font-size: 1.1rem; line-height: 1; padding: 0 .35rem; }
 .bruno-response { max-height: 18rem; overflow: auto; background: color-mix(in srgb, currentColor 5%, transparent); border-radius: .5rem; padding: .75rem; font-size: .75rem; white-space: pre-wrap; word-break: break-all; }
+.bruno-autocomplete { position: absolute; z-index: 50; min-width: 12rem; max-height: 12rem; overflow: auto; background: var(--bg-primary, #1f2937); border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: .5rem; box-shadow: 0 8px 24px rgb(0 0 0 / 25%); }
 </style>
