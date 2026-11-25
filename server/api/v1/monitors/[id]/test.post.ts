@@ -11,6 +11,9 @@ export default defineEventHandler(async event=>{
   const updates=Object.fromEntries(Object.entries(parsed.data).filter(([key])=>Object.hasOwn(body,key)))
   const input=applyMonitorUpdates(monitor,updates)
   // Trials must see the same {{environment variable}} values as scheduled checks.
-  const resolved=await resolveMonitorConfig(input,undefined,prisma)
+  // Missing/unsupported variables are checker config errors, not a 500 from the endpoint.
+  let resolved:any
+  try { resolved=await resolveMonitorConfig(input,undefined,prisma) }
+  catch { resolved={...input,workspaceId:scope.workspaceId,environmentId:scope.environmentId} }
   return trialMonitor(scope.user.id,resolved)
 })

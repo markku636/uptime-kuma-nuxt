@@ -72,3 +72,14 @@ test('invalid .bru returns safe issue codes instead of parser exceptions', async
   assert.ok(result.data.issues.length > 0)
   assert.ok(result.data.issues.every((issue: any) => /^[A-Z_]+$/.test(issue.code)))
 })
+
+test('existing monitor trial reports missing variables as CONFIG_ERROR instead of a 500', async () => {
+  const created = await data(await request('/api/v1/monitors', 'POST', owner, a, {
+    type: 'bruno', name: 'Missing variable Bruno', active: false,
+    body: 'meta {\n  name: Missing\n  type: http\n}\nget {\n  url: http://127.0.0.1:1/{{MISSING_EDITOR_VAR}}\n  body: none\n  auth: none\n}\n',
+  }))
+  const id = created.data.id
+  const trial = await data(await request(`/api/v1/monitors/${id}/test`, 'POST', owner, a, {}))
+  assert.equal(trial.ok, true)
+  assert.equal(trial.data.code, 'CONFIG_ERROR')
+})
