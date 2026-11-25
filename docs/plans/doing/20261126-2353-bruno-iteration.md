@@ -118,3 +118,9 @@ R15 ✅ Path param 與 URL  token 對帳 — commit `8a17ae1`：
 - 驗證：unit 141/141、typecheck 0 errors、build 成功、完整整合 97 pass / 1 skip。
 - 部署：artifact `044bf17922a1cbdd6307d28f1cf0465995ef0b566b204ae999a81109e963cc16`（source `8a17ae1`）；
   loader rev251 → app rev252，最終 Healthy/Synced。
+R16 ✅ Settings 唯讀分頁 — commit `e3f8ed3`：
+- 官方最後一個分頁補齊：顯示保留的 `settings {}` block，並標示 worker 不套用，interval/timeout 請用監測表單。
+- 瀏覽器測試同時驗證 Script/Tests/Settings 三個分頁。
+- 驗證：unit 141/141、typecheck 0 errors、build 成功、Bruno browser 3/3。
+- 部署：artifact `9eb81a6258b8ae7be3a6a81b24002ffdee23a2ca564072a07de0b5d5465a3f88`（source `e3f8ed3`）；
+  loader rev253 → app rev254，最終 Healthy/Synced。
