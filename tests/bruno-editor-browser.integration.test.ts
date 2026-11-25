@@ -127,6 +127,9 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByRole('button', {name:'Copy .bru', exact:true}).click()
     await page.getByText('Copied', {exact:true}).waitFor()
     assert.equal(await page.evaluate(() => navigator.clipboard.readText()), edited)
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', {name:'Download .bru', exact:true}).click()
+    assert.match((await downloadPromise).suggestedFilename(), /\.bru$/)
 
     await page.getByRole('button', {name:'UI editor', exact:true}).click()
     await page.getByRole('tab', {name:/Params/}).waitFor()

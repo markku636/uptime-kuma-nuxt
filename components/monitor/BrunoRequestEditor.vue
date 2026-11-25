@@ -16,6 +16,7 @@
     <div v-if="mode === 'raw'" class="space-y-2">
       <div class="flex justify-end">
         <button type="button" class="btn btn-outline text-xs" :disabled="!rawSource" @click="copySource">{{ copied ? 'Copied' : 'Copy .bru' }}</button>
+        <button type="button" class="btn btn-outline text-xs" :disabled="!rawSource" @click="downloadSource">Download .bru</button>
       </div>
       <textarea
         v-model="rawSource"
@@ -345,6 +346,16 @@ const bulkText = computed({
   },
 })
 function toggleBulk(kind: 'params' | 'headers') { bulkKind.value = bulkKind.value === kind ? null : kind }
+
+function downloadSource() {
+  if (!rawSource.value) return
+  const url = URL.createObjectURL(new Blob([rawSource.value], {type: 'text/plain'}))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${(model.value?.name || 'request').replace(/[^\w.-]+/g, '_')}.bru`
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 async function resetToSaved() {
   if (props.disabled || busy.value) return
