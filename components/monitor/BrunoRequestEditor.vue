@@ -151,6 +151,14 @@
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('vars')">+ Add variable</button>
       </section>
 
+      <!-- Script (preserved, never executed) -->
+      <section v-else-if="activeTab === 'script'" class="space-y-2">
+        <p class="text-xs text-amber-500">Preserved in the .bru file but never executed by the worker. Switch to Raw to edit it.</p>
+        <pre v-if="ignoredBlock('script:pre-request')" class="bruno-response">{{ ignoredBlock('script:pre-request') }}</pre>
+        <pre v-if="ignoredBlock('script:post-response')" class="bruno-response">{{ ignoredBlock('script:post-response') }}</pre>
+        <p v-if="!ignoredBlock('script:')" class="text-sm text-secondary">No script blocks in this request.</p>
+      </section>
+
       <!-- Assert -->
       <section v-else-if="activeTab === 'assert'" class="space-y-2">
         <table class="bruno-table">
@@ -171,6 +179,13 @@
           </tbody>
         </table>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('assert')">+ Add assertion</button>
+      </section>
+
+      <!-- Tests (preserved, never executed) -->
+      <section v-else-if="activeTab === 'tests'" class="space-y-2">
+        <p class="text-xs text-amber-500">Preserved in the .bru file but never executed by the worker. Switch to Raw to edit it.</p>
+        <pre v-if="ignoredBlock('tests')" class="bruno-response">{{ ignoredBlock('tests') }}</pre>
+        <p v-else class="text-sm text-secondary">No tests block in this request.</p>
       </section>
 
       <!-- Docs -->
@@ -249,8 +264,8 @@ const unary = new Set(['exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 
 const isUnary = (operator: string) => unary.has(operator)
 const tabs = [
   { key: 'params', label: 'Params' }, { key: 'body', label: 'Body' }, { key: 'headers', label: 'Headers' },
-  { key: 'auth', label: 'Auth' }, { key: 'vars', label: 'Vars' }, { key: 'assert', label: 'Assert' },
-  { key: 'docs', label: 'Docs' },
+  { key: 'auth', label: 'Auth' }, { key: 'vars', label: 'Vars' }, { key: 'script', label: 'Script' },
+  { key: 'assert', label: 'Assert' }, { key: 'tests', label: 'Tests' }, { key: 'docs', label: 'Docs' },
 ] as const
 const resultTabs = [{ key: 'headers', label: 'Headers' }, { key: 'body', label: 'Body' }, { key: 'assert', label: 'Assertions' }] as const
 
@@ -298,6 +313,8 @@ const counts = computed(() => ({
   body: model.value && model.value.body.mode !== 'none' ? 1 : 0,
   auth: model.value && model.value.auth.mode !== 'none' ? 1 : 0,
   docs: model.value?.docs?.trim() ? 1 : 0,
+  script: ignoredBlock('script:') ? 1 : 0,
+  tests: ignoredBlock('tests') ? 1 : 0,
 }))
 
 const envVariables = ref<Record<string, string>>({}), envSecrets = ref<string[]>([])
@@ -327,6 +344,11 @@ async function callApi(path: string, body: Record<string, unknown>) {
     if (response.data?.issues?.length) throw new Error(response.data.issues.map(issue => issue.code).join(', '))
     return response.data
   } finally { busy.value = false }
+}
+
+/** Find a preserved non-executed block by its official .bru block name. */
+function ignoredBlock(prefix: string) {
+  return model.value?.ignoredSources?.find(source => source.trimStart().startsWith(prefix))
 }
 
 /** Query is the default param type; keep old .bru sources that omit the type usable in the select. */

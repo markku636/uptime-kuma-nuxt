@@ -154,3 +154,52 @@ test('browser opens an empty Bruno request directly in the UI editor', {timeout:
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
+
+test('browser shows preserved script and tests blocks as read-only tabs', {timeout:60000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined, monitorId: number | undefined
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-script-tabs')
+    scope = await workspace(identity, 'Bruno script tabs')
+    const source = `meta {
+  name: Script tabs
+  type: http
+}
+
+get {
+  url: http://127.0.0.1:1/health
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  req.setHeader('X-Ignored', '1');
+}
+
+tests {
+  test('ignored', () => {});
+}
+`
+    const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {type:'bruno', name:'Script tabs', active:false, body:source}))
+    monitorId = created.data.id
+    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage(), errors: string[] = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByRole('tab', {name:/Script/}).click()
+    assert.match(await page.locator('pre.bruno-response').first().innerText(), /X-Ignored/)
+    await page.getByRole('tab', {name:/Tests/}).click()
+    assert.match(await page.locator('pre.bruno-response').first().innerText(), /test\('ignored'/)
+    assert.deepEqual(errors, [])
+  } finally {
+    await browser.close()
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})
