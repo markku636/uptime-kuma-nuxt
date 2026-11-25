@@ -1,5 +1,4 @@
 import {decryptSecret} from './variables'
-import {transientDatabaseError} from './database-errors'
 import { hashApiKey } from './request-session'
 import { workerPrisma as prisma } from './worker-prisma'
 import { backfillResourceSecrets } from './resource-secrets'
@@ -27,6 +26,14 @@ export function securityReady(){
     for(const key of legacyKeys)await prisma.apiKey.updateMany({where:{id:key.id,key:key.key},data:{key:hashApiKey(key.key)}})
   })()
   ready=pending
-  pending.catch(error=>{if(transientDatabaseError(error)&&ready===pending)ready=undefined})
+  pending.catch(error=>{
+    if(ready!==pending)return
+    ready=undefined
+    // A reboot can start the app before PostgreSQL is accepting connections.
+    // Retry any bootstrap failure so readiness recovers once the database is up.
+    console.warn('[Security] Bootstrap failed, retrying:',error?.code||error?.message)
+    const timer=setTimeout(()=>{void securityReady().catch(()=>{})},2000)
+    timer.unref()
+  })
   return pending
 }

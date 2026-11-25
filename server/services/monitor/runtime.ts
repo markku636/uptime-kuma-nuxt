@@ -1,7 +1,6 @@
 import {hostname} from 'node:os'
 import {workerPrisma as prisma} from '../../utils/worker-prisma'
 import {securityReady} from '../../utils/security-bootstrap'
-import {transientDatabaseError} from '../../utils/database-errors'
 import {StateBridge} from '../events/state-bridge'
 import {NotificationDispatcher} from '../notification/dispatcher'
 import {MonitorWorker} from './worker'
@@ -42,7 +41,9 @@ export function initializeRuntime(){
   starting=attempt
   attempt.catch(error=>{
     runtimeState.initializationFailures++
-    if(transientDatabaseError(error)&&!runtimeState.draining){starting=undefined;retry=setTimeout(()=>{retry=undefined;void initializeRuntime().catch(()=>{})},retryMs);retry.unref();retryMs=Math.min(30000,retryMs*2)}
+    // Retry every startup failure: a reboot may race the database, and a
+    // rejected initialize promise otherwise leaves readiness false forever.
+    if(!runtimeState.draining){starting=undefined;retry=setTimeout(()=>{retry=undefined;void initializeRuntime().catch(()=>{})},retryMs);retry.unref();retryMs=Math.min(30000,retryMs*2)}
   })
   return attempt
 }
