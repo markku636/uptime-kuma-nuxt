@@ -302,3 +302,4 @@ R61 ✅ API 壓力測試（僅測試，不部署） — 50 斷言 + 60 KB body �
 R62 ✅ 一鍵驗證全綠（驗證輪） — `npm run verify:bruno` 全部通過；正式站 rev300 不變。
 R63 ✅ 交付摘要文件 — `docs/evidence/20261126-bruno-editor-final.md`：功能、部署 rev300、驗證結果與待人工確認項目。
 R64 ✅ 驗證 + 正式站健康（驗證輪） — verify:bruno 全綠、ready 200；rev300 不變。
+R65 ✅ 截止前最終驗證 — 07:54 CST `npm run verify:bruno` 全綠；07:51 前每 15 分鐘監測 8 次皆 ready=200 / unit 109 pass。準備在 08:00 收尾。
