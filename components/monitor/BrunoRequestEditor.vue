@@ -14,6 +14,9 @@
     <p v-if="error" role="alert" class="text-sm text-red-400">{{ error }}</p>
     <!-- Raw mode -->
     <div v-if="mode === 'raw'" class="space-y-2">
+      <div class="flex justify-end">
+        <button type="button" class="btn btn-outline text-xs" :disabled="!rawSource" @click="copySource">{{ copied ? 'Copied' : 'Copy .bru' }}</button>
+      </div>
       <textarea
         v-model="rawSource"
         class="input-field font-mono text-xs"
@@ -312,7 +315,12 @@ const mode = ref<'raw' | 'ui'>('ui')
 const model = ref<BrunoRequestModel | null>(null)
 const activeTab = ref<(typeof tabs)[number]['key']>('params')
 const resultTab = ref<'headers' | 'body' | 'assert'>('body')
-const busy = ref(false), error = ref(''), envDialogOpen = ref(false)
+const busy = ref(false), error = ref(''), envDialogOpen = ref(false), copied = ref(false)
+async function copySource() {
+  if (!rawSource.value) return
+  try { await navigator.clipboard.writeText(rawSource.value); copied.value = true; setTimeout(() => { copied.value = false }, 1500) }
+  catch { error.value = 'Unable to copy; select the text and copy manually.' }
+}
 const bulkKind = ref<'params' | 'headers' | null>(null)
 watch(activeTab, () => { bulkKind.value = null })
 

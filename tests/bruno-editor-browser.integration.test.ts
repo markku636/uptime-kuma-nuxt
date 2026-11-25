@@ -39,7 +39,7 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     }))
     monitorId = created.data.id
 
-    const context = await browser.newContext({viewport:{width:1440,height:1100}})
+    const context = await browser.newContext({viewport:{width:1440,height:1100}, permissions:['clipboard-read','clipboard-write']})
     const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
     await context.addCookies([...cookies,
       {name:'workspace_id',value:String(scope.workspaceId),url:base},
@@ -124,6 +124,9 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     assert.match(edited, /auth: bearer/)
     assert.match(edited, /token: demo-token/)
     assert.match(edited, /# Demo doc/)
+    await page.getByRole('button', {name:'Copy .bru', exact:true}).click()
+    await page.getByText('Copied', {exact:true}).waitFor()
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), edited)
 
     await page.getByRole('button', {name:'UI editor', exact:true}).click()
     await page.getByRole('tab', {name:/Params/}).waitFor()
