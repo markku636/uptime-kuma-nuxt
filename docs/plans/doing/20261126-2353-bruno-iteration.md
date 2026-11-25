@@ -160,3 +160,9 @@ R22 ✅ 23 個斷言端到端 + 上限提高到 50 — commit `d36adf0`：
 - 驗證：unit 142/142（既有 21 條上限測試改 51）、typecheck 0 errors、build 成功、完整整合 99 pass / 1 skip。
 - 部署：artifact `adc63e0c9c8e3bfc91ae64e44f7a89f2d27bad79f0eb1b9e63f9d64768775f53`（source `d36adf0`）；
   loader rev265 → app rev266，最終 Healthy/Synced。
+R23 ✅ form-url-encoded body — commit `9f142d0`：
+- parser 接受 `body:form-urlencoded`，以 `name: value` 行編輯，送出時轉成 URL-encoded 並自動帶 content-type；`{{var}}` 保留不編碼。
+- unit round-trip + 端到端 fixture 驗證實際送出 `a=1&b=hello%20world` 與 content-type。
+- 驗證：unit 143/143、typecheck 0 errors、build 成功、完整整合 99 pass / 1 skip。
+- 部署：artifact `a2eaa3bdb121cbb456e2c8158231e68c8c0d8ccf53aed0daab1ad699f4b6df46`（source `9f142d0`）；
+  loader rev267 → app rev268，最終 Healthy/Synced。
