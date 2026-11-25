@@ -145,3 +145,37 @@ auth:bearer {
   assert.ok(!text.includes('literal-bearer-token'))
   assert.match(response.headers.get('x-bruno-secret-names') || '', /token/)
 })
+
+test('exported Bruno .bru re-parses after supplying its secret placeholders', async () => {
+  const {parseBrunoManifest} = await import('../server/services/bruno/parser')
+  const source = `meta {
+  name: Round trip export
+  type: http
+}
+
+post {
+  url: https://example.com/login
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {"token": "LITERAL_BODY_TOKEN"}
+}
+
+auth:bearer {
+  token: LITERAL_BEARER_TOKEN
+}
+`
+  const created = await data(await request('/api/v1/monitors', 'POST', owner, a, {type:'bruno', name:'Round trip export', active:false, body:source}))
+  const response = await request(`/api/v1/bruno/download?ids=${created.data.id}`, 'GET', owner, a)
+  assert.equal(response.status, 200)
+  const exported = await response.text()
+  assert.ok(!exported.includes('LITERAL_BEARER_TOKEN'))
+  const names = (response.headers.get('x-bruno-secret-names') || '').split(',').filter(Boolean)
+  assert.ok(names.length > 0)
+  const values = Object.fromEntries(names.map(name => [name, name.endsWith('_url') ? 'https://example.com/login' : name.endsWith('_body') ? '{"token":"supplied"}' : 'supplied']))
+  const parsed = await parseBrunoManifest({collectionId:'roundtrip', mode:'create', files:[{path:'request.bru', content:exported}]}, values, names)
+  assert.deepEqual(parsed.issues, [], `exported source could not be re-parsed: ${JSON.stringify(parsed.issues)} ${exported}`)
+  assert.equal(parsed.requests.length, 1)
+})
