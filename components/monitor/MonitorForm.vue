@@ -90,6 +90,16 @@
         spellcheck="false"
         placeholder="meta {&#10;  name: Example&#10;}&#10;get {&#10;  url: https://example.com/health&#10;}&#10;assert {&#10;  res.status: eq 200&#10;}"
       />
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="btn btn-outline" :disabled="trialLoading || loading || !form.body" @click="handleSubmit(true)">
+          {{ trialLoading ? 'Sending…' : 'Send request' }}
+        </button>
+        <span v-if="trialResult" class="text-sm">
+          {{ trialResult.status===1?'Check passed':'Check failed' }} · {{ trialResult.code }} · {{ Math.round(trialResult.ping) }} ms
+        </span>
+      </div>
+      <p v-if="trialError" role="alert" class="text-sm text-red-400">{{ trialError }}</p>
+      <MonitorAssertionResults v-if="trialResult?.assertionResults" :result="trialResult.assertionResults" />
     </div>
 
     <!-- HTTP Settings -->
@@ -1463,6 +1473,10 @@ const handleSubmit = async (trial=false) => {
     upsideDown: form.upsideDown,
   }
 
+  // Bruno monitors keep the declarative .bru request in body even though they
+  // have no URL field; assign it unconditionally so create + trial both work.
+  if (form.type === 'bruno') data.body = form.body
+
   // HTTP-based monitors
   if (showUrlField.value) {
     data.url = form.url
@@ -1495,10 +1509,9 @@ const handleSubmit = async (trial=false) => {
       }
     }
     
-    // Request body
-    if (form.type === 'bruno') {
-      data.body = form.body
-    } else if (form.body && ['POST', 'PUT', 'PATCH'].includes(form.method)) {
+    // Request body for HTTP-based monitors. Bruno stores its .bru request in
+    // body too, but Bruno is not in showUrlField, so it is assigned below.
+    if (form.body && ['POST', 'PUT', 'PATCH'].includes(form.method)) {
       data.body = form.body
     }
 
