@@ -247,3 +247,4 @@ R41 ✅ 轉換 API 逾時 — commit `8a50387`：
 - 部署：artifact `de2ad8d88d6de2d36d6661f91ffbe77c91fed723a6c1eaa9408757dba32efe89`（source `8a50387`）；
   loader rev289 → app rev290，最終 Healthy/Synced。
 R42 ✅ DTO 可見性 unit 測試（僅測試，不部署） — commit `7d629bd`：確認 monitorEditorDTO 預設不回 body，只有 includeBody:true 才回。unit 153/153。
+R43 ✅ 三次完整整合全綠（驗證輪，不部署） — 三次皆 103 pass / 0 fail / 1 skip；先前的 badges / drag flaky 未再出現。
