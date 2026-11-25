@@ -23,6 +23,14 @@ export default defineEventHandler(async event => {
     if (!environment) throw createError({ statusCode: 404, message: 'Environment not found' })
   }
 
+  // Bound the whole model before walking it: an oversized or cyclic payload must not burn editor capacity.
+  let serialized: string
+  try { serialized = JSON.stringify(parsed.data.model) }
+  catch { throw createError({ statusCode: 400, message: 'Invalid request model' }) }
+  if (!serialized || Buffer.byteLength(serialized) > 2 * 1024 * 1024) {
+    throw createError({ statusCode: 413, message: 'Request model is too large' })
+  }
+
   try {
     const { values, secretNames } = await editorEnvironmentValues(scope.workspaceId, environmentId)
     return { ok: true, data: await modelToSource(parsed.data.model as BrunoRequestModel, values, secretNames) }

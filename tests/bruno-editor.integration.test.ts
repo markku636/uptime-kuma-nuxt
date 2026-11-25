@@ -105,3 +105,15 @@ test('Bruno .bru source is only readable by an interactive editor session', asyn
   assert.ok(!Object.hasOwn(viewerResponse.data, 'body'))
   assert.ok(!JSON.stringify(viewerResponse).includes('SECRET_TOKEN_SENTINEL'))
 })
+
+test('stringify rejects oversized model payloads with a bounded error', async () => {
+  const model = {
+    name: 'Huge', method: 'GET', url: 'https://example.com', params: [], headers: [],
+    auth: {mode: 'none'}, body: {mode: 'none', content: ''}, vars: [], assertions: [], ignoredBlocks: [],
+    docs: 'x'.repeat(3 * 1024 * 1024),
+  }
+  const response = await request('/api/v1/bruno/request/stringify', 'POST', editor, a, {model, environmentId: a.environmentId})
+  assert.equal(response.status, 413)
+  const text = await response.text()
+  assert.ok(!text.includes('x'.repeat(100)))
+})
