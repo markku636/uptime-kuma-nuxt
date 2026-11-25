@@ -1,9 +1,12 @@
 <template>
   <div ref="root" class="bruno-editor space-y-3" @focusin="rememberFocus" @input="trackAutocomplete" @keydown.esc="autocompleteOpen = false" @keydown.ctrl.enter.prevent="$emit('send')" @keydown.meta.enter.prevent="$emit('send')">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <div class="inline-flex rounded-lg border border-[color-mix(in_srgb,currentColor_20%,transparent)] p-0.5">
-        <button type="button" class="bruno-toggle" :class="mode === 'raw' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('raw')">Raw (.bru)</button>
-        <button type="button" class="bruno-toggle" :class="mode === 'ui' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('ui')">UI editor</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="inline-flex rounded-lg border border-[color-mix(in_srgb,currentColor_20%,transparent)] p-0.5">
+          <button type="button" class="bruno-toggle" :class="mode === 'raw' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('raw')">Raw (.bru)</button>
+          <button type="button" class="bruno-toggle" :class="mode === 'ui' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('ui')">UI editor</button>
+        </div>
+        <button type="button" class="btn btn-outline text-xs" :disabled="disabled || busy" @click="resetToSaved">Reset</button>
       </div>
       <span class="text-xs text-secondary">Bruno-style request editor · scripts, tests and post-response vars are not executed</span>
     </div>
@@ -300,6 +303,7 @@ const resultTabs = [{ key: 'headers', label: 'Headers' }, { key: 'body', label: 
 
 const { current, environment } = useWorkspace()
 const resolvedEnvironmentId = computed(() => Number(props.environmentId || environment.value?.id || 0) || undefined)
+const savedSource = ref(props.modelValue)
 const rawSource = ref(props.modelValue)
 watch(() => props.modelValue, value => { if (mode.value === 'raw' && value !== rawSource.value) rawSource.value = value })
 watch(rawSource, value => { if (mode.value === 'raw' && value !== props.modelValue) emit('update:modelValue', value) })
@@ -333,6 +337,15 @@ const bulkText = computed({
   },
 })
 function toggleBulk(kind: 'params' | 'headers') { bulkKind.value = bulkKind.value === kind ? null : kind }
+
+async function resetToSaved() {
+  if (props.disabled || busy.value) return
+  rawSource.value = savedSource.value
+  emit('update:modelValue', savedSource.value)
+  model.value = null
+  error.value = ''
+  await initializeUi()
+}
 
 const counts = computed(() => ({
   params: model.value?.params.filter(row => row.enabled).length || 0,

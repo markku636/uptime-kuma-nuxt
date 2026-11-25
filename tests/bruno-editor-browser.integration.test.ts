@@ -174,6 +174,9 @@ test('browser opens an empty Bruno request directly in the UI editor', {timeout:
     await page.getByPlaceholder('https://example.com/health', {exact:true}).fill('http://127.0.0.1:1/health')
     await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
     assert.match(await page.locator('textarea.font-mono').first().inputValue(), /http:\/\/127.0.0.1:1\/health/)
+    await page.getByRole('button', {name:'Reset', exact:true}).click()
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    assert.equal(await page.getByPlaceholder('https://example.com/health', {exact:true}).inputValue(), '')
     assert.deepEqual(errors, [])
   } finally {
     await browser.close()
