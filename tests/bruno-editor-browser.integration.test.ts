@@ -99,7 +99,10 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     assert.match(edited, /~off: no/)
     assert.match(edited, /X-Demo: abc/)
 
-    await page.getByRole('button', {name:'Send request', exact:true}).click()
+    await page.getByRole('button', {name:'UI editor', exact:true}).click()
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByPlaceholder('https://example.com/health', {exact:true}).focus()
+    await page.keyboard.press('Control+Enter')
     await page.getByText(/Status\s*200/).waitFor()
     assert.equal(hits, 1)
 

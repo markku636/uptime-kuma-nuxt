@@ -1,5 +1,5 @@
 <template>
-  <div class="bruno-editor space-y-3" @focusin="rememberFocus">
+  <div class="bruno-editor space-y-3" @focusin="rememberFocus" @keydown.ctrl.enter.prevent="$emit('send')" @keydown.meta.enter.prevent="$emit('send')">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="inline-flex rounded-lg border border-[color-mix(in_srgb,currentColor_20%,transparent)] p-0.5">
         <button type="button" class="bruno-toggle" :class="mode === 'raw' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('raw')">Raw (.bru)</button>
@@ -193,6 +193,7 @@
     <!-- Trial / Send -->
     <div class="flex flex-wrap items-center gap-2 border-t border-[color-mix(in_srgb,currentColor_12%,transparent)] pt-3">
       <button type="button" class="btn btn-outline" :disabled="disabled || trialLoading || busy || !rawSource" @click="$emit('send')">{{ trialLoading ? 'Sending…' : 'Send request' }}</button>
+      <span class="text-xs text-secondary">Ctrl / ⌘ + Enter</span>
       <span v-if="trialResult" class="text-sm">{{ trialResult.status === 1 ? 'Passed' : 'Failed' }} · {{ trialResult.code }} · {{ Math.round(trialResult.ping) }} ms</span>
     </div>
     <p v-if="trialError" role="alert" class="text-sm text-red-400">{{ trialError }}</p>
