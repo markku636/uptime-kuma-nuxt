@@ -53,3 +53,10 @@ R4 ✅ Path params 支援 — commit `70cab92`：
 - 驗證：unit 126/126、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
 - 部署：artifact `d1844eec0703b9eff39e4ef0a4b7fddf22235eef30df3a138ae7e149bc388ce5`（203,736,113 bytes，source `70cab92`）；
   loader rev229 → app rev230，Healthy/Synced。
+R5 ✅ Params/Headers Bulk Edit — commit `d0701c3`：
+- Bruno 分頁新增官方風格的 Bulk Edit / Table Edit 切換；`name: value` 每行一筆，`~` 前綴代表停用，
+  切回表格與序列化都保留，Params 的 query/path 型別也會沿用。
+- 瀏覽器測試實際走過：加 param → Bulk Edit 改值與停用列 → Table Edit → Raw 驗證 `.bru` 內容 → Send → Save → reload。
+- 驗證：unit 126/126、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip（數次跑有既有 drag flaky，重跑通過）。
+- 部署：artifact `6c69c567c3a046f4138560a1d4c0558921221fba6020026811ad7f7e9f9f9443`（203,737,351 bytes，source `d0701c3`）；
+  loader rev231 → app rev232，最終 Healthy/Synced。
