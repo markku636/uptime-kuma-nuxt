@@ -309,3 +309,17 @@ settings {
   assert.match(produced.source!, /vars:post-response \{\n  saved: value/)
   assert.match(produced.source!, /settings \{\n  encodeUrl: true/)
 })
+
+test('path params must match a :name token in the URL', async () => {
+  const invalid = await modelToSource(model({
+    url: 'https://example.com/users',
+    params: [{name: 'id', value: '42', enabled: true, type: 'path'}],
+  }), VALUES, SECRETS)
+  assert.equal(invalid.source, null)
+  assert.ok(invalid.issues.some(issue => issue.code === 'UNSUPPORTED_PARAMETER'), JSON.stringify(invalid.issues))
+
+  const { parseBrunoManifest } = await import('../server/services/bruno/parser')
+  const source = `meta {\n  name: Unused path\n  type: http\n}\nget {\n  url: https://example.com/users\n  body: none\n  auth: none\n}\nparams:path {\n  id: 42\n}\n`
+  const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, VALUES, SECRETS)
+  assert.ok(parsed.issues.some(issue => issue.code === 'UNSUPPORTED_PARAMETER'), JSON.stringify(parsed.issues))
+})

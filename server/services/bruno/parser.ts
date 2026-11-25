@@ -166,6 +166,7 @@ function buildRequest(file:string,ast:any,layers:any[],environment:Record<string
   let sourceUrl=ownQuery?rawUrl.replace(/\?[^#]*/,''):rawUrl
   // Bruno path params replace `:name` tokens in the URL before the request is sent.
   for(const pair of inheritedPairs([...layers,ast],'path')){
+    if(!sourceUrl.includes(`:${pair.name}`))fail('UNSUPPORTED_PARAMETER','params')
     const token=new RegExp(`:${pair.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?=/|\\?|#|$)`)
     sourceUrl=sourceUrl.replace(token,()=>pair.value)
   }

@@ -247,6 +247,10 @@ export async function modelToSource(
       return assertion
     })
 
+    // A path param without its :name token in the URL would be silently ignored by the worker.
+    for (const pair of params) {
+      if (pair.enabled && pair.type === 'path' && !rawUrl.includes(`:${pair.name}`)) fail('UNSUPPORTED_PARAMETER', 'params')
+    }
     // Params are authoritative: rebuild the URL query from enabled params only, never duplicate one.
     const enabled = params.filter(pair => pair.enabled && pair.type !== 'path')
     let url = rawUrl
