@@ -264,3 +264,8 @@ R46 ✅ 匯出完整去識別 — commit `f0b4802`：
 - 驗證：unit 153/153、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
 - 部署：artifact `1cd5424a166565d4e70d5748ac22a8effadd4c58b318d9ea5e39db8b3ad961dd`（source `f0b4802`）；
   loader rev291 → app rev292，最終 Healthy/Synced。
+R47 ✅ redacted manifest 也納入 Bruno monitor — commit `cac855c`：
+- `/api/v1/bruno/export` 的分享用 manifest 現在包含 Bruno monitor，所有字面值轉 secret placeholder 並寫入 configure.bru。
+- 新增 unit 測試；unit 154/154、build 成功、完整整合 104 pass / 0 fail / 1 skip。
+- 部署：artifact `f75c1968018fb02213d92281c564a9db1be9e64d36c674584256260b9d75e2fb`（source `cac855c`）；
+  loader rev293 → app rev294，最終 Healthy/Synced。
