@@ -200,3 +200,8 @@ R30 ✅ Copy .bru — commit `ae771b8`：
 - 驗證：unit 146/146、typecheck 0 errors、build 成功、Bruno browser 5/5。
 - 部署：artifact `2ce284d6cefcf37f389ab7e9468f4320b71d74889f390d35aa9cfa28274ca84f`（source `ae771b8`）；
   loader rev277 → app rev278，Healthy/Synced。
+R31 ✅ Download .bru — commit `20e90d0`：
+- Raw 模式可下載目前 .bru 檔，檔名取自 request name；瀏覽器測試驗證下載事件與 .bru 副檔名。
+- 驗證：unit 146/146、typecheck 0 errors、build 成功、Bruno browser 5/5。
+- 部署：artifact `6235133e9920fda148e6cf37c054e213460136ef55ec158f0de57bd3c7e67fb1`（source `20e90d0`）；
+  loader rev279 → app rev280，最終 Healthy/Synced。
