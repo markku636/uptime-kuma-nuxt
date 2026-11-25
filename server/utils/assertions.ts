@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { isDeepStrictEqual } from 'node:util'
+import { safePatternMatch } from './safe-pattern'
 import { assertionSources, assertionOperators, type AssertionSet, type AssertionRule, type AssertionEvaluation, type AssertionRuleResult, type JsonValue } from '../../shared/types/assertions'
 const blocked = new Set(['__proto__','prototype','constructor'])
 
@@ -76,11 +77,11 @@ const ruleSchema=z.object({id:z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),source:z
   }else if(rule.path!==undefined)ctx.addIssue({code:'custom',message:'This source does not take a path'})
   const unary=['exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray','isDefined','isUndefined','isTruthy','isFalsy']
   const numeric=['gt','gte','lt','lte','length']
-  const text=['startsWith','endsWith']
+  const text=['startsWith','endsWith','matches','notMatches']
   const list=['in','notIn']
   if(!unary.includes(rule.operator)&&rule.expected===undefined)ctx.addIssue({code:'custom',message:'Expected value is required'})
   if(numeric.includes(rule.operator)&&typeof rule.expected!=='number')ctx.addIssue({code:'custom',message:'Numeric comparisons require numeric values'})
-  if(text.includes(rule.operator)&&typeof rule.expected!=='string')ctx.addIssue({code:'custom',message:'Text comparisons require a string'})
+  if(text.includes(rule.operator)&&(typeof rule.expected!=='string'||Buffer.byteLength(rule.expected)>256))ctx.addIssue({code:'custom',message:'Text comparisons require a short string pattern'})
   if(list.includes(rule.operator)&&!Array.isArray(rule.expected))ctx.addIssue({code:'custom',message:'List comparisons require an array'})
   if(rule.operator==='between'&&(!Array.isArray(rule.expected)||rule.expected.length!==2||rule.expected.some(value=>typeof value!=='number')))ctx.addIssue({code:'custom',message:'Between requires two numbers'})
   if(['equals','notEquals','contains','notContains'].includes(rule.operator)&&['header','text'].includes(rule.source)&&typeof rule.expected!=='string')ctx.addIssue({code:'custom',message:'Text/header comparisons require a string'})
@@ -129,6 +130,11 @@ export function evaluateRule(rule:AssertionRule,exists:boolean,value:unknown):As
       }else if(['startsWith','endsWith'].includes(rule.operator)){
         if(typeof value!=='string'||typeof rule.expected!=='string'){reason='type_mismatch';break}
         passed=rule.operator==='startsWith'?value.startsWith(rule.expected):value.endsWith(rule.expected)
+      }else if(['matches','notMatches'].includes(rule.operator)){
+        if(typeof value!=='string'||typeof rule.expected!=='string'){reason='type_mismatch';break}
+        const matched=safePatternMatch(value,rule.expected)
+        if(matched===null){reason='type_mismatch';break}
+        passed=rule.operator==='matches'?matched:!matched
       }else if(rule.operator==='length'){
         if(typeof value!=='string'&&!Array.isArray(value)){reason='type_mismatch';break}
         passed=value.length===rule.expected

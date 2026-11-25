@@ -5,7 +5,7 @@ import type { BrunoIssue, BrunoRequestModel } from '../../../shared/types/bruno'
 
 const METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as const
 const UNARY_OPERATORS = new Set(['exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isJson', 'isNumber', 'isString', 'isBoolean', 'isArray', 'isDefined', 'isUndefined', 'isTruthy', 'isFalsy'])
-const OPERATORS = new Set(['eq', 'ne', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'notIn', 'startsWith', 'endsWith', 'length', 'between', 'contains', 'notContains', ...UNARY_OPERATORS])
+const OPERATORS = new Set(['eq', 'ne', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'notIn', 'startsWith', 'endsWith', 'length', 'between', 'matches', 'notMatches', 'contains', 'notContains', ...UNARY_OPERATORS])
 const AUTH_MODES = ['none', 'inherit', 'basic', 'bearer']
 const BODY_MODES = ['none', 'json', 'text']
 const FILE = 'request.bru'

@@ -91,3 +91,23 @@ test('Bruno between token with two numbers is parsed into a bounded range', asyn
   assert.deepEqual(parsed.issues, [])
   assert.deepEqual(parsed.requests[0]!.config.assertions.rules[0].expected, [200, 299])
 })
+
+test('safe pattern matcher supports the bounded regex subset', async () => {
+  const { safePatternMatch } = await import('../server/utils/safe-pattern')
+  assert.equal(safePatternMatch('ok.123', '^ok\\..*'), true)
+  assert.equal(safePatternMatch('OK.123', '^ok\\..*'), false)
+  assert.equal(safePatternMatch('abc123', '[a-z]+[0-9]+'), true)
+  assert.equal(safePatternMatch('hello world', 'world$'), true)
+  assert.equal(safePatternMatch('nomatch', '^ok'), false)
+  assert.equal(safePatternMatch('anything', '(a|aa)+$'), null, 'groups/alternation are rejected')
+  assert.equal(safePatternMatch('x', 'a{100}{100}'), null)
+})
+
+test('matches and notMatches evaluate through the safe matcher and fail closed on bad patterns', () => {
+  assert.equal(check('matches', true, 'ok.123', '^ok\\..*').passed, true)
+  assert.equal(check('notMatches', true, 'ok.123', '^[0-9]+$').passed, true)
+  assert.equal(check('matches', true, '123', '^[0-9]+$').passed, true)
+  assert.equal(check('matches', true, 'abc', '(a|aa)+$').passed, false)
+  assert.equal(check('matches', true, 123, '^ok').passed, false)
+  assert.equal(check('matches', false, undefined, '^ok').passed, false)
+})
