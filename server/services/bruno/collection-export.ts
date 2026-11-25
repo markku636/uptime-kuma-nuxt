@@ -74,12 +74,24 @@ export function monitorToBru(stored: any, seq: number, secrets: SecretNamer): st
     if (!source.trim() || Buffer.byteLength(source) > 131072) fail('UNSUPPORTED_MONITOR_TYPE')
     let ast: any
     try { ast = brunoLang.bruToJsonV2(source) } catch { fail('UNSUPPORTED_MONITOR_TYPE') }
-    if (ast.auth?.basic?.username) ast.auth.basic.username = secrets.protect(String(ast.auth.basic.username), monitor.name, 'username')
-    if (ast.auth?.basic?.password) ast.auth.basic.password = secrets.protect(String(ast.auth.basic.password), monitor.name, 'password')
-    if (ast.auth?.bearer?.token) ast.auth.bearer.token = secrets.protect(String(ast.auth.bearer.token), monitor.name, 'token')
-    if (Array.isArray(ast.headers)) ast.headers = ast.headers.map((header: any) => header && CREDENTIAL_HEADERS.has(String(header.name).toLowerCase())
-      ? {...header, value: secrets.protect(String(header.value ?? ''), monitor.name, variableSlug(String(header.name)))} : header)
-    return brunoLang.jsonToBruV2(ast)
+    const before = secrets.names.size
+    const protect = (value: unknown, field: string) => hasReference(String(value ?? '')) ? String(value ?? '') : secrets.protect(String(value ?? ''), monitor.name, field)
+    if (ast.http?.url !== undefined) ast.http.url = protect(ast.http.url, 'url')
+    if (Array.isArray(ast.params)) ast.params = ast.params.map((pair: any, index: number) => pair && {...pair, value: protect(pair.value, `query_${index}`)})
+    if (Array.isArray(ast.headers)) ast.headers = ast.headers.map((header: any, index: number) => {
+      if (!header) return header
+      const field = CREDENTIAL_HEADERS.has(String(header.name).toLowerCase()) ? variableSlug(String(header.name)) : `header_${index}`
+      return {...header, value: protect(header.value, field)}
+    })
+    if (ast.body?.json !== undefined) ast.body.json = protect(ast.body.json, 'body')
+    if (ast.body?.text !== undefined) ast.body.text = protect(ast.body.text, 'body')
+    if (Array.isArray(ast.vars?.req)) ast.vars.req = ast.vars.req.map((pair: any, index: number) => pair && {...pair, value: protect(pair.value, `var_${index}`)})
+    if (ast.auth?.basic?.username) ast.auth.basic.username = protect(ast.auth.basic.username, 'username')
+    if (ast.auth?.basic?.password) ast.auth.basic.password = protect(ast.auth.basic.password, 'password')
+    if (ast.auth?.bearer?.token) ast.auth.bearer.token = protect(ast.auth.bearer.token, 'token')
+    // Nothing sensitive to redact: keep the stored text byte-identical.
+    if (secrets.names.size === before) return source.endsWith('\n') ? source : `${source}\n`
+    try { return brunoLang.jsonToBruV2(ast) } catch { fail('UNSUPPORTED_MONITOR_TYPE') }
   }
   if (!['http', 'keyword', 'json-query'].includes(monitor.type) || !monitor.url) fail('UNSUPPORTED_MONITOR_TYPE')
   const method = String(monitor.method || 'GET').toLowerCase()

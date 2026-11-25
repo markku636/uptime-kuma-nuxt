@@ -121,3 +121,27 @@ test('stringify rejects oversized model payloads with a bounded error', async ()
   const text = await response.text()
   assert.ok(!text.includes('x'.repeat(100)))
 })
+
+test('downloading a Bruno monitor never returns its literal credentials', async () => {
+  const source = `meta {
+  name: Secret export
+  type: http
+}
+
+post {
+  url: https://example.com/login
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: literal-bearer-token
+}
+`
+  const created = await data(await request('/api/v1/monitors', 'POST', owner, a, {type:'bruno', name:'Secret export', active:false, body:source}))
+  const response = await request(`/api/v1/bruno/download?ids=${created.data.id}`, 'GET', owner, a)
+  assert.equal(response.status, 200)
+  const text = await response.text()
+  assert.ok(!text.includes('literal-bearer-token'))
+  assert.match(response.headers.get('x-bruno-secret-names') || '', /token/)
+})

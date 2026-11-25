@@ -9,7 +9,7 @@ const source = `meta {
 }
 
 get {
-  url: https://example.com/health
+  url: {{ORIGIN}}/health
   body: none
   auth: none
 }
@@ -25,9 +25,9 @@ const stored = {
 }
 
 test('Bruno monitors export their stored .bru request', () => {
-  const result = monitorToBru(stored, 1, {} as any)
+  const result = monitorToBru(stored, 1, {names: new Set<string>()} as any)
   assert.match(result, /get \{/ )
-  assert.match(result, /url: https:\/\/example\.com\/health/)
+  assert.match(result, /url: \{\{ORIGIN\}\}\/health/)
   assert.match(result, /res\.status: eq 200/)
 })
 
@@ -38,11 +38,12 @@ test('Bruno monitors are included in collection exports', () => {
   })
   const file = result.files.find(file => file.path.endsWith('.bru') && file.path !== 'bruno.json')!
   assert.match(file.content, /res\.status: eq 200/)
+  assert.match(file.content, /url: \{\{ORIGIN\}\}\/health/)
   assert.equal(result.exported, 1)
 })
 
 test('an empty Bruno body is rejected with a safe export code', () => {
-  assert.throws(() => monitorToBru({...stored, body: ''}, 1, {} as any), BrunoExportError)
+  assert.throws(() => monitorToBru({...stored, body: ''}, 1, {names: new Set<string>()} as any), BrunoExportError)
 })
 
 test('Bruno export replaces literal credentials with secret placeholders', () => {
@@ -66,10 +67,10 @@ auth:bearer {
 }
 `
   const names: string[] = []
-  const secrets = {protect: (value: string, _name: string, field: string) => {
+  const secrets = {names: new Set<string>(), protect: (value: string, _name: string, field: string) => {
     if (!value || /\{\{/.test(value)) return value
     const name = `secret_${field}`
-    names.push(name)
+    names.push(name); (secrets.names as Set<string>).add(name)
     return `{{${name}}}`
   }} as any
   const output = monitorToBru({...stored, name: 'Secret export', body: credentialSource}, 1, secrets)
@@ -77,5 +78,6 @@ auth:bearer {
   assert.ok(!output.includes('literal-api-key'))
   assert.match(output, /token: \{\{secret_token\}\}/)
   assert.match(output, /X-Api-Key: \{\{secret_x_api_key\}\}/)
-  assert.deepEqual(names.sort(), ['secret_token', 'secret_x_api_key'])
+  assert.ok(names.includes('secret_token'))
+  assert.ok(names.includes('secret_x_api_key'))
 })
