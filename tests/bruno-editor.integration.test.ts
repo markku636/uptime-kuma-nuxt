@@ -179,3 +179,16 @@ auth:bearer {
   assert.deepEqual(parsed.issues, [], `exported source could not be re-parsed: ${JSON.stringify(parsed.issues)} ${exported}`)
   assert.equal(parsed.requests.length, 1)
 })
+
+test('parse and stringify stay bounded with 50 assertions and a large body', async () => {
+  const assertions = Array.from({length: 50}, (_, index) => `  res.body.value: eq ${index}`).join('\n')
+  const source = `meta {\n  name: Stress\n  type: http\n}\npost {\n  url: https://example.com\n  body: text\n  auth: none\n}\nbody:text {\n  ${'x'.repeat(60000)}\n}\nassert {\n${assertions}\n}\n`
+  const started = Date.now()
+  const parsed = await data(await request('/api/v1/bruno/request/parse', 'POST', editor, a, {source, environmentId: a.environmentId}))
+  assert.equal(parsed.ok, true)
+  assert.deepEqual(parsed.data.issues, [])
+  assert.equal(parsed.data.model.assertions.length, 50)
+  const stringified = await data(await request('/api/v1/bruno/request/stringify', 'POST', editor, a, {model: parsed.data.model, environmentId: a.environmentId}))
+  assert.deepEqual(stringified.data.issues, [])
+  assert.ok(Date.now() - started < 8000, `conversion took ${Date.now() - started} ms`)
+})
