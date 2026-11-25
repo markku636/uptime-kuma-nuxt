@@ -46,3 +46,10 @@ R3 ✅ 官方 assert operator 擴充 + UI 初始化修正 — commit `833e54c`�
 - 驗證：unit 123/123、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip（第一次跑的 group drag 為既有 flaky，重跑通過）。
 - 部署：artifact `d5c569c9bd90a5d404908ec8a0dc164d745818cff3609c9af2b0958addcc2257`（203,742,289 bytes，source `833e54c`）；
   loader rev227 → app rev228，最終 Healthy/Synced。
+R4 ✅ Path params 支援 — commit `70cab92`：
+- `parser.ts` 接受 `params:path` block，並在執行前把 `:name` token 換成 path param 值；query/path 分開驗證、path 名稱限定 `^[A-Za-z_][A-Za-z0-9_]*$`。
+- DTO 的 `params` 增加選填 `type:'query'|'path'`；Raw↔UI round-trip 保留；Params 分頁新增 Type 下拉（官方的行為）。
+- 新增 3 個測試：path/query round-trip、URL 代入與 query 分離、非法 path 名稱 fail closed；既有 `params:path` 視為不支援的測試改為 `params:unknown`。
+- 驗證：unit 126/126、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
+- 部署：artifact `d1844eec0703b9eff39e4ef0a4b7fddf22235eef30df3a138ae7e149bc388ce5`（203,736,113 bytes，source `70cab92`）；
+  loader rev229 → app rev230，Healthy/Synced。
