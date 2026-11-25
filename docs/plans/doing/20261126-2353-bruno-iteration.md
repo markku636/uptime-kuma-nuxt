@@ -37,3 +37,12 @@ R2 ✅ 嵌套 JSON body 支援 — commit `c767f16`：
 - 驗證：unit 104/104、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
 - 部署：artifact `29d9f0d6de001073dca3fc157a5267958e91da675f60d4e10e0f858ec88133a4`（203,740,042 bytes，source `c767f16`）；
   loader rev225 → app rev226，最終 Healthy/Synced（rollout 中短暫 Degraded，10 秒後 Healthy）；短命 server 已停。
+R3 ✅ 官方 assert operator 擴充 + UI 初始化修正 — commit `833e54c`：
+- 新增 `in/notIn/startsWith/endsWith/length/isEmpty/isNotEmpty/isJson/isNumber/isString/isBoolean/isArray` 13 個 operator，
+  貫穿 shared type、zod 驗證、`evaluateRule()`、Bruno parser 映射、Raw/UI 轉換與兩個編輯器下拉。
+- 修正 R1 的 bug：workspace 仍載入時 `canEdit=false` 讓 UI 初始化跳過，導致有內容的 monitor 進編輯頁是空白；
+  現在初始化不受 disabled 影響，disabled 只擋使用者輸入。
+- 新增 `tests/assertion-operators.test.ts`（6 個語意測試）與 14 個新 variant 案例；既有不支援 operator 測試改為 `matches/notMatches/between`。
+- 驗證：unit 123/123、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip（第一次跑的 group drag 為既有 flaky，重跑通過）。
+- 部署：artifact `d5c569c9bd90a5d404908ec8a0dc164d745818cff3609c9af2b0958addcc2257`（203,742,289 bytes，source `833e54c`）；
+  loader rev227 → app rev228，最終 Healthy/Synced。
