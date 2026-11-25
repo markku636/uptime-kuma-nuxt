@@ -242,3 +242,7 @@ R39 ✅ 審查發現修復（5 項） — commit `bccee14`：
 - 部署：artifact `c2d0c252fb36322dc35fddc03b92ab0f04f3f3a68e4ef54e96a975fbd6b60405`（source `bccee14`）；
   loader rev287 → app rev288，最終 Healthy/Synced。
 R40 ✅ Bruno 專用回歸（驗證輪，不部署） — `npm run test:bruno` 105/105、`npm run test:bruno:integration` 全綠（1 skip）。正式站仍為 rev288。
+R41 ✅ 轉換 API 逾時 — commit `8a50387`：
+- parse/stringify 請求加 10 秒 AbortSignal，避免 API 卡住讓編輯器永久 busy；Bruno browser 5/5。
+- 部署：artifact `de2ad8d88d6de2d36d6661f91ffbe77c91fed723a6c1eaa9408757dba32efe89`（source `8a50387`）；
+  loader rev289 → app rev290，最終 Healthy/Synced。
