@@ -233,3 +233,22 @@ test('unsupported path param names fail closed', async () => {
   const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, VALUES, SECRETS)
   assert.ok(parsed.issues.some(issue => issue.code === 'UNSUPPORTED_PARAMETER'), JSON.stringify(parsed.issues))
 })
+
+test('query values with reserved characters are encoded without encoding {{variables}}', async () => {
+  const input = model({
+    url: 'https://example.com/search#results',
+    params: [
+      {name: 'q a', value: 'coffee & tea', enabled: true},
+      {name: 'token', value: '{{TOKEN}}', enabled: true},
+      {name: 'mixed', value: 'prefix-{{NAME}}-suffix', enabled: true},
+      {name: 'unicode', value: '東京', enabled: true},
+    ],
+  })
+  const result = await roundTrip(input)
+  const url = result.source.split('\n').find(line => line.trim().startsWith('url:'))!
+  assert.ok(url.includes('q%20a=coffee%20%26%20tea'), url)
+  assert.ok(url.includes('token={{TOKEN}}'), url)
+  assert.ok(url.includes('mixed=prefix-{{NAME}}-suffix'), url)
+  assert.ok(url.includes('unicode=%E6%9D%B1%E4%BA%AC'), url)
+  assert.deepEqual(result.model.params, input.params, 'params block keeps the original raw values')
+})

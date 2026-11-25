@@ -178,6 +178,13 @@ export async function sourceToModel(
   }
 }
 
+/** Encode literal query text while leaving {{variable}} placeholders usable by the resolver. */
+function encodeQueryPart(value: string): string {
+  return value.split(/(\{\{\s*[^{}]+?\s*\}\})/g)
+    .map(part => /^\{\{/.test(part) ? part : encodeURIComponent(part))
+    .join('')
+}
+
 /**
  * Turns a UI model back into official .bru text and re-validates it through the strict parser.
  * The validation copy omits assertion descriptions because parser.ts deliberately rejects annotations;
@@ -238,7 +245,7 @@ export async function modelToSource(
       const hashAt = rawUrl.indexOf('#')
       const fragment = hashAt >= 0 ? rawUrl.slice(hashAt) : ''
       const base = (hashAt >= 0 ? rawUrl.slice(0, hashAt) : rawUrl).split('?')[0]!
-      url = `${base}?${enabled.map(pair => `${pair.name}=${pair.value}`).join('&')}${fragment}`
+      url = `${base}?${enabled.map(pair => `${encodeQueryPart(pair.name)}=${encodeQueryPart(pair.value)}`).join('&')}${fragment}`
     }
 
     json = {
