@@ -241,3 +241,4 @@ R39 ✅ 審查發現修復（5 項） — commit `bccee14`：
 - 驗證：unit 152/152、typecheck 0 errors、build 成功、Bruno browser 5/5、Bruno 整合全綠；完整整合 102 pass / 1 fail（unrelated badges flaky）。
 - 部署：artifact `c2d0c252fb36322dc35fddc03b92ab0f04f3f3a68e4ef54e96a975fbd6b60405`（source `bccee14`）；
   loader rev287 → app rev288，最終 Healthy/Synced。
+R40 ✅ Bruno 專用回歸（驗證輪，不部署） — `npm run test:bruno` 105/105、`npm run test:bruno:integration` 全綠（1 skip）。正式站仍為 rev288。
