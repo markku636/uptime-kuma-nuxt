@@ -60,3 +60,9 @@ R5 ✅ Params/Headers Bulk Edit — commit `d0701c3`：
 - 驗證：unit 126/126、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip（數次跑有既有 drag flaky，重跑通過）。
 - 部署：artifact `6c69c567c3a046f4138560a1d4c0558921221fba6020026811ad7f7e9f9f9443`（203,737,351 bytes，source `d0701c3`）；
   loader rev231 → app rev232，最終 Healthy/Synced。
+R6 ✅ 補齊安全 operator（between/isDefined/isUndefined/isTruthy/isFalsy） — commit `97775dc`：
+- 官方 `between 200 299` token 解析成 `[200,299]` 範圍；其餘為無值型 predicate；regex 類（matches/notMatches）因 ReDoS 風險仍明確拒絕。
+- 貫穿 shared type、zod、evaluateRule、parser、Raw/UI 轉換與兩個編輯器下拉。
+- 驗證：unit 133/133、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
+- 部署：artifact `b2fa2b59f43a9c4dd478143a5333fc5a71038050809c6d13c2b5ae5784e709e4`（source `97775dc`）；
+  loader rev233 → app rev234，最終 Healthy/Synced。
