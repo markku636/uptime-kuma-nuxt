@@ -230,3 +230,5 @@ R37 ✅ Unsaved changes 提示 — commit `9cbf36f`：
 - 驗證：unit 150/150、typecheck 0 errors、build 成功、Bruno browser 5/5。
 - 部署：artifact `e5f95b7195e2ba7e9c818a738fd96b14fdd3a9a3f1734ef6d834739f566d9aa1`（source `9cbf36f`）；
   loader rev285 → app rev286，最終 Healthy/Synced。
+R38 ✅ Bruno 專用測試指令（僅工具，不部署） — commit `ccd0e66`：
+- `npm run test:bruno` 跑 103 個 Bruno/assertion unit；`npm run test:bruno:integration` 跑 Bruno 相關整合（獨立 DB）。
