@@ -166,3 +166,9 @@ R23 ✅ form-url-encoded body — commit `9f142d0`：
 - 驗證：unit 143/143、typecheck 0 errors、build 成功、完整整合 99 pass / 1 skip。
 - 部署：artifact `a2eaa3bdb121cbb456e2c8158231e68c8c0d8ccf53aed0daab1ad699f4b6df46`（source `9f142d0`）；
   loader rev267 → app rev268，最終 Healthy/Synced。
+R24 ✅ 可讀的錯誤訊息 — commit `7876f7c`：
+- 安全錯誤碼轉成英文說明（含 field），不再只顯示 `HTTP_BLOCK_REQUIRED` 之類的內部碼。
+- 瀏覽器測試建立不含 HTTP block 的 monitor，驗證畫面出現 "A single GET/POST/… request block is required." 且不會進 UI 模式。
+- 驗證：unit 143/143、typecheck 0 errors、build 成功、Bruno browser 4/4。
+- 部署：artifact `7c95dfdcb8ae7bfc52faebf0c7812c329f083c10232b8bb9f60403fe026d4783`（source `7876f7c`）；
+  loader rev269 → app rev270，Healthy/Synced。
