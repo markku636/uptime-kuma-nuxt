@@ -281,3 +281,4 @@ R51 ✅ 第三輪審查修復 — commit `2b9d585`：
 - 驗證：unit 156/156、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
 - 部署：artifact `0db75cb71ebf698e5a1507e9a48baac30c00830691bc38cdfc75f9c325063817`（source `2b9d585`）；
   loader rev297 → app rev298，最終 Healthy/Synced。
+R52 ✅ 最終完整回歸（驗證輪，不部署） — unit 156/156、typecheck 0 errors、build 成功、三次完整整合皆 104 pass / 0 fail / 1 skip。正式站仍為 rev298。
