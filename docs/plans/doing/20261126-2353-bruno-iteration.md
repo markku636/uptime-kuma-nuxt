@@ -130,3 +130,9 @@ R17 ✅ Send 斷言顯示 actual — commit `297e111`：
 - 驗證：unit 142/142、typecheck 0 errors、build 成功、完整整合 97 pass / 1 skip。
 - 部署：artifact `931e18e5c1539feda17e6df46765310701a0bb3ce2d85832fc78b06b038b0977`（source `297e111`）；
   loader rev255 → app rev256，最終 Healthy/Synced。
+R18 ✅ Vars 分頁變數清單/插入 — commit `2985c6a`：
+- Vars 分頁直接列出目前環境的變數（secret 顯示 ••••••）與 Insert 按鈕，插入最後聚焦的輸入框；上限 50 筆避免畫面爆量。
+- 瀏覽器測試驗證環境變數建立後清單出現且 Insert 可用。
+- 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno browser 3/3。
+- 部署：artifact `d6d2cc36ff3504de63b6563a1659b69092d2c022b9e965f17db715c538a0c31a`（source `2985c6a`）；
+  loader rev257 → app rev258，最終 Healthy/Synced。
