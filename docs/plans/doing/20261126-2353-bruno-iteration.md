@@ -232,3 +232,12 @@ R37 ✅ Unsaved changes 提示 — commit `9cbf36f`：
   loader rev285 → app rev286，最終 Healthy/Synced。
 R38 ✅ Bruno 專用測試指令（僅工具，不部署） — commit `ccd0e66`：
 - `npm run test:bruno` 跑 103 個 Bruno/assertion unit；`npm run test:bruno:integration` 跑 Bruno 相關整合（獨立 DB）。
+R39 ✅ 審查發現修復（5 項） — commit `bccee14`：
+1. `safe-pattern.ts` 改真正的 O(tokens·n) NFA 模擬並加 800 萬工作上限；64 個 `.*` 對 4KB 由約 700ms 降到 5ms。
+2. `monitorEditorDTO(monitor,{includeBody})` 集中控制 Bruno source 可見性；writer API key 的 PUT/clone/pause 回應不再洩漏。
+3. `sync()` 改送出 `serializableModel()`，空白新增列不再讓 Save 失敗。
+4. `checkBruno` 改用 `monitor.acceptedStatuscodes`（原本永遠讀到 undefined）。
+5. Bruno monitor 匯出時把 bearer/basic 與 auth-like header 的明文憑證轉成 secret placeholder。
+- 驗證：unit 152/152、typecheck 0 errors、build 成功、Bruno browser 5/5、Bruno 整合全綠；完整整合 102 pass / 1 fail（unrelated badges flaky）。
+- 部署：artifact `c2d0c252fb36322dc35fddc03b92ab0f04f3f3a68e4ef54e96a975fbd6b60405`（source `bccee14`）；
+  loader rev287 → app rev288，最終 Healthy/Synced。
