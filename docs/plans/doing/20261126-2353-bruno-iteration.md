@@ -66,3 +66,9 @@ R6 ✅ 補齊安全 operator（between/isDefined/isUndefined/isTruthy/isFalsy）
 - 驗證：unit 133/133、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
 - 部署：artifact `b2fa2b59f43a9c4dd478143a5333fc5a71038050809c6d13c2b5ae5784e709e4`（source `97775dc`）；
   loader rev233 → app rev234，最終 Healthy/Synced。
+R7 ✅ Query 值安全編碼 — commit `2b3a690`：
+- 序列化 URL query 時只編碼字面值，保留 `{{VAR}}` 給 resolver；空白、`&`、unicode、混合 placeholder 都正確。
+- 新增 variant 測試驗證 `.bru` URL 與 params block 的原始值行為。
+- 驗證：unit 134/134、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
+- 部署：artifact `9a8607774d6552677ba01d39c0f5e802222c2a7000eb5c715652b89c099e12e3`（source `2b3a690`）；
+  loader rev235 → app rev236，最終 Healthy/Synced。
