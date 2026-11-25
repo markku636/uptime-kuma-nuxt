@@ -136,3 +136,9 @@ R18 ✅ Vars 分頁變數清單/插入 — commit `2985c6a`：
 - 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno browser 3/3。
 - 部署：artifact `d6d2cc36ff3504de63b6563a1659b69092d2c022b9e965f17db715c538a0c31a`（source `2985c6a`）；
   loader rev257 → app rev258，最終 Healthy/Synced。
+R19 ✅ stringify payload 上限 — commit `dd4769f`：
+- 序列化 API 在 walking model 前先限制 JSON 的大小（2 MiB）並攔截無法序列化的輸入，回 400/413，不回傳內容。
+- 整合測試以 3 MiB docs 模型驗證 413 且 response 不含 payload。
+- 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno API 整合 5/5。
+- 部署：artifact `61f5051aed91a502ea915cb602702ae25449bbecde00dbbfcb14cd0aec5bdf6a`（source `dd4769f`）；
+  loader rev259 → app rev260，最終 Healthy/Synced。
