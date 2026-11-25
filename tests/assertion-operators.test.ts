@@ -125,3 +125,21 @@ test('trial-only actual values are capped and absent from scheduled evaluations'
   const large = evaluateAssertions({...set, rules: [rule('isString', undefined)]}, {...response, body: JSON.stringify({value: 'x'.repeat(5000)})}, true)
   assert.equal(String(large.rules[0]!.actual).length, 513)
 })
+
+test('50 assertions with safe regexes evaluate well within the trial budget', async () => {
+  const { evaluateAssertions } = await import('../server/utils/assertions')
+  const rules = Array.from({length: 50}, (_, index) => {
+    const operator = index % 5 === 0 ? 'matches' : index % 5 === 1 ? 'contains' : index % 5 === 2 ? 'equals' : index % 5 === 3 ? 'isString' : 'notMatches'
+    const expected = operator === 'matches' || operator === 'notMatches' ? '^ok.*'
+      : operator === 'contains' ? 'ok' : operator === 'equals' ? 'alpha' : undefined
+    return {id: `perf-${index}`, source: 'json', path: '$.value', operator,
+      ...(expected === undefined ? {} : {expected})} as AssertionRule
+  })
+  const response = {status: 200, elapsed: 12, headers: {}, body: JSON.stringify({value: 'ok-alpha-' + 'x'.repeat(60000)})}
+  const started = performance.now()
+  const result = evaluateAssertions({version: 1, mode: 'all', rules}, response, true)
+  const elapsed = performance.now() - started
+  assert.equal(result.error, undefined)
+  assert.equal(result.rules.length, 50)
+  assert.ok(elapsed < 2000, `50 assertions took ${Math.round(elapsed)} ms`)
+})
