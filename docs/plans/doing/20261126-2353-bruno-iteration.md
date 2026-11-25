@@ -222,3 +222,5 @@ R35 ✅ Bruno monitor 可匯出 — commit `8da6f2d`：
 - 驗證：unit 150/150、typecheck 0 errors、build 成功、Bruno 整合 8 pass / 1 skip；完整整合的 group drag 仍為既有 flaky。
 - 部署：artifact `5ab8b523e889c6bb49580456fabc8f5c47df8e8910a0033a7fec14c1405b9f1a`（source `8da6f2d`）；
   loader rev283 → app rev284，最終 Healthy/Synced。
+R36 ✅ 穩定 drag 整合測試（僅測試，不部署） — commit `d3ec9f6`：
+- group drag 改用最多 3 次重試與新 boundingBox，消除常見的 flaky；兩次完整整合中一次全綠、一次剩 unrelated badges 時序 flaky（與 Bruno 無關）。
