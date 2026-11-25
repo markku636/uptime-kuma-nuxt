@@ -143,3 +143,29 @@ test('50 assertions with safe regexes evaluate well within the trial budget', as
   assert.equal(result.rules.length, 50)
   assert.ok(elapsed < 2000, `50 assertions took ${Math.round(elapsed)} ms`)
 })
+
+test('every supported operator exports back to a parseable .bru assertion', async () => {
+  const { assertionPair } = await import('../server/services/bruno/exporter')
+  const { parseBrunoManifest } = await import('../server/services/bruno/parser')
+  const cases: Array<{operator: AssertionRule['operator']; expected?: unknown}> = [
+    {operator: 'equals', expected: 200}, {operator: 'notEquals', expected: 404},
+    {operator: 'contains', expected: 'ok'}, {operator: 'notContains', expected: 'bad'},
+    {operator: 'gt', expected: 1}, {operator: 'gte', expected: 1}, {operator: 'lt', expected: 5}, {operator: 'lte', expected: 5},
+    {operator: 'in', expected: [200, 201]}, {operator: 'notIn', expected: [500]},
+    {operator: 'matches', expected: '^ok.*'}, {operator: 'notMatches', expected: '^[0-9]+$'},
+    {operator: 'startsWith', expected: 'ok'}, {operator: 'endsWith', expected: 'done'},
+    {operator: 'length', expected: 2}, {operator: 'between', expected: [200, 299]},
+    ...(['exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isJson', 'isNumber', 'isString', 'isBoolean', 'isArray', 'isDefined', 'isUndefined', 'isTruthy', 'isFalsy'] as AssertionRule['operator'][]).map(operator => ({operator})),
+  ]
+  for (const item of cases) {
+    const numeric = new Set(['equals', 'notEquals', 'gt', 'gte', 'lt', 'lte', 'in', 'notIn', 'between'])
+    const ruleSource: AssertionRule['source'] = numeric.has(item.operator) ? 'status' : 'json'
+    const rule: AssertionRule = {id: 'r', source: ruleSource, ...(ruleSource === 'json' ? {path: '$.value'} : {}), operator: item.operator, ...(item.expected === undefined ? {} : {expected: item.expected as never})}
+    const pair = assertionPair(rule)
+    assert.ok(!pair.value.includes('undefined'), JSON.stringify(pair))
+    const source = `meta {\n  name: Export\n  type: http\n}\nget {\n  url: https://example.com\n  body: none\n  auth: none\n}\nassert {\n  ${pair.name}: ${pair.value}\n}\n`
+    const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, {}, [])
+    assert.deepEqual(parsed.issues, [], `${item.operator}: ${JSON.stringify(pair)}`)
+    assert.equal(parsed.requests[0]!.config.assertions.rules[0]!.operator, item.operator)
+  }
+})

@@ -5,7 +5,7 @@ export class BrunoExportError extends Error{constructor(public monitorId:number,
 function line(value:string,id:number){if(/[\r\n]/.test(value))throw new BrunoExportError(id,'MULTILINE_METADATA');return value}
 /** Bruno `assert` entry for a typed rule, e.g. {name:'res.status',value:'eq 200'}. */
 export function assertionPair(rule:AssertionRule){
-  const operators:Record<string,string>={equals:'eq',notEquals:'ne',contains:'contains',notContains:'notContains',gt:'gt',gte:'gte',lt:'lt',lte:'lte',exists:'exists',notExists:'notExists',isNull:'isNull',isNotNull:'isNotNull'}
+  const operators:Record<string,string>={equals:'eq',notEquals:'ne',contains:'contains',notContains:'notContains',gt:'gt',gte:'gte',lt:'lt',lte:'lte',in:'in',notIn:'notIn',matches:'matches',notMatches:'notMatches',startsWith:'startsWith',endsWith:'endsWith',length:'length',between:'between',exists:'exists',notExists:'notExists',isNull:'isNull',isNotNull:'isNotNull',isEmpty:'isEmpty',isNotEmpty:'isNotEmpty',isJson:'isJson',isNumber:'isNumber',isString:'isString',isBoolean:'isBoolean',isArray:'isArray',isDefined:'isDefined',isUndefined:'isUndefined',isTruthy:'isTruthy',isFalsy:'isFalsy'}
   const name=rule.source==='status'?'res.status':rule.source==='responseTime'?'res.responseTime':rule.source==='text'?'res.text':rule.source==='header'?`res.headers[${JSON.stringify(rule.path)}]`:'res.body'+rule.path!.slice(1)
   return {name,value:`${operators[rule.operator]}${rule.expected!==undefined?' '+JSON.stringify(rule.expected):''}`}
 }
