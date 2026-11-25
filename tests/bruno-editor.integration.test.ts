@@ -83,3 +83,25 @@ test('existing monitor trial reports missing variables as CONFIG_ERROR instead o
   assert.equal(trial.ok, true)
   assert.equal(trial.data.code, 'CONFIG_ERROR')
 })
+
+test('Bruno .bru source is only readable by an interactive editor session', async () => {
+  const created = await data(await request('/api/v1/monitors', 'POST', owner, a, {
+    type: 'bruno', name: 'Source visibility', active: false,
+    body: 'meta {\n  name: Visible\n  type: http\n}\nget {\n  url: http://127.0.0.1:1/health\n  body: none\n  auth: bearer\n}\nauth:bearer {\n  token: SECRET_TOKEN_SENTINEL\n}\n',
+  }))
+  const id = created.data.id
+  const bySession = await data(await request(`/api/v1/monitors/${id}`, 'GET', owner, a))
+  assert.match(bySession.data.body, /SECRET_TOKEN_SENTINEL/)
+
+  for (const scope of ['read', 'write'] as const) {
+    const key = await data(await request('/api/v1/api-keys', 'POST', owner, a, {name: `bruno-source-${scope}`, scope})) as any
+    const response = await data(await request(`/api/v1/monitors/${id}`, 'GET', undefined, a, undefined, {'x-api-key': key.key}))
+    assert.ok(!Object.hasOwn(response.data, 'body'), `${scope} key must not read the .bru source`)
+    assert.ok(!JSON.stringify(response).includes('SECRET_TOKEN_SENTINEL'))
+    await request(`/api/v1/api-keys/${key.id}`, 'DELETE', owner, a)
+  }
+
+  const viewerResponse = await data(await request(`/api/v1/monitors/${id}`, 'GET', viewer, a))
+  assert.ok(!Object.hasOwn(viewerResponse.data, 'body'))
+  assert.ok(!JSON.stringify(viewerResponse).includes('SECRET_TOKEN_SENTINEL'))
+})
