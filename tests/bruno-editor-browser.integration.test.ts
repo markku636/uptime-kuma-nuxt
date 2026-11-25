@@ -63,6 +63,15 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByPlaceholder('Name').last().fill('token')
     await page.getByPlaceholder('Value').last().fill('demo')
 
+    await page.getByRole('button', {name:'Bulk Edit', exact:true}).click()
+    const bulk = page.locator('textarea[placeholder="name: value"]')
+    assert.match(await bulk.inputValue(), /token: demo/)
+    await bulk.fill('token: demo2\n~off: no')
+    await page.getByRole('button', {name:'Table Edit', exact:true}).click()
+    const paramTable = page.locator('table.bruno-table').first()
+    assert.equal(await paramTable.getByPlaceholder('Name').first().inputValue(), 'token')
+    assert.equal(await paramTable.getByPlaceholder('Value').first().inputValue(), 'demo2')
+
     await page.getByRole('tab', {name:/Headers/}).click()
     await page.getByRole('button', {name:'+ Add header', exact:true}).click()
     await page.getByPlaceholder('Name').last().fill('X-Demo')
@@ -86,7 +95,8 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
     await page.waitForFunction(() => (document.querySelector('textarea.font-mono') as HTMLTextAreaElement | null)?.value?.includes('X-Demo'))
     const edited = await raw.inputValue()
-    assert.match(edited, /token: demo/)
+    assert.match(edited, /token: demo2/)
+    assert.match(edited, /~off: no/)
     assert.match(edited, /X-Demo: abc/)
 
     await page.getByRole('button', {name:'Send request', exact:true}).click()

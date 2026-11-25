@@ -55,8 +55,12 @@
 
       <!-- Params -->
       <section v-if="activeTab === 'params'" class="space-y-2">
-        <p class="text-xs text-secondary">Query parameters · <code>&#123;&#123;variable&#125;&#125;</code> values are resolved from this environment when the check runs.</p>
-        <table class="bruno-table">
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-xs text-secondary">Query/path parameters · <code>&#123;&#123;variable&#125;&#125;</code> values are resolved from this environment when the check runs.</p>
+          <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="toggleBulk('params')">{{ bulkKind === 'params' ? 'Table Edit' : 'Bulk Edit' }}</button>
+        </div>
+        <textarea v-if="bulkKind === 'params'" v-model="bulkText" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="name: value" :disabled="disabled" />
+        <table v-else class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-24">Type</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.params" :key="index">
@@ -73,7 +77,7 @@
             </tr>
           </tbody>
         </table>
-        <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('params')">+ Add parameter</button>
+        <button v-if="bulkKind !== 'params'" type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('params')">+ Add parameter</button>
       </section>
 
       <!-- Body -->
@@ -92,7 +96,11 @@
 
       <!-- Headers -->
       <section v-else-if="activeTab === 'headers'" class="space-y-2">
-        <table class="bruno-table">
+        <div class="flex justify-end">
+          <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="toggleBulk('headers')">{{ bulkKind === 'headers' ? 'Table Edit' : 'Bulk Edit' }}</button>
+        </div>
+        <textarea v-if="bulkKind === 'headers'" v-model="bulkText" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="Name: value" :disabled="disabled" />
+        <table v-else class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.headers" :key="index">
@@ -103,7 +111,7 @@
             </tr>
           </tbody>
         </table>
-        <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('headers')">+ Add header</button>
+        <button v-if="bulkKind !== 'headers'" type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('headers')">+ Add header</button>
       </section>
 
       <!-- Auth -->
@@ -245,6 +253,30 @@ const model = ref<BrunoRequestModel | null>(null)
 const activeTab = ref<(typeof tabs)[number]['key']>('params')
 const resultTab = ref<'headers' | 'body' | 'assert'>('body')
 const busy = ref(false), error = ref(''), envDialogOpen = ref(false), ignoredWarning = ref(false)
+const bulkKind = ref<'params' | 'headers' | null>(null)
+watch(activeTab, () => { bulkKind.value = null })
+
+/** Official Bruno bulk editor: one `name: value` per line; a leading `~` marks a disabled row. */
+const bulkText = computed({
+  get: () => model.value && bulkKind.value
+    ? model.value[bulkKind.value].map(row => `${row.enabled ? '' : '~'}${row.name}: ${row.value}`).join('\n')
+    : '',
+  set: text => {
+    if (!model.value || !bulkKind.value) return
+    const previous = model.value[bulkKind.value] as Array<{name: string; value: string; enabled: boolean; type?: 'query' | 'path'}>
+    const rows = text.split(/\r?\n/).map(line => {
+      const match = /^\s*(~?)\s*([^:]+?)\s*:\s?(.*)$/.exec(line)
+      if (!match || !match[2]!.trim()) return null
+      const name = match[2]!.trim(), old = previous.find(row => row.name === name)
+      return {
+        name, value: match[3] ?? '', enabled: match[1] !== '~',
+        ...(bulkKind.value === 'params' && old?.type ? {type: old.type} : {}),
+      }
+    }).filter(row => row !== null)
+    model.value[bulkKind.value] = rows as any
+  },
+})
+function toggleBulk(kind: 'params' | 'headers') { bulkKind.value = bulkKind.value === kind ? null : kind }
 
 const counts = computed(() => ({
   params: model.value?.params.filter(row => row.enabled).length || 0,
