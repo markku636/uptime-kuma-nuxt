@@ -18,4 +18,6 @@ export interface BrunoRequestModel {
   vars: Array<{ name: string; value: string; enabled: boolean }>
   assertions: Array<{ expression: string; operator: string; value: string; enabled: boolean; description?: string }>
   ignoredBlocks: string[]
+  /** Official `docs {}` block, kept verbatim; optional so older models stay unchanged. */
+  docs?: string
 }

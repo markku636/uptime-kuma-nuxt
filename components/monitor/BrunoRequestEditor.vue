@@ -177,6 +177,20 @@
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('assert')">+ Add assertion</button>
       </section>
 
+      <!-- Docs -->
+      <section v-else-if="activeTab === 'docs'" class="space-y-2">
+        <p class="text-xs text-secondary">Request documentation from the <code>docs</code> block. It is kept in the .bru file and is not sent with the request.</p>
+        <textarea
+          :value="model.docs || ''"
+          class="input-field font-mono text-xs"
+          rows="14"
+          spellcheck="false"
+          placeholder="# Endpoint&#10;Describe what this request does."
+          :disabled="disabled"
+          @input="model.docs = ($event.target as HTMLTextAreaElement).value"
+        />
+      </section>
+
       <p v-if="model.ignoredBlocks.length" role="status" class="text-xs text-amber-500">Blocks not executed by the worker: {{ model.ignoredBlocks.join(', ') }}. Switching to UI mode and saving will remove them from the request.</p>
     </div>
 
@@ -239,6 +253,7 @@ const isUnary = (operator: string) => unary.has(operator)
 const tabs = [
   { key: 'params', label: 'Params' }, { key: 'body', label: 'Body' }, { key: 'headers', label: 'Headers' },
   { key: 'auth', label: 'Auth' }, { key: 'vars', label: 'Vars' }, { key: 'assert', label: 'Assert' },
+  { key: 'docs', label: 'Docs' },
 ] as const
 const resultTabs = [{ key: 'headers', label: 'Headers' }, { key: 'body', label: 'Body' }, { key: 'assert', label: 'Assertions' }] as const
 
@@ -285,6 +300,7 @@ const counts = computed(() => ({
   assert: model.value?.assertions.filter(row => row.enabled).length || 0,
   body: model.value && model.value.body.mode !== 'none' ? 1 : 0,
   auth: model.value && model.value.auth.mode !== 'none' ? 1 : 0,
+  docs: model.value?.docs?.trim() ? 1 : 0,
 }))
 
 const envVariables = ref<Record<string, string>>({}), envSecrets = ref<string[]>([])

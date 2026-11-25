@@ -168,9 +168,10 @@ export async function sourceToModel(
         return assertion
       })
 
+    const docs = typeof ast.docs === 'string' && ast.docs.trim() ? ast.docs : undefined
     const model: BrunoRequestModel = {
       name, method: method as BrunoRequestModel['method'], url, params, headers, auth, body, vars, assertions,
-      ignoredBlocks: ignoredBlocks(ast),
+      ignoredBlocks: ignoredBlocks(ast), ...(docs ? {docs} : {}),
     }
     return { model, issues: [] }
   } catch (error) {
@@ -264,6 +265,10 @@ export async function modelToSource(
       json.auth = { bearer: { token: asLine(authInput.token, 'auth.token', 8192) } }
     }
     if (bodyMode !== 'none') json.body = { [bodyMode]: content }
+    if (input.docs !== undefined && input.docs !== null) {
+      const docs = asText(input.docs, 'docs', 32768)
+      if (docs.trim()) json.docs = docs
+    }
     if (vars.length) json.vars = { req: vars.map(pair => ({ ...pair, local: false })) }
   } catch (error) {
     return { source: null, issues: [safeIssue(error)] }

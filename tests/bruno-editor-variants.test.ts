@@ -252,3 +252,12 @@ test('query values with reserved characters are encoded without encoding {{varia
   assert.ok(url.includes('unicode=%E6%9D%B1%E4%BA%AC'), url)
   assert.deepEqual(result.model.params, input.params, 'params block keeps the original raw values')
 })
+
+test('docs block round-trips verbatim and stays out of the request configuration', async () => {
+  const docs = '# Users endpoint\nReturns {{NAME}} with status 200.\n\n- no auth required'
+  const input = model({docs})
+  const result = await roundTrip(input)
+  assert.equal(result.model.docs, docs)
+  assert.match(result.source, /docs \{\n  # Users endpoint/)
+  assert.match(result.source, /\{\{NAME\}\}/)
+})
