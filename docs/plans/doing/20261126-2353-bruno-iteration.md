@@ -77,3 +77,9 @@ R8 ✅ Docs 分頁 — commit `dc45219`：
 - 驗證：unit 135/135、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
 - 部署：artifact `fe61486b9cbb805c6acdbf76be2060babfce0d9261bbad1d31972c2bdbacb30d`（source `dc45219`）；
   loader rev237 → app rev238，最終 Healthy/Synced。
+R9 ✅ UI 編輯保留不執行區塊 — commit `8e83be0`：
+- `ignoredSources` 把 script/tests/post-response vars/settings 原文帶進 DTO，序列化時原樣附加；UI 不再要求二次確認，改為提示「保留但不執行」。
+- 既有 full round-trip 測試改為驗證保留；新增 4 個 block 保留測試。
+- 驗證：unit 136/136、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
+- 部署：artifact `35a81850e1a2f0f4d4eab874f5063c99271a8e21b64d0120efb5a14e58845c41`（source `8e83be0`）；
+  loader rev239 → app rev240，最終 Healthy/Synced。
