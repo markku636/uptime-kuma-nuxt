@@ -12,7 +12,7 @@ export function redactBrunoSource(source: string, protect: (value: string, field
   const value = (input: unknown, field: string): string => {
     if (typeof input !== 'string') return ''
     if (!input.trim()) return input
-    return /\{\{/.test(input) ? input : protect(input, field)
+    return /\{\{\s*[^{}]+\s*\}\}/.test(input) ? input : protect(input, field)
   }
   if (ast.http?.url !== undefined) ast.http.url = value(ast.http.url, 'url')
   if (Array.isArray(ast.params)) ast.params = ast.params.map((pair: any, index: number) => pair && {...pair, value: value(pair.value, `query_${index}`)})
@@ -24,9 +24,18 @@ export function redactBrunoSource(source: string, protect: (value: string, field
   if (ast.vars) {
     for (const kind of ['req', 'res']) if (Array.isArray(ast.vars[kind])) ast.vars[kind] = ast.vars[kind].map((pair: any, index: number) => pair && {...pair, value: value(pair.value, `var_${kind}_${index}`)})
   }
-  if (ast.auth?.basic?.username) ast.auth.basic.username = value(ast.auth.basic.username, 'username')
-  if (ast.auth?.basic?.password) ast.auth.basic.password = value(ast.auth.basic.password, 'password')
-  if (ast.auth?.bearer?.token) ast.auth.bearer.token = value(ast.auth.bearer.token, 'token')
+  // Any auth provider (basic/bearer/apikey/awsv4/oauth2/...) gets all of its string fields redacted;
+  // only structural mode/placement values stay as they are.
+  if (ast.auth && typeof ast.auth === 'object') {
+    for (const [provider, fields] of Object.entries(ast.auth)) {
+      if (!fields || typeof fields !== 'object' || Array.isArray(fields)) continue
+      const rewritten: Record<string, unknown> = {}
+      for (const [key, fieldValue] of Object.entries(fields as Record<string, unknown>)) {
+        rewritten[key] = key === 'mode' || key === 'placement' ? fieldValue : value(fieldValue, `auth_${provider}_${key}`)
+      }
+      ast.auth[provider] = rewritten
+    }
+  }
   if (Array.isArray(ast.assertions)) {
     ast.assertions = ast.assertions.map((assertion: any, index: number) => {
       if (!assertion) return assertion

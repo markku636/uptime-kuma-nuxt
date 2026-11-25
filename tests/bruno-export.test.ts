@@ -79,7 +79,7 @@ auth:bearer {
   const output = monitorToBru({...stored, name: 'Secret export', body: credentialSource}, 1, mockSecrets())
   assert.ok(!output.includes('literal-bearer-token'))
   assert.ok(!output.includes('literal-api-key'))
-  assert.match(output, /token: \{\{secret_token\}\}/)
+  assert.match(output, /token: \{\{secret_auth_bearer_token\}\}/)
   assert.match(output, /X-Api-Key: \{\{secret_header_0\}\}/)
   assert.match(output, /X-Api-Key: \{\{secret_header_0\}\}/)
 })
@@ -144,4 +144,28 @@ script:pre-request {
     assert.ok(!file.content.includes(literal), `${literal} leaked`)
   }
   assert.equal(new Set(result.secretNames).size, result.secretNames.length, 'secret names must be unique')
+})
+
+test('apikey auth credentials are redacted like basic/bearer', () => {
+  const source = `meta {
+  name: Api key
+  type: http
+}
+
+get {
+  url: {{ORIGIN}}
+  body: none
+  auth: apikey
+}
+
+auth:apikey {
+  key: X-Api-Key
+  value: LITERAL_API_KEY
+  placement: header
+}
+`
+  const output = monitorToBru({...stored, name: 'Api key', body: source}, 1, mockSecrets())
+  assert.ok(!output.includes('LITERAL_API_KEY'))
+  assert.match(output, /\{\{secret_auth_apikey_value\}\}/)
+  assert.match(output, /placement: header/)
 })
