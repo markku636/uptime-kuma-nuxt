@@ -1,5 +1,5 @@
 <template>
-  <div ref="root" class="bruno-editor space-y-3" @focusin="rememberFocus" @input="trackAutocomplete" @keydown.esc="autocompleteOpen = false" @keydown.ctrl.enter.prevent="$emit('send')" @keydown.meta.enter.prevent="$emit('send')">
+  <div ref="root" class="bruno-editor space-y-3" @focusin="rememberFocus" @input="markDirty" @keydown.esc="autocompleteOpen = false" @keydown.ctrl.enter.prevent="$emit('send')" @keydown.meta.enter.prevent="$emit('send')">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="flex flex-wrap items-center gap-2">
         <div class="inline-flex rounded-lg border border-[color-mix(in_srgb,currentColor_20%,transparent)] p-0.5">
@@ -7,6 +7,7 @@
           <button type="button" class="bruno-toggle" :class="mode === 'ui' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('ui')">UI editor</button>
         </div>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled || busy" @click="resetToSaved">Reset</button>
+        <span v-if="dirty" role="status" class="text-xs text-amber-500">Unsaved changes</span>
       </div>
       <span class="text-xs text-secondary">Bruno-style request editor · scripts, tests and post-response vars are not executed</span>
     </div>
@@ -316,7 +317,7 @@ const mode = ref<'raw' | 'ui'>('ui')
 const model = ref<BrunoRequestModel | null>(null)
 const activeTab = ref<(typeof tabs)[number]['key']>('params')
 const resultTab = ref<'headers' | 'body' | 'assert'>('body')
-const busy = ref(false), error = ref(''), envDialogOpen = ref(false), copied = ref(false)
+const busy = ref(false), error = ref(''), envDialogOpen = ref(false), copied = ref(false), dirty = ref(false)
 async function copySource() {
   if (!rawSource.value) return
   try { await navigator.clipboard.writeText(rawSource.value); copied.value = true; setTimeout(() => { copied.value = false }, 1500) }
@@ -363,6 +364,7 @@ async function resetToSaved() {
   emit('update:modelValue', savedSource.value)
   model.value = null
   error.value = ''
+  dirty.value = false
   await initializeUi()
 }
 
@@ -529,6 +531,10 @@ const autocompleteStyle = computed(() => {
   const box = target.getBoundingClientRect(), parent = container.getBoundingClientRect()
   return {left: `${box.left - parent.left}px`, top: `${box.bottom - parent.top + 4}px`}
 })
+function markDirty(event: Event) {
+  dirty.value = true
+  trackAutocomplete(event)
+}
 function trackAutocomplete(event: Event) {
   const target = event.target
   if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) || typeof target.value !== 'string') {
