@@ -301,3 +301,4 @@ R60 ✅ 一鍵驗證指令（僅工具，不部署） — `npm run verify:bruno`
 R61 ✅ API 壓力測試（僅測試，不部署） — 50 斷言 + 60 KB body 的 parse/stringify 在 <8 秒內完成，8/8 整合測試通過。
 R62 ✅ 一鍵驗證全綠（驗證輪） — `npm run verify:bruno` 全部通過；正式站 rev300 不變。
 R63 ✅ 交付摘要文件 — `docs/evidence/20261126-bruno-editor-final.md`：功能、部署 rev300、驗證結果與待人工確認項目。
+R64 ✅ 驗證 + 正式站健康（驗證輪） — verify:bruno 全綠、ready 200；rev300 不變。
