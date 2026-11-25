@@ -7,9 +7,10 @@ const mode=ref<'all'|'any'>(props.modelValue?.mode||'all')
 const rules=ref<Draft[]>((props.modelValue?.rules||[]).map((rule,index)=>({id:rule.id||`rule-${index+1}`,source:rule.source,path:rule.path||'',operator:rule.operator,expectedText:JSON.stringify(rule.expected)??''})))
 const error=ref('')
 const sources:AssertionSource[]=['status','responseTime','header','text','json']
-const operators:AssertionOperator[]=['equals','notEquals','contains','notContains','gt','gte','lt','lte','exists','notExists','isNull','isNotNull']
+const unaryOperators:AssertionOperator[]=['exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray']
+const operators:AssertionOperator[]=['equals','notEquals','contains','notContains','gt','gte','lt','lte','in','notIn','startsWith','endsWith','length',...unaryOperators]
 const sourceLabels:Record<AssertionSource,string>={status:'HTTP status',responseTime:'Response time (ms)',header:'Response header',text:'Response body text',json:'JSON body'}
-const operatorLabels:Record<AssertionOperator,string>={equals:'=',notEquals:'≠',contains:'contains',notContains:'does not contain',gt:'>',gte:'≥',lt:'<',lte:'≤',exists:'exists',notExists:'does not exist',isNull:'is null',isNotNull:'is not null'}
+const operatorLabels:Record<AssertionOperator,string>={equals:'=',notEquals:'≠',contains:'contains',notContains:'does not contain',gt:'>',gte:'≥',lt:'<',lte:'≤',in:'in',notIn:'not in',startsWith:'starts with',endsWith:'ends with',length:'length',exists:'exists',notExists:'does not exist',isNull:'is null',isNotNull:'is not null',isEmpty:'is empty',isNotEmpty:'is not empty',isJson:'is JSON',isNumber:'is number',isString:'is string',isBoolean:'is boolean',isArray:'is array'}
 const presets:{label:string;rule:Omit<Draft,'id'>}[]=[
   {label:'Status is 200',rule:{source:'status',path:'',operator:'equals',expectedText:'200'}},
   {label:'Status is 2xx (200-299)',rule:{source:'status',path:'',operator:'gte',expectedText:'200'}},
@@ -19,7 +20,7 @@ const presets:{label:string;rule:Omit<Draft,'id'>}[]=[
   {label:'JSON field exists',rule:{source:'json',path:'$.data',operator:'exists',expectedText:''}},
 ]
 const preset=ref('')
-const needsValue=(operator:string)=>!['exists','notExists','isNull','isNotNull'].includes(operator)
+const needsValue=(operator:string)=>!unaryOperators.includes(operator as AssertionOperator)
 function ruleLabel(rule:Draft,index:number){
   const value=needsValue(rule.operator)?` ${rule.expectedText||''}`:''
   const path=['header','json'].includes(rule.source)&&rule.path?` ${rule.path}`:''
@@ -33,7 +34,9 @@ function update(){
       if(needsValue(rule.operator)){
         if(!rule.expectedText.trim())throw new Error('Enter a JSON value, for example true, 200, null or "ready".')
         result.expected=JSON.parse(rule.expectedText)
-        if(['gt','gte','lt','lte'].includes(rule.operator)&&typeof result.expected!=='number')throw new Error('Numeric comparisons require a JSON number.')
+        if(['gt','gte','lt','lte','length'].includes(rule.operator)&&typeof result.expected!=='number')throw new Error('Numeric comparisons require a JSON number.')
+        if(['in','notIn'].includes(rule.operator)&&!Array.isArray(result.expected))throw new Error('List comparisons require a JSON array.')
+        if(['startsWith','endsWith'].includes(rule.operator)&&typeof result.expected!=='string')throw new Error('Text comparisons require a JSON string.')
       }
       return result
     })

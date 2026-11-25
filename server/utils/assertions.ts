@@ -74,11 +74,20 @@ const ruleSchema=z.object({id:z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),source:z
   else if(rule.source==='header'){
     if(!rule.path||!/^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,256}$/.test(rule.path))ctx.addIssue({code:'custom',message:'A valid header name is required'})
   }else if(rule.path!==undefined)ctx.addIssue({code:'custom',message:'This source does not take a path'})
-  if(!['exists','notExists','isNull','isNotNull'].includes(rule.operator)&&rule.expected===undefined)ctx.addIssue({code:'custom',message:'Expected value is required'})
-  if(['gt','gte','lt','lte'].includes(rule.operator)&&(typeof rule.expected!=='number'||['header','text'].includes(rule.source)))ctx.addIssue({code:'custom',message:'Numeric comparisons require numeric values'})
+  const unary=['exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray']
+  const numeric=['gt','gte','lt','lte','length']
+  const text=['startsWith','endsWith']
+  const list=['in','notIn']
+  if(!unary.includes(rule.operator)&&rule.expected===undefined)ctx.addIssue({code:'custom',message:'Expected value is required'})
+  if(numeric.includes(rule.operator)&&typeof rule.expected!=='number')ctx.addIssue({code:'custom',message:'Numeric comparisons require numeric values'})
+  if(text.includes(rule.operator)&&typeof rule.expected!=='string')ctx.addIssue({code:'custom',message:'Text comparisons require a string'})
+  if(list.includes(rule.operator)&&!Array.isArray(rule.expected))ctx.addIssue({code:'custom',message:'List comparisons require an array'})
   if(['equals','notEquals','contains','notContains'].includes(rule.operator)&&['header','text'].includes(rule.source)&&typeof rule.expected!=='string')ctx.addIssue({code:'custom',message:'Text/header comparisons require a string'})
-  if(['status','responseTime'].includes(rule.source)&&!['exists','notExists','isNull','isNotNull'].includes(rule.operator)
-    &&(typeof rule.expected!=='number'||['contains','notContains'].includes(rule.operator)))ctx.addIssue({code:'custom',message:'Status/time comparisons require a number'})
+  if(['status','responseTime'].includes(rule.source)&&!unary.includes(rule.operator)){
+    if(!['equals','notEquals','gt','gte','lt','lte','in','notIn'].includes(rule.operator))ctx.addIssue({code:'custom',message:'Status/time comparisons require a number or list'})
+    else if(list.includes(rule.operator)){if(!Array.isArray(rule.expected)||rule.expected.some(value=>typeof value!=='number'))ctx.addIssue({code:'custom',message:'Status/time lists require numbers'})}
+    else if(typeof rule.expected!=='number')ctx.addIssue({code:'custom',message:'Status/time comparisons require a number'})
+  }
 })
 export const assertionsSchema=z.object({version:z.literal(1),mode:z.enum(['all','any']),rules:z.array(ruleSchema).max(20)}).strict().superRefine((set,ctx)=>{
   if(new Set(set.rules.map(rule=>rule.id)).size!==set.rules.length)ctx.addIssue({code:'custom',message:'Rule IDs must be unique'})
@@ -91,6 +100,13 @@ export function evaluateRule(rule:AssertionRule,exists:boolean,value:unknown):As
     case 'notExists':passed=!exists;reason='unexpected_value';break
     case 'isNull':passed=exists&&value===null;reason=exists?'not_null':'missing';break
     case 'isNotNull':passed=exists&&value!==null;reason=exists?'is_null':'missing';break
+    case 'isEmpty':passed=exists&&(value===''||(Array.isArray(value)&&!value.length)||(value!==null&&typeof value==='object'&&!Array.isArray(value)&&!Object.keys(value).length));reason='unexpected_value';break
+    case 'isNotEmpty':passed=exists&&!(value===''||(Array.isArray(value)&&!value.length)||(value!==null&&typeof value==='object'&&!Array.isArray(value)&&!Object.keys(value).length));reason='value_mismatch';break
+    case 'isJson':passed=exists&&typeof value==='string'&&(()=>{try{JSON.parse(value);return true}catch{return false}})();reason='type_mismatch';break
+    case 'isNumber':passed=exists&&typeof value==='number'&&Number.isFinite(value);reason='type_mismatch';break
+    case 'isString':passed=exists&&typeof value==='string';reason='type_mismatch';break
+    case 'isBoolean':passed=exists&&typeof value==='boolean';reason='type_mismatch';break
+    case 'isArray':passed=exists&&Array.isArray(value);reason='type_mismatch';break
     default:
       if(!exists){reason='missing';break}
       if(['gt','gte','lt','lte'].includes(rule.operator)){
@@ -101,6 +117,16 @@ export function evaluateRule(rule:AssertionRule,exists:boolean,value:unknown):As
         else if(Array.isArray(value))passed=value.some(item=>isDeepStrictEqual(item,rule.expected))
         else{reason='type_mismatch';break}
         if(rule.operator==='notContains')passed=!passed
+      }else if(['in','notIn'].includes(rule.operator)){
+        if(!Array.isArray(rule.expected)){reason='type_mismatch';break}
+        passed=rule.expected.some(item=>isDeepStrictEqual(item,value))
+        if(rule.operator==='notIn')passed=!passed
+      }else if(['startsWith','endsWith'].includes(rule.operator)){
+        if(typeof value!=='string'||typeof rule.expected!=='string'){reason='type_mismatch';break}
+        passed=rule.operator==='startsWith'?value.startsWith(rule.expected):value.endsWith(rule.expected)
+      }else if(rule.operator==='length'){
+        if(typeof value!=='string'&&!Array.isArray(value)){reason='type_mismatch';break}
+        passed=value.length===rule.expected
       }else{
         passed=isDeepStrictEqual(value,rule.expected)
         if(rule.operator==='notEquals')passed=!passed

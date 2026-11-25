@@ -124,9 +124,9 @@ function assertionRules(pairs:any):AssertionRule[]{
   const result:AssertionRule[]=[]
   for(const pair of pairs){
     keys(pair,['name','value','enabled'],'assert');if(typeof pair.enabled!=='boolean')fail('INVALID_ASSERTION','assert');if(!pair.enabled)continue
-    const expression=string(pair.name,'assert',256),value=string(pair.value,'assert',4096),match=/^(eq|ne|neq|gt|gte|lt|lte|contains|notContains|exists|notExists|isNull|isNotNull)(?:\s+([\s\S]+))?$/.exec(value)
+    const expression=string(pair.name,'assert',256),value=string(pair.value,'assert',4096),match=/^(eq|ne|neq|gt|gte|lt|lte|in|notIn|startsWith|endsWith|length|contains|notContains|exists|notExists|isNull|isNotNull|isEmpty|isNotEmpty|isJson|isNumber|isString|isBoolean|isArray)(?:\s+([\s\S]+))?$/.exec(value)
     if(!match)fail('UNSUPPORTED_ASSERTION','assert')
-    const operators:Record<string,AssertionRule['operator']>={eq:'equals',ne:'notEquals',neq:'notEquals',gt:'gt',gte:'gte',lt:'lt',lte:'lte',contains:'contains',notContains:'notContains',exists:'exists',notExists:'notExists',isNull:'isNull',isNotNull:'isNotNull'}
+    const operators:Record<string,AssertionRule['operator']>={eq:'equals',ne:'notEquals',neq:'notEquals',gt:'gt',gte:'gte',lt:'lt',lte:'lte',in:'in',notIn:'notIn',startsWith:'startsWith',endsWith:'endsWith',length:'length',contains:'contains',notContains:'notContains',exists:'exists',notExists:'notExists',isNull:'isNull',isNotNull:'isNotNull',isEmpty:'isEmpty',isNotEmpty:'isNotEmpty',isJson:'isJson',isNumber:'isNumber',isString:'isString',isBoolean:'isBoolean',isArray:'isArray'}
     const rule:AssertionRule={id:`bruno-${result.length+1}`,source:'json',operator:operators[match[1]!]!}
     if(expression==='res.status')rule.source='status'
     else if(expression==='res.responseTime')rule.source='responseTime'
@@ -134,7 +134,7 @@ function assertionRules(pairs:any):AssertionRule[]{
     else if(expression==='res.body'||expression.startsWith('res.body.')||expression.startsWith('res.body[')){rule.path='$'+expression.slice(8);parseSelector(rule.path)}
     else if(expression.startsWith('res.headers')){const parts=parseSelector('$'+expression.slice(11));if(parts.length!==1||typeof parts[0]!=='string')fail('UNSUPPORTED_ASSERTION','assert');rule.source='header';rule.path=parts[0]}
     else fail('UNSUPPORTED_ASSERTION','assert')
-    const unary=['exists','notExists','isNull','isNotNull'].includes(rule.operator)
+    const unary=['exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray'].includes(rule.operator)
     if(unary&&match[2]!==undefined)fail('UNSUPPORTED_ASSERTION','assert')
     if(!unary){try{rule.expected=parseSafeJson(match[2]||'') as JsonValue}catch{fail('UNSUPPORTED_ASSERTION','assert')}}
     result.push(rule)

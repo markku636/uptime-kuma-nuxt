@@ -43,6 +43,19 @@ const assertions: Array<{ label: string; expression: string; operator: string; v
   { label: 'notExists', expression: 'res.body.missing', operator: 'notExists', value: '' },
   { label: 'isNull', expression: 'res.body.nil', operator: 'isNull', value: '' },
   { label: 'isNotNull', expression: 'res.body.name', operator: 'isNotNull', value: '' },
+  { label: 'in list', expression: 'res.body.name', operator: 'in', value: '["alice","bob"]' },
+  { label: 'not in list', expression: 'res.body.name', operator: 'notIn', value: '["carol"]' },
+  { label: 'status in list', expression: 'res.status', operator: 'in', value: '[200,201]' },
+  { label: 'starts with', expression: 'res.text', operator: 'startsWith', value: '"ok"' },
+  { label: 'ends with', expression: 'res.text', operator: 'endsWith', value: '"done"' },
+  { label: 'array length', expression: 'res.body.items', operator: 'length', value: '2' },
+  { label: 'is empty', expression: 'res.body.optional', operator: 'isEmpty', value: '' },
+  { label: 'is not empty', expression: 'res.body.name', operator: 'isNotEmpty', value: '' },
+  { label: 'is JSON string', expression: 'res.text', operator: 'isJson', value: '' },
+  { label: 'is number', expression: 'res.body.count', operator: 'isNumber', value: '' },
+  { label: 'is string', expression: 'res.body.name', operator: 'isString', value: '' },
+  { label: 'is boolean', expression: 'res.body.active', operator: 'isBoolean', value: '' },
+  { label: 'is array', expression: 'res.body.items', operator: 'isArray', value: '' },
 ]
 
 for (const variant of assertions) {
@@ -129,7 +142,7 @@ test('body and vars variants: multiline text, nested JSON and disabled vars', as
 })
 
 test('unsupported assertion operators and expressions are rejected with safe codes', async () => {
-  for (const operator of ['matches', 'isJson', 'between', 'startsWith']) {
+  for (const operator of ['matches', 'notMatches', 'between']) {
     const result = await modelToSource(model({assertions: [{expression: 'res.body.name', operator, value: '"x"', enabled: true}]}), VALUES, SECRETS)
     assert.equal(result.source, null, operator)
     assert.ok(result.issues.some(issue => issue.code === 'UNSUPPORTED_ASSERTION'), `${operator}: ${JSON.stringify(result.issues)}`)

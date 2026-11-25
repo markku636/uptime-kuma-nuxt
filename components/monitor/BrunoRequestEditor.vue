@@ -220,8 +220,8 @@ const emit = defineEmits<{
 }>()
 
 const methods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as const
-const operators = ['eq', 'ne', 'neq', 'gt', 'gte', 'lt', 'lte', 'contains', 'notContains', 'exists', 'notExists', 'isNull', 'isNotNull'] as const
-const unary = new Set(['exists', 'notExists', 'isNull', 'isNotNull'])
+const operators = ['eq', 'ne', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'notIn', 'startsWith', 'endsWith', 'length', 'contains', 'notContains', 'exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isJson', 'isNumber', 'isString', 'isBoolean', 'isArray'] as const
+const unary = new Set(['exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isJson', 'isNumber', 'isString', 'isBoolean', 'isArray'])
 const isUnary = (operator: string) => unary.has(operator)
 const tabs = [
   { key: 'params', label: 'Params' }, { key: 'body', label: 'Body' }, { key: 'headers', label: 'Headers' },
@@ -281,7 +281,6 @@ async function callApi(path: string, body: Record<string, unknown>) {
 
 /** Default view: parse the stored request into tabs; an empty request opens as a blank UI form. */
 async function initializeUi() {
-  if (props.disabled) return
   if (!rawSource.value.trim()) {
     model.value = {
       name: 'Request', method: 'GET', url: '', params: [], headers: [],
@@ -290,8 +289,21 @@ async function initializeUi() {
     mode.value = 'ui'
     return
   }
+  // Initialization must run even while the parent is still loading workspace permissions;
+  // `disabled` only blocks user edits, not building the default UI view.
   mode.value = 'raw'
-  await switchMode('ui')
+  error.value = ''
+  busy.value = true
+  try {
+    const data = await callApi('/api/v1/bruno/request/parse', { source: rawSource.value, environmentId: resolvedEnvironmentId.value })
+    if (!data.model) throw new Error('Unable to parse this .bru request')
+    model.value = data.model
+    if (data.model.ignoredBlocks.length) { ignoredWarning.value = true; return }
+    ignoredWarning.value = false
+    mode.value = 'ui'
+  } catch (failure: any) {
+    error.value = failure?.data?.message || failure?.message || 'Unable to parse the request'
+  } finally { busy.value = false }
 }
 
 async function switchMode(target: 'raw' | 'ui') {
