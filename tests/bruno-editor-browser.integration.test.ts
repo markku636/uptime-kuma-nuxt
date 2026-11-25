@@ -247,6 +247,11 @@ settings {
     await page.getByLabel('Pre-request script').fill("req.setHeader('X-Demo', '1');")
     await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
     assert.match(await page.locator('textarea.font-mono').first().inputValue(), /X-Demo/)
+    await page.getByRole('button', {name:'UI editor', exact:true}).click()
+    await page.getByRole('tab', {name:/Script/}).click()
+    await page.getByLabel('Pre-request script').fill('')
+    await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
+    assert.doesNotMatch(await page.locator('textarea.font-mono').first().inputValue(), /script:pre-request/)
     assert.deepEqual(errors, [])
   } finally {
     await browser.close()

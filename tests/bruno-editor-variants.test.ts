@@ -334,3 +334,11 @@ test('form-url-encoded body round-trips as editable name:value lines', async () 
   assert.match(result.source, /body: formUrlEncoded/)
   assert.match(result.source, /body:form-urlencoded \{\n  a: 1\n  b: \{\{TOKEN\}\}/)
 })
+
+test('invalid preserved blocks are rejected before saving', async () => {
+  const invalid = await modelToSource({
+    ...model(), ignoredSources: ['script:pre-request {\nreq.setHeader("X", "1");\n}\n}'],
+  }, VALUES, SECRETS)
+  assert.equal(invalid.source, null)
+  assert.ok(invalid.issues.length > 0)
+})

@@ -1,7 +1,7 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {monitorToBru, buildBrunoCollection} from '../server/services/bruno/collection-export'
-import {BrunoExportError} from '../server/services/bruno/exporter'
+import {BrunoExportError,exportBrunoMonitors} from '../server/services/bruno/exporter'
 
 const source = `meta {
   name: Export me
@@ -15,7 +15,7 @@ get {
 }
 
 assert {
-  res.status: eq 200
+  res.status: eq {{EXPECTED}}
 }
 `
 const stored = {
@@ -24,11 +24,21 @@ const stored = {
   requestSecrets: null,
 }
 
+const mockSecrets = () => {
+  const names = new Set<string>()
+  return {names, protect: (value: string, _name: string, field: string) => {
+    if (!value || /\{\{/.test(value)) return value
+    const name = `secret_${field}`
+    names.add(name)
+    return `{{${name}}}`
+  }} as any
+}
+
 test('Bruno monitors export their stored .bru request', () => {
-  const result = monitorToBru(stored, 1, {names: new Set<string>()} as any)
+  const result = monitorToBru(stored, 1, mockSecrets())
   assert.match(result, /get \{/ )
   assert.match(result, /url: \{\{ORIGIN\}\}\/health/)
-  assert.match(result, /res\.status: eq 200/)
+  assert.match(result, /res\.status: eq \{\{EXPECTED\}\}/)
 })
 
 test('Bruno monitors are included in collection exports', () => {
@@ -37,13 +47,13 @@ test('Bruno monitors are included in collection exports', () => {
     environment: {name: 'default', variables: {}, secretNames: []},
   })
   const file = result.files.find(file => file.path.endsWith('.bru') && file.path !== 'bruno.json')!
-  assert.match(file.content, /res\.status: eq 200/)
+  assert.match(file.content, /res\.status: eq \{\{EXPECTED\}\}/)
   assert.match(file.content, /url: \{\{ORIGIN\}\}\/health/)
   assert.equal(result.exported, 1)
 })
 
 test('an empty Bruno body is rejected with a safe export code', () => {
-  assert.throws(() => monitorToBru({...stored, body: ''}, 1, {names: new Set<string>()} as any), BrunoExportError)
+  assert.throws(() => monitorToBru({...stored, body: ''}, 1, mockSecrets()), BrunoExportError)
 })
 
 test('Bruno export replaces literal credentials with secret placeholders', () => {
@@ -66,20 +76,12 @@ auth:bearer {
   token: literal-bearer-token
 }
 `
-  const names: string[] = []
-  const secrets = {names: new Set<string>(), protect: (value: string, _name: string, field: string) => {
-    if (!value || /\{\{/.test(value)) return value
-    const name = `secret_${field}`
-    names.push(name); (secrets.names as Set<string>).add(name)
-    return `{{${name}}}`
-  }} as any
-  const output = monitorToBru({...stored, name: 'Secret export', body: credentialSource}, 1, secrets)
+  const output = monitorToBru({...stored, name: 'Secret export', body: credentialSource}, 1, mockSecrets())
   assert.ok(!output.includes('literal-bearer-token'))
   assert.ok(!output.includes('literal-api-key'))
   assert.match(output, /token: \{\{secret_token\}\}/)
-  assert.match(output, /X-Api-Key: \{\{secret_x_api_key\}\}/)
-  assert.ok(names.includes('secret_token'))
-  assert.ok(names.includes('secret_x_api_key'))
+  assert.match(output, /X-Api-Key: \{\{secret_header_0\}\}/)
+  assert.match(output, /X-Api-Key: \{\{secret_header_0\}\}/)
 })
 
 test('redacted manifest export includes Bruno monitors with placeholders', async () => {
@@ -106,4 +108,40 @@ auth:bearer {
   assert.ok(!file.content.includes('https://example.com/login'))
   assert.ok(result.secretNames.length >= 2)
   assert.ok(result.files.some(file => file.path === 'environments/configure.bru'))
+})
+
+test('redaction covers form bodies, scripts, docs and assertion values', () => {
+  const source = `meta {
+  name: Wide redaction
+  type: http
+}
+
+post {
+  url: {{ORIGIN}}/login
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  password: LITERAL_FORM_PASS
+}
+
+assert {
+  res.body.token: eq LITERAL_ASSERT_SECRET
+}
+
+docs {
+  LITERAL_DOC_SECRET
+}
+
+script:pre-request {
+  req.setHeader('Authorization', 'Bearer LITERAL_SCRIPT_TOKEN');
+}
+`
+  const result = exportBrunoMonitors([{...stored, name: 'Wide redaction', body: source}], 'demo')
+  const file = result.files.find(file => file.path.endsWith('.bru') && !file.path.startsWith('environments/') && file.path !== 'bruno.json')!
+  for (const literal of ['LITERAL_FORM_PASS', 'LITERAL_ASSERT_SECRET', 'LITERAL_DOC_SECRET', 'LITERAL_SCRIPT_TOKEN']) {
+    assert.ok(!file.content.includes(literal), `${literal} leaked`)
+  }
+  assert.equal(new Set(result.secretNames).size, result.secretNames.length, 'secret names must be unique')
 })

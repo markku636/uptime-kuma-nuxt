@@ -309,16 +309,9 @@ export async function modelToSource(
     return { source: null, issues: [safeIssue(error)] }
   }
 
-  const hasAnnotations = (json.assertions || []).some((assertion: any) => assertion.description || assertion.annotations)
-  const validationSource = hasAnnotations
-    ? brunoLang.jsonToBruV2({
-      ...json,
-      assertions: (json.assertions || []).map((assertion: any) => {
-        const { description: _description, annotations: _annotations, ...rest } = assertion
-        return rest
-      }),
-    })
-    : source
+  // Validate the exact text that will be saved (including preserved blocks), with only
+  // @description annotation lines blanked for the strict parser.
+  const validationSource = withoutDescriptionAnnotations(source)
   const parsed = await parseBrunoManifest(manifestFor(validationSource), values, secretNames)
   if (parsed.issues.length) return { source: null, issues: parsed.issues }
   return { source, issues: [] }

@@ -445,10 +445,15 @@ function ignoredBody(name: string) {
 function updateIgnoredBlock(name: string, event: Event) {
   if (!model.value || props.disabled) return
   const body = (event.target as HTMLTextAreaElement).value
-  if (!body.trim()) return
-  const block = `${name} {\n${body}\n}`
   model.value.ignoredSources ||= []
   const index = model.value.ignoredSources.findIndex(source => source.trimStart().startsWith(name))
+  if (!body.trim()) {
+    if (index >= 0) model.value.ignoredSources.splice(index, 1)
+    const kind = name.startsWith('script:') ? 'script' : name === 'tests' ? 'tests' : name === 'vars:post-response' ? 'post-response vars' : 'settings'
+    model.value.ignoredBlocks = model.value.ignoredBlocks.filter(item => item !== kind)
+    return
+  }
+  const block = `${name} {\n${body}\n}`
   if (index >= 0) model.value.ignoredSources[index] = block
   else model.value.ignoredSources.push(block)
 }
