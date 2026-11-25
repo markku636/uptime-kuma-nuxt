@@ -261,3 +261,49 @@ test('docs block round-trips verbatim and stays out of the request configuration
   assert.match(result.source, /docs \{\n  # Users endpoint/)
   assert.match(result.source, /\{\{NAME\}\}/)
 })
+
+test('ignored script/tests/settings blocks are preserved verbatim through the UI model', async () => {
+  const { sourceToModel, modelToSource } = await import('../server/services/bruno/request-editor')
+  const source = `meta {
+  name: Preserve
+  type: http
+}
+
+get {
+  url: https://example.com/health
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+script:pre-request {
+  req.setHeader('X-Ignored', '1');
+}
+
+tests {
+  test('ignored', () => {});
+}
+
+vars:post-response {
+  saved: value
+}
+
+settings {
+  encodeUrl: true
+}
+`
+  const parsed = await sourceToModel(source, VALUES, SECRETS)
+  assert.deepEqual(parsed.issues, [])
+  assert.deepEqual(parsed.model!.ignoredBlocks, ['script', 'tests', 'post-response vars'])
+  assert.equal(parsed.model!.ignoredSources!.length, 4)
+
+  const produced = await modelToSource(parsed.model!, VALUES, SECRETS)
+  assert.deepEqual(produced.issues, [])
+  assert.match(produced.source!, /script:pre-request \{\n  req\.setHeader\('X-Ignored', '1'\);/)
+  assert.match(produced.source!, /tests \{\n  test\('ignored'/)
+  assert.match(produced.source!, /vars:post-response \{\n  saved: value/)
+  assert.match(produced.source!, /settings \{\n  encodeUrl: true/)
+})

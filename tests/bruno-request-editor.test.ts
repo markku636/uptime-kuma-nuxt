@@ -143,9 +143,9 @@ test('full .bru → model → .bru → model round-trip covers all six tabs with
   assert.match(source, /token: \{\{TOKEN\}\}/)
   assert.match(source, /@description\('Status is ok'\)/)
   assert.ok(!source.includes('authorization:'))
-  assert.ok(!source.includes('script:'))
-  assert.ok(!source.includes('tests {'))
-  assert.ok(!source.includes('vars:post-response'))
+  assert.match(source, /script:pre-request \{/)
+  assert.match(source, /tests \{/)
+  assert.match(source, /vars:post-response \{/)
   assert.ok(!source.includes('TOP_SECRET_VALUE'))
   const urlLine = source.split('\n').find(line => line.trim().startsWith('url:'))!
   assert.equal((urlLine.match(/\?/g) || []).length, 1, urlLine)
@@ -153,8 +153,8 @@ test('full .bru → model → .bru → model round-trip covers all six tabs with
 
   const again = await sourceToModel(source, VALUES, SECRETS)
   assert.deepEqual(again.issues, [])
-  // Saving from UI mode intentionally drops blocks the worker never executes.
-  assert.deepEqual(again.model, { ...model, ignoredBlocks: [] })
+  // Saving from UI mode keeps the non-executed blocks verbatim.
+  assert.deepEqual(again.model, model)
 })
 
 test('basic and bearer auth round-trip without an ambiguous Authorization header', async () => {

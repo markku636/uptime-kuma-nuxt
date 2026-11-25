@@ -94,6 +94,12 @@ function ignoredBlocks(ast: any): string[] {
   return found
 }
 
+/** Raw top-level blocks that the worker strips but the editor keeps so a UI save is lossless. */
+function ignoredSources(source: string): string[] {
+  const pattern = /^[ \t]*(script:pre-request|script:post-response|tests|vars:post-response|settings)[ \t]*\{[ \t]*\r?\n[\s\S]*?\r?\n[ \t]*\}/gm
+  return [...source.matchAll(pattern)].map(match => match[0])
+}
+
 /**
  * Validates one declarative .bru request and exposes a UI-friendly model.
  * Variable references stay as `{{name}}`; environment/secrets values are only used to make the
@@ -169,9 +175,11 @@ export async function sourceToModel(
       })
 
     const docs = typeof ast.docs === 'string' && ast.docs.trim() ? ast.docs : undefined
+    const rawIgnored = ignoredSources(source)
     const model: BrunoRequestModel = {
       name, method: method as BrunoRequestModel['method'], url, params, headers, auth, body, vars, assertions,
       ignoredBlocks: ignoredBlocks(ast), ...(docs ? {docs} : {}),
+      ...(rawIgnored.length ? {ignoredSources: rawIgnored} : {}),
     }
     return { model, issues: [] }
   } catch (error) {
@@ -277,6 +285,11 @@ export async function modelToSource(
   let source: string
   try {
     source = brunoLang.jsonToBruV2(json)
+    for (const block of asArray(model.ignoredSources ?? [], 'ignoredSources', 10)) {
+      const text = asText(block, 'ignoredSources', 65536).trim()
+      if (!/^(script:pre-request|script:post-response|tests|vars:post-response|settings)\s*\{/.test(text)) fail('UNSUPPORTED_BLOCK', 'ignoredSources')
+      source += `\n\n${text}`
+    }
     if (Buffer.byteLength(source) > 131072) fail('FILE_TOO_LARGE')
   } catch (error) {
     return { source: null, issues: [safeIssue(error)] }

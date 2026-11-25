@@ -20,4 +20,6 @@ export interface BrunoRequestModel {
   ignoredBlocks: string[]
   /** Official `docs {}` block, kept verbatim; optional so older models stay unchanged. */
   docs?: string
+  /** Raw blocks the worker never executes (script/tests/post-response vars/settings), preserved verbatim. */
+  ignoredSources?: string[]
 }

@@ -9,10 +9,6 @@
     </div>
 
     <p v-if="error" role="alert" class="text-sm text-red-400">{{ error }}</p>
-    <p v-if="ignoredWarning && mode === 'raw'" role="status" class="text-xs text-amber-500">
-      This request contains blocks the worker never executes (script, tests or post-response vars). Switching to UI mode and saving removes them. Click <strong>UI editor</strong> again to continue.
-    </p>
-
     <!-- Raw mode -->
     <div v-if="mode === 'raw'" class="space-y-2">
       <textarea
@@ -191,7 +187,7 @@
         />
       </section>
 
-      <p v-if="model.ignoredBlocks.length" role="status" class="text-xs text-amber-500">Blocks not executed by the worker: {{ model.ignoredBlocks.join(', ') }}. Switching to UI mode and saving will remove them from the request.</p>
+      <p v-if="model.ignoredBlocks.length" role="status" class="text-xs text-amber-500">Blocks not executed by the worker: {{ model.ignoredBlocks.join(', ') }}. They are kept verbatim in the .bru file but have no editable fields here.</p>
     </div>
 
     <!-- Trial / Send -->
@@ -267,7 +263,7 @@ const mode = ref<'raw' | 'ui'>('ui')
 const model = ref<BrunoRequestModel | null>(null)
 const activeTab = ref<(typeof tabs)[number]['key']>('params')
 const resultTab = ref<'headers' | 'body' | 'assert'>('body')
-const busy = ref(false), error = ref(''), envDialogOpen = ref(false), ignoredWarning = ref(false)
+const busy = ref(false), error = ref(''), envDialogOpen = ref(false)
 const bulkKind = ref<'params' | 'headers' | null>(null)
 watch(activeTab, () => { bulkKind.value = null })
 
@@ -357,8 +353,6 @@ async function initializeUi() {
     const data = await callApi('/api/v1/bruno/request/parse', { source: rawSource.value, environmentId: resolvedEnvironmentId.value })
     if (!data.model) throw new Error('Unable to parse this .bru request')
     model.value = normalizeModel(data.model)
-    if (data.model.ignoredBlocks.length) { ignoredWarning.value = true; return }
-    ignoredWarning.value = false
     mode.value = 'ui'
   } catch (failure: any) {
     error.value = failure?.data?.message || failure?.message || 'Unable to parse the request'
@@ -372,8 +366,6 @@ async function switchMode(target: 'raw' | 'ui') {
       const data = await callApi('/api/v1/bruno/request/parse', { source: rawSource.value, environmentId: resolvedEnvironmentId.value })
       if (!data.model) throw new Error('Unable to parse this .bru request')
       model.value = normalizeModel(data.model)
-      if (data.model.ignoredBlocks.length && !ignoredWarning.value) { ignoredWarning.value = true; return }
-      ignoredWarning.value = false
       mode.value = 'ui'
     } else {
       if (!model.value) return
