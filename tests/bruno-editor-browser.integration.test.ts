@@ -91,7 +91,11 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
 
     await page.getByRole('tab', {name:/Vars/}).click()
     await page.getByText('{{EDITOR_VAR}}').waitFor()
-    assert.ok((await page.getByRole('button', {name:'Insert', exact:true}).count()) > 0)
+    await page.getByRole('button', {name:'+ Add variable', exact:true}).click()
+    const varValue = page.locator('table.bruno-table input[placeholder="Value"]').first()
+    await varValue.click()
+    await page.getByRole('button', {name:'Insert', exact:true}).first().click()
+    assert.match(await varValue.inputValue(), /\{\{EDITOR_VAR\}\}/)
 
     await page.getByRole('tab', {name:/Params/}).click()
     const urlField = page.getByPlaceholder('https://example.com/health', {exact:true})

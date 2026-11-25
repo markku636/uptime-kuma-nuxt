@@ -494,7 +494,10 @@ function applyAutocomplete(name: string) {
 }
 
 let focused: HTMLElement | null = null
-function rememberFocus(event: FocusEvent) { focused = event.target instanceof HTMLElement ? event.target : null }
+function rememberFocus(event: FocusEvent) {
+  // Buttons must not steal the insertion target from the last editable field.
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) focused = event.target
+}
 function insertVariable(token: string) {
   const target = focused as HTMLInputElement | HTMLTextAreaElement | null
   if (target && typeof target.value === 'string' && 'setSelectionRange' in target) {
