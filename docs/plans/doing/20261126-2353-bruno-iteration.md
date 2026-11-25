@@ -106,3 +106,9 @@ R13 ✅ matches/notMatches（安全比對） — commit `9fdfa36`：
 - 驗證：unit 140/140、typecheck 0 errors、build 成功、 Bruno 整合全綠；完整整合的 group drag 仍為既有 flaky（單獨跑通過）。
 - 部署：artifact `de86d2347ffa53444cf4d783f29e4985f4302ee6d7ee7480ac77dee81972ae97`（source `9fdfa36`）；
   loader rev247 → app rev248，最終 Healthy/Synced。
+R14 ✅ Script / Tests 唯讀分頁 — commit `5c2c735`：
+- 官方排版補上 Script 與 Tests 分頁，顯示 R9 保留的 raw block；明確標示不執行、要改請用 Raw。
+- 新增瀏覽器測試：建立含 script/tests 的 monitor → 預設 UI → 兩個分頁可見且內容正確。
+- 驗證：unit 140/140、typecheck 0 errors、build 成功、Bruno browser 3/3。
+- 部署：artifact `31978a7fde8d65b2d8e10ad444167e8d2cdebbcd1c702ee3d93e5785eec8bcbe`（source `5c2c735`）；
+  loader rev249 → app rev250，Healthy/Synced。
