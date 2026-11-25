@@ -275,3 +275,9 @@ R48 ✅ Script/Tests/Settings 可編輯 — commit `512291d`：
 - 驗證：unit 154/154、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
 - 部署：artifact `d9271718eef614fc8de294b51fc33e7770314386e79b71df197fc8184672e610`（source `512291d`）；
   loader rev295 → app rev296，最終 Healthy/Synced。
+R51 ✅ 第三輪審查修復 — commit `2b9d585`：
+- 抽出共用 `redact.ts`，兩個匯出路徑都紅act URL/params/headers/body(含 form)/vars/auth/assert 值/description/docs/script/tests，並去重 secret 名稱。
+- `modelToSource` 改驗證最終字串（含保留 block），無效 block 不再能存；Script/Tests/Settings 清空即移除 block。
+- 驗證：unit 156/156、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
+- 部署：artifact `0db75cb71ebf698e5a1507e9a48baac30c00830691bc38cdfc75f9c325063817`（source `2b9d585`）；
+  loader rev297 → app rev298，最終 Healthy/Synced。
