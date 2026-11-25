@@ -31,3 +31,9 @@ R1 ✅ 預設 UI editor + 參數／斷言 variant 測試 — commit `b8a6cf8`：
 - 部署：artifact `7af3b9617990f61abd05defd1e9d98b8b24f146fe8d57550c1997dd029091c76`（203,741,704 bytes，source `b8a6cf8`）；
   loader GitOps `edd0ffbe`（rev223，Job `uptime-artifact-7af3b9617990-1` Succeeded）→ app `ad927e17`（rev224，Healthy/Synced）。
 - 正式站 UI 需使用者登入後確認（目前只驗證到登入頁）。
+R2 ✅ 嵌套 JSON body 支援 — commit `c767f16`：
+- `server/services/bruno/parser.ts` 的變數檢查現在只拒絕未配對的 `{{`（open delimiter）；嵌套 JSON 結尾的 `}}` 不再誤判為 `UNSUPPORTED_VARIABLE`，且不會被展開成任何變數值。
+- 新增測試：4 種嵌套 JSON body（含 literal `}}`）、未配對 `{{` 仍被拒；variant 測試的 JSON body 案例改回嵌套格式。
+- 驗證：unit 104/104、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
+- 部署：artifact `29d9f0d6de001073dca3fc157a5267958e91da675f60d4e10e0f858ec88133a4`（203,740,042 bytes，source `c767f16`）；
+  loader rev225 → app rev226，最終 Healthy/Synced（rollout 中短暫 Degraded，10 秒後 Healthy）；短命 server 已停。
