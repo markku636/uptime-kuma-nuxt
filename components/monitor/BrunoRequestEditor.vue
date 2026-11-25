@@ -116,7 +116,7 @@
       <section v-else-if="activeTab === 'auth'" class="space-y-3">
         <div class="flex items-center gap-2">
           <label class="input-label mb-0">Auth mode</label>
-          <select v-model="model.auth.mode" class="select-field w-48" :disabled="disabled">
+          <select v-model="model.auth.mode" class="select-field w-48" aria-label="Auth mode" :disabled="disabled">
             <option value="none">none</option>
             <option value="inherit">inherit</option>
             <option value="basic">basic</option>
@@ -128,7 +128,7 @@
           <div><label class="input-label">Password</label><input v-model="model.auth.password" type="text" class="input-field" :disabled="disabled"></div>
         </div>
         <div v-else-if="model.auth.mode === 'bearer'">
-          <label class="input-label">Token</label><input v-model="model.auth.token" type="text" class="input-field" :disabled="disabled">
+          <label class="input-label" for="bruno-token">Token</label><input id="bruno-token" v-model="model.auth.token" type="text" class="input-field" :disabled="disabled">
         </div>
         <p v-else class="text-sm text-secondary">{{ model.auth.mode === 'inherit' ? 'Uses credentials inherited from the collection/folder.' : 'No authentication.' }}</p>
       </section>
@@ -208,6 +208,7 @@
           class="input-field font-mono text-xs"
           rows="14"
           spellcheck="false"
+          aria-label="Docs"
           placeholder="# Endpoint&#10;Describe what this request does."
           :disabled="disabled"
           @input="model.docs = ($event.target as HTMLTextAreaElement).value"

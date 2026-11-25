@@ -109,12 +109,21 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByRole('tab', {name:/Assert/}).click()
     assert.ok((await page.locator('select.bruno-cell').count()) > 0, 'assertion operator selector is rendered')
 
+    await page.getByRole('tab', {name:/Auth/}).click()
+    await page.getByLabel('Auth mode').selectOption('bearer')
+    await page.getByLabel('Token').fill('demo-token')
+    await page.getByRole('tab', {name:/Docs/}).click()
+    await page.getByLabel('Docs').fill('# Demo doc')
+
     await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
     await page.waitForFunction(() => (document.querySelector('textarea.font-mono') as HTMLTextAreaElement | null)?.value?.includes('X-Demo'))
     const edited = await raw.inputValue()
     assert.match(edited, /token: demo2/)
     assert.match(edited, /~off: no/)
     assert.match(edited, /X-Demo: abc/)
+    assert.match(edited, /auth: bearer/)
+    assert.match(edited, /token: demo-token/)
+    assert.match(edited, /# Demo doc/)
 
     await page.getByRole('button', {name:'UI editor', exact:true}).click()
     await page.getByRole('tab', {name:/Params/}).waitFor()
