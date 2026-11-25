@@ -17,7 +17,7 @@
 - HTTP(s)、關鍵字與安全 JSON 查詢；支援 status/header/body/JSON/response-time 宣告式回應斷言與試跑。
 - Push 回報與漏報偵測（超過間隔兩倍、至少 60 秒沒回報就轉為 DOWN 並發通知）；
   workspace／environment 隔離、API key 權限、加密且不可回讀的 request／環境 secrets。
-- Bruno `.bru` 宣告式子集 preview／原子 paused import／placeholder export。JavaScript scripts/tests、未支援 auth 與格式會明確拒絕，見 [相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
+- Bruno `.bru` 宣告式子集 preview／原子 paused import／placeholder export；monitor 編輯頁提供 **Bruno 風格 UI 編輯器**（Params/Body/Headers/Auth/Vars/Script/Assert/Tests/Docs/Settings 十分頁、Raw 切換、Bulk Edit、`{{變數}}` 自動完成、頁內環境變數編輯、Send 回應面板）。JavaScript scripts/tests **保留但永不執行**；未支援 auth 與格式會明確拒絕，見 [相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
 - PostgreSQL lease/fencing、多 API／worker、Kubernetes 多節點部署設定。
 
 舊 TCP、Ping、DNS、Docker、gRPC、database、MQTT、Kafka、RabbitMQ、GameDig 等配置可保留，但目前分散 worker 沒有對應 bounded adapter，會顯示 unsupported；不要視為已可排程。HTTP proxy、NTLM/mTLS 同樣未支援，不會悄悄改成直接連線。
