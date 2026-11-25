@@ -142,3 +142,9 @@ R19 ✅ stringify payload 上限 — commit `dd4769f`：
 - 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno API 整合 5/5。
 - 部署：artifact `61f5051aed91a502ea915cb602702ae25449bbecde00dbbfcb14cd0aec5bdf6a`（source `dd4769f`）；
   loader rev259 → app rev260，最終 Healthy/Synced。
+R20 ✅ `{{` 變數自動完成 — commit `0cff909`：
+- 任一欄位輸入 `{{` 後彈出符合的環境變數（secret 遮罩），點選直接替換游標前的 `{{partial`；Esc 關閉，可用滑鼠或鍵盤延續。
+- 瀏覽器測試走過完整流程：建立 EDITOR_VAR → Vars 分頁可見 → URL 輸入 `{{ED` → 選取 → 值正確插入 → 清除後 Send 仍正常。
+- 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno browser 3/3。
+- 部署：artifact `03685814703ac124b939fba5463f7902341bc43e9e4380b03e64ab8da506f42d`（source `0cff909`）；
+  loader rev261 → app rev262，最終 Healthy/Synced。
