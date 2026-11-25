@@ -14,7 +14,9 @@
     "test:integration": "node scripts/test-integration.mjs",
     "typecheck": "nuxt typecheck",
     "start:worker": "node scripts/start-worker.mjs",
-    "bruno:smoke": "node scripts/bruno-smoke.mjs"
+    "bruno:smoke": "node scripts/bruno-smoke.mjs",
+    "test:bruno": "node --import tsx --test tests/bruno-editor-robustness.test.ts tests/bruno-editor-variants.test.ts tests/bruno-export.test.ts tests/bruno-groups.test.ts tests/bruno-request-editor.test.ts tests/bruno.test.ts tests/bruno-trial-response.test.ts tests/assertion-operators.test.ts tests/assertions.test.ts",
+    "test:bruno:integration": "node scripts/test-integration.mjs tests/bruno*.integration.test.ts tests/bruno-editor.integration.test.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.11.0",
