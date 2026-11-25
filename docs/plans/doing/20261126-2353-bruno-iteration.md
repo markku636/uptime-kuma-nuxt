@@ -72,3 +72,8 @@ R7 ✅ Query 值安全編碼 — commit `2b3a690`：
 - 驗證：unit 134/134、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
 - 部署：artifact `9a8607774d6552677ba01d39c0f5e802222c2a7000eb5c715652b89c099e12e3`（source `2b3a690`）；
   loader rev235 → app rev236，最終 Healthy/Synced。
+R8 ✅ Docs 分頁 — commit `dc45219`：
+- `.bru` 的 `docs {}` block 進 DTO（選填）並在 UI 新增 Docs 分頁可讀寫；multiline 與 `{{variable}}` 原文保留，不影響實際送出請求。
+- 驗證：unit 135/135、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
+- 部署：artifact `fe61486b9cbb805c6acdbf76be2060babfce0d9261bbad1d31972c2bdbacb30d`（source `dc45219`）；
+  loader rev237 → app rev238，最終 Healthy/Synced。
