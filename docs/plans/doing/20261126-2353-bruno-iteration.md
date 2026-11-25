@@ -180,3 +180,6 @@ R26 ✅ 瀏覽器覆蓋 Auth / Docs 分頁 — commit `2f3f04b`：
 - 驗證：unit 145/145、typecheck 0 errors、build 成功、Bruno browser 4/4。
 - 部署：artifact `88fcf82dddee99ced0ff4bfe052038b0324b98cf5285cd81b62c176e84ffd38e`（source `2f3f04b`）；
   loader rev271 → app rev272，最終 Healthy/Synced。
+R27 ✅ 50 個斷言的效能 guard（僅測試，不部署） — commit `91fd5ed`：
+- 加入 50 條規則（含 20 條安全 regex、60 KB body）的效能測試，要求 <2 秒；實測約 11 ms。
+- 驗證：unit 146/146、typecheck 0 errors。正式站仍為 R26 的 rev272。
