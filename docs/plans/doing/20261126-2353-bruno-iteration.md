@@ -83,3 +83,9 @@ R9 ✅ UI 編輯保留不執行區塊 — commit `8e83be0`：
 - 驗證：unit 136/136、typecheck 0 errors、build 成功、完整整合 94 pass / 1 skip。
 - 部署：artifact `35a81850e1a2f0f4d4eab874f5063c99271a8e21b64d0120efb5a14e58845c41`（source `8e83be0`）；
   loader rev239 → app rev240，最終 Healthy/Synced。
+R10 ✅ 既有 trial 缺變數 fail closed — commit `6cab92a`：
+- `/api/v1/monitors/{id}/test` 包住 `resolveMonitorConfig()`，缺變數交給 checker 回 `CONFIG_ERROR`，不再 500。
+- 整合測試建立含 `{{MISSING_EDITOR_VAR}}` 的 Bruno monitor 並驗證 trial 回 200/CONFIG_ERROR。
+- 驗證：unit 136/136、typecheck 0 errors、build 成功、完整整合 95 pass / 1 skip。
+- 部署：artifact `888234ae9dc742d6cfbbe8f9fd8fd80c741ebd154f464c8808fe99a33b119e37`（source `6cab92a`）；
+  loader rev241 → app rev242，最終 Healthy/Synced。
