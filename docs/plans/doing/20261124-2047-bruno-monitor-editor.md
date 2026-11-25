@@ -237,3 +237,16 @@ API 整合測試驗證 parse/stringify 的 editor 權限、跨 workspace 環境�
 
 - 部署正式站前取得使用者授權；依既有 GitOps 流程出 artifact，部署後在 `https://uptime.markkulab.net/monitors/61/edit`
   以真實 Bruno monitor 驗證 Raw/UI、環境變數 dialog 與 Send 面板。
+
+### 部署紀錄（2026-11-25 20:57 CST）
+
+- 本機 commit：`a080216`（`iterate/uptime-20261122`，20 檔、+1915/-43）。本機 git 沒有 GitHub 憑證，不 push；正式站以 immutable artifact 為準。
+- Artifact：`88677a197030f3400acb781c75af5ff588252d4059fdaca5e047f64dabbdf804`
+  （203,739,179 bytes；sourceCommit `a080216`、workingTree 無 dirty、node v20.20.0）。
+- GitOps：`uptime-api-demo-20261114/uptime-api` values-lab.yaml
+  loader commit `3e4cd18`（rev221，Job `uptime-artifact-88677a197030-1` Succeeded，
+  短命 artifact server 已立即停止）→ app commit `245db70`（rev222，API 2/2、worker 2/2、
+  fixture 1/1 Healthy，Synced）。本次無 schema 변更，migration 保持 disabled。
+- 正式站人工驗證：瀏覽器到 `https://uptime.markkulab.net/monitors/61/edit` 被導向登入頁，
+  需要使用者本人登入後才能確認 Raw/UI 分頁、環境變數 dialog 與 Send 面板；此項目尚待使用者接手確認，
+  不冒稱已完成 UI 驗收。
