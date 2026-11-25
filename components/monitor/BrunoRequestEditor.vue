@@ -202,6 +202,13 @@
         />
       </section>
 
+      <!-- Settings (preserved, never executed) -->
+      <section v-else-if="activeTab === 'settings'" class="space-y-2">
+        <p class="text-xs text-amber-500">Request-level settings are preserved but not applied by the worker. Use the monitor form for interval and timeout.</p>
+        <pre v-if="ignoredBlock('settings')" class="bruno-response">{{ ignoredBlock('settings') }}</pre>
+        <p v-else class="text-sm text-secondary">No settings block in this request.</p>
+      </section>
+
       <p v-if="model.ignoredBlocks.length" role="status" class="text-xs text-amber-500">Blocks not executed by the worker: {{ model.ignoredBlocks.join(', ') }}. They are kept verbatim in the .bru file but have no editable fields here.</p>
     </div>
 
@@ -266,6 +273,7 @@ const tabs = [
   { key: 'params', label: 'Params' }, { key: 'body', label: 'Body' }, { key: 'headers', label: 'Headers' },
   { key: 'auth', label: 'Auth' }, { key: 'vars', label: 'Vars' }, { key: 'script', label: 'Script' },
   { key: 'assert', label: 'Assert' }, { key: 'tests', label: 'Tests' }, { key: 'docs', label: 'Docs' },
+  { key: 'settings', label: 'Settings' },
 ] as const
 const resultTabs = [{ key: 'headers', label: 'Headers' }, { key: 'body', label: 'Body' }, { key: 'assert', label: 'Assertions' }] as const
 
@@ -315,6 +323,7 @@ const counts = computed(() => ({
   docs: model.value?.docs?.trim() ? 1 : 0,
   script: ignoredBlock('script:') ? 1 : 0,
   tests: ignoredBlock('tests') ? 1 : 0,
+  settings: ignoredBlock('settings') ? 1 : 0,
 }))
 
 const envVariables = ref<Record<string, string>>({}), envSecrets = ref<string[]>([])

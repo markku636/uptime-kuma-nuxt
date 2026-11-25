@@ -179,6 +179,10 @@ script:pre-request {
 tests {
   test('ignored', () => {});
 }
+
+settings {
+  encodeUrl: false
+}
 `
     const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {type:'bruno', name:'Script tabs', active:false, body:source}))
     monitorId = created.data.id
@@ -197,6 +201,8 @@ tests {
     assert.match(await page.locator('pre.bruno-response').first().innerText(), /X-Ignored/)
     await page.getByRole('tab', {name:/Tests/}).click()
     assert.match(await page.locator('pre.bruno-response').first().innerText(), /test\('ignored'/)
+    await page.getByRole('tab', {name:/Settings/}).click()
+    assert.match(await page.locator('pre.bruno-response').first().innerText(), /encodeUrl: false/)
     assert.deepEqual(errors, [])
   } finally {
     await browser.close()
