@@ -89,3 +89,8 @@ R10 ✅ 既有 trial 缺變數 fail closed — commit `6cab92a`：
 - 驗證：unit 136/136、typecheck 0 errors、build 成功、完整整合 95 pass / 1 skip。
 - 部署：artifact `888234ae9dc742d6cfbbe8f9fd8fd80c741ebd154f464c8808fe99a33b119e37`（source `6cab92a`）；
   loader rev241 → app rev242，最終 Healthy/Synced。
+R11 ✅ Ctrl/Cmd+Enter Send — commit `14bf5d8`：
+- 編輯器內按 Ctrl/⌘+Enter 直接觸發 Send；按鈕旁顯示快捷鍵提示；瀏覽器測試改用快捷鍵送請求。
+- 驗證：unit 136/136、typecheck 0 errors、build 成功、Bruno browser 2/2；完整整合的 group drag 為既有 flaky（單獨跑 3/3 通過，與 Bruno 無關）。
+- 部署：artifact `b455617ba460befb529dc6d9a4009d3db4cea106ae1443ab359c80bb9c8c1597`（source `14bf5d8`）；
+  loader rev243 → app rev244，最終 Healthy/Synced。
