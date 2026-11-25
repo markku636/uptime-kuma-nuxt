@@ -19,3 +19,12 @@ test('request envelope clears database plaintext, authenticates scope, preserves
   assert.equal(dto.configuredSecrets.headers,true);assert.equal(dto.name,'renamed');assert.ok(!JSON.stringify(dto).includes('SECRET'))
   assert.ok(!Object.hasOwn(dto,'requestSecrets'));assert.ok(!Object.hasOwn(dto,'url'))
 })
+
+test('Bruno .bru source is only exposed when the caller opts in', () => {
+  const source = 'meta {\n  name: Visible\n  type: http\n}\nget {\n  url: https://example.com\n  body: none\n  auth: none\n}\n'
+  const stored: any = {id: 20, workspaceId: 1, environmentId: 2, type: 'bruno', name: 'bruno', body: source}
+  const record: any = {...stored, ...sealMonitor(stored)}
+  assert.ok(!Object.hasOwn(monitorEditorDTO(record), 'body'))
+  assert.ok(!Object.hasOwn(monitorEditorDTO(record, {includeBody: false}), 'body'))
+  assert.match(monitorEditorDTO(record, {includeBody: true}).body, /res\.status|https:\/\/example\.com/)
+})
