@@ -100,3 +100,9 @@ R12 ✅ API key 不讀 .bru 原文 — commit `c01aa3f`：
 - 驗證：unit 136/136、typecheck 0 errors、build 成功、完整整合 96 pass / 1 skip。
 - 部署：artifact `179895cbae4d21652079b51ea55ee3825e2e516d3c0180df12481d0a8fbc8194`（source `c01aa3f`）；
   loader rev245 → app rev246，最終 Healthy/Synced。
+R13 ✅ matches/notMatches（安全比對） — commit `9fdfa36`：
+- 新增 `server/utils/safe-pattern.ts`：線性時間 DP 比對，支援字面/`.`/`[]`/轉義/`^$`/`*+?`；拒絕群組、alternation、backref、lookaround、`{}` 等量詞，避免 ReDoS；值上限 64 KiB、pattern 256 bytes。
+- 貫穿 shared type、zod、evaluateRule、parser、Raw/UI 與兩個編輯器；不支援的 pattern fail closed 為 type_mismatch。
+- 驗證：unit 140/140、typecheck 0 errors、build 成功、 Bruno 整合全綠；完整整合的 group drag 仍為既有 flaky（單獨跑通過）。
+- 部署：artifact `de86d2347ffa53444cf4d783f29e4985f4302ee6d7ee7480ac77dee81972ae97`（source `9fdfa36`）；
+  loader rev247 → app rev248，最終 Healthy/Synced。
