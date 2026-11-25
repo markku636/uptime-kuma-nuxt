@@ -154,3 +154,9 @@ R21 ✅ Insert 焦點修正 — commit `543f1c3`：
 - 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno browser 3/3。
 - 部署：artifact `a5af2dcc719dfda694f37d78ca707a95d845a012c341495401f1ca7dd809d1c7`（source `543f1c3`）；
   loader rev263 → app rev264，最終 Healthy/Synced。
+R22 ✅ 23 個斷言端到端 + 上限提高到 50 — commit `d36adf0`：
+- parser / schema / 編輯器 / exporter 的 assert 上限由 20 提高至 50（仍有大小與複雜度上限）。
+- 新增 `tests/bruno-assertions.integration.test.ts`：本機 HTTP fixture 回傳 JSON， Bruno trial 一次驗證 status/responseTime/header/text/json/in/notIn/between/length/型別等 23 條全部通過，trial actual 有值。
+- 驗證：unit 142/142（既有 21 條上限測試改 51）、typecheck 0 errors、build 成功、完整整合 99 pass / 1 skip。
+- 部署：artifact `adc63e0c9c8e3bfc91ae64e44f7a89f2d27bad79f0eb1b9e63f9d64768775f53`（source `d36adf0`）；
+  loader rev265 → app rev266，最終 Healthy/Synced。
