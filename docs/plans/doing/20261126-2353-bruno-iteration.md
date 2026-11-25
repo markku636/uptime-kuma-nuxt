@@ -296,3 +296,4 @@ R54 ✅ 紅act 最終補強 — commit `56db886`：
 - 待持有人：到 https://uptime.markkulab.net 登入後人工驗收 monitor 61 的畫面。
 R56 ✅ 匯出再匯回測試（僅測試，不部署） — 新增 API 整合測試：下載含 literal bearer/body token 的 Bruno monitor，確認無明文、secret 名稱存在，補值後重新解析為一個有效 request。
 R58 ✅ 兩次完整回歸（驗證輪） — 兩次皆 105 pass / 0 fail / 1 skip；README 更新不需部署，正式站仍 rev300。
+R59 ✅ 部署產物檢查（驗證輪） — `.output/public/_nuxt/D_T4rA_u.js` 含 `Copy .bru` 與 `Unsaved changes`，確認 rev300 帶到最新編輯器程式。
