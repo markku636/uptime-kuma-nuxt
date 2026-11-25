@@ -226,3 +226,30 @@ settings {
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
+
+test('browser shows a readable message for an invalid .bru request', {timeout:60000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined, monitorId: number | undefined
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-invalid-ui')
+    scope = await workspace(identity, 'Bruno invalid UI')
+    const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {
+      type: 'bruno', name: 'Invalid Bruno', active: false, body: 'meta {\n  name: Invalid\n  type: http\n}\n',
+    }))
+    monitorId = created.data.id
+    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage()
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+    await page.getByText(/single GET\/POST/).waitFor()
+    assert.equal(await page.getByRole('tab', {name:/Params/}).count(), 0)
+  } finally {
+    await browser.close()
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})

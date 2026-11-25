@@ -368,12 +368,36 @@ const urlPreview = computed(() => {
   return previewEnvironmentVariables(source, envVariables.value, envSecrets.value)
 })
 
+const issueMessages: Record<string, string> = {
+  HTTP_BLOCK_REQUIRED: 'A single GET/POST/… request block is required.',
+  DUPLICATE_HTTP_BLOCK: 'Only one HTTP method block is allowed.',
+  UNSUPPORTED_BLOCK: 'This .bru block is not supported.',
+  UNSUPPORTED_SYNTAX: 'The .bru syntax could not be read.',
+  INVALID_SYNTAX: 'The .bru syntax is invalid.',
+  MISSING_VARIABLE: 'A variable used in this request is not defined in the environment.',
+  UNSUPPORTED_VARIABLE: 'A variable reference is malformed.',
+  UNSUPPORTED_ASSERTION: 'An assertion uses an unsupported expression or value.',
+  UNSUPPORTED_METHOD: 'This HTTP method is not supported.',
+  UNSUPPORTED_AUTH: 'This authentication mode is not supported.',
+  UNSUPPORTED_BODY: 'This body mode is not supported.',
+  INVALID_JSON_BODY: 'The JSON body is invalid after variables are resolved.',
+  AMBIGUOUS_AUTH: 'Use the Auth tab for credentials instead of an Authorization header.',
+  FILE_TOO_LARGE: 'The request is too large.',
+  REQUEST_COUNT: 'Exactly one request is required.',
+  UNSUPPORTED_PARAMETER: 'A parameter is invalid or has no matching URL token.',
+  INVALID_FIELD: 'A field has an invalid value.',
+}
+function issueMessage(issue: {code: string; field?: string}) {
+  const text = issueMessages[issue.code] || issue.code.replace(/_/g, ' ').toLowerCase()
+  return issue.field ? `${text} (${issue.field})` : text
+}
+
 async function callApi(path: string, body: Record<string, unknown>) {
   error.value = ''
   busy.value = true
   try {
     const response = await $fetch<{ data: { model?: BrunoRequestModel | null; source?: string | null; issues: Array<{ code: string; field?: string }> } }>(path, { method: 'POST', body })
-    if (response.data?.issues?.length) throw new Error(response.data.issues.map(issue => issue.code).join(', '))
+    if (response.data?.issues?.length) throw new Error(response.data.issues.map(issueMessage).join(' '))
     return response.data
   } finally { busy.value = false }
 }
