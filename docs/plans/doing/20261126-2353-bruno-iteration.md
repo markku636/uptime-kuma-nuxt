@@ -257,3 +257,10 @@ R43 ✅ 三次完整整合全綠（驗證輪，不部署） — 三次皆 103 pa
 | N1 | Script / Tests 內容只能唯讀，不能在 UI 直接編集 | 需在不破壞「永不執行」政策下設計雙向 block 編輯，優先留在 Raw |
 | N2 | multipart/form-data、file、GraphQL、XML、OAuth/digest/NTLM/mTLS | 原計劃明確排除；若要支援需新的安全邊界與測試 |
 | N3 | 正式站使用者人工驗收（monitor 61） | 需要持有人在 https://uptime.markkulab.net 登入後確認 Raw/UI、env dialog、Send 畫面 |
+R46 ✅ 匯出完整去識別 — commit `f0b4802`：
+- Bruno monitor 匯出時，URL、params、所有 header、json/text body、pre-request vars 與 auth 的**字面值**都轉成 secret placeholder；已有 `{{var}}` 保持原樣；沒有敏感值時原文不改動。
+- `jsonToBruV2` 失敗改回安全 `BrunoExportError`，不再 500。
+- 新增 unit 與 API 整合測試，確認 download 不含 literal bearer token 且回傳 secret 名稱。
+- 驗證：unit 153/153、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
+- 部署：artifact `1cd5424a166565d4e70d5748ac22a8effadd4c58b318d9ea5e39db8b3ad961dd`（source `f0b4802`）；
+  loader rev291 → app rev292，最終 Healthy/Synced。
