@@ -59,7 +59,7 @@
           <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="toggleBulk('params')">{{ bulkKind === 'params' ? 'Table Edit' : 'Bulk Edit' }}</button>
         </div>
         <textarea v-if="bulkKind === 'params'" v-model="bulkText" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="name: value" :disabled="disabled" />
-        <table v-else class="bruno-table">
+        <div v-else class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-24">Type</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.params" :key="index">
@@ -75,7 +75,7 @@
               <td><button type="button" class="bruno-icon" :disabled="disabled" aria-label="Remove parameter" @click="model.params.splice(index, 1)">×</button></td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
         <button v-if="bulkKind !== 'params'" type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('params')">+ Add parameter</button>
       </section>
 
@@ -101,7 +101,7 @@
           <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="toggleBulk('headers')">{{ bulkKind === 'headers' ? 'Table Edit' : 'Bulk Edit' }}</button>
         </div>
         <textarea v-if="bulkKind === 'headers'" v-model="bulkText" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="Name: value" :disabled="disabled" />
-        <table v-else class="bruno-table">
+        <div v-else class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.headers" :key="index">
@@ -111,7 +111,7 @@
               <td><button type="button" class="bruno-icon" :disabled="disabled" aria-label="Remove header" @click="model.headers.splice(index, 1)">×</button></td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
         <button v-if="bulkKind !== 'headers'" type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('headers')">+ Add header</button>
       </section>
 
@@ -142,7 +142,7 @@
           <p class="text-xs text-secondary">Pre-request variables for this request (post-response vars are not executed).</p>
           <button type="button" class="btn btn-outline text-xs" @click="envDialogOpen = true">Edit environment variables</button>
         </div>
-        <table class="bruno-table">
+        <div class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.vars" :key="index">
@@ -152,7 +152,7 @@
               <td><button type="button" class="bruno-icon" :disabled="disabled" aria-label="Remove variable" @click="model.vars.splice(index, 1)">×</button></td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('vars')">+ Add variable</button>
         <div v-if="environmentNames.length" class="rounded-lg border border-[color-mix(in_srgb,currentColor_15%,transparent)] p-2 space-y-1">
           <p class="text-xs text-secondary">Environment variables · focus a field, then click Insert</p>
@@ -176,7 +176,7 @@
 
       <!-- Assert -->
       <section v-else-if="activeTab === 'assert'" class="space-y-2">
-        <table class="bruno-table">
+        <div class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Expr</th><th class="w-32">Operator</th><th>Value</th><th>Description</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.assertions" :key="index">
@@ -192,7 +192,7 @@
               <td><button type="button" class="bruno-icon" :disabled="disabled" aria-label="Remove assertion" @click="model.assertions.splice(index, 1)">×</button></td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('assert')">+ Add assertion</button>
       </section>
 

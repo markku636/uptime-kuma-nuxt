@@ -265,3 +265,31 @@ test('browser shows a readable message for an invalid .bru request', {timeout:60
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
+
+test('browser renders the editor at mobile width with scrollable tables', {timeout:60000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined, monitorId: number | undefined
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-mobile-ui')
+    scope = await workspace(identity, 'Bruno mobile UI')
+    const source = `meta {\n  name: Mobile\n  type: http\n}\nget {\n  url: http://127.0.0.1:1/health\n  body: none\n  auth: none\n}\nparams:query {\n  token: abc\n}\n`
+    const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {type:'bruno', name:'Mobile', active:false, body:source}))
+    monitorId = created.data.id
+    const context = await browser.newContext({viewport:{width:390,height:844}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage()
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    assert.equal(await page.locator('.bruno-editor .overflow-x-auto').count() > 0, true)
+    assert.equal(await page.getByPlaceholder('Name').first().isVisible(), true)
+    await page.screenshot({path:'/tmp/opencode/bruno-mobile.png', fullPage:true})
+  } finally {
+    await browser.close()
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})
