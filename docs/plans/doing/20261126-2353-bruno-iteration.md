@@ -282,3 +282,8 @@ R51 ✅ 第三輪審查修復 — commit `2b9d585`：
 - 部署：artifact `0db75cb71ebf698e5a1507e9a48baac30c00830691bc38cdfc75f9c325063817`（source `2b9d585`）；
   loader rev297 → app rev298，最終 Healthy/Synced。
 R52 ✅ 最終完整回歸（驗證輪，不部署） — unit 156/156、typecheck 0 errors、build 成功、三次完整整合皆 104 pass / 0 fail / 1 skip。正式站仍為 rev298。
+R54 ✅ 紅act 最終補強 — commit `56db886`：
+- auth 改通用處理所有 provider（apikey/awsv4/oauth2…）的欄位；`{{` 判斷改完整變數引用，避免 `p{{ss` 被誤當引用而保留。
+- 新增 apikey auth 紅act測試；unit 157/157、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
+- 部署：artifact `fb7d51d26464ff68c4ac3ab77b27c9d1e3c5d6141b0f6f1b98e126fa3f848880`（source `56db886`）；
+  loader rev299 → app rev300，最終 Healthy/Synced。
