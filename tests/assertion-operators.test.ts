@@ -111,3 +111,17 @@ test('matches and notMatches evaluate through the safe matcher and fail closed o
   assert.equal(check('matches', true, 123, '^ok').passed, false)
   assert.equal(check('matches', false, undefined, '^ok').passed, false)
 })
+
+test('trial-only actual values are capped and absent from scheduled evaluations', async () => {
+  const { evaluateAssertions } = await import('../server/utils/assertions')
+  const set = {version: 1 as const, mode: 'all' as const, rules: [rule('equals', 'alpha')]}
+  const response = {status: 200, elapsed: 5, headers: {}, body: JSON.stringify({value: 'alpha'})}
+  const scheduled = evaluateAssertions(set, response)
+  assert.equal(scheduled.rules[0]!.actual, undefined)
+
+  const trial = evaluateAssertions(set, response, true)
+  assert.equal(trial.rules[0]!.actual, 'alpha')
+
+  const large = evaluateAssertions({...set, rules: [rule('isString', undefined)]}, {...response, body: JSON.stringify({value: 'x'.repeat(5000)})}, true)
+  assert.equal(String(large.rules[0]!.actual).length, 513)
+})

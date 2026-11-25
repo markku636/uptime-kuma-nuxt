@@ -6,5 +6,5 @@ export type JsonValue = string | number | boolean | null | JsonValue[] | { [key:
 export interface AssertionRule { id:string; source:typeof assertionSources[number]; path?:string; operator:typeof assertionOperators[number]; expected?:JsonValue }
 export interface AssertionSet { version:1; mode:'all'|'any'; rules:AssertionRule[] }
 export type AssertionReason = 'passed'|'missing'|'type_mismatch'|'value_mismatch'|'unexpected_value'|'not_null'|'is_null'
-export interface AssertionRuleResult { ruleId:string; source:AssertionRule['source']; operator:AssertionRule['operator']; passed:boolean; reason:AssertionReason }
+export interface AssertionRuleResult { ruleId:string; source:AssertionRule['source']; operator:AssertionRule['operator']; passed:boolean; reason:AssertionReason; actual?:JsonValue }
 export interface AssertionEvaluation { passed:boolean; rules:AssertionRuleResult[]; error?:'INVALID_JSON'|'CONFIG_ERROR' }

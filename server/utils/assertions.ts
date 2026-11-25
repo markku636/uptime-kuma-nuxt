@@ -148,7 +148,15 @@ export function evaluateRule(rule:AssertionRule,exists:boolean,value:unknown):As
   }
   return {ruleId:rule.id,source:rule.source,operator:rule.operator,passed,reason:passed?'passed':reason}
 }
-export function evaluateAssertions(input:unknown,response:AssertionResponse):AssertionEvaluation{
+/** Trial-only actual values are capped so a large response body cannot bloat the API result. */
+function trialActual(value: unknown): JsonValue | undefined {
+  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return value as JsonValue
+  if (typeof value === 'string') return value.slice(0, 512) + (value.length > 512 ? '…' : '')
+  try { const text = JSON.stringify(value); return text.slice(0, 512) + (text.length > 512 ? '…' : '') }
+  catch { return undefined }
+}
+
+export function evaluateAssertions(input:unknown,response:AssertionResponse,includeActual=false):AssertionEvaluation{
   const parsed=assertionsSchema.safeParse(input)
   if(!parsed.success)return {passed:false,rules:[],error:'CONFIG_ERROR'}
   const set=parsed.data as AssertionSet;let json:unknown
@@ -159,7 +167,12 @@ export function evaluateAssertions(input:unknown,response:AssertionResponse):Ass
     if(rule.source==='json')selected=selectValue(json,rule.path!)
     else if(rule.source==='header')selected={exists:Object.hasOwn(headers,rule.path!.toLowerCase()),value:headers[rule.path!.toLowerCase()]}
     else selected={exists:true,value:rule.source==='status'?response.status:rule.source==='responseTime'?response.elapsed:response.body}
-    return evaluateRule(rule,selected.exists,selected.value)
+    const result=evaluateRule(rule,selected.exists,selected.value)
+    if(includeActual&&selected.exists){
+      const actual=trialActual(selected.value)
+      if(actual!==undefined)result.actual=actual
+    }
+    return result
   })
   return {passed:!rules.length||(set.mode==='all'?rules.every(rule=>rule.passed):rules.some(rule=>rule.passed)),rules}
 }

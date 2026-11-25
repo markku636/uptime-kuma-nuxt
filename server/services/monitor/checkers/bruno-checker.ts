@@ -116,7 +116,7 @@ export async function checkBruno(monitor: any, start: number, externalSignal?: A
     if (!parsedAssertions.success) {
       return { status: 0, ping: Date.now() - start, msg: messages.CONFIG_ERROR!, code: 'CONFIG_ERROR' }
     }
-    let evaluation = evaluateAssertions(parsedAssertions.data, response)
+    let evaluation = evaluateAssertions(parsedAssertions.data, response, monitor.includeTrialResponse === true)
     if (evaluation.error) {
       return withTrialResponse({ status: 0, ping: Date.now() - start, msg: messages[evaluation.error] || messages.CONFIG_ERROR!, code: evaluation.error, assertionResults: evaluation })
     }

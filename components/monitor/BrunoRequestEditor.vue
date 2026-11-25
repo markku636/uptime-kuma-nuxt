@@ -225,6 +225,7 @@
       <ul class="text-xs space-y-0.5">
         <li v-for="(rule, index) in trialResult.assertionResults.rules || []" :key="index" :class="rule.passed ? 'text-emerald-500' : 'text-red-400'">
           {{ rule.passed ? '✓' : '✗' }} {{ rule.source }}<template v-if="rule.path">.{{ rule.path }}</template> {{ rule.operator }} <code v-if="rule.expected !== undefined">{{ JSON.stringify(rule.expected) }}</code>
+          <span v-if="rule.actual !== undefined" class="text-secondary">· actual <code>{{ typeof rule.actual === 'string' ? rule.actual : JSON.stringify(rule.actual) }}</code></span>
         </li>
       </ul>
     </div>
