@@ -224,3 +224,9 @@ R35 ✅ Bruno monitor 可匯出 — commit `8da6f2d`：
   loader rev283 → app rev284，最終 Healthy/Synced。
 R36 ✅ 穩定 drag 整合測試（僅測試，不部署） — commit `d3ec9f6`：
 - group drag 改用最多 3 次重試與新 boundingBox，消除常見的 flaky；兩次完整整合中一次全綠、一次剩 unrelated badges 時序 flaky（與 Bruno 無關）。
+R37 ✅ Unsaved changes 提示 — commit `9cbf36f`：
+- 任一欄位輸入即顯示 Unsaved changes，Reset 後清除；避免誤以為已存檔。
+- 瀏覽器測試驗證提示出現與消失。
+- 驗證：unit 150/150、typecheck 0 errors、build 成功、Bruno browser 5/5。
+- 部署：artifact `e5f95b7195e2ba7e9c818a738fd96b14fdd3a9a3f1734ef6d834739f566d9aa1`（source `9cbf36f`）；
+  loader rev285 → app rev286，最終 Healthy/Synced。
