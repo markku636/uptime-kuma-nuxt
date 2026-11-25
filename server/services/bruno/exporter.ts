@@ -29,7 +29,7 @@ export function monitorAssertionRules(monitor:any,fail:(code:string)=>never):Ass
     if(match[2])rules.push({id:'status-min',source:'status',operator:'gte',expected:Number(match[1])},{id:'status-max',source:'status',operator:'lte',expected:Number(match[2])})
     else rules.push({id:'status',source:'status',operator:'equals',expected:Number(match[1])})
   }
-  if(rules.length>20||!assertionsSchema.safeParse({version:1,mode:'all',rules}).success)fail('UNSUPPORTED_ASSERTIONS')
+  if(rules.length>50||!assertionsSchema.safeParse({version:1,mode:'all',rules}).success)fail('UNSUPPORTED_ASSERTIONS')
   return rules
 }
 /** Placeholder manifest for sharing outside the workspace: every request value becomes a secret placeholder. */

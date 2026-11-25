@@ -224,7 +224,7 @@ export async function modelToSource(
     const vars = asPairs(input.vars, 'vars', 200)
     for (const pair of vars) if (pair.enabled && !validVariableName(pair.name)) fail('INVALID_VARIABLES', 'vars')
 
-    const assertions = asArray(input.assertions, 'assertions', 20).map(pair => {
+    const assertions = asArray(input.assertions, 'assertions', 50).map(pair => {
       const row = asRecord(pair, 'assertions')
       if (typeof row.enabled !== 'boolean') fail('INVALID_FIELD', 'assertions.enabled')
       const operator = asLine(row.operator, 'assertions.operator', 32)

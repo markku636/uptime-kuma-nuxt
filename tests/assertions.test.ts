@@ -48,7 +48,7 @@ test('invalid config, excessive complexity and unknown execution features fail c
   assert.equal(assertionsSchema.safeParse(valid).success,true)
   for(const config of [{...valid,rules:[{...rule('equals',0),operator:'regex'}]},{...valid,rules:[{...rule('equals',0),source:'eval'}]},
     {...valid,rules:[{...rule('equals',0),expected:undefined}]},{...valid,rules:[rule('equals',0),rule('equals',1)]},
-    {...valid,rules:Array.from({length:21},(_,i)=>({...rule('equals',0),id:String(i)}))},
+    {...valid,rules:Array.from({length:51},(_,i)=>({...rule('equals',0),id:String(i)}))},
     {...valid,rules:[{...rule('equals',0),path:'$.prototype'}]},
     {...valid,rules:[{id:'bad',source:'status',operator:'equals',expected:'200'}]},
     {...valid,rules:[{...rule('equals',0),expected:'x'.repeat(5000)}]}])assert.equal(assertionsSchema.safeParse(config).success,false)

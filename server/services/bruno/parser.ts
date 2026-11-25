@@ -125,7 +125,7 @@ function inheritedPairs(layers:any[],field:'headers'|'query'|'path'){
 }
 function assertionRules(pairs:any):AssertionRule[]{
   if(pairs===undefined)return []
-  if(!Array.isArray(pairs)||pairs.length>20)fail('ASSERTION_LIMIT','assert')
+  if(!Array.isArray(pairs)||pairs.length>50)fail('ASSERTION_LIMIT','assert')
   const result:AssertionRule[]=[]
   for(const pair of pairs){
     keys(pair,['name','value','enabled'],'assert');if(typeof pair.enabled!=='boolean')fail('INVALID_ASSERTION','assert');if(!pair.enabled)continue

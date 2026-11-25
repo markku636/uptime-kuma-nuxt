@@ -91,7 +91,7 @@ const ruleSchema=z.object({id:z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),source:z
     else if(typeof rule.expected!=='number')ctx.addIssue({code:'custom',message:'Status/time comparisons require a number'})
   }
 })
-export const assertionsSchema=z.object({version:z.literal(1),mode:z.enum(['all','any']),rules:z.array(ruleSchema).max(20)}).strict().superRefine((set,ctx)=>{
+export const assertionsSchema=z.object({version:z.literal(1),mode:z.enum(['all','any']),rules:z.array(ruleSchema).max(50)}).strict().superRefine((set,ctx)=>{
   if(new Set(set.rules.map(rule=>rule.id)).size!==set.rules.length)ctx.addIssue({code:'custom',message:'Rule IDs must be unique'})
 })
 export interface AssertionResponse{status:number;elapsed:number;headers:Record<string,string>;body:string}
