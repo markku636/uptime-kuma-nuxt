@@ -1,0 +1,109 @@
+import {test} from 'node:test'
+import assert from 'node:assert/strict'
+import http from 'node:http'
+import {chromium} from 'playwright'
+import {base,user,workspace,cleanup,request,data,type Identity,type Scope} from './helpers/http'
+
+const requestSource = (origin: string) => `meta {
+  name: Editor Bruno
+  type: http
+}
+
+get {
+  url: ${origin}/health
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+`
+
+test('browser edits a Bruno request with the tabbed editor, saves and tests it', {timeout:90000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined, monitorId: number | undefined, hits = 0
+  const fixture = http.createServer(async (req, res) => {
+    hits++
+    res.setHeader('content-type', 'application/json')
+    res.setHeader('x-fixture', 'ready')
+    res.end(JSON.stringify({ok: true, path: req.url}))
+  })
+  await new Promise<void>(r => fixture.listen(0, '127.0.0.1', r))
+  const origin = `http://127.0.0.1:${(fixture.address() as any).port}`
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-editor-browser')
+    scope = await workspace(identity, 'Bruno Editor Browser')
+    const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {
+      type: 'bruno', name: 'Editor Bruno', active: false, body: requestSource(origin),
+    }))
+    monitorId = created.data.id
+
+    const context = await browser.newContext({viewport:{width:1440,height:1100}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage(), errors: string[] = []
+    page.on('pageerror', error => errors.push(error.message))
+
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+    await page.getByRole('button', {name:'UI editor', exact:true}).waitFor()
+    const raw = page.locator('textarea.font-mono').first()
+    assert.match(await raw.inputValue(), /res\.status: eq 200/, 'existing .bru source must be visible to editors')
+    assert.match(await raw.inputValue(), new RegExp(origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+
+    await page.getByRole('button', {name:'UI editor', exact:true}).click()
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByRole('button', {name:'+ Add parameter', exact:true}).click()
+    await page.getByPlaceholder('Name').last().fill('token')
+    await page.getByPlaceholder('Value').last().fill('demo')
+
+    await page.getByRole('tab', {name:/Headers/}).click()
+    await page.getByRole('button', {name:'+ Add header', exact:true}).click()
+    await page.getByPlaceholder('Name').last().fill('X-Demo')
+    await page.getByPlaceholder('Value').last().fill('abc')
+
+    await page.getByRole('tab', {name:/Vars/}).click()
+    await page.getByRole('button', {name:'Edit environment variables', exact:true}).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.waitFor()
+    assert.match(await dialog.innerText(), /environment/i)
+    await dialog.getByPlaceholder('VARIABLE_NAME').first().fill('EDITOR_VAR')
+    await dialog.getByPlaceholder('value', {exact:true}).first().fill('from-editor')
+    await dialog.getByRole('button', {name:/Save/i}).first().click()
+    await dialog.getByText(/reschedul/i).waitFor()
+    await dialog.getByRole('button', {name:'Close', exact:true}).first().click()
+    await dialog.waitFor({state:'hidden'})
+
+    await page.getByRole('tab', {name:/Assert/}).click()
+    assert.ok((await page.locator('select.bruno-cell').count()) > 0, 'assertion operator selector is rendered')
+
+    await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
+    await page.waitForFunction(() => (document.querySelector('textarea.font-mono') as HTMLTextAreaElement | null)?.value?.includes('X-Demo'))
+    const edited = await raw.inputValue()
+    assert.match(edited, /token: demo/)
+    assert.match(edited, /X-Demo: abc/)
+
+    await page.getByRole('button', {name:'Send request', exact:true}).click()
+    await page.getByText(/Status\s*200/).waitFor()
+    assert.equal(hits, 1)
+
+    await page.getByRole('button', {name:'Save Monitor', exact:true}).click()
+    await page.waitForURL(/\/monitors$/)
+    const saved = await data(await request(`/api/v1/monitors/${monitorId}`, 'GET', identity, scope))
+    assert.match(saved.data.body, /X-Demo: abc/, 'PUT persisted the serialized .bru')
+
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+    await page.getByRole('button', {name:'UI editor', exact:true}).waitFor()
+    assert.match(await page.locator('textarea.font-mono').first().inputValue(), /X-Demo: abc/, 'saved .bru survives reload')
+    assert.deepEqual(errors, [])
+  } finally {
+    await browser.close()
+    fixture.closeAllConnections()
+    await new Promise<void>(r => fixture.close(() => r()))
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})

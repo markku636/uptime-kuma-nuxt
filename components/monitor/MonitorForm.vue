@@ -81,25 +81,17 @@
     <!-- Bruno declarative request -->
     <div v-if="form.type === 'bruno'" class="section-card space-y-3">
       <h2 class="section-title">Bruno request</h2>
-      <p class="text-sm text-secondary">Paste a single declarative <code>.bru</code> request. Scripts, tests and post-response variables are ignored. Variables use this environment's variables/secrets.</p>
-      <textarea
+      <p class="text-sm text-secondary">Edit the declarative <code>.bru</code> request as raw text or with Bruno-style tabs. Scripts, tests and post-response variables are ignored. Variables use this environment's variables/secrets.</p>
+      <BrunoRequestEditor
+        ref="brunoEditor"
         v-model="form.body"
-        class="input-field font-mono text-xs"
-        rows="14"
-        maxlength="131072"
-        spellcheck="false"
-        placeholder="meta {&#10;  name: Example&#10;}&#10;get {&#10;  url: https://example.com/health&#10;}&#10;assert {&#10;  res.status: eq 200&#10;}"
+        :environment-id="brunoEnvironmentId"
+        :disabled="loading || !canEdit"
+        :trial-result="trialResult"
+        :trial-loading="trialLoading"
+        :trial-error="trialError"
+        @send="handleSubmit(true)"
       />
-      <div class="flex flex-wrap items-center gap-2">
-        <button type="button" class="btn btn-outline" :disabled="trialLoading || loading || !form.body" @click="handleSubmit(true)">
-          {{ trialLoading ? 'Sending…' : 'Send request' }}
-        </button>
-        <span v-if="trialResult" class="text-sm">
-          {{ trialResult.status===1?'Check passed':'Check failed' }} · {{ trialResult.code }} · {{ Math.round(trialResult.ping) }} ms
-        </span>
-      </div>
-      <p v-if="trialError" role="alert" class="text-sm text-red-400">{{ trialError }}</p>
-      <MonitorAssertionResults v-if="trialResult?.assertionResults" :result="trialResult.assertionResults" />
     </div>
 
     <!-- HTTP Settings -->
@@ -1124,7 +1116,8 @@
 
 <script setup lang="ts">
 import type { AssertionSet } from '../../shared/types/assertions'
-const { canEdit, current: currentWorkspace } = useWorkspace()
+import BrunoRequestEditor from './BrunoRequestEditor.vue'
+const { canEdit, current: currentWorkspace, environment: currentEnvironment } = useWorkspace()
 interface Props {
   initialData?: any
   loading?: boolean
@@ -1137,9 +1130,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits(['submit'])
+const brunoEditor = ref<any>(null)
 const assertions=ref<AssertionSet|null>(props.initialData?.assertions||null)
 const assertionsValid=ref(true),clearSecrets=ref<string[]>([]),trialLoading=ref(false),trialError=ref(''),trialResult=ref<any>(null)
 const configuredFields=computed(()=>Object.keys(props.initialData?.configuredSecrets||{}).filter(key=>props.initialData.configuredSecrets[key]))
+const brunoEnvironmentId=computed(()=>Number(props.initialData?.environmentId || currentEnvironment.value?.id || 0)||undefined)
 const secretFieldNames=['url','body','headers','basicAuthUser','basicAuthPass','authConfig','grpcUrl','grpcBody','grpcMetadata','databaseConnectionString','databaseQuery','mqttUsername','mqttPassword','kafkaBrokers','kafkaUsername','kafkaPassword','rabbitmqNodes','rabbitmqUsername','rabbitmqPassword','redisConnectionString','radiusSecret','dockerDaemon','dockerHost','queryParams']
 
 
@@ -1461,6 +1456,11 @@ const clusterNodes = computed(() => {
 
 const handleSubmit = async (trial=false) => {
   if (!canEdit.value || !assertionsValid.value) return
+  // UI-mode edits only live in the child component until serialized back to .bru.
+  if (form.type === 'bruno' && brunoEditor.value?.sync) {
+    try { await brunoEditor.value.sync() }
+    catch (failure: any) { trialError.value = failure?.message || 'Unable to serialize the Bruno request'; return }
+  }
   const data: any = {
     type: form.type,
     name: form.name,

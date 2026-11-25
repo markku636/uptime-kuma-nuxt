@@ -31,6 +31,8 @@ export interface CheckResult {
   msg: string
   code?: string
   assertionResults?: import('../../../shared/types/assertions').AssertionEvaluation
+  // Only ever populated for in-page trials with includeTrialResponse; never for scheduled checks.
+  response?: { status: number; headers: Record<string, string>; body: string; elapsed: number; truncated?: boolean }
   // Optional outbox metadata for response-time / resend notifications
   eventType?: string
   threshold?: number

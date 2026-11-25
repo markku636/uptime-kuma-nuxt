@@ -2,7 +2,14 @@
 
 > 建立時間：2026-11-24 20:47 CST
 > 目標站：`https://uptime.markkulab.net`（SSG/SPA 已可連線，登入後為 SealWatch；本計劃完成前不改程式）
-> 狀態：🟡 待核准（審核後才進實作）
+> 狀態：🟢 實作中（2026-11-25 使用者核准完整改造，並確認 editor 可讀取既有 `.bru` 原文）
+>
+> 2026-11-25 完成實作與本機驗證（尚未部署正式站；部署需使用者授權）。
+>
+> 2026-11-25 補充決策：
+> - 範圍照本計劃全數執行（Raw/UI、六個 tab、內嵌環境變數、Send 回應面板）。
+> - 既有 Bruno monitor 的 `body` 透過 `monitorEditorDTO()` 回傳給非 viewer session（editor+），讓編輯器一進來就顯示原始 `.bru`；viewer 仍走 `monitorSummary()`，看不到 request 內容。
+> - UI 停留在 UI 模式直接按 Save/Send 時，由 `BrunoRequestEditor.sync()` 先序列化回 `form.body`，避免存到舊原文。
 > 參考：[Bruno 深度整合 Spec](../specs/2026-11-15-bruno-deep-integration.md)、[相容矩陣](../../BRUNO_COMPATIBILITY.md)、[實作紀錄](../../plans/doing/2026-11-22-uptime-iteration.md)
 
 ---
@@ -191,3 +198,42 @@ Raw 裡的 `script:*` / `tests` / `vars:post-response` / 非預設 `settings` �
 ---
 
 **核准後才進實作**；實作依 `project-development` 流程，子代理分工按 fourth section 的 A/B/C 邊界拆，回來後由規劃者親自看 diff 與測試結果，不把回報當證據。
+
+---
+
+## 八、實作與驗證紀錄（2026-11-25）
+
+### 交付檔案
+
+- Server：`server/services/bruno/request-editor.ts`、`server/api/v1/bruno/request/{parse,stringify}.post.ts`、
+  `server/services/monitor/checkers/bruno-checker.ts`（`clampTrialResponse()`）、`server/services/monitor/checker.ts`、
+  `server/utils/monitor-trial.ts`、`server/api/v1/monitors/test.post.ts`、`server/utils/monitor-secrets.ts`、
+  `shared/types/bruno.ts`。
+- UI：`components/monitor/BrunoRequestEditor.vue`、`components/monitor/EnvironmentVariablesDialog.vue`、
+  `components/monitor/MonitorForm.vue`、`composables/useEnvironmentVariables.ts`、`pages/settings/workspaces.vue`。
+- 測試：`tests/bruno-request-editor.test.ts`、`tests/bruno-trial-response.test.ts`、
+  `tests/environment-variables.test.ts`、`tests/bruno-editor.integration.test.ts`、
+  `tests/bruno-editor-browser.integration.test.ts`。
+
+### 驗證證據（baseline → 完成）
+
+| 項目 | Baseline | 完成後 |
+| --- | --- | --- |
+| `npm test` | 61/61 | **77/77 pass, 0 fail** |
+| `npm run typecheck` | 0 errors | **0 errors** |
+| `npm run build` | 成功 | **成功**（33.4 MB output） |
+| `npm run test:integration`（`TEST_PG_ADMIN_URL=postgresql://uptime@127.0.0.1:55464/postgres`） | 未量測 | **93 pass / 0 fail / 1 skip（scale）** |
+
+新增瀏覽器整合測試實際走過：既有 `.bru` 原文顯示 → Raw→UI → 加 param/header → Vars 內嵌 dialog 存全域變數 →
+Assert tab → UI→Raw → Send 顯示 status 200 → Save → reload 後原文保留。
+API 整合測試驗證 parse/stringify 的 editor 權限、跨 workspace 環境擋下、secret 值不出現在 response、安全錯誤碼。
+
+### 修正的既有回歸
+
+- Raw 模式輸入原本沒有回寫 `form.body`，導致「新增 Bruno monitor → Send」送空 body；已加 `rawSource` watch。
+- 新 monitor trial 原先因 `resolveMonitorConfig()` 對未知變數拋錯而回 500；改為 fallback 給 checker 回 `CONFIG_ERROR`。
+
+### 待辦
+
+- 部署正式站前取得使用者授權；依既有 GitOps 流程出 artifact，部署後在 `https://uptime.markkulab.net/monitors/61/edit`
+  以真實 Bruno monitor 驗證 Raw/UI、環境變數 dialog 與 Send 面板。

@@ -95,13 +95,15 @@
   </div>
 </template>
 <script setup lang="ts">
+import { isValidVariableName, useEnvironmentVariables, validateVariableMap } from '~/composables/useEnvironmentVariables'
+
 const { current, canManage, load, change } = useWorkspace()
-interface Environment { id: number; name: string; variables: Record<string, string>; secretNames: string[] }
+const { environments, load: loadEnvironments, selected: selectedEnvironmentOf, saveEnvironment, reset: resetEnvironments } = useEnvironmentVariables()
 const members = ref<{ userId: number; role: string; user: { username: string } }[]>([])
-const environments = ref<Environment[]>([]), editingEnvironmentId = ref<number>()
+const editingEnvironmentId = ref<number>()
 const variableRows = ref<{ key: string; value: string }[]>([])
 const rawJson = ref('{}'), rawMode = ref(false)
-const selectedEnvironment = computed(() => environments.value.find(e => e.id === Number(editingEnvironmentId.value)))
+const selectedEnvironment = selectedEnvironmentOf(editingEnvironmentId)
 const workspaceName = ref(''), environmentName = ref(''), memberName = ref(''), memberRole = ref('viewer')
 const secretName = ref(''), secretValue = ref(''), accountName = ref(''), accountPassword = ref('')
 const platformAdmin = ref(false), busy = ref(false), error = ref(''), notice = ref('')
@@ -120,19 +122,19 @@ async function refresh() {
   const sequence = ++refreshSequence, id = current.value?.id, owner = canManage.value
   if (!id) return
   const basePath = `/api/v1/workspaces/${id}`
-  const [environmentResponse, memberResponse] = await Promise.all([
-    $fetch<{ data: Environment[] }>(`${basePath}/environments`),
+  const [, memberResponse] = await Promise.all([
+    loadEnvironments(id),
     owner ? $fetch<{ data: typeof members.value }>(`${basePath}/members`) : Promise.resolve({ data: [] }),
   ])
   if (sequence !== refreshSequence || current.value?.id !== id) return
-  environments.value = environmentResponse.data; members.value = memberResponse.data
+  members.value = memberResponse.data
   if (!environments.value.some(e => e.id === editingEnvironmentId.value)) editingEnvironmentId.value = environments.value[0]?.id
   selectEditingEnvironment()
 }
 
 watch(() => current.value?.id, (id, previous) => {
   if (id === previous) return
-  ++refreshSequence; members.value = []; environments.value = []; editingEnvironmentId.value = undefined
+  ++refreshSequence; members.value = []; resetEnvironments(); editingEnvironmentId.value = undefined
   variableRows.value = []; rawJson.value = '{}'; rawMode.value = false
   secretName.value = ''; secretValue.value = ''; error.value = ''; notice.value = ''
   if (import.meta.client && previous) void refresh().catch(() => { if (current.value?.id === id) error.value = 'Unable to load workspace' })
@@ -151,29 +153,35 @@ async function removeMember(id: number) { await act(() => $fetch(`${base.value}/
 async function createEnvironment() { await act(async () => { await $fetch(`${base.value}/environments`, { method: 'POST', body: { name: environmentName.value } }); environmentName.value = '' }) }
 
 async function saveVariables() {
+  const workspaceId = current.value?.id, environmentId = editingEnvironmentId.value
+  if (!workspaceId || !environmentId) return
   await act(async () => {
     const values: Record<string, string> = {}
     if (rawMode.value) {
+      // Raw JSON keeps the original behaviour: shape/string checks here, key syntax checked by the server.
       const parsed = JSON.parse(rawJson.value)
-      if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object' || Object.values(parsed).some(v => typeof v !== 'string')) throw new Error('Variables must be a JSON object of strings')
-      Object.assign(values, parsed)
+      Object.assign(values, validateVariableMap(parsed, { checkNames: false }))
     } else {
       for (const row of variableRows.value) {
         const key = row.key.trim()
         if (!key) continue
-        if (!/^[A-Za-z_][\w.-]{0,99}$/.test(key)) throw new Error(`Invalid variable name: ${key}`)
+        if (!isValidVariableName(key)) throw new Error(`Invalid variable name: ${key}`)
         values[key] = String(row.value)
       }
     }
-    await $fetch(`${base.value}/environments/${editingEnvironmentId.value}`, {
-      method: 'PUT',
-      body: { variables: values, ...(secretName.value ? { secrets: { [secretName.value]: secretValue.value } } : {}) },
-    })
+    await saveEnvironment(workspaceId, environmentId, {
+      variables: values,
+      ...(secretName.value ? { secrets: { [secretName.value]: secretValue.value } } : {}),
+    }, { skipNameValidation: rawMode.value })
     secretName.value = ''; secretValue.value = ''
   })
 }
 
-async function deleteSecret(name: string) { await act(() => $fetch(`${base.value}/environments/${editingEnvironmentId.value}`, { method: 'PUT', body: { secrets: { [name]: null } } })) }
+async function deleteSecret(name: string) {
+  const workspaceId = current.value?.id, environmentId = editingEnvironmentId.value
+  if (!workspaceId || !environmentId) return
+  await act(() => saveEnvironment(workspaceId, environmentId, { secrets: { [name]: null } }))
+}
 async function createAccount() { await act(async () => { await $fetch('/api/v1/users', { method: 'POST', body: { username: accountName.value, password: accountPassword.value } }); accountName.value = ''; accountPassword.value = '' }) }
 
 onMounted(async () => {

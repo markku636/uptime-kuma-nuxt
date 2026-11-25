@@ -6,3 +6,16 @@ export interface BrunoIssue {file:string;code:string;field?:string}
 export interface BrunoRequest {path:string;name:string;config:Record<string,any>;folder:string;skipped:string[];seq?:number}
 export interface BrunoFolder {path:string;name:string;seq?:number}
 export interface BrunoParsed {requests:BrunoRequest[];environments:string[];issues:BrunoIssue[];variables:Record<string,string>;secrets:Record<string,string>;missingSecrets:string[];collectionName?:string;folders:BrunoFolder[]}
+/** Declarative view of a single .bru request used by the UI editor. Values keep {{variable}} placeholders verbatim; secrets are never materialised here. */
+export interface BrunoRequestModel {
+  name: string
+  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS'
+  url: string
+  params: Array<{ name: string; value: string; enabled: boolean }>
+  headers: Array<{ name: string; value: string; enabled: boolean }>
+  auth: { mode: 'none' | 'inherit' | 'basic' | 'bearer'; username?: string; password?: string; token?: string }
+  body: { mode: 'none' | 'json' | 'text'; content: string }
+  vars: Array<{ name: string; value: string; enabled: boolean }>
+  assertions: Array<{ expression: string; operator: string; value: string; enabled: boolean; description?: string }>
+  ignoredBlocks: string[]
+}

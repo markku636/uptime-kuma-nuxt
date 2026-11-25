@@ -61,6 +61,9 @@ export function monitorEditorDTO(monitor:any) {
   delete result.requestSecrets
   delete result.pushToken
   delete result.monitorNotifications
+  // The Bruno editor needs the existing declarative request to show it like the Bruno app.
+  // monitorEditorDTO is only served to non-viewer sessions (see monitors/[id].get.ts).
+  if (monitor.type === 'bruno') result.body = typeof hydrated.body === 'string' ? hydrated.body : ''
   result.notifications=(monitor.monitorNotifications||[]).map((row:any)=>row.notificationId)
   result.tlsConfigured=typeof hydrated.url==='string'&&hydrated.url.startsWith('https://')
   result.configuredSecrets=configuredSecrets
