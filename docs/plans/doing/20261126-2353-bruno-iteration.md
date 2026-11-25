@@ -18,8 +18,8 @@
 | G2 | 不同參數／斷言組合的自動化測試不足 | 使用者 2026-11-25 | 高 | 🔵 R1 |
 | G3 | 嵌套 JSON body 的 `}}` 被 parser 誤判為 `UNSUPPORTED_VARIABLE` | 本輪查證 | 高 | ⬜ R2 |
 | G4 | 官方支援但本平台尚未支援的 assert operator（in/notIn/matches/startsWith/endsWith/between/isJson…） | GitHub Bruno 原始碼 | 中 | ⬜ |
-| G5 | 路徑參數（`:id`）與 path params 分頁 | GitHub Bruno 原始碼 | 中 | ⬜ |
-| G6 | Params/Headers Bulk Edit（官方有） | GitHub Bruno 原始碼 | 低 | ⬜ |
+| G5 | 路徑參數（`:id`）與 path params 分頁 | GitHub Bruno 原始碼 | 中 | ✅ R4/R15 |
+| G6 | Params/Headers Bulk Edit（官方有） | GitHub Bruno 原始碼 | 低 | ✅ R5 |
 
 ## 迭代紀錄
 
@@ -248,3 +248,12 @@ R41 ✅ 轉換 API 逾時 — commit `8a50387`：
   loader rev289 → app rev290，最終 Healthy/Synced。
 R42 ✅ DTO 可見性 unit 測試（僅測試，不部署） — commit `7d629bd`：確認 monitorEditorDTO 預設不回 body，只有 includeBody:true 才回。unit 153/153。
 R43 ✅ 三次完整整合全綠（驗證輪，不部署） — 三次皆 103 pass / 0 fail / 1 skip；先前的 badges / drag flaky 未再出現。
+
+
+## 尚未做的差距（到 2026-11-26 04:51 CST）
+
+| # | 差距 | 建議 |
+|---|------|------|
+| N1 | Script / Tests 內容只能唯讀，不能在 UI 直接編集 | 需在不破壞「永不執行」政策下設計雙向 block 編輯，優先留在 Raw |
+| N2 | multipart/form-data、file、GraphQL、XML、OAuth/digest/NTLM/mTLS | 原計劃明確排除；若要支援需新的安全邊界與測試 |
+| N3 | 正式站使用者人工驗收（monitor 61） | 需要持有人在 https://uptime.markkulab.net 登入後確認 Raw/UI、env dialog、Send 畫面 |
