@@ -124,3 +124,9 @@ R16 ✅ Settings 唯讀分頁 — commit `e3f8ed3`：
 - 驗證：unit 141/141、typecheck 0 errors、build 成功、Bruno browser 3/3。
 - 部署：artifact `9eb81a6258b8ae7be3a6a81b24002ffdee23a2ca564072a07de0b5d5465a3f88`（source `e3f8ed3`）；
   loader rev253 → app rev254，最終 Healthy/Synced。
+R17 ✅ Send 斷言顯示 actual — commit `297e111`：
+- 僅在 trial（includeTrialResponse）時附帶 actual，值上限 512 字元；排程 heartbeat 不寫入，避免敏感值落地。
+- Bruno 結果面板顯示 actual；新增 unit 驗證 scheduled 無 actual、trial 有值且截斷。
+- 驗證：unit 142/142、typecheck 0 errors、build 成功、完整整合 97 pass / 1 skip。
+- 部署：artifact `931e18e5c1539feda17e6df46765310701a0bb3ce2d85832fc78b06b038b0977`（source `297e111`）；
+  loader rev255 → app rev256，最終 Healthy/Synced。
