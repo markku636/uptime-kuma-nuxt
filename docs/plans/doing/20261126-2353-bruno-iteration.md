@@ -183,3 +183,9 @@ R26 ✅ 瀏覽器覆蓋 Auth / Docs 分頁 — commit `2f3f04b`：
 R27 ✅ 50 個斷言的效能 guard（僅測試，不部署） — commit `91fd5ed`：
 - 加入 50 條規則（含 20 條安全 regex、60 KB body）的效能測試，要求 <2 秒；實測約 11 ms。
 - 驗證：unit 146/146、typecheck 0 errors。正式站仍為 R26 的 rev272。
+R28 ✅ Reset 按鈕 — commit `b6c7ae2`：
+- 一鍵還原到已儲存的 `.bru`，重新進入預設 UI；避免改壞後手動復原。
+- 瀏覽器測試：空白 monitor → 填 URL → Raw → Reset → URL 回空。
+- 驗證：unit 146/146、typecheck 0 errors、build 成功、Bruno browser 4/4。
+- 部署：artifact `1b7b84fcc03b54be14be2587571794c91f0fdc429780217b3cc12a4026294f99`（source `b6c7ae2`）；
+  loader rev273 → app rev274，最終 Healthy/Synced。
