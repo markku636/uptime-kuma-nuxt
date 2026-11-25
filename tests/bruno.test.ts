@@ -23,7 +23,7 @@ test('official parser handles nested scopes, two environments, disabled values, 
 })
 test('duplicate HTTP blocks, unknown fields and unsupported expressions are explicit errors',async()=>{
   const cases:[string,string][]=[
-    ['post {\n url: http://127.0.0.1/\n}\n','DUPLICATE_HTTP_BLOCK'],['params:path {\n id: 1\n}\n','UNSUPPORTED_BLOCK'],
+    ['post {\n url: http://127.0.0.1/\n}\n','DUPLICATE_HTTP_BLOCK'],['params:unknown {\n id: 1\n}\n','UNSUPPORTED_BLOCK'],
     ['assert {\n res.body.value: eq process.env.SECRET_SENTINEL\n}\n','UNSUPPORTED_ASSERTION'],['assert {\n res.body[?(@.secret)]: eq true\n}\n','INVALID_SYNTAX'],
     ['headers {\n X-Test: one\n x-test: two\n}\n','DUPLICATE_PAIR'],['body:xml {\n <secret/>\n}\n','UNSUPPORTED_BLOCK']
   ]

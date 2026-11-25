@@ -11,7 +11,7 @@ export interface BrunoRequestModel {
   name: string
   method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS'
   url: string
-  params: Array<{ name: string; value: string; enabled: boolean }>
+  params: Array<{ name: string; value: string; enabled: boolean; type?: 'query' | 'path' }>
   headers: Array<{ name: string; value: string; enabled: boolean }>
   auth: { mode: 'none' | 'inherit' | 'basic' | 'bearer'; username?: string; password?: string; token?: string }
   body: { mode: 'none' | 'json' | 'text'; content: string }

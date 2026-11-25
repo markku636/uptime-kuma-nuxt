@@ -171,3 +171,60 @@ test('unmatched variable openers are still rejected', async () => {
   const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, VALUES, SECRETS)
   assert.ok(parsed.issues.some(issue => issue.code === 'UNSUPPORTED_VARIABLE'), JSON.stringify(parsed.issues))
 })
+
+test('path params round-trip separately from query params', async () => {
+  const input = model({
+    url: 'https://example.com/users/:id',
+    params: [
+      {name: 'id', value: '42', enabled: true, type: 'path'},
+      {name: 'q', value: '{{NAME}}', enabled: true},
+    ],
+  })
+  const result = await roundTrip(input)
+  assert.deepEqual(result.model.params.map(row => row.name).sort(), input.params.map(row => row.name).sort())
+  assert.equal(result.model.params.find(row => row.name === 'id')!.type, 'path')
+  assert.equal(result.model.params.find(row => row.name === 'q')!.type, undefined)
+  assert.equal(result.model.url, 'https://example.com/users/:id')
+  assert.match(result.source, /params:path \{\n  id: 42/)
+  assert.match(result.source, /params:query \{\n  q: \{\{NAME\}\}/)
+  const url = result.source.split('\n').find(line => line.trim().startsWith('url:'))!
+  assert.equal((url.match(/\?/g) || []).length, 1, url)
+  assert.ok(url.includes('q={{NAME}}'), url)
+  assert.ok(!url.includes('42'), 'path params stay in their own block')
+})
+
+test('path param values are substituted into the URL before execution', async () => {
+  const { parseBrunoManifest } = await import('../server/services/bruno/parser')
+  const source = `meta {
+  name: Path params
+  type: http
+}
+
+get {
+  url: https://example.com/users/:id?view=full
+  body: none
+  auth: none
+}
+
+params:query {
+  view: full
+}
+
+params:path {
+  id: {{NAME}}
+  ~off: ignored
+}
+`
+  const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, VALUES, SECRETS)
+  assert.deepEqual(parsed.issues, [])
+  assert.equal(parsed.requests[0]!.config.url, 'https://example.com/users/{{NAME}}')
+  assert.deepEqual(parsed.requests[0]!.config.queryParams, [{name: 'view', value: 'full'}])
+  assert.ok(!JSON.stringify(parsed.requests[0]!.config).includes('off'))
+})
+
+test('unsupported path param names fail closed', async () => {
+  const { parseBrunoManifest } = await import('../server/services/bruno/parser')
+  const source = `meta {\n  name: Bad path\n  type: http\n}\nget {\n  url: https://example.com/users/:id\n  body: none\n  auth: none\n}\nparams:path {\n  1bad: x\n}\n`
+  const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, VALUES, SECRETS)
+  assert.ok(parsed.issues.some(issue => issue.code === 'UNSUPPORTED_PARAMETER'), JSON.stringify(parsed.issues))
+})

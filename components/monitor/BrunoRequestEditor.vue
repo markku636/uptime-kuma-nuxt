@@ -57,13 +57,18 @@
       <section v-if="activeTab === 'params'" class="space-y-2">
         <p class="text-xs text-secondary">Query parameters · <code>&#123;&#123;variable&#125;&#125;</code> values are resolved from this environment when the check runs.</p>
         <table class="bruno-table">
-          <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-20">Enabled</th><th class="w-10"></th></tr></thead>
+          <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-24">Type</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.params" :key="index">
               <td><input v-model="row.enabled" type="checkbox" class="mr-2" :disabled="disabled" aria-label="Enable parameter"></td>
               <td><input v-model="row.name" type="text" class="bruno-cell" placeholder="Name" :disabled="disabled"></td>
               <td><input v-model="row.value" type="text" class="bruno-cell" placeholder="Value" :disabled="disabled"></td>
-              <td><span class="text-xs text-secondary">query</span></td>
+              <td>
+                <select v-model="row.type" class="bruno-cell" :disabled="disabled">
+                  <option value="query">query</option>
+                  <option value="path">path</option>
+                </select>
+              </td>
               <td><button type="button" class="bruno-icon" :disabled="disabled" aria-label="Remove parameter" @click="model.params.splice(index, 1)">×</button></td>
             </tr>
           </tbody>
@@ -279,6 +284,12 @@ async function callApi(path: string, body: Record<string, unknown>) {
   } finally { busy.value = false }
 }
 
+/** Query is the default param type; keep old .bru sources that omit the type usable in the select. */
+function normalizeModel(value: BrunoRequestModel) {
+  for (const param of value.params) if (!param.type) param.type = 'query'
+  return value
+}
+
 /** Default view: parse the stored request into tabs; an empty request opens as a blank UI form. */
 async function initializeUi() {
   if (!rawSource.value.trim()) {
@@ -297,7 +308,7 @@ async function initializeUi() {
   try {
     const data = await callApi('/api/v1/bruno/request/parse', { source: rawSource.value, environmentId: resolvedEnvironmentId.value })
     if (!data.model) throw new Error('Unable to parse this .bru request')
-    model.value = data.model
+    model.value = normalizeModel(data.model)
     if (data.model.ignoredBlocks.length) { ignoredWarning.value = true; return }
     ignoredWarning.value = false
     mode.value = 'ui'
@@ -312,7 +323,7 @@ async function switchMode(target: 'raw' | 'ui') {
     if (target === 'ui') {
       const data = await callApi('/api/v1/bruno/request/parse', { source: rawSource.value, environmentId: resolvedEnvironmentId.value })
       if (!data.model) throw new Error('Unable to parse this .bru request')
-      model.value = data.model
+      model.value = normalizeModel(data.model)
       if (data.model.ignoredBlocks.length && !ignoredWarning.value) { ignoredWarning.value = true; return }
       ignoredWarning.value = false
       mode.value = 'ui'

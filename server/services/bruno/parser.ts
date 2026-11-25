@@ -10,7 +10,7 @@ import {validVariableName} from '../../utils/variables'
 const methods=new Set(['get','head','post','put','patch','delete','options'])
 // Imported but never executed: the monitor keeps the request and the source records which kinds were skipped.
 const skippedBlocks=['script:pre-request','script:post-response','tests','vars:post-response']
-const requestBlocks=new Set(['meta',...methods,'headers','query','params:query','auth:basic','auth:bearer','body:json','body:text','vars:pre-request','assert','docs','settings',...skippedBlocks])
+const requestBlocks=new Set(['meta',...methods,'headers','query','params:query','params:path','auth:basic','auth:bearer','body:json','body:text','vars:pre-request','assert','docs','settings',...skippedBlocks])
 const scopeBlocks=new Set(['meta','headers','query','auth','auth:basic','auth:bearer','vars:pre-request','docs',...skippedBlocks])
 const envBlocks=new Set(['vars','vars:secret'])
 class Unsupported extends Error{constructor(public code:string,public field?:string){super(code)}}
@@ -104,18 +104,23 @@ function pairLayer(pairs:any,field:string){
   if(!Array.isArray(pairs)||pairs.length>100)fail('INVALID_PAIRS',field)
   const seen=new Set<string>(),result:{name:string,value:string}[]=[]
   for(const pair of pairs){
-    keys(pair,field==='query'?['name','value','enabled','type']:['name','value','enabled'],field)
+    keys(pair,field==='query'||field==='path'?['name','value','enabled','type']:['name','value','enabled'],field)
     if(typeof pair.enabled!=='boolean')fail('INVALID_PAIRS',field)
     if(!pair.enabled)continue
-    if(pair.type&&pair.type!=='query')fail('UNSUPPORTED_PARAMETER',field)
+    if(pair.type&&pair.type!==field)fail('UNSUPPORTED_PARAMETER',field)
+    if(field==='path'&&!/^[A-Za-z_][A-Za-z0-9_]*$/.test(string(pair.name,field,256)))fail('UNSUPPORTED_PARAMETER',field)
     const name=string(pair.name,field,256),value=string(pair.value,field,32768),key=field==='headers'?name.toLowerCase():name
     if(seen.has(key))fail('DUPLICATE_PAIR',field);seen.add(key);result.push({name,value})
   }
   return result
 }
-function inheritedPairs(layers:any[],field:'headers'|'query'){
+function inheritedPairs(layers:any[],field:'headers'|'query'|'path'){
   const result=new Map<string,{name:string,value:string}>()
-  for(const layer of layers)for(const pair of pairLayer(field==='query'?layer.query||layer.params:layer.headers,field))result.set(field==='headers'?pair.name.toLowerCase():pair.name,pair)
+  for(const layer of layers){
+    const rows=field==='query'?[...(layer.query||[]),...(layer.params||[]).filter((pair:any)=>pair?.type!=='path')]
+      :field==='path'?(layer.params||[]).filter((pair:any)=>pair?.type==='path'):layer.headers
+    for(const pair of pairLayer(rows,field))result.set(field==='headers'?pair.name.toLowerCase():pair.name,pair)
+  }
   return [...result.values()]
 }
 function assertionRules(pairs:any):AssertionRule[]{
@@ -152,7 +157,12 @@ function buildRequest(file:string,ast:any,layers:any[],environment:Record<string
   const retain=resolver(primary,environment,collection,true),actual=resolver(primary,environment,collection,false,undefined,new Set(Object.keys(environment)))
   // Bruno keeps enabled query params both in the URL and in params:query; the params block is authoritative.
   const rawUrl=string(ast.http.url,'http.url',8192),ownQuery=Array.isArray(ast.params)&&ast.params.some((pair:any)=>pair?.type!=='path')
-  const sourceUrl=ownQuery?rawUrl.replace(/\?[^#]*/,''):rawUrl
+  let sourceUrl=ownQuery?rawUrl.replace(/\?[^#]*/,''):rawUrl
+  // Bruno path params replace `:name` tokens in the URL before the request is sent.
+  for(const pair of inheritedPairs([...layers,ast],'path')){
+    const token=new RegExp(`:${pair.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?=/|\\?|#|$)`)
+    sourceUrl=sourceUrl.replace(token,()=>pair.value)
+  }
   const url=retain(sourceUrl);let parsedURL:URL
   try{parsedURL=new URL(actual(sourceUrl))}catch{fail('INVALID_URL','http.url')}
   if(!['http:','https:'].includes(parsedURL!.protocol))fail('UNSUPPORTED_URL','http.url')

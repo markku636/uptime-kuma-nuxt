@@ -38,15 +38,20 @@ const asArray = (value: unknown, field: string, maximum: number): any[] => {
   if (!Array.isArray(value) || value.length > maximum) fail('INVALID_FIELD', field)
   return value
 }
-const asPairs = (value: unknown, field: string, maximum = 100): Array<{ name: string; value: string; enabled: boolean }> =>
+const asPairs = (value: unknown, field: string, maximum = 100): Array<{ name: string; value: string; enabled: boolean; type?: 'query' | 'path' }> =>
   asArray(value, field, maximum).map(pair => {
     const row = asRecord(pair, field)
     if (typeof row.enabled !== 'boolean') fail('INVALID_FIELD', `${field}.enabled`)
-    return {
+    const result: { name: string; value: string; enabled: boolean; type?: 'query' | 'path' } = {
       name: asLine(row.name, `${field}.name`, 256),
       value: asLine(row.value, `${field}.value`, 32768),
       enabled: row.enabled,
     }
+    if (field === 'params' && row.type !== undefined) {
+      if (row.type !== 'query' && row.type !== 'path') fail('UNSUPPORTED_PARAMETER', 'params')
+      result.type = row.type
+    }
+    return result
   })
 
 const manifestFor = (source: string) => ({
@@ -120,7 +125,7 @@ export async function sourceToModel(
 
     const params = rawParams
       .filter(pair => pair && typeof pair === 'object')
-      .map(pair => ({ name: String(pair.name ?? ''), value: String(pair.value ?? ''), enabled: pair.enabled !== false }))
+      .map(pair => ({ name: String(pair.name ?? ''), value: String(pair.value ?? ''), enabled: pair.enabled !== false, ...(pair.type === 'path' ? {type: 'path' as const} : {}) }))
     const headerRows: any[] = Array.isArray(ast.headers) ? ast.headers : []
     const headers = headerRows
       .filter(pair => pair && typeof pair === 'object')
@@ -191,7 +196,7 @@ export async function modelToSource(
     if (!METHODS.includes(method as (typeof METHODS)[number])) fail('UNSUPPORTED_METHOD', 'method')
     const rawUrl = asLine(input.url, 'url', 8192)
 
-    const params = asPairs(input.params, 'params').map(pair => ({ ...pair, type: 'query' }))
+    const params = asPairs(input.params, 'params').map(pair => ({ ...pair, type: pair.type || 'query' as const }))
     const headers = asPairs(input.headers, 'headers')
     const authInput = asRecord(input.auth, 'auth')
     const authMode = asLine(authInput.mode, 'auth.mode', 16)
@@ -227,7 +232,7 @@ export async function modelToSource(
     })
 
     // Params are authoritative: rebuild the URL query from enabled params only, never duplicate one.
-    const enabled = params.filter(pair => pair.enabled)
+    const enabled = params.filter(pair => pair.enabled && pair.type !== 'path')
     let url = rawUrl
     if (enabled.length) {
       const hashAt = rawUrl.indexOf('#')
