@@ -294,3 +294,4 @@ R54 ✅ 紅act 最終補強 — commit `56db886`：
 - 功能：Bruno 風格 UI 編輯器（十個分頁）、Raw/UI 切換、env dialog、`{{` 自動完成、Ctrl/⌘+Enter、Copy/Download/Reset、Send 回應與 actual、完整 operator 集、path params、form-urlencoded、匯出（單檔/ZIP/manifest）去識別、API key write-only 防護。
 - 驗證：unit 157/157、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
 - 待持有人：到 https://uptime.markkulab.net 登入後人工驗收 monitor 61 的畫面。
+R56 ✅ 匯出再匯回測試（僅測試，不部署） — 新增 API 整合測試：下載含 literal bearer/body token 的 Bruno monitor，確認無明文、secret 名稱存在，補值後重新解析為一個有效 request。
