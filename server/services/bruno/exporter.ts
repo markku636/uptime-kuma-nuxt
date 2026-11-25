@@ -1,3 +1,4 @@
+import brunoLang from '@usebruno/lang'
 import type {AssertionRule} from '../../../shared/types/assertions'
 import {hydrateMonitor} from '../../utils/monitor-secrets'
 import {assertionsSchema,parseSelector} from '../../utils/assertions'
@@ -38,6 +39,32 @@ export function exportBrunoMonitors(monitors:any[],collectionId:string){
   for(const stored of monitors){
     const monitor=hydrateMonitor(stored),id=monitor.id
     function fail(code:string):never{throw new BrunoExportError(id,code)}
+    if(monitor.type==='bruno'){
+      const source=typeof monitor.body==='string'?monitor.body:''
+      if(!source.trim()||Buffer.byteLength(source)>131072)fail('UNSUPPORTED_OR_INCOMPLETE_MONITOR')
+      let ast:any
+      try{ast=brunoLang.bruToJsonV2(source)}catch{fail('UNSUPPORTED_OR_INCOMPLETE_MONITOR')}
+      const protect=(value:unknown,field:string)=>{
+        const text=String(value??'')
+        if(!text||/\{\{/.test(text))return text
+        const name=`monitor_${id}_${field}`
+        secretNames.push(name)
+        return `{{${name}}}`
+      }
+      if(ast.http?.url!==undefined)ast.http.url=protect(ast.http.url,'url')
+      if(Array.isArray(ast.params))ast.params=ast.params.map((pair:any,index:number)=>pair&&{...pair,value:protect(pair.value,`query_${index}`)})
+      if(Array.isArray(ast.headers))ast.headers=ast.headers.map((header:any,index:number)=>header&&{...header,value:protect(header.value,`header_${index}`)})
+      if(ast.body?.json!==undefined)ast.body.json=protect(ast.body.json,'body')
+      if(ast.body?.text!==undefined)ast.body.text=protect(ast.body.text,'body')
+      if(Array.isArray(ast.vars?.req))ast.vars.req=ast.vars.req.map((pair:any,index:number)=>pair&&{...pair,value:protect(pair.value,`var_${index}`)})
+      if(ast.auth?.basic?.username)ast.auth.basic.username=protect(ast.auth.basic.username,'username')
+      if(ast.auth?.basic?.password)ast.auth.basic.password=protect(ast.auth.basic.password,'password')
+      if(ast.auth?.bearer?.token)ast.auth.bearer.token=protect(ast.auth.bearer.token,'token')
+      let output:string
+      try{output=brunoLang.jsonToBruV2(ast)}catch{fail('UNSUPPORTED_OR_INCOMPLETE_MONITOR')}
+      files.push({path:`requests/monitor-${id}.bru`,content:output})
+      continue
+    }
     if(!['http','keyword','json-query'].includes(monitor.type)||!monitor.url)fail('UNSUPPORTED_OR_INCOMPLETE_MONITOR')
     if(monitor.proxyId||monitor.ignoreTls||monitor.upsideDown||(monitor.maxRedirects??10)!==10||monitor.timeout!==30)fail('UNSUPPORTED_TRANSPORT_SETTINGS')
     const rules=monitorAssertionRules(monitor,fail)

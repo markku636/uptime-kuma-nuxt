@@ -81,3 +81,29 @@ auth:bearer {
   assert.ok(names.includes('secret_token'))
   assert.ok(names.includes('secret_x_api_key'))
 })
+
+test('redacted manifest export includes Bruno monitors with placeholders', async () => {
+  const { exportBrunoMonitors } = await import('../server/services/bruno/exporter')
+  const source = `meta {
+  name: Redacted
+  type: http
+}
+
+post {
+  url: https://example.com/login
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: literal-secret
+}
+`
+  const result = exportBrunoMonitors([{...stored, name: 'Redacted', body: source}], 'demo')
+  const file = result.files.find(file => file.path.endsWith('.bru') && file.path !== 'bruno.json' && !file.path.startsWith('environments/'))!
+  assert.ok(file, 'a Bruno request file is exported')
+  assert.ok(!file.content.includes('literal-secret'))
+  assert.ok(!file.content.includes('https://example.com/login'))
+  assert.ok(result.secretNames.length >= 2)
+  assert.ok(result.files.some(file => file.path === 'environments/configure.bru'))
+})
