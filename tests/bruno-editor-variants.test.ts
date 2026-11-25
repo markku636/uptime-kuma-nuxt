@@ -323,3 +323,14 @@ test('path params must match a :name token in the URL', async () => {
   const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, VALUES, SECRETS)
   assert.ok(parsed.issues.some(issue => issue.code === 'UNSUPPORTED_PARAMETER'), JSON.stringify(parsed.issues))
 })
+
+test('form-url-encoded body round-trips as editable name:value lines', async () => {
+  const input = model({
+    method: 'POST', url: 'https://example.com/form',
+    body: {mode: 'formUrlEncoded', content: 'a: 1\nb: {{TOKEN}}\nwith space: x & y'},
+  })
+  const result = await roundTrip(input)
+  assert.deepEqual(result.model.body, input.body)
+  assert.match(result.source, /body: formUrlEncoded/)
+  assert.match(result.source, /body:form-urlencoded \{\n  a: 1\n  b: \{\{TOKEN\}\}/)
+})

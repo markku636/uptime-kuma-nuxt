@@ -7,7 +7,7 @@ const METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as 
 const UNARY_OPERATORS = new Set(['exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isJson', 'isNumber', 'isString', 'isBoolean', 'isArray', 'isDefined', 'isUndefined', 'isTruthy', 'isFalsy'])
 const OPERATORS = new Set(['eq', 'ne', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'notIn', 'startsWith', 'endsWith', 'length', 'between', 'matches', 'notMatches', 'contains', 'notContains', ...UNARY_OPERATORS])
 const AUTH_MODES = ['none', 'inherit', 'basic', 'bearer']
-const BODY_MODES = ['none', 'json', 'text']
+const BODY_MODES = ['none', 'json', 'text', 'formUrlEncoded']
 const FILE = 'request.bru'
 
 class EditorError extends Error {
@@ -150,7 +150,10 @@ export async function sourceToModel(
     const bodyMode = ast.http?.body || 'none'
     const body: BrunoRequestModel['body'] = {
       mode: BODY_MODES.includes(bodyMode) ? bodyMode as BrunoRequestModel['body']['mode'] : 'none',
-      content: bodyMode !== 'none' ? String(ast.body?.[bodyMode] ?? '') : '',
+      content: bodyMode === 'formUrlEncoded'
+        ? (Array.isArray(ast.body?.formUrlEncoded) ? ast.body.formUrlEncoded : [])
+          .map((pair: any) => `${String(pair?.name ?? '')}: ${String(pair?.value ?? '')}`).join('\n')
+        : bodyMode !== 'none' ? String(ast.body?.[bodyMode] ?? '') : '',
     }
 
     const assertionRows: any[] = Array.isArray(ast.assertions) ? ast.assertions : []
@@ -276,7 +279,14 @@ export async function modelToSource(
     } else if (authMode === 'bearer') {
       json.auth = { bearer: { token: asLine(authInput.token, 'auth.token', 8192) } }
     }
-    if (bodyMode !== 'none') json.body = { [bodyMode]: content }
+    if (bodyMode === 'formUrlEncoded') {
+      const rows = content.split(/\r?\n/).map(line => {
+        const at = line.indexOf(':')
+        if (at < 0 || !line.slice(0, at).trim()) return null
+        return {name: asLine(line.slice(0, at).trim(), 'body.form.name', 256), value: asText(line.slice(at + 1).trim(), 'body.form.value', 32768), enabled: true}
+      }).filter(row => row !== null)
+      json.body = {formUrlEncoded: rows}
+    } else if (bodyMode !== 'none') json.body = { [bodyMode]: content }
     if (input.docs !== undefined && input.docs !== null) {
       const docs = asText(input.docs, 'docs', 32768)
       if (docs.trim()) json.docs = docs

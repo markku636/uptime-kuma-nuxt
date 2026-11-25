@@ -68,3 +68,50 @@ assert {
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
+
+test('form-url-encoded Bruno body is sent with encoded values', {timeout:30000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined
+  let seenBody = '', seenType = ''
+  const fixture = http.createServer(async (req, res) => {
+    seenType = String(req.headers['content-type'] || '')
+    for await (const chunk of req) seenBody += chunk
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ok: true}))
+  })
+  await new Promise<void>(resolve => fixture.listen(0, '127.0.0.1', resolve))
+  const origin = `http://127.0.0.1:${(fixture.address() as any).port}`
+  try {
+    identity = await user('bruno-form-body')
+    scope = await workspace(identity, 'Bruno form body')
+    const body = `meta {
+  name: Form body
+  type: http
+}
+
+post {
+  url: ${origin}/form
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  a: 1
+  b: hello world
+}
+
+assert {
+  res.status: eq 200
+}
+`
+    const trial = await data(await request('/api/v1/monitors/test', 'POST', identity, scope, {
+      type: 'bruno', name: 'Form body', active: false, timeout: 30, body,
+    }))
+    assert.equal(trial.data.status, 1, JSON.stringify(trial.data))
+    assert.equal(seenBody, 'a=1&b=hello%20world')
+    assert.match(seenType, /application\/x-www-form-urlencoded/)
+  } finally {
+    fixture.closeAllConnections()
+    await new Promise<void>(resolve => fixture.close(() => resolve()))
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})

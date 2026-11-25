@@ -14,7 +14,7 @@ export interface BrunoRequestModel {
   params: Array<{ name: string; value: string; enabled: boolean; type?: 'query' | 'path' }>
   headers: Array<{ name: string; value: string; enabled: boolean }>
   auth: { mode: 'none' | 'inherit' | 'basic' | 'bearer'; username?: string; password?: string; token?: string }
-  body: { mode: 'none' | 'json' | 'text'; content: string }
+  body: { mode: 'none' | 'json' | 'text' | 'formUrlEncoded'; content: string }
   vars: Array<{ name: string; value: string; enabled: boolean }>
   assertions: Array<{ expression: string; operator: string; value: string; enabled: boolean; description?: string }>
   ignoredBlocks: string[]

@@ -84,9 +84,11 @@
             <option value="none">none</option>
             <option value="json">json</option>
             <option value="text">text</option>
+            <option value="formUrlEncoded">form-url-encoded</option>
           </select>
         </div>
-        <textarea v-if="model.body.mode !== 'none'" v-model="model.body.content" class="input-field font-mono text-xs" rows="12" spellcheck="false" :disabled="disabled" :placeholder="model.body.mode === 'json' ? '{ }' : 'Body content'" />
+        <textarea v-if="model.body.mode !== 'none'" v-model="model.body.content" class="input-field font-mono text-xs" rows="12" spellcheck="false" :disabled="disabled" :placeholder="model.body.mode === 'json' ? '{ }' : model.body.mode === 'formUrlEncoded' ? 'name: value' : 'Body content'" />
+        <p v-if="model.body.mode === 'formUrlEncoded'" class="text-xs text-secondary">One <code>name: value</code> per line; values keep <code>&#123;&#123;variable&#125;&#125;</code> placeholders.</p>
         <p v-else class="text-sm text-secondary">No request body.</p>
       </section>
 

@@ -10,7 +10,7 @@ import {validVariableName} from '../../utils/variables'
 const methods=new Set(['get','head','post','put','patch','delete','options'])
 // Imported but never executed: the monitor keeps the request and the source records which kinds were skipped.
 const skippedBlocks=['script:pre-request','script:post-response','tests','vars:post-response']
-const requestBlocks=new Set(['meta',...methods,'headers','query','params:query','params:path','auth:basic','auth:bearer','body:json','body:text','vars:pre-request','assert','docs','settings',...skippedBlocks])
+const requestBlocks=new Set(['meta',...methods,'headers','query','params:query','params:path','auth:basic','auth:bearer','body:json','body:text','body:form-urlencoded','vars:pre-request','assert','docs','settings',...skippedBlocks])
 const scopeBlocks=new Set(['meta','headers','query','auth','auth:basic','auth:bearer','vars:pre-request','docs',...skippedBlocks])
 const envBlocks=new Set(['vars','vars:secret'])
 class Unsupported extends Error{constructor(public code:string,public field?:string){super(code)}}
@@ -196,11 +196,19 @@ function buildRequest(file:string,ast:any,layers:any[],environment:Record<string
     keys(auth.bearer,['token'],'auth.bearer');headers.authorization='Bearer '+retain(string(auth.bearer.token,'auth.bearer',8192))
   }
   const mode=ast.http.body||'none'
-  if(ast.body)keys(ast.body,['json','text'],'body')
-  if(!['none','json','text'].includes(mode))fail('UNSUPPORTED_BODY','http.body')
+  if(ast.body)keys(ast.body,['json','text','formUrlEncoded'],'body')
+  if(!['none','json','text','formUrlEncoded'].includes(mode))fail('UNSUPPORTED_BODY','http.body')
   if(mode!=='none'){
-    config.body=retain(string(ast.body?.[mode],'body',131072))
-    if(mode==='json'){try{parseSafeJson(actual(ast.body[mode]))}catch{fail('INVALID_JSON_BODY','body')}headers['content-type']||='application/json'}
+    if(mode==='formUrlEncoded'){
+      const pairs=pairLayer(ast.body?.formUrlEncoded,'form')
+      for(const pair of pairs)actual(pair.value)
+      const encode=(value:string)=>value.split(/(\{\{\s*[^{}]+?\s*\}\})/g).map(part=>/^\{\{/.test(part)?part:encodeURIComponent(part)).join('')
+      config.body=pairs.map(pair=>`${encode(pair.name)}=${encode(pair.value)}`).join('&')
+      headers['content-type']||='application/x-www-form-urlencoded'
+    }else{
+      config.body=retain(string(ast.body?.[mode],'body',131072))
+      if(mode==='json'){try{parseSafeJson(actual(ast.body[mode]))}catch{fail('INVALID_JSON_BODY','body')}headers['content-type']||='application/json'}
+    }
   }
   const parsed=createMonitorSchema.safeParse(config)
   if(!parsed.success)fail('INVALID_MONITOR','request')
