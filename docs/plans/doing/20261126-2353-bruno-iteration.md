@@ -269,3 +269,9 @@ R47 ✅ redacted manifest 也納入 Bruno monitor — commit `cac855c`：
 - 新增 unit 測試；unit 154/154、build 成功、完整整合 104 pass / 0 fail / 1 skip。
 - 部署：artifact `f75c1968018fb02213d92281c564a9db1be9e64d36c674584256260b9d75e2fb`（source `cac855c`）；
   loader rev293 → app rev294，最終 Healthy/Synced。
+R48 ✅ Script/Tests/Settings 可編輯 — commit `512291d`：
+- 三個分頁改為 textarea，直接修改保留的 block；worker 仍不執行，Save/Raw 會帶回原文。
+- 瀏覽器測試驗證修改 pre-request script 後 Raw 出現新內容。
+- 驗證：unit 154/154、typecheck 0 errors、build 成功、完整整合 104 pass / 0 fail / 1 skip。
+- 部署：artifact `d9271718eef614fc8de294b51fc33e7770314386e79b71df197fc8184672e610`（source `512291d`）；
+  loader rev295 → app rev296，最終 Healthy/Synced。
