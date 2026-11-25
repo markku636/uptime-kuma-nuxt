@@ -173,10 +173,9 @@
 
       <!-- Script (preserved, never executed) -->
       <section v-else-if="activeTab === 'script'" class="space-y-2">
-        <p class="text-xs text-amber-500">Preserved in the .bru file but never executed by the worker. Switch to Raw to edit it.</p>
-        <pre v-if="ignoredBlock('script:pre-request')" class="bruno-response">{{ ignoredBlock('script:pre-request') }}</pre>
-        <pre v-if="ignoredBlock('script:post-response')" class="bruno-response">{{ ignoredBlock('script:post-response') }}</pre>
-        <p v-if="!ignoredBlock('script:')" class="text-sm text-secondary">No script blocks in this request.</p>
+        <p class="text-xs text-amber-500">Preserved in the .bru file but never executed by the worker.</p>
+        <textarea :value="ignoredBody('script:pre-request')" class="input-field font-mono text-xs" rows="10" spellcheck="false" aria-label="Pre-request script" placeholder="req.setHeader('X-Demo', '1');" :disabled="disabled" @input="updateIgnoredBlock('script:pre-request', $event)" />
+        <textarea :value="ignoredBody('script:post-response')" class="input-field font-mono text-xs" rows="10" spellcheck="false" aria-label="Post-response script" placeholder="res.setBody({});" :disabled="disabled" @input="updateIgnoredBlock('script:post-response', $event)" />
       </section>
 
       <!-- Assert -->
@@ -203,9 +202,8 @@
 
       <!-- Tests (preserved, never executed) -->
       <section v-else-if="activeTab === 'tests'" class="space-y-2">
-        <p class="text-xs text-amber-500">Preserved in the .bru file but never executed by the worker. Switch to Raw to edit it.</p>
-        <pre v-if="ignoredBlock('tests')" class="bruno-response">{{ ignoredBlock('tests') }}</pre>
-        <p v-else class="text-sm text-secondary">No tests block in this request.</p>
+        <p class="text-xs text-amber-500">Preserved in the .bru file but never executed by the worker.</p>
+        <textarea :value="ignoredBody('tests')" class="input-field font-mono text-xs" rows="12" spellcheck="false" aria-label="Tests" placeholder="test('status is 200', () => {});" :disabled="disabled" @input="updateIgnoredBlock('tests', $event)" />
       </section>
 
       <!-- Docs -->
@@ -226,11 +224,10 @@
       <!-- Settings (preserved, never executed) -->
       <section v-else-if="activeTab === 'settings'" class="space-y-2">
         <p class="text-xs text-amber-500">Request-level settings are preserved but not applied by the worker. Use the monitor form for interval and timeout.</p>
-        <pre v-if="ignoredBlock('settings')" class="bruno-response">{{ ignoredBlock('settings') }}</pre>
-        <p v-else class="text-sm text-secondary">No settings block in this request.</p>
+        <textarea :value="ignoredBody('settings')" class="input-field font-mono text-xs" rows="6" spellcheck="false" aria-label="Request settings" placeholder="encodeUrl: true" :disabled="disabled" @input="updateIgnoredBlock('settings', $event)" />
       </section>
 
-      <p v-if="model.ignoredBlocks.length" role="status" class="text-xs text-amber-500">Blocks not executed by the worker: {{ model.ignoredBlocks.join(', ') }}. They are kept verbatim in the .bru file but have no editable fields here.</p>
+      <p v-if="model.ignoredBlocks.length" role="status" class="text-xs text-amber-500">Blocks not executed by the worker: {{ model.ignoredBlocks.join(', ') }}. They are kept verbatim in the .bru file and can be edited in their own tabs.</p>
     </div>
 
     <!-- Trial / Send -->
@@ -440,6 +437,20 @@ async function callApi(path: string, body: Record<string, unknown>) {
 /** Find a preserved non-executed block by its official .bru block name. */
 function ignoredBlock(prefix: string) {
   return model.value?.ignoredSources?.find(source => source.trimStart().startsWith(prefix))
+}
+function ignoredBody(name: string) {
+  const block = ignoredBlock(name)
+  return block ? block.replace(/^\s*\S+\s*\{/, '').replace(/\}\s*$/, '').trim() : ''
+}
+function updateIgnoredBlock(name: string, event: Event) {
+  if (!model.value || props.disabled) return
+  const body = (event.target as HTMLTextAreaElement).value
+  if (!body.trim()) return
+  const block = `${name} {\n${body}\n}`
+  model.value.ignoredSources ||= []
+  const index = model.value.ignoredSources.findIndex(source => source.trimStart().startsWith(name))
+  if (index >= 0) model.value.ignoredSources[index] = block
+  else model.value.ignoredSources.push(block)
 }
 
 /** Query is the default param type; keep old .bru sources that omit the type usable in the select. */
