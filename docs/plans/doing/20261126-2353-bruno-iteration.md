@@ -194,3 +194,9 @@ R29 ✅ 窄畫面表格 — commit `479835e`：
 - 驗證：unit 146/146、typecheck 0 errors、build 成功、Bruno browser 5/5。
 - 部署：artifact `21d78c33c1e97a576e5c856579ca564dfbc066b35a372c5646f7f59bffb472c7`（source `479835e`）；
   loader rev275 → app rev276，最終 Healthy/Synced。
+R30 ✅ Copy .bru — commit `ae771b8`：
+- Raw 模式一鍵複製整份 .bru 到剪貼簿，顯示 Copied 回饋；失敗時提示手動複製。
+- 瀏覽器測試授與 clipboard 權限後驗證內容與原始碼一致。
+- 驗證：unit 146/146、typecheck 0 errors、build 成功、Bruno browser 5/5。
+- 部署：artifact `2ce284d6cefcf37f389ab7e9468f4320b71d74889f390d35aa9cfa28274ca84f`（source `ae771b8`）；
+  loader rev277 → app rev278，Healthy/Synced。
