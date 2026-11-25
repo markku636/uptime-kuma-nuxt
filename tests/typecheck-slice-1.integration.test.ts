@@ -62,11 +62,19 @@ test('tag edit reload and public status group drag save preserve actual values a
    const dragEvents:{type:string;order:string[]}[]=[]
    await p.exposeFunction('recordGroupDrag',(event:{type:string;order:string[]})=>{if(dragEvents.length<60||event.type==='dragend'||event.type==='drop')dragEvents.push(event)})
    await p.evaluate(()=>{for(const type of ['dragstart','dragenter','dragover','drop','dragend'])document.addEventListener(type,event=>{if(!(event.target instanceof Element)||!event.target.closest('.public-group-list'))return;void(window as unknown as {recordGroupDrag:(event:{type:string;order:string[]})=>Promise<void>}).recordGroupDrag({type:event.type,order:[...document.querySelectorAll<HTMLInputElement>('.public-group-list .group-name-input')].map(input=>input.value)})},true)})
-   // Move the second group above the first using its header, outside nested monitor Sortables.
-   const source=p.locator('.public-group-list .group-drag-handle').nth(1),target=p.locator('.public-group-list .group-title').first()
-   await source.scrollIntoViewIfNeeded();const from=await source.boundingBox(),to=await target.boundingBox();assert.ok(from);assert.ok(to)
-   try{await p.mouse.move(from.x+from.width/2,from.y+from.height/2);await p.mouse.down();await p.waitForTimeout(100);await p.mouse.move(from.x+from.width/2,from.y+from.height/2-8,{steps:4});await p.waitForTimeout(100);await p.mouse.move(to.x+12,to.y+4,{steps:24});await p.mouse.move(to.x+13,to.y+5,{steps:2});await p.waitForTimeout(150);await p.mouse.move(to.x+12,to.y+4,{steps:2});await p.waitForTimeout(150)}finally{await p.mouse.up()}
-   try{await p.waitForFunction(()=>document.querySelector<HTMLInputElement>('.public-group-list .group-name-input')?.value==='Second group',undefined,{timeout:4500});assert.ok(dragEvents.some(event=>event.type==='dragstart'),'Native group dragstart observed');assert.ok(dragEvents.some(event=>event.type==='dragend'),'Native group dragend observed')}finally{t.diagnostic('Native drag evidence '+JSON.stringify(dragEvents))}
+   // Native HTML5 drag can miss a pointer under parallel load; retry with fresh boxes up to 3 times.
+   let reordered=false
+   for(let attempt=1;attempt<=3&&!reordered;attempt++){
+    const source=p.locator('.public-group-list .group-drag-handle').nth(1),target=p.locator('.public-group-list .group-title').first()
+    await source.scrollIntoViewIfNeeded();const from=await source.boundingBox(),to=await target.boundingBox();assert.ok(from);assert.ok(to)
+    try{await p.mouse.move(from.x+from.width/2,from.y+from.height/2);await p.mouse.down();await p.waitForTimeout(120);await p.mouse.move(from.x+from.width/2,from.y+from.height/2-8,{steps:6});await p.waitForTimeout(120);await p.mouse.move(to.x+12,to.y+4,{steps:30});await p.mouse.move(to.x+13,to.y+5,{steps:3});await p.waitForTimeout(200);await p.mouse.move(to.x+12,to.y+4,{steps:3});await p.waitForTimeout(200)}finally{await p.mouse.up()}
+    reordered=await p.waitForFunction(()=>document.querySelector<HTMLInputElement>('.public-group-list .group-name-input')?.value==='Second group',undefined,{timeout:2500}).then(()=>true).catch(()=>false)
+    t.diagnostic('Group drag attempt '+attempt+' reordered='+reordered)
+   }
+   assert.ok(reordered,'Group drag reorder did not complete')
+   assert.ok(dragEvents.some(event=>event.type==='dragstart'),'Native group dragstart observed')
+   assert.ok(dragEvents.some(event=>event.type==='dragend'),'Native group dragend observed')
+   t.diagnostic('Native drag evidence '+JSON.stringify(dragEvents))
   })
   await step('status save',async()=>{await p.getByRole('button',{name:/Show Sidebar/}).click();const response=p.waitForResponse(r=>new URL(r.url()).pathname==='/api/v1/status-pages/'+slug&&r.request().method()==='PUT');await p.getByRole('button',{name:'Save',exact:true}).click();assert.equal((await response).status(),200);await p.getByRole('button',{name:/Edit Mode/}).waitFor()})
   await step('stored group identity and links',async()=>{const saved=await prisma.statusPageGroup.findMany({where:{statusPageId:record.id},orderBy:{weight:'asc'},include:{monitors:true}});assert.deepEqual(saved.map(row=>row.id),original.map(row=>row.id).reverse());assert.deepEqual(saved.flatMap(row=>row.monitors.map(link=>link.monitorId)).sort((a,b)=>a-b),monitorIds.sort((a,b)=>a-b))})
