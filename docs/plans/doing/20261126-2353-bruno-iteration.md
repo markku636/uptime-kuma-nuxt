@@ -94,3 +94,9 @@ R11 ✅ Ctrl/Cmd+Enter Send — commit `14bf5d8`：
 - 驗證：unit 136/136、typecheck 0 errors、build 成功、Bruno browser 2/2；完整整合的 group drag 為既有 flaky（單獨跑 3/3 通過，與 Bruno 無關）。
 - 部署：artifact `b455617ba460befb529dc6d9a4009d3db4cea106ae1443ab359c80bb9c8c1597`（source `14bf5d8`）；
   loader rev243 → app rev244，最終 Healthy/Synced。
+R12 ✅ API key 不讀 .bru 原文 — commit `c01aa3f`：
+- `GET /api/v1/monitors/{id}` 只在互動式 session 回傳 Bruno source；read/write API key 都移除 `body`，viewer 本來就走 monitorSummary。
+- 整合測試建立含 bearer token 的 Bruno monitor，驗證 session 可見、read/write key 與 viewer 都看不到原文。
+- 驗證：unit 136/136、typecheck 0 errors、build 成功、完整整合 96 pass / 1 skip。
+- 部署：artifact `179895cbae4d21652079b51ea55ee3825e2e516d3c0180df12481d0a8fbc8194`（source `c01aa3f`）；
+  loader rev245 → app rev246，最終 Healthy/Synced。
