@@ -56,6 +56,11 @@ const assertions: Array<{ label: string; expression: string; operator: string; v
   { label: 'is string', expression: 'res.body.name', operator: 'isString', value: '' },
   { label: 'is boolean', expression: 'res.body.active', operator: 'isBoolean', value: '' },
   { label: 'is array', expression: 'res.body.items', operator: 'isArray', value: '' },
+  { label: 'between', expression: 'res.status', operator: 'between', value: '200 299' },
+  { label: 'is defined', expression: 'res.body.name', operator: 'isDefined', value: '' },
+  { label: 'is undefined', expression: 'res.body.missing', operator: 'isUndefined', value: '' },
+  { label: 'is truthy', expression: 'res.body.active', operator: 'isTruthy', value: '' },
+  { label: 'is falsy', expression: 'res.body.inactive', operator: 'isFalsy', value: '' },
 ]
 
 for (const variant of assertions) {
@@ -142,7 +147,7 @@ test('body and vars variants: multiline text, nested JSON and disabled vars', as
 })
 
 test('unsupported assertion operators and expressions are rejected with safe codes', async () => {
-  for (const operator of ['matches', 'notMatches', 'between']) {
+  for (const operator of ['matches', 'notMatches']) {
     const result = await modelToSource(model({assertions: [{expression: 'res.body.name', operator, value: '"x"', enabled: true}]}), VALUES, SECRETS)
     assert.equal(result.source, null, operator)
     assert.ok(result.issues.some(issue => issue.code === 'UNSUPPORTED_ASSERTION'), `${operator}: ${JSON.stringify(result.issues)}`)

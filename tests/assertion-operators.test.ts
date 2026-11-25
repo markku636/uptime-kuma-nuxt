@@ -70,3 +70,24 @@ test('invalid expected types are rejected instead of crashing the checker', () =
   assert.equal(evaluateAssertions({version: 1, mode: 'all', rules: [rule('length', '2')]}, response).error, 'CONFIG_ERROR')
   assert.equal(evaluateAssertions({version: 1, mode: 'all', rules: [rule('startsWith', 2)]}, response).error, 'CONFIG_ERROR')
 })
+
+test('between and truthiness predicates evaluate without throwing', () => {
+  assert.equal(check('between', true, 250, [200, 299]).passed, true)
+  assert.equal(check('between', true, 300, [200, 299]).passed, false)
+  assert.equal(check('between', true, '250', [200, 299]).passed, false)
+  assert.equal(check('isDefined', true, 0).passed, true)
+  assert.equal(check('isDefined', false, undefined).passed, false)
+  assert.equal(check('isUndefined', false, undefined).passed, true)
+  assert.equal(check('isTruthy', true, 1).passed, true)
+  assert.equal(check('isTruthy', true, 0).passed, false)
+  assert.equal(check('isFalsy', true, '').passed, true)
+  assert.equal(check('isFalsy', false, undefined).passed, false)
+})
+
+test('Bruno between token with two numbers is parsed into a bounded range', async () => {
+  const { parseBrunoManifest } = await import('../server/services/bruno/parser')
+  const source = `meta {\n  name: Between\n  type: http\n}\nget {\n  url: https://example.com/health\n  body: none\n  auth: none\n}\nassert {\n  res.status: between 200 299\n}\n`
+  const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, {}, [])
+  assert.deepEqual(parsed.issues, [])
+  assert.deepEqual(parsed.requests[0]!.config.assertions.rules[0].expected, [200, 299])
+})

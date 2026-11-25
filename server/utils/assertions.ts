@@ -74,7 +74,7 @@ const ruleSchema=z.object({id:z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),source:z
   else if(rule.source==='header'){
     if(!rule.path||!/^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,256}$/.test(rule.path))ctx.addIssue({code:'custom',message:'A valid header name is required'})
   }else if(rule.path!==undefined)ctx.addIssue({code:'custom',message:'This source does not take a path'})
-  const unary=['exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray']
+  const unary=['exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray','isDefined','isUndefined','isTruthy','isFalsy']
   const numeric=['gt','gte','lt','lte','length']
   const text=['startsWith','endsWith']
   const list=['in','notIn']
@@ -82,10 +82,11 @@ const ruleSchema=z.object({id:z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),source:z
   if(numeric.includes(rule.operator)&&typeof rule.expected!=='number')ctx.addIssue({code:'custom',message:'Numeric comparisons require numeric values'})
   if(text.includes(rule.operator)&&typeof rule.expected!=='string')ctx.addIssue({code:'custom',message:'Text comparisons require a string'})
   if(list.includes(rule.operator)&&!Array.isArray(rule.expected))ctx.addIssue({code:'custom',message:'List comparisons require an array'})
+  if(rule.operator==='between'&&(!Array.isArray(rule.expected)||rule.expected.length!==2||rule.expected.some(value=>typeof value!=='number')))ctx.addIssue({code:'custom',message:'Between requires two numbers'})
   if(['equals','notEquals','contains','notContains'].includes(rule.operator)&&['header','text'].includes(rule.source)&&typeof rule.expected!=='string')ctx.addIssue({code:'custom',message:'Text/header comparisons require a string'})
   if(['status','responseTime'].includes(rule.source)&&!unary.includes(rule.operator)){
-    if(!['equals','notEquals','gt','gte','lt','lte','in','notIn'].includes(rule.operator))ctx.addIssue({code:'custom',message:'Status/time comparisons require a number or list'})
-    else if(list.includes(rule.operator)){if(!Array.isArray(rule.expected)||rule.expected.some(value=>typeof value!=='number'))ctx.addIssue({code:'custom',message:'Status/time lists require numbers'})}
+    if(!['equals','notEquals','gt','gte','lt','lte','in','notIn','between'].includes(rule.operator))ctx.addIssue({code:'custom',message:'Status/time comparisons require a number or list'})
+    else if(list.includes(rule.operator)||rule.operator==='between'){if(!Array.isArray(rule.expected)||rule.expected.some(value=>typeof value!=='number'))ctx.addIssue({code:'custom',message:'Status/time lists require numbers'})}
     else if(typeof rule.expected!=='number')ctx.addIssue({code:'custom',message:'Status/time comparisons require a number'})
   }
 })
@@ -107,6 +108,10 @@ export function evaluateRule(rule:AssertionRule,exists:boolean,value:unknown):As
     case 'isString':passed=exists&&typeof value==='string';reason='type_mismatch';break
     case 'isBoolean':passed=exists&&typeof value==='boolean';reason='type_mismatch';break
     case 'isArray':passed=exists&&Array.isArray(value);reason='type_mismatch';break
+    case 'isDefined':passed=exists;reason='missing';break
+    case 'isUndefined':passed=!exists;reason='unexpected_value';break
+    case 'isTruthy':passed=exists&&Boolean(value);reason='value_mismatch';break
+    case 'isFalsy':passed=exists&&!value;reason='unexpected_value';break
     default:
       if(!exists){reason='missing';break}
       if(['gt','gte','lt','lte'].includes(rule.operator)){
@@ -127,6 +132,9 @@ export function evaluateRule(rule:AssertionRule,exists:boolean,value:unknown):As
       }else if(rule.operator==='length'){
         if(typeof value!=='string'&&!Array.isArray(value)){reason='type_mismatch';break}
         passed=value.length===rule.expected
+      }else if(rule.operator==='between'){
+        if(typeof value!=='number'||!Array.isArray(rule.expected)||rule.expected.length!==2){reason='type_mismatch';break}
+        passed=value>=Number(rule.expected[0])&&value<=Number(rule.expected[1])
       }else{
         passed=isDeepStrictEqual(value,rule.expected)
         if(rule.operator==='notEquals')passed=!passed
