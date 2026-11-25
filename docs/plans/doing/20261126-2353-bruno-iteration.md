@@ -207,3 +207,6 @@ R31 ✅ Download .bru — commit `20e90d0`：
   loader rev279 → app rev280，最終 Healthy/Synced。
 R32 ✅ 相容性文件更新（僅文件，不部署） — commit `87fd49d`：
 - `docs/BRUNO_COMPATIBILITY.md` 補上 UI editor 各分頁、快捷鍵、operator 清單、path params/form body 與 API key 可見性。
+R33 ✅ 完整回歸（驗證輪，不部署） — 無程式變更：
+- unit 146/146、typecheck 0 errors、build 成功、完整整合 102 pass / 0 fail / 1 skip。
+- 正式站仍為 R31 的 rev280（Healthy/Synced）；R32 文件與 R33 驗證不需要重新部署。
