@@ -530,6 +530,16 @@ R92/R93 🔵 正確性與 UX：
     公開狀態頁加 Monitors / Up / Down / 24h uptime 摘要卡。
   build/unit 61/61、integration 89 pass / 0 fail / 1 skipped、typecheck 0。
 
+R94 🔵  Incident：11/25 08:35 node 重開機後 app pod 比 PostgreSQL 先啟動，
+  security bootstrap 失敗且只對 transient 錯誤重試，readiness 永久 503、兩域 502。
+  先 rollout restart 止血（DB 已就緒），再根治：securityReady 與 initializeRuntime
+  對所有失敗都重試（2s／指數退避至 30s）。本機以正式 DB port-forward 驗證
+  50 個 monitor envelope 全可解密、securityReady 成功。線上恢復 200。
+R95 🔵 Bruno 新增頁修正：`data.body` 原本寫在 showUrlField 分支內，Bruno 不在該分支，
+  所以新增時 body 是空的；改為無條件指派。另加 Bruno 專用「Send request」試跑按鈕
+  （原本只有 HTTP 類型有試跑入口）。新增 browser 整合測試驗證 body 送出與密封。
+  unit 61/61、integration 90 pass / 0 fail / 1 skipped、typecheck 0。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
