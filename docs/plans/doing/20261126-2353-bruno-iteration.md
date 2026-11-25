@@ -175,3 +175,8 @@ R24 ✅ 可讀的錯誤訊息 — commit `7876f7c`：
 R25 ✅ 轉換層健壯性測試（僅測試，不影響 runtime，故不重新部署） — commit `e153434`：
 - `tests/bruno-editor-robustness.test.ts` 驗證 14 種畸形 model 與 5 種畸形 source 都只回安全錯誤碼、不拋例外、不洩漏 secret 值。
 - 驗證：unit 145/145、typecheck 0 errors、build 成功；正式站仍為 R24 的 rev270。
+R26 ✅ 瀏覽器覆蓋 Auth / Docs 分頁 — commit `2f3f04b`：
+- 補 aria-label 讓自動化與鍵盤使用者可定位 Auth mode / Token / Docs；瀏覽器測試實際設定 bearer token 與 docs，Raw 驗證 `.bru` 內容。
+- 驗證：unit 145/145、typecheck 0 errors、build 成功、Bruno browser 4/4。
+- 部署：artifact `88fcf82dddee99ced0ff4bfe052038b0324b98cf5285cd81b62c176e84ffd38e`（source `2f3f04b`）；
+  loader rev271 → app rev272，最終 Healthy/Synced。
