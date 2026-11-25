@@ -98,6 +98,10 @@ test('Bruno .bru source is only readable by an interactive editor session', asyn
     const response = await data(await request(`/api/v1/monitors/${id}`, 'GET', undefined, a, undefined, {'x-api-key': key.key}))
     assert.ok(!Object.hasOwn(response.data, 'body'), `${scope} key must not read the .bru source`)
     assert.ok(!JSON.stringify(response).includes('SECRET_TOKEN_SENTINEL'))
+    if (scope === 'write') {
+      const updated = await data(await request(`/api/v1/monitors/${id}`, 'PUT', undefined, a, {name: 'Source visibility renamed'}, {'x-api-key': key.key}))
+      assert.ok(!Object.hasOwn(updated.data, 'body'), 'write key must not read the source from a mutation response')
+    }
     await request(`/api/v1/api-keys/${key.id}`, 'DELETE', owner, a)
   }
 

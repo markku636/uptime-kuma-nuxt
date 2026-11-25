@@ -84,19 +84,24 @@ export function safePatternMatch(value: string, pattern: string): boolean | null
   if (!parsed || typeof value !== 'string' || Buffer.byteLength(value) > MAX_VALUE) return null
   const {tokens, anchoredStart, anchoredEnd} = parsed
   const length = value.length, width = length + 1
+  // Hard work budget keeps a short pattern from stalling a checker on a large body.
+  if (tokens.length * width > 8_000_000) return null
   let previous = new Uint8Array(width), current = new Uint8Array(width)
   // An unanchored pattern may start at any position in the value.
   if (anchoredStart) previous[0] = 1
   else previous.fill(1)
   for (const token of tokens) {
     current.fill(0)
-    for (let start = 0; start <= length; start++) {
-      if (!previous[start]) continue
-      const upper = token.max === Infinity ? length - start : Math.min(length - start, token.max)
-      if (upper < token.min) continue
-      for (let count = 0; count <= upper; count++) {
-        if (count > 0 && !token.test(value[start + count - 1]!)) break
-        if (count >= token.min) current[start + count] = 1
+    const unbounded = token.max === Infinity
+    for (let pos = 0; pos <= length; pos++) {
+      if (unbounded) {
+        // Zero-width star/plus closure: one left-to-right pass, no quadratic restart.
+        if (token.min === 0 ? previous[pos] : false) current[pos] = 1
+        if (pos > 0 && token.test(value[pos - 1]!) && (previous[pos - 1] || current[pos - 1])) current[pos] = 1
+      } else if (token.max === 1) {
+        if ((token.min === 0 && previous[pos]) || (pos > 0 && previous[pos - 1] && token.test(value[pos - 1]!))) current[pos] = 1
+      } else if (pos > 0 && previous[pos - 1] && token.test(value[pos - 1]!)) {
+        current[pos] = 1
       }
     }
     const swap = previous; previous = current; current = swap

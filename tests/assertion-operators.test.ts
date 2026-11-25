@@ -169,3 +169,10 @@ test('every supported operator exports back to a parseable .bru assertion', asyn
     assert.equal(parsed.requests[0]!.config.assertions.rules[0]!.operator, item.operator)
   }
 })
+
+test('64 unbounded tokens on a 4 KB value stay fast after the linear rewrite', async () => {
+  const { safePatternMatch } = await import('../server/utils/safe-pattern')
+  const started = performance.now()
+  assert.equal(safePatternMatch('x'.repeat(4096), '^' + '.*'.repeat(64)), true)
+  assert.ok(performance.now() - started < 1000, 'safe pattern matcher must be linear-time')
+})

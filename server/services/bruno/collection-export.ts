@@ -68,11 +68,18 @@ function monitorDocs(monitor: any) {
 export function monitorToBru(stored: any, seq: number, secrets: SecretNamer): string {
   const monitor = hydrateMonitor(stored), id = monitor.id
   const fail = (code: string): never => { throw new BrunoExportError(id, code) }
-  // Bruno monitors already store a declarative .bru request; export it verbatim.
+  // Bruno monitors already store a declarative .bru request; protect literal credentials before export.
   if (monitor.type === 'bruno') {
     const source = typeof monitor.body === 'string' ? monitor.body : ''
     if (!source.trim() || Buffer.byteLength(source) > 131072) fail('UNSUPPORTED_MONITOR_TYPE')
-    return source.endsWith('\n') ? source : `${source}\n`
+    let ast: any
+    try { ast = brunoLang.bruToJsonV2(source) } catch { fail('UNSUPPORTED_MONITOR_TYPE') }
+    if (ast.auth?.basic?.username) ast.auth.basic.username = secrets.protect(String(ast.auth.basic.username), monitor.name, 'username')
+    if (ast.auth?.basic?.password) ast.auth.basic.password = secrets.protect(String(ast.auth.basic.password), monitor.name, 'password')
+    if (ast.auth?.bearer?.token) ast.auth.bearer.token = secrets.protect(String(ast.auth.bearer.token), monitor.name, 'token')
+    if (Array.isArray(ast.headers)) ast.headers = ast.headers.map((header: any) => header && CREDENTIAL_HEADERS.has(String(header.name).toLowerCase())
+      ? {...header, value: secrets.protect(String(header.value ?? ''), monitor.name, variableSlug(String(header.name)))} : header)
+    return brunoLang.jsonToBruV2(ast)
   }
   if (!['http', 'keyword', 'json-query'].includes(monitor.type) || !monitor.url) fail('UNSUPPORTED_MONITOR_TYPE')
   const method = String(monitor.method || 'GET').toLowerCase()

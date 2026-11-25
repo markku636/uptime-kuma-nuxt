@@ -133,6 +133,9 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
 
     await page.getByRole('button', {name:'UI editor', exact:true}).click()
     await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByRole('tab', {name:/Headers/}).click()
+    await page.getByRole('button', {name:'+ Add header', exact:true}).click()
+    await page.getByRole('tab', {name:/Params/}).waitFor()
     await page.getByPlaceholder('https://example.com/health', {exact:true}).focus()
     await page.keyboard.press('Control+Enter')
     await page.getByText(/Status\s*200/).waitFor()

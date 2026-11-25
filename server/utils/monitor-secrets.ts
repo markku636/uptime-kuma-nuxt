@@ -50,7 +50,7 @@ export async function reserveMonitorId(tx:any):Promise<number> {
   return rows[0].id
 }
 
-export function monitorEditorDTO(monitor:any) {
+export function monitorEditorDTO(monitor:any, options:{includeBody?:boolean} = {}) {
   const fields=['id','workspaceId','environmentId','configVersion','name','description','active','userId','interval','retryInterval','maxretries','timeout','responseTimeThreshold','resendInterval','snmpOid','snmpVersion','cacheBust','type','hostname','port','method','keyword','invertKeyword','ignoreTls','upsideDown','authMethod','proxyId','weight','createdAt','maxRedirects','acceptedStatuscodes','jsonPath','expectedValue','grpcProtoContent','grpcMethod','grpcServiceName','grpcEnableTls','databaseType','dockerContainer','mqttTopic','mqttSuccessMessage','kafkaTopic','kafkaSaslMechanism','radiusCalledStationId','radiusCallingStationId','game','parent','childrenIds','remoteBrowserId','dnsRecordType','dnsResolver','expiryNotification','tlsExpiryDays','tlsInfo','nodeId','assignedNode','assertions','tags','heartbeats']
   const hydrated=hydrateMonitor(monitor),result:Record<string,any>=Object.fromEntries(fields.filter(key=>Object.hasOwn(monitor,key)).map(key=>[key,monitor[key]])),configuredSecrets:Record<string,boolean>={}
   for (const key of sensitiveMonitorFields) {
@@ -61,9 +61,8 @@ export function monitorEditorDTO(monitor:any) {
   delete result.requestSecrets
   delete result.pushToken
   delete result.monitorNotifications
-  // The Bruno editor needs the existing declarative request to show it like the Bruno app.
-  // monitorEditorDTO is only served to non-viewer sessions (see monitors/[id].get.ts).
-  if (monitor.type === 'bruno') result.body = typeof hydrated.body === 'string' ? hydrated.body : ''
+  // The Bruno source can contain plaintext credentials: only interactive editor sessions may read it.
+  if (options.includeBody && monitor.type === 'bruno') result.body = typeof hydrated.body === 'string' ? hydrated.body : ''
   result.notifications=(monitor.monitorNotifications||[]).map((row:any)=>row.notificationId)
   result.tlsConfigured=typeof hydrated.url==='string'&&hydrated.url.startsWith('https://')
   result.configuredSecrets=configuredSecrets

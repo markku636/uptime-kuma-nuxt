@@ -50,10 +50,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const { brunoSources, ...withoutSources } = serializedMonitor
-  const dto: any = session.role === 'viewer' ? monitorSummary(withoutSources) : monitorEditorDTO(withoutSources)
-  // The Bruno .bru source can contain plaintext credentials. Only an interactive editor session
-  // should read it back; API keys (including write keys) keep the previous write-only behaviour.
-  if (event.context.authMethod === 'api-key') delete dto.body
+  const editableSession = session.role !== 'viewer' && event.context.authMethod !== 'api-key'
+  const dto = session.role === 'viewer' ? monitorSummary(withoutSources) : monitorEditorDTO(withoutSources, {includeBody: editableSession})
   return {
     ok: true,
     // Group and Bruno origin are display metadata, not request configuration.

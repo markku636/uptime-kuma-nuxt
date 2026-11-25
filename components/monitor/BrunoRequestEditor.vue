@@ -584,7 +584,7 @@ async function sync() {
   // An incomplete request cannot be serialized by the strict parser; keep the existing source
   // so creating a monitor and filling it in later still works.
   if (mode.value === 'ui' && model.value && model.value.url.trim() && !props.disabled) {
-    const data = await callApi('/api/v1/bruno/request/stringify', { model: model.value, environmentId: resolvedEnvironmentId.value })
+    const data = await callApi('/api/v1/bruno/request/stringify', { model: serializableModel(), environmentId: resolvedEnvironmentId.value })
     if (!data.source) throw new Error('Unable to serialize this request')
     rawSource.value = data.source
     emit('update:modelValue', data.source)

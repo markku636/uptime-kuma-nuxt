@@ -115,3 +115,24 @@ assert {
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
+
+test('Bruno checks honour monitor-level accepted status codes', {timeout:30000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined
+  const fixture = http.createServer((_req, res) => { res.statusCode = 404; res.end('not found') })
+  await new Promise<void>(resolve => fixture.listen(0, '127.0.0.1', resolve))
+  const origin = `http://127.0.0.1:${(fixture.address() as any).port}`
+  try {
+    identity = await user('bruno-accepted-status')
+    scope = await workspace(identity, 'Bruno accepted status')
+    const body = `meta {\n  name: Accepted 404\n  type: http\n}\nget {\n  url: ${origin}/missing\n  body: none\n  auth: none\n}\n`
+    const trial = await data(await request('/api/v1/monitors/test', 'POST', identity, scope, {
+      type: 'bruno', name: 'Accepted 404', active: false, timeout: 30, body, acceptedStatuscodes: ['404'],
+    }))
+    assert.equal(trial.data.status, 1, JSON.stringify(trial.data))
+    assert.equal(trial.data.code, 'CHECK_OK')
+  } finally {
+    fixture.closeAllConnections()
+    await new Promise<void>(resolve => fixture.close(() => resolve()))
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})

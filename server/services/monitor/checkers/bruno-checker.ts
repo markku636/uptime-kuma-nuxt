@@ -122,7 +122,7 @@ export async function checkBruno(monitor: any, start: number, externalSignal?: A
     }
     let passed = evaluation.passed
     let code = passed ? 'CHECK_OK' : 'ASSERTIONS_FAILED'
-    if (!parsedAssertions.data.rules.some(rule => rule.source === 'status') && !acceptedStatus(response.status, config.acceptedStatuscodes)) {
+    if (!parsedAssertions.data.rules.some(rule => rule.source === 'status') && !acceptedStatus(response.status, monitor.acceptedStatuscodes ?? config.acceptedStatuscodes)) {
       passed = false
       code = 'HTTP_STATUS'
     }
