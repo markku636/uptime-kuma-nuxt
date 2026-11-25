@@ -111,7 +111,7 @@ test('many parameters keep order and variable names in values', async () => {
 test('body and vars variants: multiline text, nested JSON and disabled vars', async () => {
   const cases: Array<{ body: BrunoRequestModel['body']; expected: string }> = [
     { body: {mode: 'text', content: 'line one\nline two'}, expected: 'line two' },
-    { body: {mode: 'json', content: '{"count":{{COUNT}},"name":"{{NAME}}"}'}, expected: '"name":"{{NAME}}"' },
+    { body: {mode: 'json', content: '{"nested":{"count":{{COUNT}},"name":"{{NAME}}"}}'}, expected: '"name":"{{NAME}}"' },
   ]
   for (const item of cases) {
     const input = model({
@@ -137,4 +137,24 @@ test('unsupported assertion operators and expressions are rejected with safe cod
   const unknown = await modelToSource(model({assertions: [{expression: 'res.foobar', operator: 'eq', value: '1', enabled: true}]}), VALUES, SECRETS)
   assert.equal(unknown.source, null)
   assert.ok(unknown.issues.some(issue => issue.code === 'UNSUPPORTED_ASSERTION'))
+})
+
+test('nested JSON bodies are valid even though they end with }}', async () => {
+  const bodies = [
+    '{"nested":{"count":2}}',
+    '{"a":{"b":{"c":"{{NAME}}"}}}',
+    '{"items":[{"id":1},{"id":2}]}',
+    '{"literal":"ends with }}"}',
+  ]
+  for (const content of bodies) {
+    const result = await roundTrip(model({method: 'POST', url: 'https://example.com/api', body: {mode: 'json', content}}))
+    assert.deepEqual(result.model.body, {mode: 'json', content})
+  }
+})
+
+test('unmatched variable openers are still rejected', async () => {
+  const source = `meta {\n  name: Bad\n  type: http\n}\nget {\n  url: https://example.com/{{OPS\n  body: none\n  auth: none\n}\n`
+  const { parseBrunoManifest } = await import('../server/services/bruno/parser')
+  const parsed = await parseBrunoManifest({collectionId: 'x', mode: 'create', files: [{path: 'request.bru', content: source}]}, VALUES, SECRETS)
+  assert.ok(parsed.issues.some(issue => issue.code === 'UNSUPPORTED_VARIABLE'), JSON.stringify(parsed.issues))
 })

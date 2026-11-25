@@ -82,7 +82,9 @@ function resolver(primary:Record<string,string>,environment:Record<string,string
   const resolve=(source:string,chain:string[]=[]):string=>{
     if(++operations>10000||chain.length>32)fail('VARIABLE_COMPLEXITY','variables')
     const expression=/\{\{\s*([^{}]+?)\s*\}\}/g
-    if(/\{\{|\}\}/.test(source.replace(expression,'')))fail('UNSUPPORTED_VARIABLE','variables')
+    // Only an unmatched OPEN delimiter can hide an unresolved variable. A stray `}}` is
+    // legitimate in nested JSON bodies (`{"a":{"b":1}}`) and cannot expand anything on its own.
+    if(source.replace(expression,'').includes('{{'))fail('UNSUPPORTED_VARIABLE','variables')
     const result=source.replace(expression,(_match,name)=>{
       onReference?.(name)
       if(!validVariableName(name))fail('UNSUPPORTED_VARIABLE','variables')
