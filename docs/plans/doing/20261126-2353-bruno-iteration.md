@@ -210,3 +210,9 @@ R32 ✅ 相容性文件更新（僅文件，不部署） — commit `87fd49d`：
 R33 ✅ 完整回歸（驗證輪，不部署） — 無程式變更：
 - unit 146/146、typecheck 0 errors、build 成功、完整整合 102 pass / 0 fail / 1 skip。
 - 正式站仍為 R31 的 rev280（Healthy/Synced）；R32 文件與 R33 驗證不需要重新部署。
+R34 ✅ 匯出支援所有 operator — commit `52fbf53`：
+- `assertionPair()` 補上 13 個新 operator 的 Bruno token；否則匯出會寫出 `undefined`。
+- 新增 31 種 operator 的匯出→解析→operator 還原測試。
+- 驗證：unit 147/147、typecheck 0 errors、build 成功；完整整合 101 pass / 1 fail（既有 group drag flaky，單獨跑通過）。
+- 部署：artifact `1ae7e119abe588bf2cc0f565aaad0ebb4dc2cc60e8e2e722773b0d39a7571391`（source `52fbf53`）；
+  loader rev281 → app rev282，最終 Healthy/Synced。
