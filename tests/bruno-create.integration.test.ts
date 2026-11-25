@@ -54,6 +54,7 @@ assert {
     await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent?.trim() === 'Create Monitor' && !button.disabled))
     await page.locator('select.select-field').first().selectOption('bruno')
     await page.getByPlaceholder('My Monitor', { exact: true }).fill('Browser Bruno created')
+    await page.getByRole('button', { name: 'Raw (.bru)', exact: true }).click()
     await page.locator('textarea.font-mono').first().fill(bru)
 
     await page.getByRole('button', { name: 'Send request', exact: true }).click()

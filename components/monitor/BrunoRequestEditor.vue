@@ -235,7 +235,7 @@ const rawSource = ref(props.modelValue)
 watch(() => props.modelValue, value => { if (mode.value === 'raw' && value !== rawSource.value) rawSource.value = value })
 watch(rawSource, value => { if (mode.value === 'raw' && value !== props.modelValue) emit('update:modelValue', value) })
 
-const mode = ref<'raw' | 'ui'>('raw')
+const mode = ref<'raw' | 'ui'>('ui')
 const model = ref<BrunoRequestModel | null>(null)
 const activeTab = ref<(typeof tabs)[number]['key']>('params')
 const resultTab = ref<'headers' | 'body' | 'assert'>('body')
@@ -279,6 +279,21 @@ async function callApi(path: string, body: Record<string, unknown>) {
   } finally { busy.value = false }
 }
 
+/** Default view: parse the stored request into tabs; an empty request opens as a blank UI form. */
+async function initializeUi() {
+  if (props.disabled) return
+  if (!rawSource.value.trim()) {
+    model.value = {
+      name: 'Request', method: 'GET', url: '', params: [], headers: [],
+      auth: {mode: 'none'}, body: {mode: 'none', content: ''}, vars: [], assertions: [], ignoredBlocks: [],
+    }
+    mode.value = 'ui'
+    return
+  }
+  mode.value = 'raw'
+  await switchMode('ui')
+}
+
 async function switchMode(target: 'raw' | 'ui') {
   if (mode.value === target || busy.value || props.disabled) return
   try {
@@ -291,6 +306,13 @@ async function switchMode(target: 'raw' | 'ui') {
       mode.value = 'ui'
     } else {
       if (!model.value) return
+      if (!model.value.url.trim()) {
+        rawSource.value = `meta {\n  name: ${model.value.name || 'Request'}\n  type: http\n}\n\n${model.value.method.toLowerCase()} {\n  url: \n  body: none\n  auth: none\n}\n`
+        emit('update:modelValue', rawSource.value)
+        mode.value = 'raw'
+        error.value = ''
+        return
+      }
       const data = await callApi('/api/v1/bruno/request/stringify', { model: serializableModel(), environmentId: resolvedEnvironmentId.value })
       if (!data.source) throw new Error('Unable to serialize this request')
       rawSource.value = data.source
@@ -302,6 +324,8 @@ async function switchMode(target: 'raw' | 'ui') {
     error.value = failure?.data?.message || failure?.message || 'Unable to convert the request'
   }
 }
+
+onMounted(initializeUi)
 
 function addRow(kind: 'params' | 'headers' | 'vars' | 'assert') {
   if (!model.value || props.disabled) return
@@ -341,7 +365,9 @@ function prettyBody(body: string) {
 
 /** Called by the parent before saving/trial so UI edits are always written back to the .bru source. */
 async function sync() {
-  if (mode.value === 'ui' && model.value && !props.disabled) {
+  // An incomplete request cannot be serialized by the strict parser; keep the existing source
+  // so creating a monitor and filling it in later still works.
+  if (mode.value === 'ui' && model.value && model.value.url.trim() && !props.disabled) {
     const data = await callApi('/api/v1/bruno/request/stringify', { model: model.value, environmentId: resolvedEnvironmentId.value })
     if (!data.source) throw new Error('Unable to serialize this request')
     rawSource.value = data.source

@@ -50,7 +50,9 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     page.on('pageerror', error => errors.push(error.message))
 
     await page.goto(`${base}/monitors/${monitorId}/edit`)
-    await page.getByRole('button', {name:'UI editor', exact:true}).waitFor()
+    // UI editor is the default view now.
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
     const raw = page.locator('textarea.font-mono').first()
     assert.match(await raw.inputValue(), /res\.status: eq 200/, 'existing .bru source must be visible to editors')
     assert.match(await raw.inputValue(), new RegExp(origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
@@ -97,13 +99,45 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     assert.match(saved.data.body, /X-Demo: abc/, 'PUT persisted the serialized .bru')
 
     await page.goto(`${base}/monitors/${monitorId}/edit`)
-    await page.getByRole('button', {name:'UI editor', exact:true}).waitFor()
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
     assert.match(await page.locator('textarea.font-mono').first().inputValue(), /X-Demo: abc/, 'saved .bru survives reload')
     assert.deepEqual(errors, [])
   } finally {
     await browser.close()
     fixture.closeAllConnections()
     await new Promise<void>(r => fixture.close(() => r()))
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})
+
+test('browser opens an empty Bruno request directly in the UI editor', {timeout:60000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined, monitorId: number | undefined
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-empty-ui')
+    scope = await workspace(identity, 'Bruno empty UI')
+    const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {type:'bruno', name:'Empty Bruno', active:false}))
+    monitorId = created.data.id
+    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage(), errors: string[] = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+    assert.equal(await page.getByText('HTTP_BLOCK_REQUIRED').count(), 0, 'empty request must not show a parse error')
+    assert.equal(await page.locator('textarea.font-mono').count(), 0, 'UI editor is the default view')
+    await page.getByPlaceholder('https://example.com/health', {exact:true}).fill('http://127.0.0.1:1/health')
+    await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
+    assert.match(await page.locator('textarea.font-mono').first().inputValue(), /http:\/\/127.0.0.1:1\/health/)
+    assert.deepEqual(errors, [])
+  } finally {
+    await browser.close()
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
