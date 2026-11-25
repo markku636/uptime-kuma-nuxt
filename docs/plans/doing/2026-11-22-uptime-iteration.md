@@ -540,6 +540,10 @@ R95 🔵 Bruno 新增頁修正：`data.body` 原本寫在 showUrlField 分支內
   （原本只有 HTTP 類型有試跑入口）。新增 browser 整合測試驗證 body 送出與密封。
   unit 61/61、integration 90 pass / 0 fail / 1 skipped、typecheck 0。
 
+R96 🔵 Settings 版面：Profile／Variables & Keys／Workspaces 子頁上限放寬至 max-w-6xl；
+  TLS 到期設定卡片改為 grid 排版、Days 輸入限寬，按鈕不再擠在一起。
+  unit 61/61、integration 90 pass / 0 fail / 1 skipped、typecheck 0。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
