@@ -299,3 +299,4 @@ R58 ✅ 兩次完整回歸（驗證輪） — 兩次皆 105 pass / 0 fail / 1 sk
 R59 ✅ 部署產物檢查（驗證輪） — `.output/public/_nuxt/D_T4rA_u.js` 含 `Copy .bru` 與 `Unsaved changes`，確認 rev300 帶到最新編輯器程式。
 R60 ✅ 一鍵驗證指令（僅工具，不部署） — `npm run verify:bruno` 依序跑 unit / typecheck / build / Bruno 整合，實測全綠。
 R61 ✅ API 壓力測試（僅測試，不部署） — 50 斷言 + 60 KB body 的 parse/stringify 在 <8 秒內完成，8/8 整合測試通過。
+R62 ✅ 一鍵驗證全綠（驗證輪） — `npm run verify:bruno` 全部通過；正式站 rev300 不變。
