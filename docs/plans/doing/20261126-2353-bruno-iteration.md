@@ -148,3 +148,9 @@ R20 ✅ `{{` 變數自動完成 — commit `0cff909`：
 - 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno browser 3/3。
 - 部署：artifact `03685814703ac124b939fba5463f7902341bc43e9e4380b03e64ab8da506f42d`（source `0cff909`）；
   loader rev261 → app rev262，最終 Healthy/Synced。
+R21 ✅ Insert 焦點修正 — commit `543f1c3`：
+- focus 追蹤只接受 input/textarea，按鈕不再搶走插入目標；Vars 分頁新增列後點 Insert 會插到該列的 Value。
+- 瀏覽器測試覆蓋此流程。
+- 驗證：unit 142/142、typecheck 0 errors、build 成功、Bruno browser 3/3。
+- 部署：artifact `a5af2dcc719dfda694f37d78ca707a95d845a012c341495401f1ca7dd809d1c7`（source `543f1c3`）；
+  loader rev263 → app rev264，最終 Healthy/Synced。
