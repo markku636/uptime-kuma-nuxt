@@ -68,6 +68,12 @@ function monitorDocs(monitor: any) {
 export function monitorToBru(stored: any, seq: number, secrets: SecretNamer): string {
   const monitor = hydrateMonitor(stored), id = monitor.id
   const fail = (code: string): never => { throw new BrunoExportError(id, code) }
+  // Bruno monitors already store a declarative .bru request; export it verbatim.
+  if (monitor.type === 'bruno') {
+    const source = typeof monitor.body === 'string' ? monitor.body : ''
+    if (!source.trim() || Buffer.byteLength(source) > 131072) fail('UNSUPPORTED_MONITOR_TYPE')
+    return source.endsWith('\n') ? source : `${source}\n`
+  }
   if (!['http', 'keyword', 'json-query'].includes(monitor.type) || !monitor.url) fail('UNSUPPORTED_MONITOR_TYPE')
   const method = String(monitor.method || 'GET').toLowerCase()
   if (!METHODS.has(method)) fail('UNSUPPORTED_METHOD')
