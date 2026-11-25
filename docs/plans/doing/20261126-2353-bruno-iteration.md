@@ -189,3 +189,8 @@ R28 ✅ Reset 按鈕 — commit `b6c7ae2`：
 - 驗證：unit 146/146、typecheck 0 errors、build 成功、Bruno browser 4/4。
 - 部署：artifact `1b7b84fcc03b54be14be2587571794c91f0fdc429780217b3cc12a4026294f99`（source `b6c7ae2`）；
   loader rev273 → app rev274，最終 Healthy/Synced。
+R29 ✅ 窄畫面表格 — commit `479835e`：
+- 四個表格外層加 overflow-x-auto；390px 寬度瀏覽器測試驗證分頁與欄位可見，並存 /tmp/opencode/bruno-mobile.png。
+- 驗證：unit 146/146、typecheck 0 errors、build 成功、Bruno browser 5/5。
+- 部署：artifact `21d78c33c1e97a576e5c856579ca564dfbc066b35a372c5646f7f59bffb472c7`（source `479835e`）；
+  loader rev275 → app rev276，最終 Healthy/Synced。
