@@ -172,6 +172,6 @@ R24 ✅ 可讀的錯誤訊息 — commit `7876f7c`：
 - 驗證：unit 143/143、typecheck 0 errors、build 成功、Bruno browser 4/4。
 - 部署：artifact `7c95dfdcb8ae7bfc52faebf0c7812c329f083c10232b8bb9f60403fe026d4783`（source `7876f7c`）；
   loader rev269 → app rev270，Healthy/Synced。
-R25 ✅ 轉換層健壯性測試（僅測試，不影響 runtime，故不重新部署） — commit `?`：
+R25 ✅ 轉換層健壯性測試（僅測試，不影響 runtime，故不重新部署） — commit `e153434`：
 - `tests/bruno-editor-robustness.test.ts` 驗證 14 種畸形 model 與 5 種畸形 source 都只回安全錯誤碼、不拋例外、不洩漏 secret 值。
 - 驗證：unit 145/145、typecheck 0 errors、build 成功；正式站仍為 R24 的 rev270。
