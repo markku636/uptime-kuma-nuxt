@@ -24,3 +24,10 @@
 ## 迭代紀錄
 
 格式：`R<n> ✅/❌ 標題 — commit／映像／驗證證據`
+R1 ✅ 預設 UI editor + 參數／斷言 variant 測試 — commit `b8a6cf8`：
+- 空 `.bru` 直接開空白 UI 表單，不再出現 `HTTP_BLOCK_REQUIRED`；有內容則自動 parse 進分頁；Raw 仍可切換。
+- 新增 `tests/bruno-editor-variants.test.ts`（25 個案例：20 種 operator/expression、禁用列、placeholder、嵌套 URL、20 個參數、body/vars、不支援 operator 的安全錯誤碼）；既有 browser/create 測試改為配合 UI 預設。
+- 驗證：unit 102/102、typecheck 0 errors、build 成功；整合 `bruno-editor-browser` + `bruno-create` 3/3 pass。
+- 部署：artifact `7af3b9617990f61abd05defd1e9d98b8b24f146fe8d57550c1997dd029091c76`（203,741,704 bytes，source `b8a6cf8`）；
+  loader GitOps `edd0ffbe`（rev223，Job `uptime-artifact-7af3b9617990-1` Succeeded）→ app `ad927e17`（rev224，Healthy/Synced）。
+- 正式站 UI 需使用者登入後確認（目前只驗證到登入頁）。
