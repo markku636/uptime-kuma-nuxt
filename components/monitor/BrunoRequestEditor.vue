@@ -149,6 +149,16 @@
           </tbody>
         </table>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('vars')">+ Add variable</button>
+        <div v-if="environmentNames.length" class="rounded-lg border border-[color-mix(in_srgb,currentColor_15%,transparent)] p-2 space-y-1">
+          <p class="text-xs text-secondary">Environment variables · focus a field, then click Insert</p>
+          <div v-for="name in environmentNames" :key="name" class="flex items-center justify-between gap-2 text-xs">
+            <code class="break-all">{{ variableToken(name) }}</code>
+            <span class="flex items-center gap-2">
+              <span class="text-secondary">{{ envSecrets.includes(name) ? '••••••' : envVariables[name] }}</span>
+              <button type="button" class="btn btn-outline text-xs !px-2 !py-1" :disabled="disabled" @click="insertVariable(variableToken(name))">Insert</button>
+            </span>
+          </div>
+        </div>
       </section>
 
       <!-- Script (preserved, never executed) -->
@@ -339,6 +349,9 @@ async function loadEnv() {
   } catch { envVariables.value = {}; envSecrets.value = [] }
 }
 watch([() => current.value?.id, () => resolvedEnvironmentId.value], loadEnv, { immediate: true })
+
+const environmentNames = computed(() => [...new Set([...Object.keys(envVariables.value), ...envSecrets.value])].sort().slice(0, 50))
+const variableToken = (name: string) => `{{${name}}}`
 
 const urlPreview = computed(() => {
   const source = mode.value === 'ui' ? model.value?.url || '' : rawSource.value

@@ -89,6 +89,10 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await dialog.getByRole('button', {name:'Close', exact:true}).first().click()
     await dialog.waitFor({state:'hidden'})
 
+    await page.getByRole('tab', {name:/Vars/}).click()
+    await page.getByText('{{EDITOR_VAR}}').waitFor()
+    assert.ok((await page.getByRole('button', {name:'Insert', exact:true}).count()) > 0)
+
     await page.getByRole('tab', {name:/Assert/}).click()
     assert.ok((await page.locator('select.bruno-cell').count()) > 0, 'assertion operator selector is rendered')
 
