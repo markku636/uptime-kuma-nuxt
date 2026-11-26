@@ -42,6 +42,7 @@ export interface VisualDb {
     diffRatio: number | null
     diffPixels: number | null
     diffImage: Buffer | null
+    currentImage: Buffer
     metrics: Record<string, unknown>
   }): Promise<void>
 }
@@ -66,6 +67,7 @@ const prismaDb: VisualDb = {
       data: {
         ...data,
         diffImage: data.diffImage ? new Uint8Array(data.diffImage) : null,
+        currentImage: new Uint8Array(data.currentImage),
         metrics: data.metrics as Prisma.InputJsonValue,
       },
     })
@@ -255,6 +257,7 @@ export async function checkVisualDiff(
           diffRatio,
           diffPixels,
           diffImage,
+          currentImage: screenshot,
           metrics: {
             httpStatus,
             overflow: observation.documentScrollWidth - observation.viewportWidth,

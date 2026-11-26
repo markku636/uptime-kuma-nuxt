@@ -258,6 +258,7 @@ model VisualCheckArtifact {
   diffRatio     Float?   @map("diff_ratio")
   diffPixels    Int?     @map("diff_pixels")
   diffImage     Bytes?   @map("diff_image")
+  currentImage  Bytes?   @map("current_image")
   metrics       Json?
 
   @@index([monitorId, checkedAt(sort: Desc)])
