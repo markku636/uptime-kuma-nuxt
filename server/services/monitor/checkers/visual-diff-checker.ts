@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import { chromium } from 'playwright'
 import type { CheckResult } from '../checker'
-import { prisma } from '../../../utils/prisma'
+import { workerPrisma } from '../../../utils/worker-prisma'
 import { normalizeVisualConfig } from '../../../utils/visual-config'
 import type { VisualConfig } from '../../../../shared/types/visual-config'
 import {
@@ -49,21 +49,21 @@ export interface VisualDb {
 
 const prismaDb: VisualDb = {
   async findBaseline(monitorId, viewportLabel) {
-    const row = await prisma.visualBaseline.findUnique({
+    const row = await workerPrisma.visualBaseline.findUnique({
       where: { monitorId_viewportLabel: { monitorId, viewportLabel } },
     })
     if (!row) return null
     return { configVersion: row.configVersion, image: Buffer.from(row.image), sha256: row.sha256 }
   },
   async saveBaseline(monitorId, viewportLabel, width, height, image, sha256, configVersion) {
-    await prisma.visualBaseline.upsert({
+    await workerPrisma.visualBaseline.upsert({
       where: { monitorId_viewportLabel: { monitorId, viewportLabel } },
       create: { monitorId, viewportLabel, width, height, image: new Uint8Array(image), sha256, configVersion },
       update: { width, height, image: new Uint8Array(image), sha256, configVersion },
     })
   },
   async saveArtifact(data) {
-    await prisma.visualCheckArtifact.create({
+    await workerPrisma.visualCheckArtifact.create({
       data: {
         ...data,
         diffImage: data.diffImage ? new Uint8Array(data.diffImage) : null,
@@ -193,6 +193,10 @@ export async function checkVisualDiff(
       page.setDefaultTimeout(Math.min(timeoutMs, config.waitTimeoutMs || 5000))
       const pageErrors: string[] = []
       page.on('pageerror', (error: Error) => pageErrors.push(error.message))
+      // worker 的 deadline／lease 失效會 abort；關掉頁面讓正在進行的 goto/screenshot 立刻中斷，
+      // 不要佔住 slot 直到 timeout 自然到期。
+      const abortPage = () => { void page.close().catch(() => {}) }
+      signal?.addEventListener('abort', abortPage, { once: true })
       try {
         const response = await page.goto(monitor.url, { waitUntil: 'domcontentloaded', timeout: timeoutMs })
         const httpStatus = response?.status() ?? 0
@@ -268,6 +272,7 @@ export async function checkVisualDiff(
           },
         })
       } finally {
+        signal?.removeEventListener('abort', abortPage)
         await page.close().catch(() => {})
         await context.close().catch(() => {})
       }
