@@ -77,3 +77,35 @@
 - commit：`cef572a fix(visual-diff): ship Chromium in the runtime image`。
 - 驗證：本機無 Docker，無法實際 build image；此項**未經映像建置驗證**，留待 CI 確認。
 - lab 部署：仍未部署（blocked）。
+
+## R9 ✅ 使用者文件（00:54–00:55 CST）
+
+- 做什麼：Spec 狀態改 ✅；新增 `docs/visual-diff-monitor.md`（怎麼建、各欄位建議、怎麼看結果與接受基準、fullPage／動態內容的坑）。
+- commit：`ecffe8a docs(visual-diff): mark spec implemented and add user guide`。
+
+## R10 ✅ API 回應與接受基準收緊（00:55–00:56 CST）
+
+- 做什麼：差異查詢只回每個 viewport 最近一筆（base64 圖片很大）；接受基準時驗證 viewport 確實在 monitor 設定中。
+- commit：`a5a746f fix(visual-diff): bound artifact response and validate accept target`。
+- 驗證：typecheck exit=0；`npm test` 176/176。
+
+## R11 ✅ 不把壞頁存成基準（00:56–00:58 CST）
+
+- 做什麼：版面規則失敗時略過基準建立／auto 更新，避免壞頁成為基準；新增真 Chrome regression test。
+- commit：`086483f fix(visual-diff): do not baseline a page that fails layout rules`。
+- 驗證：typecheck exit=0；`npm test` 177/177；`npm run build` exit=0。
+
+---
+
+## 目前狀態（2026-11-27 00:58 CST，截止 20:00）
+
+**已完成（已 commit）**：設定 schema／DB migration、純規則與像素比對、真瀏覽器 checker、派工與排程註冊、基準接受／差異查詢 API、表單與詳情頁 UI、backup／retention、Docker runtime 的 Chromium、文件。共 12 筆 commit（`d4e0a2d` → `086483f`，另 `1f73fa0` 為並行 session 連帶提交）。
+
+**驗證證據**：`npm test` 177/177、`npm run typecheck` exit=0、`npm run build` exit=0、`prisma validate/generate` 成功、真 Chrome 流程測試 2/2。
+
+**未完成／阻塞（需使用者決定）**：
+
+1. **lab 部署**：cluster 已由並行 session 修復為 Healthy，但 `uptime-api` chart 是 artifact 模式（`values.yaml` 無 `image.repository`），`deploy_delivery_status` 仍 blocked；可用 storage 上傳工具上限 1 MiB，無法上傳 runtime artifact。需要你指定這套 artifact 的建置／上傳流程或授權綁定專案。
+2. **DB Backed E2E**：本機無 `.env`／Postgres，dev server bootstrap 失敗，無法登入後台用瀏覽器實際建立 monitor 並看差異頁；API／UI 只通過型別、build 與單元測試。
+3. **audit log**：repo 沒有 audit 機制，接受基準未寫稽核。
+4. **Docker image**：無 Docker 可實際 build，Chromium 安裝步驟未經映像建置驗證。
