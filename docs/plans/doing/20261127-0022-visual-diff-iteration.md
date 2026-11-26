@@ -57,3 +57,23 @@
 - 修過的失敗：`v-for` 的 index 是 `string | number`，移除函式改接受聯集並 `Number(index)`。
 - 瀏覽器驗證：❌ 本機無 `.env`／Postgres，dev server 的 security bootstrap 因缺 `DATABASE_URL` 失敗（log: `logs/dev-server.log`），無法登入後台看表單；此為環境限制，不是 build/型別失敗。已停止我啟動的 dev server。
 - lab 部署：沿用阻塞，未重試。
+
+## R6 ✅ 排程缺口與周邊流程（00:44–00:50 CST）
+
+- 做什麼：補上 **worker 認領SQL**、`supportedScheduledTypes`、runtime queue 查詢、兩個 serializer 的 `visual-diff`（漏掉這些 monitor 永遠不會被執行）；backup 匯出加 `visualConfig`；retention 一併清 `VisualCheckArtifact`；加 regression test 證明 `claimMonitors` 能認領 `visual-diff`。
+- commit：程式碼被同時處理 DiskPressure 的 session 連同它的文件一起提交在 `1f73fa0 docs: record R97 DiskPressure incident and prune hardening`（內容已核對都在，訊息不是我下的）。
+- 驗證：typecheck exit=0；`npm test` 176/176（含新測試）。
+- clone/runtime：`clone.post.ts` 與 `resolveMonitorConfig` 都是整列展開，`visualConfig` 會自動帶過去，無需改；trial API 仍不支援 visual-diff（未做試跑按鈕）。
+
+## R7 ✅ 檢查器健韌性（00:50–00:52 CST）
+
+- 做什麼：checker 改用 `workerPrisma`（bounded pool，與 worker 一致）寫入基準／結果；`AbortSignal` 觸發時直接關掉 page，避免 lease 被佔到自然 timeout。
+- commit：`dc42bba fix(visual-diff): use bounded worker DB and abort page on deadline`。
+- 驗證：typecheck exit=0；`npm test` 176/176（含真 Chrome 流程測試）。
+
+## R8 ✅ 執行環境（00:52–00:54 CST）
+
+- 做什麼：Dockerfile runtime stage 安裝 Chromium 與共享函式庫、設 `PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` 並讓 node 使用者可讀；否則上線後每次檢查都找不到瀏覽器。
+- commit：`cef572a fix(visual-diff): ship Chromium in the runtime image`。
+- 驗證：本機無 Docker，無法實際 build image；此項**未經映像建置驗證**，留待 CI 確認。
+- lab 部署：仍未部署（blocked）。
