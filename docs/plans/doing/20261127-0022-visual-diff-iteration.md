@@ -109,3 +109,5 @@
 2. **DB Backed E2E**：本機無 `.env`／Postgres，dev server bootstrap 失敗，無法登入後台用瀏覽器實際建立 monitor 並看差異頁；API／UI 只通過型別、build 與單元測試。
 3. **audit log**：repo 沒有 audit 機制，接受基準未寫稽核。
 4. **Docker image**：無 Docker 可實際 build，Chromium 安裝步驟未經映像建置驗證。
+5. **Push**：`git push origin iterate/uptime-20261122` 失敗（`could not read Username for 'https://github.com'`），本機沒有 GitHub 憑證；目前 7 筆 commit 只在本機，未上遠端。未嘗試任何其他方式繞過。
+
