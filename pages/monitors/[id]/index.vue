@@ -106,6 +106,52 @@
       </Transition>
 
       <div v-if="lastHeartbeat?.assertionResults" class="section-card"><MonitorAssertionResults :result="lastHeartbeat.assertionResults" /></div>
+
+      <!-- Visual diff：每個 viewport 最近一次的差異證據與基準接受 -->
+      <div v-if="showVisualPanel" class="section-card space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="section-title">視覺跑版（每個 viewport 最近一次）</h3>
+          <button class="text-sm underline" :disabled="loadingVisual" @click="loadVisualArtifacts">重新整理</button>
+        </div>
+        <p v-if="loadingVisual" class="text-sm text-secondary">載入中…</p>
+        <p v-else-if="!latestVisualByViewport.length" class="text-sm text-secondary">尚無檢查結果。</p>
+        <div v-for="item in latestVisualByViewport" :key="item.viewportLabel" class="border rounded-lg p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="font-medium">{{ item.viewportLabel }}</span>
+              <span class="ml-2 text-sm" :class="item.status === 1 ? 'text-emerald-400' : 'text-red-400'">
+                {{ item.status === 1 ? '正常' : '跑版' }}
+                <template v-if="item.diffRatio != null"> · {{ (item.diffRatio * 100).toFixed(2) }}%（{{ item.diffPixels }}px）</template>
+                <template v-if="item.baseline?.stale"> · 基準已失效</template>
+              </span>
+            </div>
+            <button
+              v-if="item.currentImage"
+              class="btn btn-secondary text-sm"
+              :disabled="acceptingViewport === item.viewportLabel"
+              @click="acceptBaseline(item.viewportLabel)"
+            >
+              {{ acceptingViewport === item.viewportLabel ? '處理中…' : '接受為新基準' }}
+            </button>
+          </div>
+          <p v-if="item.metrics" class="text-xs text-secondary break-all">{{ visualMetricsText(item.metrics) }}</p>
+          <div class="grid gap-3 md:grid-cols-3">
+            <figure v-if="item.baseline?.image">
+              <figcaption class="text-xs text-secondary mb-1">基準</figcaption>
+              <img :src="`data:image/png;base64,${item.baseline.image}`" class="w-full border rounded" alt="baseline" />
+            </figure>
+            <figure v-if="item.currentImage">
+              <figcaption class="text-xs text-secondary mb-1">本次</figcaption>
+              <img :src="`data:image/png;base64,${item.currentImage}`" class="w-full border rounded" alt="current" />
+            </figure>
+            <figure v-if="item.diffImage">
+              <figcaption class="text-xs text-secondary mb-1">差異</figcaption>
+              <img :src="`data:image/png;base64,${item.diffImage}`" class="w-full border rounded" alt="diff" />
+            </figure>
+          </div>
+        </div>
+      </div>
+
       <!-- Status & Heartbeat Bar -->
       <div class="card card-body mb-6 card-interactive">
         <div class="flex flex-col lg:flex-row lg:items-center gap-6">
@@ -432,6 +478,60 @@ const showBadgeGenerator = ref(false)
 const currentPage = ref(1)
 const perPage = 25
 
+// Visual diff 證據
+const visualArtifacts = ref<any[]>([])
+const loadingVisual = ref(false)
+const acceptingViewport = ref('')
+const showVisualPanel = computed(() => monitor.value?.type === 'visual-diff')
+const latestVisualByViewport = computed(() => {
+  const seen = new Set<string>()
+  return visualArtifacts.value.filter((item) => {
+    const label = String(item.viewportLabel || '')
+    if (!label || seen.has(label)) return false
+    seen.add(label)
+    return true
+  })
+})
+const visualMetricsText = (metrics: any) => {
+  if (!metrics) return ''
+  const parts = [
+    `HTTP ${metrics.httpStatus ?? '?'}`,
+    `水平溢出 ${metrics.overflow ?? 0}px`,
+    ...(metrics.brokenImages?.length ? [`破圖 ${metrics.brokenImages.length}`] : []),
+    ...(metrics.pageErrors?.length ? [`JS 錯誤 ${metrics.pageErrors.length}`] : []),
+  ]
+  const required = (metrics.required || []).map((rule: any) => `${rule.selector}: ${rule.visibleCount}/${rule.count}`)
+  if (required.length) parts.push(required.join(', '))
+  return parts.join(' · ')
+}
+async function loadVisualArtifacts() {
+  if (!showVisualPanel.value) return
+  loadingVisual.value = true
+  try {
+    const res = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/visual-artifacts`, { query: { limit: 20 } })
+    visualArtifacts.value = res?.data || []
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || '無法載入視覺差異', color: 'error' })
+  } finally {
+    loadingVisual.value = false
+  }
+}
+async function acceptBaseline(viewportLabel: string) {
+  acceptingViewport.value = viewportLabel
+  try {
+    await $fetch(`/api/v1/monitors/${monitorId.value}/visual-baselines/accept`, {
+      method: 'POST',
+      body: { viewportLabel },
+    })
+    toast.add({ title: '已接受新基準', description: `${viewportLabel} 的基準已更新`, color: 'success' })
+    await loadVisualArtifacts()
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || '接受基準失敗', color: 'error' })
+  } finally {
+    acceptingViewport.value = ''
+  }
+}
+
 // TLS Certificate info
 const certInfo = ref<any>(null)
 const loadingCert = ref(false)
@@ -513,6 +613,7 @@ onMounted(async () => {
     heartbeats.value = heartbeatsRes.data || heartbeatsRes || []
     void loadPushUrl()
     void loadPingSeries()
+    void loadVisualArtifacts()
 
     // Fetch certificate info for HTTPS monitors
     if (monitor.value?.tlsConfigured) {
