@@ -22,7 +22,8 @@ import {
   checkDns,
   checkRadius,
   checkTailscalePing,
-  checkSnmp
+  checkSnmp,
+  checkVisualDiff
 } from './checkers'
 
 export interface CheckResult {
@@ -121,6 +122,9 @@ export async function checkMonitor(monitor: any, signal?: AbortSignal): Promise<
       
       case 'real-browser':
         return await checkRealBrowser(monitor, startTime)
+
+      case 'visual-diff':
+        return await checkVisualDiff(monitor, startTime, signal)
       
       default:
         throw new Error(`Unknown monitor type: ${monitor.type}`)

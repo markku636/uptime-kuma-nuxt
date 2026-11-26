@@ -238,6 +238,16 @@ const realBrowserMonitorType: MonitorType = {
 }
 
 /**
+ * Visual Diff Monitor Type（網頁跑版）
+ */
+const visualDiffMonitorType: MonitorType = {
+  supportsConditions: true,
+  conditionVariables: [
+    { id: 'response_time', operators: numericOperators }
+  ]
+}
+
+/**
  * Tailscale Ping Monitor Type
  */
 const tailscalePingMonitorType: MonitorType = {
@@ -326,6 +336,7 @@ export const monitorTypeList: Record<string, MonitorType> = {
   // Special
   'push': pushMonitorType,
   'real-browser': realBrowserMonitorType,
+  'visual-diff': visualDiffMonitorType,
   'tailscale-ping': tailscalePingMonitorType,
   'group': groupMonitorType,
   'manual': manualMonitorType,
