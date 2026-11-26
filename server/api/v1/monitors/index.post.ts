@@ -37,6 +37,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // visual-diff 需要真瀏覽器載入的目標頁；設定本身由 createMonitorSchema 的 visualConfigSchema 驗證。
+  if (data.type === 'visual-diff' && !data.url) {
+    throw createError({
+      statusCode: 400,
+      message: 'URL is required for visual-diff monitors'
+    })
+  }
+
   if (['tcp', 'ping', 'dns'].includes(data.type) && !data.hostname) {
     throw createError({
       statusCode: 400,

@@ -1,6 +1,7 @@
 import { sensitiveMonitorFields } from './monitor-secrets'
 import { z } from 'zod'
 import { assertionsSchema, parseSelector } from './assertions'
+import { visualConfigSchema } from './visual-config'
 export const createMonitorSchema = z.object({
   clearSecrets: z.array(z.enum(sensitiveMonitorFields)).max(sensitiveMonitorFields.length).optional(),
   name: z.string().min(1, 'Name is required').max(200),
@@ -31,6 +32,7 @@ export const createMonitorSchema = z.object({
   maxRedirects: z.number().int().min(0).max(10).default(10),
   active: z.boolean().default(true),
   assertions: assertionsSchema.optional().nullable(),
+  visualConfig: visualConfigSchema.optional().nullable(),
   authConfig: z.object({ tokenUrl: z.string().max(8192), clientId: z.string().max(4096), clientSecret: z.string().max(8192), scopes: z.string().max(4096).optional(), audience: z.string().max(4096).optional() }).strict().optional().nullable(),
   acceptedStatuscodes: z.array(z.union([z.number().int().min(100).max(599), z.string().regex(/^\d{3}(?:-\d{3})?$/).refine(value=>{const [start,end=start]=value.split('-').map(Number);return start!>=100&&end!<=599&&start!<=end!})])).max(50).optional().nullable(),
   weight: z.number().int().min(0).max(2147483647).optional(),

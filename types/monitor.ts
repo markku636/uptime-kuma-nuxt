@@ -23,6 +23,7 @@ export enum MonitorType {
   RADIUS = 'radius',
   TAILSCALE_PING = 'tailscale-ping',
   REAL_BROWSER = 'real-browser',
+  VISUAL_DIFF = 'visual-diff',
   GROUP = 'group',
 }
 
@@ -124,6 +125,9 @@ export interface Monitor {
   
   // Real Browser specific
   remoteBrowserId?: number
+
+  // Visual diff specific
+  visualConfig?: import('../shared/types/visual-config').VisualConfig | null
 }
 
 export interface CreateMonitorInput {

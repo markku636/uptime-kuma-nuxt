@@ -1,7 +1,7 @@
 import {fenceMonitorData} from '../../../utils/monitor-mutation'
 // server/api/v1/monitors/[id].put.ts
 import { Prisma } from '@prisma/client'
-import { monitorEditorDTO, monitorSecretUpdate } from '../../../utils/monitor-secrets'
+import { hydrateMonitor, monitorEditorDTO, monitorSecretUpdate } from '../../../utils/monitor-secrets'
 import { startMonitorJob, stopMonitorJob } from '../../../services/monitor/scheduler'
 
 import { createMonitorSchema } from '../../../utils/monitor-input'
@@ -56,6 +56,11 @@ export default defineEventHandler(async (event) => {
   const monitor = await prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM monitors WHERE id=${id} FOR UPDATE`
     const current=await tx.monitor.findFirstOrThrow({where:{id,workspaceId:session.workspaceId,environmentId:session.environmentId}})
+    // url 是敏感欄位，DB 裡是 NULL；要從 seal/envelope 還原後才判斷是否為空。
+    if (monitorData.type === 'visual-diff') {
+      const url = Object.hasOwn(monitorData, 'url') ? monitorData.url : hydrateMonitor(current).url
+      if (!url) throw createError({statusCode:400,message:'URL is required for visual-diff monitors'})
+    }
     if (monitorData.proxyId) { await assertWorkspaceIds(tx, 'proxy', [monitorData.proxyId], session.workspaceId); throw createError({statusCode:400,message:'HTTP proxy transport is not supported'}) }
     if (monitorData.dockerHost && /^\d+$/.test(monitorData.dockerHost)) await assertWorkspaceIds(tx, 'dockerHost', [Number(monitorData.dockerHost)], session.workspaceId)
     if (monitorData.remoteBrowserId) await assertWorkspaceIds(tx, 'remoteBrowser', [monitorData.remoteBrowserId], session.workspaceId)
