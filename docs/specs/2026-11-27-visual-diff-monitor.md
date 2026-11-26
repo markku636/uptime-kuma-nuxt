@@ -1,6 +1,6 @@
 # Spec：網頁跑版監控（visual-diff monitor type）
 
-狀態：🔵 待實作。日期：2026-11-27。規劃／實作：OpenCode。依 [主計劃](../plans/doing/20261125-2356-visual-diff-monitor-type.md) 與 [迭代紀錄](../plans/doing/20261127-0022-visual-diff-iteration.md)。
+狀態：✅ 已實作（2026-11-27 00:54；部署 lab 仍阻塞）。日期：2026-11-27。規劃／實作：OpenCode。依 [主計劃](../plans/doing/20261125-2356-visual-diff-monitor-type.md) 與 [迭代紀錄](../plans/doing/20261127-0022-visual-diff-iteration.md)。
 
 ## 行為契約
 
