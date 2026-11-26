@@ -68,6 +68,19 @@ const visualConfig = {
   baselineStrategy: 'manual' as const,
 }
 
+test('版面規則失敗時不建立基準', { timeout: 120000 }, async () => {
+  const server = await serve(() => brokenHtml)
+  const db = new MemoryDb()
+  const monitor = { id: 7777, url: server.url, timeout: 20, configVersion: 1, visualConfig }
+  try {
+    const broken = await checkVisualDiff(monitor, Date.now(), undefined, { db, launch })
+    assert.equal(broken.status, 0, broken.msg)
+    assert.equal(db.baselines.size, 0, '壞掉的頁面不該被存成基準')
+  } finally {
+    await server.close()
+  }
+})
+
 test('visual-diff 完整流程：建立基準 → UP → 改版 DOWN → 設定變更後基準失效', { timeout: 120000 }, async () => {
   let currentHtml = okHtml
   const server = await serve(() => currentHtml)

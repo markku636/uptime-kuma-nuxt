@@ -226,12 +226,17 @@ export async function checkVisualDiff(
         }
 
         if (!baseline) {
-          await deps.db.saveBaseline(monitor.id, label, viewport.width, viewport.height, screenshot, sha256, configVersion)
-          createdBaselines++
+          // 頁面本身就違反版面規則時，不把壞掉的截圖存成基準。
+          if (rules.length === 0) {
+            await deps.db.saveBaseline(monitor.id, label, viewport.width, viewport.height, screenshot, sha256, configVersion)
+            createdBaselines++
+          }
         } else if (baseline.configVersion !== configVersion) {
-          if (config.baselineStrategy === 'auto') {
+          if (config.baselineStrategy === 'auto' && rules.length === 0) {
             await deps.db.saveBaseline(monitor.id, label, viewport.width, viewport.height, screenshot, sha256, configVersion)
             refreshedBaselines++
+          } else if (config.baselineStrategy === 'auto') {
+            // 規則失敗時保留舊基準，下次健康的檢查才更新。
           } else {
             failures.push(`[${label}] BASELINE_STALE: 設定已變更，請接受新基準`)
             code = code ?? 'BASELINE_STALE'
