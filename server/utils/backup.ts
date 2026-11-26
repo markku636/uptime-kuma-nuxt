@@ -24,7 +24,7 @@ export const exportBackup = defineEventHandler(async event => {
     notice: 'Secrets, headers, bodies and URL query values are omitted. Restores create paused monitors; configure secrets before activation.', data: {
       monitors: monitors.map(m => ({ id: m.id, name: m.name, type: m.type, description: m.description, url: safeURL(m.url), hostname: m.hostname,
         port: m.port, interval: m.interval, timeout: m.timeout, retryInterval: m.retryInterval, maxretries: m.maxretries, method: m.method,
-        assertions: m.assertions, jsonPath: m.jsonPath, expectedValue: m.expectedValue, keyword: m.keyword, acceptedStatuscodes: m.acceptedStatuscodes, active: false, ignoreTls: m.ignoreTls, upsideDown: m.upsideDown, tagIds: m.tags.map(x => x.tagId), notificationIds: m.monitorNotifications.map(x => x.notificationId) })),
+        assertions: m.assertions, visualConfig: m.visualConfig, jsonPath: m.jsonPath, expectedValue: m.expectedValue, keyword: m.keyword, acceptedStatuscodes: m.acceptedStatuscodes, active: false, ignoreTls: m.ignoreTls, upsideDown: m.upsideDown, tagIds: m.tags.map(x => x.tagId), notificationIds: m.monitorNotifications.map(x => x.notificationId) })),
       tags: tags.map(t => ({ id: t.id, name: t.name, color: t.color })),
       notifications: notifications.map(n => ({ id: n.id, name: n.name, type: n.type, active: false, isDefault: n.isDefault, config: {} })),
       proxies: proxies.map(p => ({ id: p.id, protocol: p.protocol, host: '', port: p.port, active: false, auth: false })),

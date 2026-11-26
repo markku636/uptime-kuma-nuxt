@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto'
 export const workerInstanceId=randomUUID()
-export const supportedScheduledTypes=['http','keyword','json-query','bruno']
+export const supportedScheduledTypes=['http','keyword','json-query','bruno','visual-diff']
 export function positiveSetting(name:string,fallback:number,min:number,max:number){
   const input=process.env[name],value=input===undefined?fallback:Number(input)
   if(!Number.isSafeInteger(value)||value<min||value>max)throw new Error(`Invalid ${name}`)

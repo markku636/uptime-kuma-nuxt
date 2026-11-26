@@ -59,6 +59,12 @@ export async function clearOldData(): Promise<void> {
 
     console.log(`[ClearOldData] Deleted ${heartbeatResult.count} old heartbeats`)
 
+    // Visual diff 的差異圖比心跳大很多，跟著同一個保留天數清掉；基準是必要狀態，保留。
+    const visualResult = await prisma.visualCheckArtifact.deleteMany({
+      where: { checkedAt: { lt: cutoffDate } },
+    })
+    console.log(`[ClearOldData] Deleted ${visualResult.count} old visual check artifacts`)
+
     // Note: stat_daily table doesn't exist in NuxtJS version
     // If you need it, add the model to schema.prisma first
 

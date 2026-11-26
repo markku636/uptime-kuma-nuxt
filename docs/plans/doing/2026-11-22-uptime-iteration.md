@@ -544,6 +544,13 @@ R96 🔵 Settings 版面：Profile／Variables & Keys／Workspaces 子頁上限�
   TLS 到期設定卡片改為 grid 排版、Days 輸入限寬，按鈕不再擠在一起。
   unit 61/61、integration 90 pass / 0 fail / 1 skipped、typecheck 0。
 
+R97 🔵 DiskPressure 事件（11/26–11/27）：artifact releases 累積到 44 個／38GB，
+  kubelet 標 disk-pressure taint，所有 pod Pending、兩域 502。清理到 2 個（1.7GB）、
+  移除 taint，待 kubelet 重新評估後 DiskPressure=False、pod 全 Healthy、站點 200。
+  根治：prune CronJob 改每 6 小時、容忍 disk-pressure taint、保留 2 個；
+  修正 job 的 sh 語法錯誤（folded scalar 少分號），手動觸發驗證成功清到 2 個。
+  另清除 Evicted pod，讓 revision 302 回到 Healthy/Synced。
+
 ## 目前狀態（2026-11-23 22:52 CST）
 
 R1–R72 全部 commit/push 到 `origin/iterate/uptime-20261122` 並部署正式站。
