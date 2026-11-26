@@ -14,11 +14,12 @@
           <label class="input-label">Monitor Type <span class="text-red-400">*</span></label>
           <select v-model="form.type" class="select-field" :disabled="loading">
             <option v-for="type in monitorTypes" :key="type.value" :value="type.value">
-              {{ type.label }}{{ ['http','keyword','json-query','push','bruno'].includes(type.value) ? '' : ' (unsupported)' }}
+              {{ type.label }}{{ ['http','keyword','json-query','push','bruno','visual-diff'].includes(type.value) ? '' : ' (unsupported)' }}
             </option>
           </select>
-          <p v-if="!['http','keyword','json-query','push','bruno'].includes(form.type)" role="status" class="text-sm mt-2">This checker is stored for compatibility but is not scheduled by the bounded PostgreSQL worker yet. HTTP, keyword and JSON query checks are supported.</p>
+          <p v-if="!['http','keyword','json-query','push','bruno','visual-diff'].includes(form.type)" role="status" class="text-sm mt-2">This checker is stored for compatibility but is not scheduled by the bounded PostgreSQL worker yet. HTTP, keyword and JSON query checks are supported.</p>
           <p v-if="form.type === 'bruno'" role="status" class="text-sm mt-2">Bruno requests are scheduled by the bounded worker. Use a single declarative .bru request below; scripts and tests are ignored.</p>
+          <p v-if="form.type === 'visual-diff'" role="status" class="text-sm mt-2">首次檢查會建立基準並顯示正常；之後每個 viewport 都會比對版面規則與截圖差異。基準失效時需到監控詳情頁接受新基準。</p>
           <p v-if="form.type === 'push'" role="status" class="text-sm mt-2">A missed-heartbeat alert is raised after twice the check interval (at least 60 seconds) without a push.</p>
         </div>
 
@@ -92,6 +93,112 @@
         :trial-error="trialError"
         @send="handleSubmit(true)"
       />
+    </div>
+
+    <!-- Visual diff（網頁跑版） -->
+    <div v-if="showVisualSettings" class="section-card space-y-4">
+      <h2 class="section-title">視覺跑版設定</h2>
+      <p class="text-sm text-secondary">每個 viewport 獨立建立基準與比對；首次檢查只建立基準。設定變更後舊基準會失效，需到監控詳情頁接受新基準。</p>
+      <p v-if="visualConfigError" role="alert" class="text-sm text-red-400">{{ visualConfigError }}</p>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="input-label">Viewports</label>
+          <button type="button" class="text-sm underline" :disabled="loading" @click="addVisualViewport">＋ 新增</button>
+        </div>
+        <div v-for="(viewport, index) in form.visualViewports" :key="index" class="grid gap-2 md:grid-cols-4 items-end">
+          <div class="form-group">
+            <label class="input-label">Label</label>
+            <input v-model="viewport.label" type="text" class="input-field" :disabled="loading" />
+          </div>
+          <div class="form-group">
+            <label class="input-label">寬度 (px)</label>
+            <input v-model.number="viewport.width" type="number" min="320" max="3840" class="input-field" :disabled="loading" />
+          </div>
+          <div class="form-group">
+            <label class="input-label">高度 (px)</label>
+            <input v-model.number="viewport.height" type="number" min="400" max="4320" class="input-field" :disabled="loading" />
+          </div>
+          <button type="button" class="text-sm underline mb-2" :disabled="loading || form.visualViewports.length <= 1" @click="removeVisualViewport(index)">移除</button>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="input-label">必要元素（selector）</label>
+          <button type="button" class="text-sm underline" :disabled="loading" @click="addVisualSelector">＋ 新增</button>
+        </div>
+        <div v-for="(item, index) in form.visualRequiredSelectors" :key="index" class="grid gap-2 md:grid-cols-4 items-end">
+          <div class="form-group md:col-span-2">
+            <label class="input-label">Selector</label>
+            <input v-model="item.selector" type="text" class="input-field" placeholder="#hero" :disabled="loading" />
+          </div>
+          <div class="form-group">
+            <label class="input-label">最少個數</label>
+            <input v-model.number="item.minCount" type="number" min="1" class="input-field" :disabled="loading" />
+          </div>
+          <button type="button" class="text-sm underline mb-2" :disabled="loading" @click="removeVisualSelector(index)">移除</button>
+          <div class="form-group">
+            <label class="input-label">最小寬度（可選）</label>
+            <input v-model.number="item.minWidth" type="number" min="0" class="input-field" :disabled="loading" />
+          </div>
+          <div class="form-group md:col-span-3">
+            <label class="input-label">最小高度（可選）</label>
+            <input v-model.number="item.minHeight" type="number" min="0" class="input-field" :disabled="loading" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="input-label">忽略區塊 selectors（逗號分隔）</label>
+        <input v-model="form.visualIgnoreSelectors" type="text" class="input-field" placeholder=".timestamp, #ad" :disabled="loading" />
+        <p class="text-xs text-gray-400 mt-1">動態內容（時間、廣告、隨機 id）可遮罩，避免誤報。</p>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="form-group">
+          <label class="input-label">等待元素 selector</label>
+          <input v-model="form.visualWaitForSelector" type="text" class="input-field" placeholder='[data-ready="true"]' :disabled="loading" />
+        </div>
+        <div class="form-group">
+          <label class="input-label">基準策略</label>
+          <select v-model="form.visualBaselineStrategy" class="select-field" :disabled="loading">
+            <option value="manual">manual（需人工接受）</option>
+            <option value="auto">auto（自動更新失效基準）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="input-label">等待超時 (ms)</label>
+          <input v-model.number="form.visualWaitTimeoutMs" type="number" min="0" max="60000" class="input-field" :disabled="loading" />
+        </div>
+        <div class="form-group">
+          <label class="input-label">截圖前穩定等待 (ms)</label>
+          <input v-model.number="form.visualSettleMs" type="number" min="0" max="10000" class="input-field" :disabled="loading" />
+        </div>
+        <div class="form-group">
+          <label class="input-label">水平溢出容許 (px)</label>
+          <input v-model.number="form.visualMaxOverflow" type="number" min="0" max="500" class="input-field" :disabled="loading" />
+        </div>
+        <div class="form-group">
+          <label class="input-label">差異比例閾值 (0–1)</label>
+          <input v-model.number="form.visualDiffThreshold" type="number" min="0" max="1" step="0.001" class="input-field" :disabled="loading" />
+        </div>
+        <div class="form-group">
+          <label class="input-label">差異像素上限（可選）</label>
+          <input v-model.number="form.visualMaxDiffPixels" type="number" min="0" class="input-field" :disabled="loading" />
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input v-model="form.visualFullPage" type="checkbox" class="checkbox" :disabled="loading" />
+          <span>擷取整頁（fullPage）</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input v-model="form.visualDetectBrokenImages" type="checkbox" class="checkbox" :disabled="loading" />
+          <span>檢查破圖</span>
+        </label>
+      </div>
     </div>
 
     <!-- HTTP Settings -->
@@ -1303,6 +1410,26 @@ const form = reactive({
   tlsCa: props.initialData?.tlsCa || '',
   // Cache Bust
   cacheBust: props.initialData?.cacheBust || false,
+  // Visual diff（網頁跑版）
+  visualViewports: props.initialData?.visualConfig?.viewports?.length
+    ? props.initialData.visualConfig.viewports.map((v: any) => ({ label: String(v.label), width: Number(v.width), height: Number(v.height) }))
+    : [{ label: 'desktop', width: 1440, height: 900 }, { label: 'mobile', width: 375, height: 812 }],
+  visualRequiredSelectors: (props.initialData?.visualConfig?.requiredSelectors || []).map((s: any) => ({
+    selector: String(s.selector || ''),
+    minCount: Number(s.minCount ?? 1),
+    minWidth: s.minWidth == null ? '' : Number(s.minWidth),
+    minHeight: s.minHeight == null ? '' : Number(s.minHeight),
+  })),
+  visualIgnoreSelectors: (props.initialData?.visualConfig?.ignoreSelectors || []).join(', '),
+  visualWaitForSelector: props.initialData?.visualConfig?.waitForSelector || '',
+  visualWaitTimeoutMs: props.initialData?.visualConfig?.waitTimeoutMs ?? 5000,
+  visualSettleMs: props.initialData?.visualConfig?.settleMs ?? 300,
+  visualFullPage: props.initialData?.visualConfig?.fullPage ?? true,
+  visualDetectBrokenImages: props.initialData?.visualConfig?.detectBrokenImages ?? true,
+  visualMaxOverflow: props.initialData?.visualConfig?.maxHorizontalOverflowPx ?? 2,
+  visualDiffThreshold: props.initialData?.visualConfig?.diffThreshold ?? 0.02,
+  visualMaxDiffPixels: props.initialData?.visualConfig?.maxDiffPixels ?? '',
+  visualBaselineStrategy: props.initialData?.visualConfig?.baselineStrategy || 'manual',
   // Remote Browser
   useRemoteBrowser: !!props.initialData?.remoteBrowserId,
   remoteBrowser: props.initialData?.remoteBrowserId ?? null,
@@ -1366,7 +1493,7 @@ const gameTypes = [
 
 // Computed properties for conditional fields
 const showUrlField = computed(() => 
-  ['http', 'keyword', 'json-query'].includes(form.type)
+  ['http', 'keyword', 'json-query', 'visual-diff'].includes(form.type)
 )
 
 const showHostnameField = computed(() => 
@@ -1387,8 +1514,17 @@ const showDatabaseSettings = computed(() =>
 
 // Monitor types that support conditions
 const supportsConditions = computed(() => 
-  ['grpc-keyword', 'tcp', 'dns', 'mqtt', 'snmp'].includes(form.type)
+  ['grpc-keyword', 'tcp', 'dns', 'mqtt', 'snmp', 'visual-diff'].includes(form.type)
 )
+
+const showVisualSettings = computed(() => form.type === 'visual-diff')
+const visualConfigError = ref('')
+const addVisualViewport = () => form.visualViewports.push({ label: `v${form.visualViewports.length + 1}`, width: 800, height: 600 })
+const removeVisualViewport = (index: number | string) => {
+  if (form.visualViewports.length > 1) form.visualViewports.splice(Number(index), 1)
+}
+const addVisualSelector = () => form.visualRequiredSelectors.push({ selector: '', minCount: 1, minWidth: '', minHeight: '' })
+const removeVisualSelector = (index: number | string) => form.visualRequiredSelectors.splice(Number(index), 1)
 
 const databasePlaceholder = computed(() => {
   switch (form.type) {
@@ -1629,6 +1765,51 @@ const handleSubmit = async (trial=false) => {
     data.radiusSecret = form.radiusSecret
     data.radiusCalledStationId = form.radiusCalledStationId || undefined
     data.radiusCallingStationId = form.radiusCallingStationId || undefined
+  }
+
+  // Visual diff（網頁跑版）
+  if (showVisualSettings.value) {
+    const viewports = form.visualViewports.map((v) => ({
+      label: String(v.label || '').trim(),
+      width: Number(v.width),
+      height: Number(v.height),
+    }))
+    const requiredSelectors = form.visualRequiredSelectors
+      .filter((s) => String(s.selector || '').trim())
+      .map((s) => ({
+        selector: String(s.selector).trim(),
+        minCount: Number(s.minCount) || 1,
+        ...(s.minWidth !== '' && s.minWidth != null ? { minWidth: Number(s.minWidth) } : {}),
+        ...(s.minHeight !== '' && s.minHeight != null ? { minHeight: Number(s.minHeight) } : {}),
+      }))
+    const ignoreSelectors = form.visualIgnoreSelectors.split(',').map((s) => s.trim()).filter(Boolean)
+    const candidate: any = {
+      viewports,
+      requiredSelectors,
+      ignoreSelectors,
+      waitForSelector: String(form.visualWaitForSelector || '').trim() || null,
+      waitTimeoutMs: Number(form.visualWaitTimeoutMs),
+      settleMs: Number(form.visualSettleMs),
+      fullPage: form.visualFullPage,
+      detectBrokenImages: form.visualDetectBrokenImages,
+      maxHorizontalOverflowPx: Number(form.visualMaxOverflow),
+      diffThreshold: Number(form.visualDiffThreshold),
+      baselineStrategy: form.visualBaselineStrategy,
+    }
+    if (form.visualMaxDiffPixels !== '' && form.visualMaxDiffPixels != null) {
+      candidate.maxDiffPixels = Number(form.visualMaxDiffPixels)
+    }
+    // 基本的客戶端檢查；完整驗證由 createMonitorSchema 在 server 端做。
+    if (!viewports.length || viewports.some((v) => !v.label || !v.width || !v.height) || new Set(viewports.map((v) => v.label)).size !== viewports.length) {
+      visualConfigError.value = '請至少填一個 viewport，label 不可重複，寬高不可為空。'
+      return
+    }
+    if (candidate.diffThreshold < 0 || candidate.diffThreshold > 1) {
+      visualConfigError.value = '差異閾值必須在 0 到 1 之間。'
+      return
+    }
+    visualConfigError.value = ''
+    data.visualConfig = candidate
   }
 
   // Max redirects for HTTP

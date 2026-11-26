@@ -165,6 +165,7 @@ const typeOptions = computed(() => {
     { value: 'radius', label: 'RADIUS' },
     { value: 'group', label: 'Group' },
     { value: 'real-browser', label: 'Real Browser' },
+    { value: 'visual-diff', label: '視覺跑版 (Visual Diff)' },
     { value: 'tailscale-ping', label: 'Tailscale Ping' },
     { value: 'rabbit-mq', label: 'RabbitMQ' },
     { value: 'manual', label: 'Manual' },
