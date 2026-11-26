@@ -24,11 +24,19 @@ export default defineEventHandler(async (event) => {
   ])
   const baselineByLabel = new Map(baselines.map((row) => [row.viewportLabel, row]))
 
+  // 回傳的圖片是 base64，一筆可能很大；只回每個 viewport 最近一筆（最多 4 個）。
+  const seen = new Set<string>()
+  const latestPerViewport = rows.filter((row) => {
+    if (seen.has(row.viewportLabel)) return false
+    seen.add(row.viewportLabel)
+    return true
+  })
+
   return {
     ok: true,
     monitorType: monitor.type,
     configVersion: monitor.configVersion,
-    data: rows.map((row) => {
+    data: latestPerViewport.map((row) => {
       const baseline = baselineByLabel.get(row.viewportLabel)
       return {
         id: String(row.id),

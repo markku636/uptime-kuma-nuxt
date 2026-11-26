@@ -16,9 +16,16 @@ export default defineEventHandler(async (event) => {
 
   const monitor = await prisma.monitor.findFirst({
     where: { id, workspaceId: scope.workspaceId, environmentId: scope.environmentId },
-    select: { id: true, configVersion: true },
+    select: { id: true, configVersion: true, visualConfig: true },
   })
   if (!monitor) throw createError({ statusCode: 404, message: 'Monitor not found' })
+
+  const configuredLabels = new Set(
+    ((monitor.visualConfig as any)?.viewports ?? []).map((viewport: any) => String(viewport.label)),
+  )
+  if (configuredLabels.size > 0 && !configuredLabels.has(viewportLabel)) {
+    throw createError({ statusCode: 400, message: '這個 viewport 不在監控設定中' })
+  }
 
   const artifact = await prisma.visualCheckArtifact.findFirst({
     where: { monitorId: id, viewportLabel },
