@@ -600,3 +600,15 @@ R107 🔵 通知升級（`a59c67c`）：`monitor_notifications.delay_minutes` mi
   成功、25 migrations），監控表單可對每個已選通知頻道設定 0–1440 分鐘延遲；
   DOWN 時依頻道延遲送出（未設則用全域 alertDelay），恢復仍取消；clone/DTO 保留。
   unit 186、integration 113、typecheck 0；rev341，線上建立 webhook 頻道→表單出現 Delay 輸入→清理。
+
+R108 🔵 對抗式審查修補（`2f22632`）：
+- RSS 只取 pin=true 的事件（原本會把已取消固定的草稿公開）、上限與公開頁對齊；補回歸測試。
+- 事件新增／更新／取消固定改走 `requireStatusPageEditor`（session + editor），viewer／唯讀 API key 403。
+- 事件更新時間軸改取最新 50 筆再反轉（原本卡在最早 50 筆）；RSS 取最新 20 筆。
+- Inline editor 的 slug 改唯讀；embed snippet origin 改用瀏覽器目前 origin，避免 localhost 連結。
+- 公開維護 API 只回傳 UI 需要的欄位，先篩選再限制筆數。
+- 狀態頁 `sendUrl` 改由 `hydrateMonitor` 讀取密封 URL（原本永遠不顯示）。
+- 事件更新送出失敗保留輸入並顯示錯誤（原本靜默清空）。
+- SNMP community／RADIUS password 改寫入既有密封 `radiusSecret` 欄位（原本被 schema 丟棄）。
+- 一般狀態頁管理表單補 noIndex 核取方塊。
+unit 186、integration 113、typecheck 0；rev343 Healthy。線上驗證 RSS 取消固定後内容消失、snippet 正確、slug 唯讀。
