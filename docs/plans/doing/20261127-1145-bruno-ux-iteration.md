@@ -159,3 +159,12 @@ R23 ✅ 最終回歸 + lab 部署 R19–R22（15:27–15:32 CST）— 無程式 
 - GitOps `9f55add` loader（rev310）→ `52164a0` migration（rev311，無 pending）→ `b141518` application（rev312）。
 - rev312 API 2/2、worker 2/2、fixture 1/1 Healthy，release Healthy / Synced；`/api/health/ready` = 200。正式站未部署。
 
+R24 ✅ 完整整合回歸（15:32–15:34 CST，驗證輪）— 無程式變更：`npm run test:integration` 107 pass / 0 fail / 1 skip；lab rev312 不變。
+
+## 目前狀態（2026-11-27 15:34 CST，截止 20:00）
+
+- 本機 HEAD `e139b89`，24 輪；工作樹乾淨，commit `f99b38b` → `e139b89`。
+- lab：`uptime-api-demo-20261114/uptime-api` rev312，Healthy / Synced，artifact `c283ace7…`，API/worker/fixture 全 Healthy，`/api/health/ready` 200。
+- 驗證：`npm run verify:bruno` 全綠；完整整合 107 pass / 0 fail / 1 skip；Bruno editor browser 6/6。
+- 未部署正式站（使用者只授權 lab）。待持有人：到 lab／正式站登入後人工驗收 UI（R13 起如實記錄未做）。
+
