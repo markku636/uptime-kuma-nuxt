@@ -751,7 +751,7 @@ async function sync() {
     emitSource(data.source)
   }
 }
-defineExpose({ mode, source: rawSource, sync })
+defineExpose({ mode, source: rawSource, sync, insertVariable })
 </script>
 
 <style scoped>

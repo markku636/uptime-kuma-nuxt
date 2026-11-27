@@ -101,7 +101,7 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByLabel('Body mode').selectOption('none')
 
     await page.getByRole('tab', {name:/Vars/}).click()
-    await page.getByRole('button', {name:'Edit environment variables', exact:true}).click()
+    await page.getByRole('button', {name:'Edit environment variables', exact:true}).last().click()
     const dialog = page.getByRole('dialog')
     await dialog.waitFor()
     assert.match(await dialog.innerText(), /environment/i)
@@ -426,6 +426,51 @@ test('browser sends a request built from scratch in the UI editor', {timeout:600
     await browser.close()
     fixture.closeAllConnections()
     await new Promise<void>(r => fixture.close(() => r()))
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})
+
+test('browser edits environment variables directly from a monitor form', {timeout:60000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined, monitorId: number | undefined
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-env-from-monitor')
+    scope = await workspace(identity, 'Bruno env from monitor')
+    const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {
+      type: 'http', name: 'Env from monitor', url: '{{TOPLEVEL_VAR}}/health', active: false,
+    }))
+    monitorId = created.data.id
+    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage(), errors: string[] = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+
+    await page.getByRole('button', {name:'Edit environment variables', exact:true}).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.waitFor()
+    await dialog.getByPlaceholder('VARIABLE_NAME').first().fill('TOPLEVEL_VAR')
+    await dialog.getByPlaceholder('value', {exact:true}).first().fill('demo')
+    await dialog.getByRole('button', {name:/Save/i}).first().click()
+    await dialog.getByText(/reschedul/i).waitFor()
+    await dialog.getByRole('button', {name:'Close', exact:true}).first().click()
+    await dialog.waitFor({state:'hidden'})
+
+    await page.reload()
+    await page.getByRole('button', {name:'Edit environment variables', exact:true}).click()
+    const reopened = page.getByRole('dialog')
+    await reopened.waitFor()
+    assert.equal(await reopened.getByPlaceholder('VARIABLE_NAME').first().inputValue(), 'TOPLEVEL_VAR', 'the new variable survives reload')
+    assert.equal(await reopened.getByPlaceholder('value', {exact:true}).first().inputValue(), 'demo')
+    await reopened.getByRole('button', {name:'Close', exact:true}).first().click()
+    assert.deepEqual(errors, [])
+  } finally {
+    await browser.close()
     if (identity && scope) await cleanup([identity], [scope])
   }
 })

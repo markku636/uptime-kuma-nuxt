@@ -79,6 +79,24 @@
       </div>
     </div>
 
+    <!-- Environment variables: reachable from every monitor form, not only Bruno's Vars tab -->
+    <div class="section-card flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="section-title mb-1">Environment variables</h2>
+        <p class="text-sm text-secondary">Use <code v-pre>{{variableName}}</code> in URLs, headers and bodies. Changes apply to every monitor in this environment.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-secondary">{{ currentEnvironment?.name || 'default' }}</span>
+        <button type="button" class="btn btn-outline" :disabled="loading || !canEdit" @click="envDialogOpen = true">Edit environment variables</button>
+      </div>
+    </div>
+    <EnvironmentVariablesDialog
+      v-model:open="envDialogOpen"
+      :environment-id="brunoEnvironmentId"
+      :disabled="loading || !canEdit"
+      @insert="insertEnvToken"
+    />
+
     <!-- Bruno declarative request -->
     <div v-if="form.type === 'bruno'" class="section-card space-y-3">
       <h2 class="section-title">Bruno request</h2>
@@ -1224,6 +1242,7 @@
 <script setup lang="ts">
 import type { AssertionSet } from '../../shared/types/assertions'
 import BrunoRequestEditor from './BrunoRequestEditor.vue'
+import EnvironmentVariablesDialog from './EnvironmentVariablesDialog.vue'
 const { canEdit, current: currentWorkspace, environment: currentEnvironment } = useWorkspace()
 interface Props {
   initialData?: any
@@ -1238,6 +1257,16 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['submit'])
 const brunoEditor = ref<any>(null)
+const envDialogOpen = ref(false)
+
+/** Send an inserted {{token}} to the Bruno editor's last focused field; otherwise to the URL field. */
+function insertEnvToken(token: string) {
+  if (form.type === 'bruno' && brunoEditor.value?.insertVariable) {
+    brunoEditor.value.insertVariable(token)
+    return
+  }
+  if (showUrlField.value) form.url += token
+}
 const assertions=ref<AssertionSet|null>(props.initialData?.assertions||null)
 const assertionsValid=ref(true),clearSecrets=ref<string[]>([]),trialLoading=ref(false),trialError=ref(''),trialResult=ref<any>(null)
 const configuredFields=computed(()=>Object.keys(props.initialData?.configuredSecrets||{}).filter(key=>props.initialData.configuredSecrets[key]))
