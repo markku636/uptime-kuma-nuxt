@@ -931,6 +931,11 @@ function formatLastUpdated(date: Date | null) {
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               ]"
             >
+              <span
+                class="mr-1.5 inline-block w-2 h-2 rounded-full align-middle"
+                :class="tab.status === 'down' ? 'bg-red-500' : tab.status === 'maintenance' ? 'bg-blue-500' : tab.status === 'up' ? 'bg-emerald-500' : tab.status === 'pending' ? 'bg-amber-500' : 'bg-gray-400'"
+                :title="`Group status: ${tab.status || 'unknown'}`"
+              ></span>
               {{ tab.name }}
               <span class="ml-2 text-xs text-gray-400">
                 ({{ tab.count || 0 }})

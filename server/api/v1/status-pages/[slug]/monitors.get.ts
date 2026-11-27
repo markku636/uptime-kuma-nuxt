@@ -86,11 +86,32 @@ export default defineEventHandler(async (event) => {
     }
   })
 
+  // Group-level status for tabs, computed from all linked monitors (bounded).
+  const groupLinks = await prisma.statusPageMonitor.findMany({
+    where: { groupId: { in: groupsWithCounts.map(g => g.id) } },
+    select: { groupId: true, monitor: { select: { active: true, states: { select: { status: true }, take: 1 } } } },
+    take: 4000,
+  })
+  const groupStatus = new Map<number, string>()
+  for (const group of groupsWithCounts) {
+    const rows = groupLinks.filter(link => link.groupId === group.id && link.monitor.active)
+    const statuses = rows.map(link => link.monitor.states[0]?.status ?? 2)
+    let status = 'unknown'
+    if (statuses.length) {
+      if (statuses.includes(0)) status = 'down'
+      else if (statuses.includes(3)) status = 'maintenance'
+      else if (statuses.includes(2) || statuses.includes(1) === false) status = 'pending'
+      else status = 'up'
+    }
+    groupStatus.set(group.id, status)
+  }
+
   // Build group tabs
   const groupTabs = groupsWithCounts.map(group => ({
     id: group.id,
     name: group.name,
-    count: group._count.monitors
+    count: group._count.monitors,
+    status: groupStatus.get(group.id) || 'unknown',
   }))
 
   // If no pagination, load all data (for edit mode)

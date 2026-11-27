@@ -71,6 +71,7 @@ interface GroupTab {
   id: number
   name: string
   count: number
+  status?: string
 }
 
 interface Pagination {
