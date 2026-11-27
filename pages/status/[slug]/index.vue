@@ -182,6 +182,7 @@ useHead({
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: shareUrl },
     { name: 'twitter:card', content: 'summary' },
+    ...(statusPage.value?.noIndex ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
   ],
 })
 

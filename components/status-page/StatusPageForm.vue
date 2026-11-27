@@ -9,6 +9,7 @@ interface StatusPage {
   showTags: boolean
   customCSS: string | null
   googleAnalyticsId: string | null
+  noIndex?: boolean
   icon?: string | null
   footerText?: string | null
   showPoweredBy?: boolean
@@ -53,6 +54,7 @@ const form = ref<StatusPage>({
   showTags: true,
   customCSS: '',
   googleAnalyticsId: '',
+  noIndex: false,
   icon: '',
   footerText: '',
   showPoweredBy: true,
@@ -74,6 +76,7 @@ onMounted(() => {
       showTags: props.statusPage.showTags,
       customCSS: props.statusPage.customCSS || '',
       googleAnalyticsId: props.statusPage.googleAnalyticsId || '',
+      noIndex: props.statusPage.noIndex ?? false,
       icon: props.statusPage.icon || '',
       footerText: props.statusPage.footerText || '',
       showPoweredBy: props.statusPage.showPoweredBy ?? true,
@@ -221,6 +224,10 @@ function handleSubmit() {
       <UCheckbox
         v-model="form.published"
         label="Publish this status page (make it publicly accessible)"
+      />
+      <UCheckbox
+        v-model="form.noIndex"
+        label="Hide from search engines (noindex, nofollow)"
       />
     </div>
 

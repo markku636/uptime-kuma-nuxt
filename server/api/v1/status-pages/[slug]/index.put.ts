@@ -30,6 +30,7 @@ const updateStatusPageSchema = z.object({
   footerText: z.string().nullable().optional(),
   domainNameList: z.array(z.string()).nullable().optional(),
   googleAnalyticsId: z.string().nullable().optional(),
+  noIndex: z.boolean().optional(),
   autoRefreshInterval: z.number().nullable().optional(),
   perPage: z.number().min(1).max(50).nullable().optional(),
   publicGroupList: z.array(groupSchema).optional(),

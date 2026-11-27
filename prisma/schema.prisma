@@ -318,6 +318,7 @@ model StatusPage {
   customCss             String?   @map("custom_css")
   footerText            String?   @map("footer_text")
   googleAnalyticsId     String?   @map("google_analytics_id")
+  noIndex               Boolean   @default(false) @map("no_index")
   userId                Int       @map("user_id")
   createdAt             DateTime  @default(now()) @map("created_at")
 

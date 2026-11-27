@@ -270,7 +270,8 @@ function formatConfig(statusPage: any, canEdit = false) {
     autoRefreshInterval: statusPage.autoRefreshInterval || 300,
     customCSS: statusPage.customCss,
     footerText: statusPage.footerText,
-    googleAnalyticsId: statusPage.googleAnalyticsId
+    googleAnalyticsId: statusPage.googleAnalyticsId,
+    noIndex: !!statusPage.noIndex,
   }
 }
 

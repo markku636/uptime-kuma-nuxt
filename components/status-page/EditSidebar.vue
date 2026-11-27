@@ -125,6 +125,17 @@
         <label class="form-check-label" for="showPoweredBy">Show Powered By</label>
       </div>
 
+      <!-- Search engine indexing -->
+      <div class="form-check">
+        <input
+          id="noIndex"
+          v-model="localConfig.noIndex"
+          type="checkbox"
+          class="form-check-input"
+        />
+        <label class="form-check-label" for="noIndex">Hide from search engines (noindex)</label>
+      </div>
+
       <!-- Show Certificate Expiry -->
       <div class="form-check">
         <input
@@ -331,6 +342,7 @@ interface StatusPageConfig {
   customCSS?: string
   footerText?: string
   googleAnalyticsId?: string
+  noIndex?: boolean
   domainNameList?: string[]
   publicGroupList?: any[]
 }
@@ -390,6 +402,7 @@ const localConfig = ref<StatusPageConfig>({
   customCSS: '',
   footerText: '',
   googleAnalyticsId: '',
+  noIndex: false,
   domainNameList: [],
   publicGroupList: []
 })

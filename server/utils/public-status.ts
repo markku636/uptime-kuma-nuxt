@@ -39,7 +39,8 @@ export function statusConfig(page: any) {
     showPoweredBy: page.showPoweredBy, showCertificateExpiry: page.showCertificateExpiry,
     passwordProtected: !!page.passwordHash,
     perPage: page.perPage, autoRefreshInterval: page.autoRefreshInterval, customCSS: page.customCss,
-    customCss: page.customCss, footerText: page.footerText, googleAnalyticsId: page.googleAnalyticsId }
+    customCss: page.customCss, footerText: page.footerText, googleAnalyticsId: page.googleAnalyticsId,
+    noIndex: !!page.noIndex }
 }
 
 export const publicHeartbeatHandler = defineEventHandler(async (event: H3Event) => {

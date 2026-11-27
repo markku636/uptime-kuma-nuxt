@@ -19,6 +19,7 @@ interface StatusPageConfig {
   customCSS?: string
   footerText?: string
   googleAnalyticsId?: string
+  noIndex?: boolean
   domainNameList?: string[]
   publicGroupList?: PublicGroup[]
   canEdit?: boolean
