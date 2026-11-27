@@ -199,7 +199,7 @@ R30 ✅ 嵌入對話框同步易用性（16:01–16:04 CST）— commit `740741d
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
 
-R31 ✅ 環境編輯副作用提示（16:04–16:08 CST）— commit 待填：
+R31 ✅ 環境編輯副作用提示（16:04–16:07 CST）— commit `0bab011`：
 - Settings 與對話框都標示「Saving reschedules every monitor in this environment.」；Settings 顯示變數草稿數量（N/200）。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
