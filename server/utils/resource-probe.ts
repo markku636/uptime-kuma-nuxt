@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { z } from 'zod'
 import { createError, defineEventHandler, readBody } from 'h3'
 import { prisma } from './prisma'
 import { requireWorkspace } from './workspace'
@@ -25,7 +26,10 @@ export function resourceProbeHandler(kind:SecretResource){
   return defineEventHandler(async event=>{
     const scope=await requireWorkspace(event,'editor'),body=await readBody(event)
     if(!body||typeof body!=='object'||Array.isArray(body))throw createError({statusCode:400,message:'Invalid resource test'})
-    const {id,notificationId,dockerHostId,remoteBrowserId,overrides,...direct}=body
+    const {id,notificationId,dockerHostId,remoteBrowserId,overrides,eventStatus,...direct}=body
+    // 通知測試可指定送 UP（預設）或 DOWN；DOWN 才會帶出agent 指令等告警專用內容。
+    const probeStatus=z.enum(['up','down']).default('up').safeParse(eventStatus)
+    if(!probeStatus.success)throw createError({statusCode:400,message:'Invalid eventStatus'})
     const resourceId=id??notificationId??dockerHostId??remoteBrowserId
     let existing:any
     if(resourceId!==undefined){
@@ -42,7 +46,11 @@ export function resourceProbeHandler(kind:SecretResource){
     if(windows.size>=10000&&!windows.has(scope.user.id))throw createError({statusCode:503,message:'Test capacity reached'})
     windows.set(scope.user.id,window);window.count++;active.add(scope.user.id);total++
     try{
-      if(kind==='notification')await sendNotification({type:row.type,config:row.config},{name:'Test Monitor'},{status:1,ping:0,msg:'Test',code:'CHECK_COMPLETE'})
+      if(kind==='notification'){
+        const down=probeStatus.data==='down'
+        await sendNotification({type:row.type,config:row.config},{name:'Test Monitor'},
+          {status:down?0:1,ping:0,msg:'Test',code:down?'TEST_DOWN':'CHECK_COMPLETE',...(down?{eventType:'test-down'}:{})})
+      }
       else if(kind==='dockerHost'&&row.dockerType==='socket'){
         if(typeof row.dockerDaemon!=='string'||!row.dockerDaemon.startsWith('/'))throw new Error('CONFIG_ERROR')
         await socketPing(row.dockerDaemon)

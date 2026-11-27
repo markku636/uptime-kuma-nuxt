@@ -33,3 +33,35 @@ test('default and linked notifications stay within workspace and omit request/er
     if(owner&&a&&b)await cleanup([owner],[a,b])
   }
 })
+
+test('notification test endpoint can emit an UP or DOWN probe event',{timeout:15000},async()=>{
+  const events:string[]=[]
+  const server=http.createServer(async(req,res)=>{
+    let body='';for await(const chunk of req)body+=chunk
+    events.push(body);res.end('accepted')
+  })
+  await new Promise<void>(r=>server.listen(0,'127.0.0.1',r))
+  const origin=`http://127.0.0.1:${(server.address() as any).port}`
+  let owner:Identity|undefined,a:Scope|undefined
+  try{
+    owner=await user('notification-probe-owner');a=await workspace(owner,'Notification probe')
+    const channel=await data(await request('/api/v1/notifications','POST',owner,a,{name:'Probe channel',type:'webhook',active:true,isDefault:false,config:{url:origin+'/notify'}}))
+    const id=channel.data.id
+    const bad=await request('/api/v1/notifications/test','POST',owner,a,{notificationId:id,eventStatus:'sideways'})
+    assert.equal(bad.status,400)
+
+    const up=await data(await request('/api/v1/notifications/test','POST',owner,a,{notificationId:id,eventStatus:'up'}))
+    assert.equal(up.success,true)
+    const down=await data(await request('/api/v1/notifications/test','POST',owner,a,{notificationId:id,eventStatus:'down'}))
+    assert.equal(down.success,true)
+    for(let i=0;i<100&&events.length<2;i++)await new Promise(r=>setTimeout(r,30))
+    assert.equal(events.length,2)
+    const bodies=events.map(e=>JSON.parse(e))
+    assert.equal(bodies[0]!.status,'up')
+    assert.equal(bodies[1]!.status,'down')
+    assert.match(bodies[1]!.title,/DOWN/)
+  }finally{
+    server.closeAllConnections();await new Promise<void>(r=>server.close(()=>r()))
+    if(owner&&a)await cleanup([owner],[a])
+  }
+})
