@@ -290,7 +290,7 @@
       </button>
     </div>
 
-    <EnvironmentVariablesDialog v-model:open="envDialogOpen" :environment-id="resolvedEnvironmentId" @insert="insertVariable" @saved="loadEnv(); emit('refreshVariables')" />
+    <EnvironmentVariablesDialog v-model:open="envDialogOpen" :environment-id="resolvedEnvironmentId" :disabled="disabled" @insert="insertVariable" @saved="loadEnv(); emit('refreshVariables')" />
   </div>
 </template>
 

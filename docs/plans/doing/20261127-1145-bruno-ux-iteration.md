@@ -136,3 +136,8 @@ R18 ✅ 完整回歸 + lab 再部署 R14–R17（15:14–15:19 CST，沿用 lab 
 - GitOps `be485b1` loader（rev307，Job Succeeded）→ `83d372f` migration（rev308，Job Succeeded，無 pending migrations）→ `215bb95` application（rev309）。
 - rev309 API 2/2、worker 2/2、DB/fixture Healthy，release Healthy / Synced；`/api/health/ready` = 200。正式站仍未部署。
 
+R19 ✅ 環境變數 dialog 遵循 disabled（15:19–15:22 CST）— commit 待填：
+- 把編輯器的 `disabled` 傳給 `EnvironmentVariablesDialog`，表單 loading／無權限時 dialog 也唯讀。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：此輪在 rev309 之後，尚未進 lab。
+
