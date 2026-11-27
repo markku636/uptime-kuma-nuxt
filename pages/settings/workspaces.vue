@@ -50,20 +50,35 @@
                 <h3 class="font-medium">Environment variables</h3>
                 <p class="text-xs text-secondary mt-1">Use <code v-pre>{{variableName}}</code> in URLs, headers and bodies. Values are stored as a JSON object.</p>
               </div>
-              <button type="button" class="text-xs text-primary hover:underline" @click="rawMode = !rawMode">
-                {{ rawMode ? 'Use key/value editor' : 'Edit JSON directly' }}
-              </button>
+              <div class="flex items-center gap-3">
+                <button type="button" class="text-xs text-primary hover:underline" @click="selectEditingEnvironment()">Reset changes</button>
+                <button type="button" class="text-xs text-primary hover:underline" @click="rawMode = !rawMode">
+                  {{ rawMode ? 'Use key/value editor' : 'Edit JSON directly' }}
+                </button>
+              </div>
             </div>
 
             <div v-if="!rawMode" class="space-y-2">
               <div v-for="(row, index) in variableRows" :key="index" class="flex flex-wrap gap-2 items-center">
-                <input v-model="row.key" class="field flex-1 min-w-40" placeholder="VARIABLE_NAME" :aria-label="`Variable name ${index + 1}`">
+                <div class="flex-1 min-w-40">
+                  <input v-model="row.key" class="field w-full" placeholder="VARIABLE_NAME" :aria-label="`Variable name ${index + 1}`">
+                  <p v-if="row.key.trim() && !isValidVariableName(row.key.trim())" class="text-xs text-red-500 mt-1">Invalid variable name</p>
+                </div>
                 <input v-model="row.value" class="field flex-[2] min-w-48" placeholder="value" :aria-label="`Variable value ${index + 1}`">
+                <UButton type="button" color="neutral" variant="ghost" size="sm" :disabled="!row.key.trim()" :aria-label="`Copy token for variable ${index + 1}`" @click="copyToken(row.key)">Copy token</UButton>
                 <UButton type="button" color="neutral" variant="ghost" size="sm" :aria-label="`Remove variable ${index + 1}`" @click="variableRows.splice(index, 1)">Remove</UButton>
               </div>
               <UButton type="button" color="neutral" variant="soft" size="sm" @click="variableRows.push({ key: '', value: '' })">+ Add variable</UButton>
             </div>
             <textarea v-else v-model="rawJson" class="field min-h-32 w-full font-mono" aria-label="Static environment variables" spellcheck="false" />
+
+            <div class="border-t border-current/10 pt-4">
+              <label class="text-xs text-secondary" for="settings-env-preview">Preview placeholders</label>
+              <input id="settings-env-preview" v-model="previewText" class="field w-full mt-1" placeholder="&#123;&#123;baseUrl&#125;&#125;/health">
+              <p v-if="previewResult" class="text-xs mt-1" :class="previewResult.missing.length ? 'text-amber-500' : 'text-emerald-500'">
+                Resolved: <code class="break-all">{{ previewResult.preview }}</code><span v-if="previewResult.missing.length"> · Unknown: {{ previewResult.missing.join(', ') }}</span>
+              </p>
+            </div>
 
             <div class="border-t border-current/10 pt-4">
               <h4 class="font-medium text-sm">Secrets</h4>
@@ -96,6 +111,7 @@
 </template>
 <script setup lang="ts">
 import { isValidVariableName, useEnvironmentVariables, validateVariableMap } from '~/composables/useEnvironmentVariables'
+import { previewEnvironmentVariables } from '~/utils/variable-preview'
 
 const route = useRoute()
 const { current, canManage, load, change } = useWorkspace()
@@ -105,6 +121,24 @@ const editingEnvironmentId = ref<number>()
 const variableRows = ref<{ key: string; value: string }[]>([])
 const rawJson = ref('{}'), rawMode = ref(false)
 const selectedEnvironment = selectedEnvironmentOf(editingEnvironmentId)
+const previewText = ref('')
+const previewResult = computed(() => {
+  const text = previewText.value
+  if (!text?.includes('{{')) return null
+  const variables: Record<string, string> = {}
+  if (rawMode.value) {
+    try { Object.assign(variables, validateVariableMap(JSON.parse(rawJson.value), {checkNames: false})) } catch { /* show missing placeholders */ }
+  } else {
+    for (const row of variableRows.value) if (row.key.trim()) variables[row.key.trim()] = row.value
+  }
+  return previewEnvironmentVariables(text, variables, selectedEnvironment.value?.secretNames || [])
+})
+
+async function copyToken(name: string) {
+  const token = `{{${name.trim()}}}`
+  try { await navigator.clipboard.writeText(token); notice.value = `Copied ${token}` }
+  catch { error.value = 'Clipboard unavailable; select and copy the name manually.' }
+}
 const workspaceName = ref(''), environmentName = ref(''), memberName = ref(''), memberRole = ref('viewer')
 const secretName = ref(''), secretValue = ref(''), accountName = ref(''), accountPassword = ref('')
 const platformAdmin = ref(false), busy = ref(false), error = ref(''), notice = ref('')

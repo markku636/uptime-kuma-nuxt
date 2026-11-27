@@ -482,7 +482,7 @@ test('browser deep links a monitor environment into Settings', {timeout:60000}, 
     identity = await user('bruno-env-deeplink')
     scope = await workspace(identity, 'Bruno env deep link')
     const second = await data(await request(`/api/v1/workspaces/${scope.workspaceId}/environments`, 'POST', identity, scope, {name:'staging'}))
-    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const context = await browser.newContext({viewport:{width:1280,height:900}, permissions:['clipboard-read','clipboard-write']})
     const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
     await context.addCookies([...cookies,
       {name:'workspace_id',value:String(scope.workspaceId),url:base},
@@ -494,6 +494,15 @@ test('browser deep links a monitor environment into Settings', {timeout:60000}, 
     const select = page.getByLabel('Edit environment')
     await select.waitFor()
     assert.equal(await select.inputValue(), String(second.data.id), 'the query parameter selects the requested environment')
+
+    await page.getByLabel('Variable name 1').fill('PREVIEW_VAR')
+    await page.getByLabel('Variable value 1').fill('hello')
+    await page.getByLabel('Preview placeholders').fill('{{PREVIEW_VAR}}/health')
+    await page.getByText(/hello\/health/).waitFor()
+    await page.getByLabel('Copy token for variable 1').click()
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), '{{PREVIEW_VAR}}')
+    await page.getByRole('button', {name:'Reset changes'}).click()
+    assert.equal(await page.getByLabel('Variable name 1').inputValue(), '', 'reset restores the saved variables')
   } finally {
     await browser.close()
     if (identity && scope) await cleanup([identity], [scope])

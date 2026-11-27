@@ -181,9 +181,15 @@ R27 ✅ 監測編輯頁直接編輯環境變數（15:41–15:56 CST）— commit
 - 驗證：最終 `npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 7/7。
 - 部署：尚未進 lab。
 
-R28 ✅ 環境編輯深連結（15:56–16:00 CST）— commit 待填：
-- 對話框的 Settings 連結改為 `/settings/workspaces?environment=<id>`；workspaces 頁面读取 query 並選取對應環境。
+R28 ✅ 環境編輯深連結（15:56–15:59 CST）— commit `456d953`：
+- 對話框的 Settings 連結改為 `/settings/workspaces?environment=<id>`；workspaces 頁面讀取 query 並選取對應環境。
 - browser 測試建立第二個環境後帶 query 進入設定頁，驗證下拉選到該環境。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
+- 部署：尚未進 lab。
+
+R29 ✅ Settings 環境變數編輯易用性（15:59–16:05 CST）— commit 待填：
+- 每列變數新增 `Copy token`（复制 `{{NAME}}`）、非法名稱即時提示；新增 `Reset changes`；新增 Preview placeholders（用尚未儲存的草稿值即時解析，secret 遮罩、缺值列出）。
+- browser 測試：填變數與 preview 得到解析值、Copy token 寫入剪貼簿、Reset 還原。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
 
