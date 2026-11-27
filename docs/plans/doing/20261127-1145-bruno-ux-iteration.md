@@ -95,7 +95,7 @@ R11 ✅ 斷言結果摘要（12:20–12:22 CST）— commit `4884b96`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 
-R12 ✅ 文件更新 + 完整回歸（12:22–12:26 CST）— commit 待填：
+R12 ✅ 文件更新 + 完整回歸（12:22–12:27 CST）— commit `a164ad5`：
 - `docs/BRUNO_COMPATIBILITY.md` 補上 R1–R11 的行為。
 - `TEST_PG_ADMIN_URL=postgresql://uptime@127.0.0.1:55464/postgres npm run verify:bruno` 全綠（unit 109/109、typecheck、build、Bruno 整合 27 pass / 1 skip）；完整 `npm run test:integration` 107 pass / 0 fail / 1 skip。
 - 部署：未部署。
