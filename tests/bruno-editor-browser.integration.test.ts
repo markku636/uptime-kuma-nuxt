@@ -440,7 +440,7 @@ test('browser edits environment variables directly from a monitor form', {timeou
       type: 'http', name: 'Env from monitor', url: '{{TOPLEVEL_VAR}}/health', active: false,
     }))
     monitorId = created.data.id
-    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const context = await browser.newContext({viewport:{width:1280,height:900}, permissions:['clipboard-read','clipboard-write']})
     const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
     await context.addCookies([...cookies,
       {name:'workspace_id',value:String(scope.workspaceId),url:base},
@@ -456,6 +456,10 @@ test('browser edits environment variables directly from a monitor form', {timeou
     await dialog.waitFor()
     await dialog.getByPlaceholder('VARIABLE_NAME').first().fill('TOPLEVEL_VAR')
     await dialog.getByPlaceholder('value', {exact:true}).first().fill('demo')
+    await dialog.getByLabel(/Preview placeholders/).fill('{{TOPLEVEL_VAR}}/health')
+    await dialog.getByText(/demo\/health/).waitFor()
+    await dialog.getByLabel('Copy token for variable 1').click()
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), '{{TOPLEVEL_VAR}}')
     await dialog.getByRole('button', {name:/Save/i}).first().click()
     await dialog.getByText(/reschedul/i).waitFor()
     await dialog.getByRole('button', {name:'Close', exact:true}).first().click()
@@ -467,6 +471,8 @@ test('browser edits environment variables directly from a monitor form', {timeou
     await reopened.waitFor()
     assert.equal(await reopened.getByPlaceholder('VARIABLE_NAME').first().inputValue(), 'TOPLEVEL_VAR', 'the new variable survives reload')
     assert.equal(await reopened.getByPlaceholder('value', {exact:true}).first().inputValue(), 'demo')
+    await reopened.getByRole('button', {name:'Reset changes'}).click()
+    assert.equal(await reopened.getByPlaceholder('VARIABLE_NAME').first().inputValue(), 'TOPLEVEL_VAR', 'reset restores the saved variable')
     await reopened.getByRole('button', {name:'Close', exact:true}).first().click()
     assert.deepEqual(errors, [])
   } finally {

@@ -32,9 +32,12 @@
 
         <div class="flex flex-wrap items-center justify-between gap-2">
           <span class="text-sm font-medium">Variables ({{ variableCount }}/200)</span>
-          <button type="button" class="text-xs text-primary hover:underline disabled:opacity-50" :disabled="readOnly" @click="toggleRawMode">
-            {{ rawMode ? 'Use key/value editor' : 'Edit JSON directly' }}
-          </button>
+          <div class="flex items-center gap-3">
+            <button type="button" class="text-xs text-primary hover:underline disabled:opacity-50" :disabled="readOnly" @click="populate()">Reset changes</button>
+            <button type="button" class="text-xs text-primary hover:underline disabled:opacity-50" :disabled="readOnly" @click="toggleRawMode">
+              {{ rawMode ? 'Use key/value editor' : 'Edit JSON directly' }}
+            </button>
+          </div>
         </div>
 
         <textarea
@@ -51,10 +54,14 @@
           </thead>
           <tbody>
             <tr v-for="(row, index) in variableRows" :key="index">
-              <td class="py-1 pr-2"><input v-model="row.key" class="env-field w-full" placeholder="VARIABLE_NAME" :aria-label="`Variable name ${index + 1}`" :disabled="readOnly"></td>
+              <td class="py-1 pr-2">
+                <input v-model="row.key" class="env-field w-full" placeholder="VARIABLE_NAME" :aria-label="`Variable name ${index + 1}`" :disabled="readOnly">
+                <p v-if="row.key.trim() && !isValidVariableName(row.key.trim())" class="text-xs text-red-500 mt-1">Invalid variable name</p>
+              </td>
               <td class="py-1 pr-2"><input v-model="row.value" class="env-field w-full" placeholder="value" :aria-label="`Variable value ${index + 1}`" :disabled="readOnly"></td>
               <td class="py-1 whitespace-nowrap">
                 <UButton size="xs" variant="ghost" color="neutral" :disabled="!row.key.trim()" :aria-label="`Insert variable ${index + 1}`" @click="insertName(row.key)">Insert</UButton>
+                <UButton size="xs" variant="ghost" color="neutral" :disabled="!row.key.trim()" :aria-label="`Copy token for variable ${index + 1}`" @click="copyToken(row.key)">Copy token</UButton>
                 <UButton size="xs" variant="ghost" color="neutral" :disabled="readOnly" :aria-label="`Remove variable ${index + 1}`" @click="variableRows.splice(index, 1)">Remove</UButton>
               </td>
             </tr>
@@ -96,7 +103,7 @@
         </div>
 
         <div class="border-t border-current/10 pt-3 space-y-2">
-          <label class="text-xs text-secondary" for="env-dialog-preview">Preview placeholders</label>
+          <label class="text-xs text-secondary" for="env-dialog-preview">Preview placeholders (uses unsaved values above)</label>
           <input id="env-dialog-preview" v-model="previewText" class="env-field w-full" :placeholder="'{{baseUrl}}/health?token={{apiKey}}'" />
           <p v-if="previewResult" class="text-xs" :class="previewResult.missing.length ? 'text-amber-500' : 'text-emerald-500'">
             Resolved: <code class="break-all">{{ previewResult.preview }}</code>
@@ -145,8 +152,20 @@ const variableCount = computed(() => {
 const previewResult = computed(() => {
   const text = previewText.value
   if (!text?.includes('{{')) return null
-  return preview(text, selectedEnvironment.value)
+  const variables: Record<string, string> = {}
+  if (rawMode.value) {
+    try { Object.assign(variables, validateVariableMap(JSON.parse(rawJson.value), {checkNames: false})) } catch { /* show missing placeholders */ }
+  } else {
+    for (const row of variableRows.value) if (row.key.trim()) variables[row.key.trim()] = row.value
+  }
+  return preview(text, { ...(selectedEnvironment.value || { id: 0, workspaceId: 0, name: '', secretNames: [] }), variables })
 })
+
+async function copyToken(name: string) {
+  const token = `{{${name.trim()}}}`
+  try { await navigator.clipboard.writeText(token); notice.value = `Copied ${token}` }
+  catch { formError.value = 'Clipboard unavailable; select and copy the name manually.' }
+}
 
 function populate() {
   const values = selectedEnvironment.value?.variables || {}

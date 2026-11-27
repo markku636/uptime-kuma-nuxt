@@ -187,9 +187,15 @@ R28 ✅ 環境編輯深連結（15:56–15:59 CST）— commit `456d953`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
 
-R29 ✅ Settings 環境變數編輯易用性（15:59–16:05 CST）— commit 待填：
-- 每列變數新增 `Copy token`（复制 `{{NAME}}`）、非法名稱即時提示；新增 `Reset changes`；新增 Preview placeholders（用尚未儲存的草稿值即時解析，secret 遮罩、缺值列出）。
+R29 ✅ Settings 環境變數編輯易用性（15:59–16:01 CST）— commit `ce50e26`：
+- 每列變數新增 `Copy token`（複製 `{{NAME}}`）、非法名稱即時提示；新增 `Reset changes`；新增 Preview placeholders（用尚未儲存的草稿值即時解析，secret 遮罩、缺值列出）。
 - browser 測試：填變數與 preview 得到解析值、Copy token 寫入剪貼簿、Reset 還原。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
+- 部署：尚未進 lab。
+
+R30 ✅ 嵌入對話框同步易用性（16:01–16:05 CST）— commit 待填：
+- 對話框新增 Copy token / Reset changes / 非法名稱提示；Preview 改用以尚未儲存的草稿值解析。
+- browser 測試：在監測編輯頁的對話框 Preview 得到解析值、Copy token 寫入剪貼簿、重新開啟後 Reset 還原已存值。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
 
