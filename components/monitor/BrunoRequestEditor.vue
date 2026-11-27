@@ -29,6 +29,7 @@
         :disabled="disabled"
         placeholder="meta {&#10;  name: Example&#10;}&#10;get {&#10;  url: https://example.com/health&#10;}&#10;assert {&#10;  res.status: eq 200&#10;}"
       />
+      <p v-if="urlWarning" role="status" class="text-xs text-amber-500">{{ urlWarning }}</p>
       <p v-if="urlPreview" class="text-xs text-secondary break-all">Variables: <code>{{ urlPreview.preview }}</code><span v-if="urlPreview.missing.length"> · Unknown: {{ urlPreview.missing.join(', ') }}</span></p>
     </div>
 
@@ -44,6 +45,7 @@
         <div>
           <label class="input-label">URL</label>
           <input v-model="model.url" type="text" class="input-field font-mono text-xs" placeholder="https://example.com/health" :disabled="disabled">
+          <p v-if="urlWarning" role="status" class="text-xs text-amber-500 mt-1">{{ urlWarning }}</p>
           <p v-if="urlPreview" class="text-xs text-secondary mt-1 break-all">Resolved: <code>{{ urlPreview.preview }}</code><span v-if="urlPreview.missing.length"> · Unknown: {{ urlPreview.missing.join(', ') }}</span></p>
         </div>
         <div class="md:col-span-2">
@@ -461,6 +463,15 @@ const urlPreview = computed(() => {
 /** UI edits are serialized by sync() before the parent sends, so raw source may still be empty. */
 const canSend = computed(() => !props.disabled && !props.trialLoading && !busy.value
   && (mode.value === 'ui' ? !!model.value?.url.trim() : !!rawSource.value.trim()))
+
+const urlWarning = computed(() => {
+  const source = mode.value === 'ui'
+    ? model.value?.url || ''
+    : /^\s*url:\s*(.*)$/m.exec(rawSource.value)?.[1] || ''
+  const value = source.trim()
+  if (!value || value.startsWith('{{')) return ''
+  return /^https?:\/\//i.test(value) ? '' : 'URL should start with http:// or https://.'
+})
 
 const issueMessages: Record<string, string> = {
   HTTP_BLOCK_REQUIRED: 'A single GET/POST/… request block is required.',

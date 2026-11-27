@@ -77,9 +77,15 @@ R8 ✅ Assert 快速新增（12:12–12:14 CST）— commit `f0061c7`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 
-R9 ✅ Reset 基準同步（12:14–12:18 CST）— commit 待填：
+R9 ✅ Reset 基準同步（12:14–12:17 CST）— commit `e802d12`：
 - 集中所有 `update:modelValue` 到 `emitSource()`，用 `selfEmission` 區分自己的寫回與外部 props 更新；外部更新時同步 `savedSource`／`rawSource`，UI 模式重新初始化。
 - 避免 Save／clone 在同一元件實例更新 source 後，Reset 退回舊 `.bru`。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6（既有 Reset／Save／Send 流程無回歸）。外部 prop 更新缺乏直接自動化案例，如實記錄。
+- 部署：未部署。
+
+R10 ✅ URL 格式即時提示（12:17–12:20 CST）— commit 待填：
+- UI 與 Raw 模式都在 URL 不是 http(s)（且不是 `{{變數}}`）時顯示提示，不用等到 Send 才失敗。
+- browser 測試：`ftp://` 出現提示，改回 http 後提示消失，Send 仍正常。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 
