@@ -124,7 +124,7 @@ R16 ✅ 重複欄位警告（15:09–15:11 CST）— commit `935e920`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab。
 
-R17 ✅ 無效 URL 擋下 Send（15:11–15:14 CST）— commit 待填：
+R17 ✅ 無效 URL 擋下 Send（15:11–15:14 CST）— commit `5083b64`：
 - `canSend` 加入 `!urlWarning`，非 http(s) URL 不能試送；`{{var}}` 開頭的 URL 仍可送（執行時展開）。
 - browser 測試：`ftp://` 時 Send disabled，改回 http 後恢復。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
