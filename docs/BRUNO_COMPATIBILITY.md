@@ -40,9 +40,9 @@ source environment變更與監測寫入同一transaction。Monitor request配置
 
 | 分頁 | 內容 |
 | --- | --- |
-| Params | query/path 類型切換、增刪列、Bulk Edit（`name: value` 每行，`~` 代表停用） |
+| Params | query/path 類型切換、增刪列、Bulk Edit（`name: value` 每行，`~` 代表停用；無效列會提示行號） |
 | Body | none / json / text / form-url-encoded |
-| Headers / Auth / Vars | 表頭與 basic/bearer 憑證、pre-request vars、環境變數清單與插入 |
+| Headers / Auth / Vars | 表頭與 basic/bearer 憑證（預設遮罩）、pre-request vars（可 Bulk Edit）、環境變數清單（可篩選、超過 50 筆會提示）與插入 |
 | Script / Tests / Settings | 可直接編輯保留的 block；worker 永不執行，存檔原樣保留 |
 | Assert | Expr / Operator / Value / Description，完整安全 operator 下拉 |
 | Docs | `docs {}` block 可讀寫 |
