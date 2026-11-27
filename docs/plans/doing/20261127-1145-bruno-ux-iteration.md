@@ -100,3 +100,9 @@ R12 ✅ 文件更新 + 完整回歸（12:22–12:27 CST）— commit `a164ad5`�
 - `TEST_PG_ADMIN_URL=postgresql://uptime@127.0.0.1:55464/postgres npm run verify:bruno` 全綠（unit 109/109、typecheck、build、Bruno 整合 27 pass / 1 skip）；完整 `npm run test:integration` 107 pass / 0 fail / 1 skip。
 - 部署：未部署。
 
+R13 ✅ lab 部署（14:56–15:01 CST，使用者授權「現在部署到 lab 驗證」）— 無程式 commit：
+- Artifact：`4bb02a1c5a6a7987cfa9ac9c92532ffbd28462adfb285dd05b9cbfa008acd8a5`（204,810,327 bytes；source `6724089`、working tree clean、Node v20.20.0）；短命只讀 artifact server `192.168.50.57:18991` 供 loader 拉取後立即停止。
+- v-terminal GitOps `uptime-api-demo-20261114/uptime-api`（deploy repo commit `587d5e9` loader → `30581ff` migration → `32f95a3` application）：rev304 loader Job `uptime-artifact-4bb02a1c5a6a-2` Succeeded；rev305 migration Job `uptime-migrate-4bb02a1c5a6a-2` Succeeded，套用 2 個先前未上的 visual-diff migrations；rev306 API 2/2、worker 2/2、DB 1/1 Healthy，release Healthy / Synced。
+- 驗證：`/api/health/ready` = 200；未登入的 `/monitors/61/edit` 正確導向登入頁，故 UI 畫面仍待持有人登入 lab 驗收（不冒稱已人工驗收）。
+- 正式站未部署（使用者只授權 lab）。
+
