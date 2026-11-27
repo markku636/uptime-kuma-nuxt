@@ -76,10 +76,20 @@
       >
         <!-- Group title (only show if multiple groups or specified) -->
         <h2 v-if="showGroupTitle" class="group-title">
+          <button
+            type="button"
+            class="group-collapse"
+            :aria-expanded="!isGroupCollapsed(group.id)"
+            :aria-label="isGroupCollapsed(group.id) ? `Expand ${group.name}` : `Collapse ${group.name}`"
+            @click="toggleGroup(group.id)"
+          >
+            <UIcon :name="isGroupCollapsed(group.id) ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-down'" class="w-4 h-4" />
+          </button>
           {{ group.name }}
+          <span class="group-count">{{ getMonitorsForGroup(group).length }}</span>
         </h2>
-        
-        <div class="monitor-list-container shadow-box">
+
+        <div v-show="!isGroupCollapsed(group.id)" class="monitor-list-container shadow-box">
           <!-- Empty state -->
           <div v-if="getMonitorsForGroup(group).length === 0" class="empty-state">
             {{ $t('No Monitors') }}
@@ -163,6 +173,15 @@ const emit = defineEmits<{
   (e: 'reorderMonitors', group: Group): void
 }>()
 
+// Viewers can collapse long groups; state is local and never persisted server-side.
+const collapsedGroups = ref<Set<number>>(new Set())
+function isGroupCollapsed(id: number) { return collapsedGroups.value.has(id) }
+function toggleGroup(id: number) {
+  const next = new Set(collapsedGroups.value)
+  if (next.has(id)) next.delete(id); else next.add(id)
+  collapsedGroups.value = next
+}
+
 // Show group title logic
 const showGroupTitle = computed(() => {
   // Always show in edit mode
@@ -237,6 +256,22 @@ function getMonitorsForGroup(group: Group): Monitor[] {
 .dark .group-title {
   color: #f1f5f9;
 }
+
+.group-collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  border-radius: 4px;
+  color: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.group-collapse:hover { background: rgba(127,127,127,.15); }
+.group-count { margin-left: 8px; font-size: .8rem; opacity: .6; }
 
 .monitor-list-container {
   background: #ffffff;
