@@ -17,7 +17,7 @@
 |---|------|------|------|------|
 | U1 | 空白 Bruno monitor 在 UI editor 填完 URL 後 Send 按鈕仍 disabled（`rawSource` 空白），無法頁內試送 | 2026-11-27 code review | 高 | ✅ R1 |
 | U2 | Auth 的 Password / Token 用 `type=text` 明文顯示，無顯示/隱藏切換 | 2026-11-27 code review | 高 | ✅ R2 |
-| U3 | `savedSource` 只在 mount 時設定，Save 後 props 更新時 Reset 會退回舊內容 | 2026-11-27 code review | 中 | ⬜ |
+| U3 | `savedSource` 只在 mount 時設定，Save 後 props 更新時 Reset 會退回舊內容 | 2026-11-27 code review | 中 | ✅ R9 |
 | U4 | Operator 下拉沒有操作數格式提示（`between` 需 `min max` 等），易填錯 | 2026-11-27 code review | 中 | ✅ R3 |
 | U4b | Bulk Edit 無效列被靜默丟棄 | 2026-11-27 code review | 高 | ✅ R4 |
 | U5 | Raw 模式 Copy / Download 兩顆按鈕沒有間距；busy/parse 中缺少視覺回饋 | 2026-11-27 code review | 低 | ✅ R5 |
@@ -71,9 +71,15 @@ R7 ✅ 編輯器顯示目前環境（12:08–12:12 CST）— commit `834d817`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 
-R8 ✅ Assert 快速新增（12:12–12:16 CST）— commit 待填：
+R8 ✅ Assert 快速新增（12:12–12:14 CST）— commit `f0061c7`：
 - 「Quick add…」下拉提供 Status is 200 / Response time under 1000 ms / JSON field equals…，一鍵帶入 expression、operator、value，不必記 `.bru` 斷言語法。
 - browser 測試選 responseTime 後驗證三欄值都正確填入，選完下拉自動回到提示。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：未部署。
+
+R9 ✅ Reset 基準同步（12:14–12:18 CST）— commit 待填：
+- 集中所有 `update:modelValue` 到 `emitSource()`，用 `selfEmission` 區分自己的寫回與外部 props 更新；外部更新時同步 `savedSource`／`rawSource`，UI 模式重新初始化。
+- 避免 Save／clone 在同一元件實例更新 source 後，Reset 退回舊 `.bru`。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6（既有 Reset／Save／Send 流程無回歸）。外部 prop 更新缺乏直接自動化案例，如實記錄。
 - 部署：未部署。
 

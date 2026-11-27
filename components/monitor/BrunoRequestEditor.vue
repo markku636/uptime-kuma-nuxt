@@ -332,8 +332,22 @@ const { current, environment } = useWorkspace()
 const resolvedEnvironmentId = computed(() => Number(props.environmentId || environment.value?.id || 0) || undefined)
 const savedSource = ref(props.modelValue)
 const rawSource = ref(props.modelValue)
-watch(() => props.modelValue, value => { if (mode.value === 'raw' && value !== rawSource.value) rawSource.value = value })
-watch(rawSource, value => { if (mode.value === 'raw' && value !== props.modelValue) emit('update:modelValue', value) })
+/** Ignore our own v-model writes; only an external source update should move the Reset baseline. */
+let selfEmission: string | null = null
+function emitSource(value: string) {
+  selfEmission = value
+  emit('update:modelValue', value)
+}
+watch(() => props.modelValue, value => {
+  if (value !== selfEmission) {
+    savedSource.value = value
+    rawSource.value = value
+    if (mode.value === 'ui') void initializeUi()
+  }
+  if (mode.value === 'raw' && value !== rawSource.value) rawSource.value = value
+  selfEmission = null
+})
+watch(rawSource, value => { if (mode.value === 'raw' && value !== props.modelValue) emitSource(value) })
 
 const mode = ref<'raw' | 'ui'>('ui')
 const model = ref<BrunoRequestModel | null>(null)
@@ -399,7 +413,7 @@ function downloadSource() {
 async function resetToSaved() {
   if (props.disabled || busy.value) return
   rawSource.value = savedSource.value
-  emit('update:modelValue', savedSource.value)
+  emitSource(savedSource.value)
   model.value = null
   error.value = ''
   dirty.value = false
@@ -549,7 +563,7 @@ async function switchMode(target: 'raw' | 'ui') {
       if (!model.value) return
       if (!model.value.url.trim()) {
         rawSource.value = `meta {\n  name: ${model.value.name || 'Request'}\n  type: http\n}\n\n${model.value.method.toLowerCase()} {\n  url: \n  body: none\n  auth: none\n}\n`
-        emit('update:modelValue', rawSource.value)
+        emitSource(rawSource.value)
         mode.value = 'raw'
         error.value = ''
         return
@@ -557,7 +571,7 @@ async function switchMode(target: 'raw' | 'ui') {
       const data = await callApi('/api/v1/bruno/request/stringify', { model: serializableModel(), environmentId: resolvedEnvironmentId.value })
       if (!data.source) throw new Error('Unable to serialize this request')
       rawSource.value = data.source
-      emit('update:modelValue', data.source)
+      emitSource(data.source)
       mode.value = 'raw'
     }
     error.value = ''
@@ -663,7 +677,7 @@ async function sync() {
     const data = await callApi('/api/v1/bruno/request/stringify', { model: serializableModel(), environmentId: resolvedEnvironmentId.value })
     if (!data.source) throw new Error('Unable to serialize this request')
     rawSource.value = data.source
-    emit('update:modelValue', data.source)
+    emitSource(data.source)
   }
 }
 defineExpose({ mode, source: rawSource, sync })
