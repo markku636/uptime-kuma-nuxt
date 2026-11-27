@@ -169,6 +169,7 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByPlaceholder('https://example.com/health', {exact:true}).focus()
     await page.keyboard.press('Control+Enter')
     await page.getByText(/Status\s*200/).waitFor()
+    await page.getByText(/\d+ passed \/ \d+ failed/).waitFor()
     assert.equal(hits, 1)
 
     await page.getByRole('button', {name:'Save Monitor', exact:true}).click()

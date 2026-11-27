@@ -83,9 +83,15 @@ R9 ✅ Reset 基準同步（12:14–12:17 CST）— commit `e802d12`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6（既有 Reset／Save／Send 流程無回歸）。外部 prop 更新缺乏直接自動化案例，如實記錄。
 - 部署：未部署。
 
-R10 ✅ URL 格式即時提示（12:17–12:20 CST）— commit 待填：
+R10 ✅ URL 格式即時提示（12:17–12:20 CST）— commit `ed0d019`：
 - UI 與 Raw 模式都在 URL 不是 http(s)（且不是 `{{變數}}`）時顯示提示，不用等到 Send 才失敗。
 - browser 測試：`ftp://` 出現提示，改回 http 後提示消失，Send 仍正常。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：未部署。
+
+R11 ✅ 斷言結果摘要（12:20–12:22 CST）— commit 待填：
+- Send 結果的 Assertions 標題旁顯示「N passed / M failed」，不用逐條數。
+- browser 測試驗證摘要出現。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 

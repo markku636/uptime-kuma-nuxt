@@ -259,7 +259,7 @@
     <p v-if="trialError" role="alert" class="text-sm text-red-400">{{ trialError }}</p>
 
     <div v-if="trialResult?.assertionResults" class="section-card !p-3">
-      <p class="text-sm font-medium mb-1">Assertions</p>
+      <p class="text-sm font-medium mb-1">Assertions <span v-if="assertionSummary" class="text-xs font-normal text-secondary">{{ assertionSummary }}</span></p>
       <ul class="text-xs space-y-0.5">
         <li v-for="(rule, index) in trialResult.assertionResults.rules || []" :key="index" :class="rule.passed ? 'text-emerald-500' : 'text-red-400'">
           {{ rule.passed ? '✓' : '✗' }} {{ rule.source }}<template v-if="rule.path">.{{ rule.path }}</template> {{ rule.operator }} <code v-if="rule.expected !== undefined">{{ JSON.stringify(rule.expected) }}</code>
@@ -674,6 +674,13 @@ function insertVariable(token: string) {
     target.setSelectionRange(start + token.length, start + token.length)
   } else rawSource.value += token
 }
+
+const assertionSummary = computed(() => {
+  const rules = props.trialResult?.assertionResults?.rules
+  if (!Array.isArray(rules)) return ''
+  const passed = rules.filter((rule: any) => rule.passed).length
+  return `${passed} passed / ${rules.length - passed} failed`
+})
 
 function prettyBody(body: string) {
   if (!body) return ''
