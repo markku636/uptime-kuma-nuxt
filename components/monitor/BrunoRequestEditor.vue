@@ -156,9 +156,14 @@
       <section v-else-if="activeTab === 'vars'" class="space-y-2">
         <div class="flex items-center justify-between gap-2">
           <p class="text-xs text-secondary">Pre-request variables for this request (post-response vars are not executed).</p>
-          <button type="button" class="btn btn-outline text-xs" @click="envDialogOpen = true">Edit environment variables</button>
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="toggleBulk('vars')">{{ bulkKind === 'vars' ? 'Table Edit' : 'Bulk Edit' }}</button>
+            <button type="button" class="btn btn-outline text-xs" @click="envDialogOpen = true">Edit environment variables</button>
+          </div>
         </div>
-        <div class="overflow-x-auto"><table class="bruno-table">
+        <p v-if="bulkWarnings.length" role="status" class="text-xs text-amber-500">{{ bulkWarnings.join(' ') }}</p>
+        <textarea v-if="bulkKind === 'vars'" v-model="bulkDraft" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="name: value" :disabled="disabled" />
+        <div v-else class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.vars" :key="index">
@@ -169,7 +174,7 @@
             </tr>
           </tbody>
         </table></div>
-        <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('vars')">+ Add variable</button>
+        <button v-if="bulkKind !== 'vars'" type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('vars')">+ Add variable</button>
         <div v-if="environmentNames.length" class="rounded-lg border border-[color-mix(in_srgb,currentColor_15%,transparent)] p-2 space-y-1">
           <p class="text-xs text-secondary">Environment variables · focus a field, then click Insert</p>
           <input v-model="envFilter" type="text" class="input-field !py-1 text-xs" placeholder="Filter variables" aria-label="Filter environment variables" :disabled="disabled">
@@ -375,13 +380,13 @@ async function copySource() {
   try { await navigator.clipboard.writeText(rawSource.value); copied.value = true; setTimeout(() => { copied.value = false }, 1500) }
   catch { error.value = 'Unable to copy; select the text and copy manually.' }
 }
-const bulkKind = ref<'params' | 'headers' | null>(null)
+const bulkKind = ref<'params' | 'headers' | 'vars' | null>(null)
 const bulkWarnings = ref<string[]>([])
 const bulkDraft = ref('')
 watch(activeTab, () => { bulkKind.value = null; bulkWarnings.value = [] })
 
 /** Keep the textarea's own draft while typing so invalid lines are not normalized away before the warning is seen. */
-function bulkRowsToText(kind: 'params' | 'headers') {
+function bulkRowsToText(kind: 'params' | 'headers' | 'vars') {
   return model.value?.[kind].map(row => `${row.enabled ? '' : '~'}${row.name}: ${row.value}`).join('\n') || ''
 }
 /** Official Bruno bulk editor: one `name: value` per line; a leading `~` marks a disabled row. */
@@ -409,7 +414,7 @@ function applyBulkDraft() {
   model.value[kind] = rows as any
 }
 watch(bulkDraft, applyBulkDraft)
-function toggleBulk(kind: 'params' | 'headers') {
+function toggleBulk(kind: 'params' | 'headers' | 'vars') {
   bulkKind.value = bulkKind.value === kind ? null : kind
   bulkWarnings.value = []
   if (bulkKind.value) bulkDraft.value = bulkRowsToText(kind)

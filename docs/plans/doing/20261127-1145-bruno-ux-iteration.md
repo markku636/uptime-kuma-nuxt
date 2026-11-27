@@ -141,9 +141,15 @@ R19 ✅ 環境變數 dialog 遵循 disabled（15:19–15:22 CST）— commit `73
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：此輪在 rev309 之後，尚未進 lab。
 
-R21 ✅ Vars 清單截斷提示（15:22–15:25 CST）— commit 待填：
+R21 ✅ Vars 清單截斷提示（15:22–15:24 CST）— commit `b4fbd0a`：
 - 清單上限 50 筆；超過時顯示「Showing 50 of N variables — use the filter to find the rest.」
 - browser 測試先建立 55 個環境變數，驗證提示出現。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：尚未進 lab。
+
+R22 ✅ Vars 支援 Bulk Edit（15:24–15:27 CST）— commit 待填：
+- Params / Headers 的 Bulk Edit 延伸到 Vars；無效列警示、停用列前綴 `~` 與表格回填行為一致。
+- browser 測試：Vars → Bulk Edit 填 `BULK_VAR: yes` → Table Edit 驗證列值。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab。
 
