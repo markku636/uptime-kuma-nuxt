@@ -174,7 +174,11 @@ R25 ✅ 斷言 expression 自動建議（15:35–15:37 CST）— commit `9bf9753
 - 驗證：`npm run verify:bruno` 全綠（unit 109/109、Bruno 整合 29 pass / 1 skip）；完整整合 109 pass / 0 fail / 1 skip；Bruno editor browser 8/8。
 - 未部署正式站（使用者只授權 lab）。待持有人：到 lab／正式站登入後人工驗收 UI（R13 起如實記錄未做）。
 
-R32 ✅ 完整回歸 + lab 部署 R27–R31（16:07–16:15 CST，沿用 lab 授權）— 無程式 commit：
+R33 ✅ 正式網域上線核對（16:20 CST，使用者「deploy」）— 無程式 commit：
+- 查證：deploy repo 只有 `uptime-api-demo-20261114/uptime-api`（overlays `lab`），prod 沒有 uptime release；`deploy_delivery_status(environment=prod)` = blocked（沒有 values-prod.yaml）。因此 `https://uptime.markkulab.net` 是 lab release 對外提供的站台，不是獨立 prod cluster 部署。
+- 證據：正式網域與 lab NodePort 回傳同一個 JS chunk `_nuxt/Bh7tMXmM.js`（129,468 bytes），內含本輪新增字串 `Enter a URL to enable Send` / `Show credentials` / `Quick add assertion` / `Copy token for variable` / `Open full editor in Settings`。
+- 結論：rev318 已是目前正式網域的線上版本，無需再做一次 prod GitOps；若要另建獨立 prod cluster release，需先確認 namespace／chart overlay／Secret／DB／網域切割，屬新服務建立而非單純版本升級。
+
 - `docs/BRUNO_COMPATIBILITY.md` 補上環境編輯入口與功能；`npm run verify:bruno` 全綠、完整整合 109 pass / 0 fail / 1 skip。
 - Artifact `539161e9dfe81a3f1c38da225848338a33ec465173d8508cbfd297abc03a3288`（204,823,738 bytes；source `7631787`、working tree clean）；短命 server 拉取後已停。
 - GitOps `9eea3a7` loader（rev316）→ `b210f02` migration（rev317，無 pending）→ `02ead7c` application（rev318）。
