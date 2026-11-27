@@ -398,6 +398,7 @@ test('browser sends a request built from scratch in the UI editor', {timeout:600
     const urlField = page.getByPlaceholder('https://example.com/health', {exact:true})
     await urlField.fill('ftp://example.com/health')
     await page.getByText(/URL should start with/).waitFor()
+    assert.equal(await send.isDisabled(), true, 'an invalid URL scheme blocks Send')
     await urlField.fill(`${origin}/health`)
     assert.equal(await page.getByText(/URL should start with/).count(), 0, 'a valid URL clears the hint')
     assert.equal(await send.isEnabled(), true, 'UI edits must enable Send without switching to Raw')

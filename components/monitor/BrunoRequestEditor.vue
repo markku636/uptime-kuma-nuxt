@@ -490,10 +490,6 @@ const urlPreview = computed(() => {
   return previewEnvironmentVariables(source, envVariables.value, envSecrets.value)
 })
 
-/** UI edits are serialized by sync() before the parent sends, so raw source may still be empty. */
-const canSend = computed(() => !props.disabled && !props.trialLoading && !busy.value
-  && (mode.value === 'ui' ? !!model.value?.url.trim() : !!rawSource.value.trim()))
-
 const urlWarning = computed(() => {
   const source = mode.value === 'ui'
     ? model.value?.url || ''
@@ -502,6 +498,10 @@ const urlWarning = computed(() => {
   if (!value || value.startsWith('{{')) return ''
   return /^https?:\/\//i.test(value) ? '' : 'URL should start with http:// or https://.'
 })
+
+/** UI edits are serialized by sync() before the parent sends, so raw source may still be empty. */
+const canSend = computed(() => !props.disabled && !props.trialLoading && !busy.value && !urlWarning.value
+  && (mode.value === 'ui' ? !!model.value?.url.trim() : !!rawSource.value.trim()))
 
 /** Placeholders are resolved at check time, so validate JSON with them replaced by a scalar. */
 const bodyWarning = computed(() => {

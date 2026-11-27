@@ -118,9 +118,15 @@ R15 ✅ 分頁鍵盤導覽（15:07–15:09 CST）— commit `11f3bf5`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab。
 
-R16 ✅ 重複欄位警告（15:09–15:13 CST）— commit 待填：
+R16 ✅ 重複欄位警告（15:09–15:11 CST）— commit `935e920`：
 - 啟用中的 params / headers / vars 若有同名（不分大小寫）即在分頁上方顯示警告；停用列與空名稱忽略。
 - browser 測試加第二個同名 param 出現警告，移除後消失；避免存檔時才被 strict parser 拒絕。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：尚未進 lab。
+
+R17 ✅ 無效 URL 擋下 Send（15:11–15:14 CST）— commit 待填：
+- `canSend` 加入 `!urlWarning`，非 http(s) URL 不能試送；`{{var}}` 開頭的 URL 仍可送（執行時展開）。
+- browser 測試：`ftp://` 時 Send disabled，改回 http 後恢復。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab。
 
