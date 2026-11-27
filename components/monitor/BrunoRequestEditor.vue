@@ -198,12 +198,15 @@
 
       <!-- Assert -->
       <section v-else-if="activeTab === 'assert'" class="space-y-2">
+        <datalist id="bruno-assertion-expressions">
+          <option v-for="expression in assertionExpressions" :key="expression" :value="expression"></option>
+        </datalist>
         <div class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Expr</th><th class="w-32">Operator</th><th>Value</th><th>Description</th><th class="w-10"></th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in model.assertions" :key="index">
               <td><input v-model="row.enabled" type="checkbox" class="mr-2" :disabled="disabled" aria-label="Enable assertion"></td>
-              <td><input v-model="row.expression" type="text" class="bruno-cell" placeholder="res.status" :disabled="disabled"></td>
+              <td><input v-model="row.expression" type="text" class="bruno-cell" list="bruno-assertion-expressions" placeholder="res.status" :disabled="disabled"></td>
               <td>
                 <select v-model="row.operator" class="bruno-cell" :disabled="disabled" @change="row.value = isUnary(row.operator) ? '' : row.value">
                   <option v-for="operator in operators" :key="operator" :value="operator">{{ operator }}</option>
@@ -646,6 +649,9 @@ function addRow(kind: 'params' | 'headers' | 'vars' | 'assert') {
   else model.value[kind].push({name: '', value: '', enabled: true})
 }
 
+const assertionExpressions = [
+  'res.status', 'res.responseTime', 'res.text', 'res.body', 'res.body.data', 'res.headers.content-type',
+] as const
 const assertionPresets: Record<string, {expression: string; operator: string; value: string}> = {
   status200: {expression: 'res.status', operator: 'eq', value: '200'},
   responseTime: {expression: 'res.responseTime', operator: 'lt', value: '1000'},
