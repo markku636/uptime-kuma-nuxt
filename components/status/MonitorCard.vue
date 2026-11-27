@@ -80,6 +80,10 @@
           </UBadge>
         </div>
         
+        <span v-if="avgPing !== null" class="text-xs text-gray-500 tabular-nums" :title="'Average response time of recent checks'">
+          {{ avgPing }} ms
+        </span>
+
         <!-- Heartbeat bar -->
         <StatusHeartbeatBar
           :heartbeats="monitor.heartbeats || []"
@@ -152,6 +156,9 @@ const lastHeartbeatStatus = computed(() => {
   if (!heartbeats?.length) return -1
   return heartbeats[heartbeats.length - 1].status
 })
+
+// Recent response time (ms) from the latest observations, excluding failed checks.
+const avgPing = computed(() => recentAveragePing(props.monitor.heartbeats))
 
 // Certificate expiry color and text
 const certExpiryColor = computed((): 'error' | 'success' | 'neutral' => {
