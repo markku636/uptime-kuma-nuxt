@@ -135,9 +135,11 @@ interface Incident {
 const props = withDefaults(defineProps<{
   incident?: Incident | null
   editMode?: boolean
+  submitUpdate?: (payload: { status: string; message: string }) => Promise<boolean>
 }>(), {
   incident: null,
-  editMode: false
+  editMode: false,
+  submitUpdate: undefined
 })
 
 const emit = defineEmits<{
@@ -167,7 +169,13 @@ async function submitUpdate() {
   sendingUpdate.value = true
   updateError.value = ''
   try {
-    emit('update', { status: updateStatus.value, message })
+    const ok = props.submitUpdate
+      ? await props.submitUpdate({ status: updateStatus.value, message })
+      : true
+    if (!ok) {
+      updateError.value = 'Could not post update. Please try again.'
+      return
+    }
     updateMessage.value = ''
   } finally {
     sendingUpdate.value = false

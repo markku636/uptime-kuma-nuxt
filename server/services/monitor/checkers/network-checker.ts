@@ -297,7 +297,7 @@ export async function checkSnmp(monitor: any, startTime: number): Promise<CheckR
     
     const port = monitor.port || 161
     const timeout = (monitor.timeout || 48) * 1000
-    const community = monitor.radiusPassword || 'public' // radiusPassword is reused for SNMP community string
+    const community = monitor.radiusSecret || 'public' // sealed secret field doubles as the SNMP community
     const snmpVersion = monitor.snmpVersion || '2c'
     
     return new Promise(async (resolve) => {

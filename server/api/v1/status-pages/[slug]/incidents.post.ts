@@ -1,6 +1,7 @@
 // server/api/v1/status-pages/[slug]/incidents.post.ts
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
+import { requireStatusPageEditor } from '~/server/utils/status-page-editor'
 
 const createIncidentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -11,14 +12,7 @@ const createIncidentSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const session = await requireRequestSession(event)
-  
-  if (!session?.user) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
+  const scope = await requireStatusPageEditor(event)
 
   const slug = getRouterParam(event, 'slug')
 
@@ -30,7 +24,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const statusPage = await prisma.statusPage.findFirst({
-    where: { slug, workspaceId: session.workspaceId }
+    where: { slug, workspaceId: scope.workspaceId }
   })
 
   if (!statusPage) {

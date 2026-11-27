@@ -14,10 +14,10 @@ export default defineEventHandler(async (event) => {
   // Reuse the public gate so password-protected pages cannot leak via RSS.
   const statusPage = await visibleStatusPage(event)
   const incidents = await prisma.incident.findMany({
-    where: { statusPageId: statusPage.id },
+    where: { statusPageId: statusPage.id, pin: true },
     orderBy: { createdAt: 'desc' },
-    take: 50,
-    include: { updates: { orderBy: { createdAt: 'asc' }, take: 20 } },
+    take: 20,
+    include: { updates: { orderBy: { createdAt: 'desc' }, take: 20 } },
   })
 
   // Generate RSS feed

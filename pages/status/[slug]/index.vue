@@ -450,16 +450,18 @@ async function handleIncidentPost(incidentData: any) {
   }
 }
 
-async function handleIncidentUpdate(payload: { status: string; message: string }) {
-  if (!incident.value?.id) return
+async function handleIncidentUpdate(payload: { status: string; message: string }): Promise<boolean> {
+  if (!incident.value?.id) return false
   try {
     await $fetch(`/api/v1/status-pages/${slug.value}/incidents/${incident.value.id}/updates`, {
       method: 'POST',
       body: payload,
     })
     await loadData()
+    return true
   } catch (error: any) {
     console.error('Failed to post incident update:', error?.data?.message || error)
+    return false
   }
 }
 
@@ -820,7 +822,7 @@ function formatLastUpdated(date: Date | null) {
             :edit-mode="editMode"
             @post="handleIncidentPost"
             @unpin="handleUnpinIncident"
-            @update="handleIncidentUpdate"
+            :submit-update="handleIncidentUpdate"
           />
         </div>
 

@@ -1,9 +1,9 @@
 import { prisma } from '~/server/utils/prisma'
+import { requireStatusPageEditor } from '~/server/utils/status-page-editor'
 import { parseIncidentUpdateMessage, parseIncidentUpdateStatus } from '~/server/utils/incident-updates'
 
 export default defineEventHandler(async event => {
-  const session = await requireRequestSession(event)
-  if (!session?.user) throw createError({ statusCode: 401, message: 'Unauthorized' })
+  const scope = await requireStatusPageEditor(event)
 
   const slug = getRouterParam(event, 'slug')
   const incidentId = Number(getRouterParam(event, 'id'))
@@ -11,7 +11,7 @@ export default defineEventHandler(async event => {
     throw createError({ statusCode: 400, message: 'Invalid incident' })
   }
 
-  const statusPage = await prisma.statusPage.findFirst({ where: { slug, workspaceId: session.workspaceId }, select: { id: true } })
+  const statusPage = await prisma.statusPage.findFirst({ where: { slug, workspaceId: scope.workspaceId }, select: { id: true } })
   if (!statusPage) throw createError({ statusCode: 404, message: 'Status page not found' })
   const incident = await prisma.incident.findFirst({ where: { id: incidentId, statusPageId: statusPage.id }, select: { id: true } })
   if (!incident) throw createError({ statusCode: 404, message: 'Incident not found' })

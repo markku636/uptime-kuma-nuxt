@@ -15,6 +15,8 @@
             type="text"
             class="form-control"
             placeholder="my-status-page"
+            readonly
+            title="Change the slug in Status Pages settings"
           />
         </div>
       </div>
@@ -373,10 +375,11 @@ const emit = defineEmits<{
 }>()
 
 const embedCopied = ref(false)
-const embedSnippet = computed(() => {
-  const origin = useRuntimeConfig().public.appUrl || (typeof window !== 'undefined' ? window.location.origin : '')
-  return buildStatusEmbedSnippet(origin, localConfig.value.slug || '', localConfig.value.title)
+const embedOrigin = ref(useRuntimeConfig().public.appUrl || '')
+onMounted(() => {
+  if (typeof window !== 'undefined') embedOrigin.value = window.location.origin
 })
+const embedSnippet = computed(() => buildStatusEmbedSnippet(embedOrigin.value, localConfig.value.slug || '', localConfig.value.title))
 
 async function copyEmbedSnippet() {
   if (!embedSnippet.value || typeof navigator === 'undefined' || !navigator.clipboard) return

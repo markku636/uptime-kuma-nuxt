@@ -2,14 +2,16 @@ import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { request, data, user, workspace, cleanup, type Identity, type Scope } from './helpers/http'
 
-let owner: Identity, scope: Scope
+let owner: Identity, viewer: Identity, scope: Scope
 const slug = 'incident-updates-' + Date.now()
 
 before(async () => {
   owner = await user('incident-updates')
+  viewer = await user('incident-viewer')
   scope = await workspace(owner, 'Incident updates')
+  await data(await request(`/api/v1/workspaces/${scope.workspaceId}/members`, 'POST', owner, scope, { username: viewer.username, role: 'viewer' }))
 })
-after(async () => { await cleanup([owner], [scope]) })
+after(async () => { await cleanup([owner, viewer], [scope]) })
 
 test('incident progress updates are persisted and exposed on the public status page', async () => {
   const page = await data(await request('/api/v1/status-pages', 'POST', owner, scope, { slug, title: 'Incident Updates' }))
@@ -43,4 +45,18 @@ test('incident progress updates are persisted and exposed on the public status p
 
   const publicPost = await request(path, 'POST', undefined, undefined, { message: 'unauthorized' })
   assert.equal(publicPost.status, 401)
+
+  // Unpinning is the operator's "remove from public view" action; the feed must honour it.
+  await data(await request(`/api/v1/status-pages/${slug}/incident`, 'DELETE', owner, scope))
+  const afterUnpin = await fetch(`${process.env.TEST_BASE_URL || 'http://127.0.0.1:32511'}/api/status/${slug}/rss`)
+  assert.equal(afterUnpin.status, 200)
+  assert.ok(!(await afterUnpin.text()).includes('API degraded'))
+
+  // Viewers and read-scoped API keys must not be able to deface a public page.
+  assert.equal((await request(`/api/v1/status-pages/${slug}/incidents`, 'POST', viewer, scope, {
+    title: 'viewer', content: 'viewer', pin: true,
+  })).status, 403)
+  assert.equal((await request(`/api/v1/status-pages/${slug}/incidents`, 'POST', undefined, scope, {
+    title: 'key', content: 'key', pin: true,
+  }, { 'x-api-key': 'not-a-real-key' })).status, 401)
 })

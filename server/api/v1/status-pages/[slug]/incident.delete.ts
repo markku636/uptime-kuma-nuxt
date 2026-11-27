@@ -1,15 +1,9 @@
 // server/api/v1/status-pages/[slug]/incident.delete.ts
 import { prisma } from '~/server/utils/prisma'
+import { requireStatusPageEditor } from '~/server/utils/status-page-editor'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireRequestSession(event)
-  
-  if (!session?.user) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
+  const scope = await requireStatusPageEditor(event)
 
   const slug = getRouterParam(event, 'slug')
 
@@ -21,7 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const statusPage = await prisma.statusPage.findFirst({
-    where: { slug, workspaceId: session.workspaceId },
+    where: { slug, workspaceId: scope.workspaceId },
     include: {
       incidents: {
         where: { pin: true },

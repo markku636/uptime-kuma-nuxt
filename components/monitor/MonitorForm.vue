@@ -1421,7 +1421,7 @@ const form = reactive({
   // Game
   game: props.initialData?.game || '',
   // SNMP
-  snmpCommunity: props.initialData?.snmpCommunity || props.initialData?.radiusPassword || '',
+  snmpCommunity: props.initialData?.snmpCommunity || props.initialData?.radiusSecret || '',
   snmpOid: props.initialData?.snmpOid || '',
   snmpVersion: props.initialData?.snmpVersion || '2c',
   // DNS
@@ -1430,7 +1430,7 @@ const form = reactive({
   dnsResolveType: props.initialData?.dnsResolveType || props.initialData?.dns_resolve_type || 'A',
   // Radius
   radiusUsername: props.initialData?.radiusUsername || '',
-  radiusPassword: props.initialData?.radiusPassword || '',
+  radiusPassword: props.initialData?.radiusSecret || '',
   radiusSecret: props.initialData?.radiusSecret || '',
   radiusCalledStationId: props.initialData?.radiusCalledStationId || '',
   radiusCallingStationId: props.initialData?.radiusCallingStationId || '',
@@ -1793,7 +1793,7 @@ const handleSubmit = async (trial=false) => {
 
   // SNMP specific
   if (form.type === 'snmp') {
-    data.radiusPassword = form.snmpCommunity // Community string stored in radiusPassword field
+    data.radiusSecret = form.snmpCommunity // Community string uses the sealed secret field
     data.snmpOid = form.snmpOid
     data.snmpVersion = form.snmpVersion
     data.expectedValue = form.expectedValue
@@ -1809,8 +1809,7 @@ const handleSubmit = async (trial=false) => {
   // Radius specific
   if (form.type === 'radius') {
     data.radiusUsername = form.radiusUsername
-    data.radiusPassword = form.radiusPassword
-    data.radiusSecret = form.radiusSecret
+    data.radiusSecret = form.radiusSecret || form.radiusPassword
     data.radiusCalledStationId = form.radiusCalledStationId || undefined
     data.radiusCallingStationId = form.radiusCallingStationId || undefined
   }

@@ -33,6 +33,7 @@ const form = ref({
   published: true,
   password: '' as string | null,
   showTags: false,
+  noIndex: false,
   domainNameList: [] as string[],
   customCss: '',
   footerText: '',
@@ -62,6 +63,7 @@ watch(statusPage, (response) => {
       published: val.published,
       password: '',
       showTags: val.showTags || false,
+      noIndex: !!val.noIndex,
       domainNameList: val.domainNameList || [],
       customCss: val.customCss || '',
       footerText: val.footerText || '',
@@ -260,6 +262,7 @@ const previewUrl = computed(() => {
         <!-- Publishing -->
         <div class="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <UCheckbox v-model="form.published" label="Publish this status page" />
+          <UCheckbox v-model="form.noIndex" label="Hide from search engines (noindex, nofollow)" />
           <UFormField label="Password protection" hint="Leave blank to keep the current password; enter at least 6 characters to require one.">
             <UInput v-model="form.password" type="password" autocomplete="new-password" placeholder="Optional password" />
           </UFormField>
