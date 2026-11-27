@@ -10,6 +10,11 @@ export interface DiscordConfig {
    * 由操作者自行填寫（不要放網址或金鑰），上限 1000 字避免超過 Discord embed 限制。
    */
   agentHint?: string
+  /**
+   * 可選的純文字前導內容（embed 上方）。若 agent 只監聽訊息內容中的 @提及或關鍵字，
+   * 可在此填寫；上限 1000 字。刻意不自動帶入 monitor.url，避免網址內的 token 外洩。
+   */
+  content?: string
 }
 
 /** 純函式：組 Discord webhook body，方便單元測試不需真的打出去。 */
@@ -20,8 +25,11 @@ export function buildDiscordBody(message: NotificationMessage, config: DiscordCo
     ? `${message.body}\n\n🤖 ${hint}`
     : message.body
 
+  const content = typeof config.content === 'string' ? config.content.trim().slice(0, 1000) : ''
+
   return {
     username: config.username || 'SealWatch',
+    ...(content ? { content } : {}),
     embeds: [{
       title: message.title,
       description,
