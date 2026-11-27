@@ -21,10 +21,11 @@
               <option v-for="item in environments" :key="item.id" :value="item.id">{{ item.name }}</option>
             </select>
           </label>
+          <NuxtLink :to="`/settings/workspaces?environment=${editingEnvironmentId || ''}`" class="inline-block text-xs text-primary hover:underline">Open full editor in Settings → Workspaces</NuxtLink>
         </div>
 
         <p v-if="readOnly" role="alert" class="text-sm text-amber-500">
-          Workspace owner required. <NuxtLink to="/settings/workspaces" class="underline">Open Settings → Workspaces</NuxtLink> to manage variables and secrets.
+          Workspace owner required. <NuxtLink :to="`/settings/workspaces?environment=${editingEnvironmentId || ''}`" class="underline">Open Settings → Workspaces</NuxtLink> to manage variables and secrets.
         </p>
         <p v-if="formError || error" role="alert" class="text-sm text-red-500">{{ formError || error }}</p>
         <p v-if="notice" role="status" class="text-sm text-emerald-500">{{ notice }}</p>

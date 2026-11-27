@@ -174,11 +174,17 @@ R25 ✅ 斷言 expression 自動建議（15:35–15:37 CST）— commit `9bf9753
 - 驗證：`npm run verify:bruno` 全綠；完整整合 107 pass / 0 fail / 1 skip；Bruno editor browser 6/6。
 - 未部署正式站（使用者只授權 lab）。待持有人：到 lab／正式站登入後人工驗收 UI（R13 起如實記錄未做）。
 
-R27 ✅ 監測編輯頁直接編輯環境變數（15:41–15:50 CST）— commit 待填：
+R27 ✅ 監測編輯頁直接編輯環境變數（15:41–15:56 CST）— commit `458e4b3`：
 - `MonitorForm.vue` 在 Basic Information 後新增獨立的 Environment variables 卡片與 `Edit environment variables` 按鈕，所有監測類型都能直接打開對話框（不再只有 Bruno 的 Vars 分頁）。
 - 對話框 `insert` 事件：Bruno 透過新暴露的 `insertVariable()` 插入到最後聚焦欄位；其他類型插入到 URL 欄。
 - 第一次跑 5/7：Bruno 測試遇到兩個同名按鈕（改用 `.last()`）；新測試的對話框沒出現（Nuxt 嵌套元件 auto-import 名稱是 `MonitorEnvironmentVariablesDialog`，補上明確 import）。第二次跑 6/7：URL 是 write-only 欄位，reload 後表單不回填，改為重新打開對話框驗證變數值。
 - 驗證：最終 `npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 7/7。
+- 部署：尚未進 lab。
+
+R28 ✅ 環境編輯深連結（15:56–16:00 CST）— commit 待填：
+- 對話框的 Settings 連結改為 `/settings/workspaces?environment=<id>`；workspaces 頁面读取 query 並選取對應環境。
+- browser 測試建立第二個環境後帶 query 進入設定頁，驗證下拉選到該環境。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
 
 R26 ✅ lab 部署 R25（15:37–15:41 CST，沿用 lab 授權）— 無程式 commit：

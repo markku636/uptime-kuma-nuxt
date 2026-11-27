@@ -474,3 +474,28 @@ test('browser edits environment variables directly from a monitor form', {timeou
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
+
+test('browser deep links a monitor environment into Settings', {timeout:60000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-env-deeplink')
+    scope = await workspace(identity, 'Bruno env deep link')
+    const second = await data(await request(`/api/v1/workspaces/${scope.workspaceId}/environments`, 'POST', identity, scope, {name:'staging'}))
+    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage()
+    await page.goto(`${base}/settings/workspaces?environment=${second.data.id}`)
+    const select = page.getByLabel('Edit environment')
+    await select.waitFor()
+    assert.equal(await select.inputValue(), String(second.data.id), 'the query parameter selects the requested environment')
+  } finally {
+    await browser.close()
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})

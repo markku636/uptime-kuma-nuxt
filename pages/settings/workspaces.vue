@@ -97,6 +97,7 @@
 <script setup lang="ts">
 import { isValidVariableName, useEnvironmentVariables, validateVariableMap } from '~/composables/useEnvironmentVariables'
 
+const route = useRoute()
 const { current, canManage, load, change } = useWorkspace()
 const { environments, load: loadEnvironments, selected: selectedEnvironmentOf, saveEnvironment, reset: resetEnvironments } = useEnvironmentVariables()
 const members = ref<{ userId: number; role: string; user: { username: string } }[]>([])
@@ -128,7 +129,10 @@ async function refresh() {
   ])
   if (sequence !== refreshSequence || current.value?.id !== id) return
   members.value = memberResponse.data
-  if (!environments.value.some(e => e.id === editingEnvironmentId.value)) editingEnvironmentId.value = environments.value[0]?.id
+  const requested = Number(route.query.environment)
+  const requestedExists = environments.value.some(e => e.id === requested)
+  if (requestedExists) editingEnvironmentId.value = requested
+  else if (!environments.value.some(e => e.id === editingEnvironmentId.value)) editingEnvironmentId.value = environments.value[0]?.id
   selectEditingEnvironment()
 }
 
