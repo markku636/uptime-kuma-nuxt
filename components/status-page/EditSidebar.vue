@@ -262,6 +262,22 @@
         </div>
       </div>
 
+      <!-- Embed -->
+      <div class="form-group embed-group">
+        <label class="form-label">Embed this status page</label>
+        <textarea
+          class="form-control embed-snippet"
+          rows="3"
+          readonly
+          :value="embedSnippet"
+          aria-label="Embed iframe snippet"
+        ></textarea>
+        <div class="form-text">Paste into any site to show a compact live status widget.</div>
+        <button type="button" class="btn btn-outline btn-sm mt-2" :disabled="!embedSnippet" @click="copyEmbedSnippet">
+          {{ embedCopied ? 'Copied!' : 'Copy iframe snippet' }}
+        </button>
+      </div>
+
       <!-- Danger Zone -->
       <div class="danger-zone">
         <h4 class="danger-title">Danger Zone</h4>
@@ -343,6 +359,21 @@ const emit = defineEmits<{
   'renameGroup': [groupId: number, name: string]
   'removeMonitor': [groupIndex: number, monitorIndex: number]
 }>()
+
+const embedCopied = ref(false)
+const embedSnippet = computed(() => {
+  const origin = useRuntimeConfig().public.appUrl || (typeof window !== 'undefined' ? window.location.origin : '')
+  return buildStatusEmbedSnippet(origin, localConfig.value.slug || '', localConfig.value.title)
+})
+
+async function copyEmbedSnippet() {
+  if (!embedSnippet.value || typeof navigator === 'undefined' || !navigator.clipboard) return
+  try {
+    await navigator.clipboard.writeText(embedSnippet.value)
+    embedCopied.value = true
+    setTimeout(() => { embedCopied.value = false }, 2000)
+  } catch { /* clipboard unavailable in insecure contexts */ }
+}
 
 // Local config copy for editing
 const localConfig = ref<StatusPageConfig>({
@@ -1043,5 +1074,11 @@ function handleDiscard() {
 
 .dark .monitor-chip-remove:hover {
   color: #ef4444;
+}
+
+.embed-snippet {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  word-break: break-all;
 }
 </style>
