@@ -49,6 +49,8 @@ source environment變更與監測寫入同一transaction。Monitor request配置
 
 - 切換順序為 `UI editor | Raw (.bru)`；工具列顯示目前使用的環境名稱，parse/stringify 時顯示 `Converting…`。
 - `{{` 在任何欄位會彈出環境變數自動完成；secret 只顯示 `••••••`；Vars 分頁可篩選變數名稱。
+- 任何監測的編輯頁都有 「Environment variables」 卡片可直接開啟環境變數對話框；對話框可一鍵 Copy token、以未存檔草稿即時 Preview、Reset changes，並可帶環境 id 深連結到 Settings → Workspaces。
+- Settings → Workspaces 的環境變數editor同樣有 Copy token、草稿 Preview、Reset changes、非法名稱提示與 N/200 計數；兩處都提示存檔會重新排程該環境的所有監測。
 - Auth 的 Password / Token 預設遮罩，勾選 `Show credentials` 才會顯示明文。
 - Bulk Edit 遇到不合格式的列會在畫面列出行號，不會靜默丟棄。
 - Assert 分頁的 Value  placeholder 會隨 operator 變化（如 `between` → `200 299`），並有 Quick add 一鍵加入現成斷言。
