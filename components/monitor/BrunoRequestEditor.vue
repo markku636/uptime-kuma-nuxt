@@ -8,6 +8,7 @@
         </div>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled || busy" @click="resetToSaved">Reset</button>
         <span v-if="dirty" role="status" class="text-xs text-amber-500">Unsaved changes</span>
+        <span v-if="busy" role="status" class="text-xs text-secondary">Converting…</span>
       </div>
       <span class="text-xs text-secondary">Bruno-style request editor · scripts, tests and post-response vars are not executed</span>
     </div>
@@ -15,7 +16,7 @@
     <p v-if="error" role="alert" class="text-sm text-red-400">{{ error }}</p>
     <!-- Raw mode -->
     <div v-if="mode === 'raw'" class="space-y-2">
-      <div class="flex justify-end">
+      <div class="flex justify-end gap-2">
         <button type="button" class="btn btn-outline text-xs" :disabled="!rawSource" @click="copySource">{{ copied ? 'Copied' : 'Copy .bru' }}</button>
         <button type="button" class="btn btn-outline text-xs" :disabled="!rawSource" @click="downloadSource">Download .bru</button>
       </div>

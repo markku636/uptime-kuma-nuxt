@@ -20,7 +20,7 @@
 | U3 | `savedSource` 只在 mount 時設定，Save 後 props 更新時 Reset 會退回舊內容 | 2026-11-27 code review | 中 | ⬜ |
 | U4 | Operator 下拉沒有操作數格式提示（`between` 需 `min max` 等），易填錯 | 2026-11-27 code review | 中 | ✅ R3 |
 | U4b | Bulk Edit 無效列被靜默丟棄 | 2026-11-27 code review | 高 | ✅ R4 |
-| U5 | Raw 模式 Copy / Download 兩顆按鈕沒有間距；busy/parse 中缺少視覺回饋 | 2026-11-27 code review | 低 | ⬜ |
+| U5 | Raw 模式 Copy / Download 兩顆按鈕沒有間距；busy/parse 中缺少視覺回饋 | 2026-11-27 code review | 低 | ✅ R5 |
 | U6 | 正式站 Bruno monitor（monitor 61）人工驗收仍需持有人登入 | 延續 N3 | 中 | ⬜（需使用者） |
 
 ## 迭代紀錄
@@ -47,10 +47,15 @@ R3 ✅ Assert 值格式提示（11:56 CST）— commit `8c76112`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 
-R4 ✅ Bulk Edit 無效列提示（12:00–12:06 CST）— commit 待填：
+R4 ✅ Bulk Edit 無效列提示（12:00–12:04 CST）— commit `87c4611`：
 - 原本 `name: value` 解析會 silently 丟掉沒有冒號/空名稱的列；現在顯示 `Skipped line N: use "name: value" (prefix ~ to disable).`，切回表格前就能看到。
 - 為避免 computed setter 在 Vue 重新渲染時把草稿正規化（第一次跑測試時警告被清掉、文字被吞），改為 textarea 有自己的 `bulkDraft`，watch 後解析進 model。
 - browser 測試：`token: demo2\n~off: no\nbroken line\n: empty` → 警告列出 3、4 行 → Table Edit 只剩 2 列；後續 Raw/Save 流程不變。
 - 驗證：第一次跑 5/6（警告被吞）→ 修正後 `npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：未部署。
+
+R5 ✅ Raw 工具列與轉換回饋（12:04–12:07 CST）— commit 待填：
+- Copy / Download 兩顆按鈕加 `gap-2`；parse/stringify 進行中在工具列顯示 `Converting…`。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6（無視覺回歸）。
 - 部署：未部署。
 
