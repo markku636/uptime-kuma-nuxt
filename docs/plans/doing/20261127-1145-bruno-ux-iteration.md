@@ -153,3 +153,9 @@ R22 ✅ Vars 支援 Bulk Edit（15:24–15:27 CST）— commit `0446b88`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab。
 
+R23 ✅ 最終回歸 + lab 部署 R19–R22（15:27–15:32 CST）— 無程式 commit：
+- 文件更新、`npm run verify:bruno` 全綠（unit 109/109、Bruno 整合 27 pass / 1 skip、typecheck、build）。
+- Artifact `c283ace735b26c24a9438ab96db4b9c7f5a3ba623a1f3a77924fed6ed63c6e5d`（204,823,899 bytes；source `d545d03`、working tree clean）；短命 server 拉取後已停。
+- GitOps `9f55add` loader（rev310）→ `52164a0` migration（rev311，無 pending）→ `b141518` application（rev312）。
+- rev312 API 2/2、worker 2/2、fixture 1/1 Healthy，release Healthy / Synced；`/api/health/ready` = 200。正式站未部署。
+
