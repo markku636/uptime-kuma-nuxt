@@ -9,7 +9,7 @@
       <h4 class="incident-title">{{ incident.title }}</h4>
       <div class="incident-content" v-html="contentHtml" />
       
-      <IncidentUpdates v-if="incident.updates?.length" :updates="incident.updates" />
+      <StatusIncidentUpdates v-if="incident.updates?.length" :updates="incident.updates" />
 
       <div v-if="editMode && incident.id" class="incident-update-form">
         <label class="form-label">Add progress update</label>

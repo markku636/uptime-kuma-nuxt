@@ -36,6 +36,8 @@ const color = computed(() => statusColor[overallStatusType.value] || statusColor
 const monitors = computed(() => groups.value.flatMap(group => group.monitorList))
 const fullUrl = computed(() => `/status/${encodeURIComponent(slug.value)}`)
 
+useHead({ title: () => `${config.value?.title || 'Status'} · Status` })
+
 onMounted(async () => { await init() })
 </script>
 
