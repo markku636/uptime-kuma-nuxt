@@ -1,0 +1,30 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { buildDiscordBody } from '../server/services/notification/providers/discord'
+
+const down = {
+  title: '🔴 example is DOWN',
+  body: 'DOWN · CHECK_FAILED',
+  monitorName: 'example',
+  status: 'down' as const,
+  ping: 0,
+  time: '2026-11-27T00:00:00.000Z'
+}
+
+test('agentHint 只在 DOWN 事件附加到描述', () => {
+  const body = buildDiscordBody(down, { webhookUrl: 'https://discord.com/api/webhooks/x/y', agentHint: 'Hermes agent：請檢查' })
+  assert.equal(body.embeds[0].description, 'DOWN · CHECK_FAILED\n\n🤖 Hermes agent：請檢查')
+
+  const up = buildDiscordBody({ ...down, status: 'up', title: '🟢 example is UP', body: 'UP' }, { webhookUrl: 'x', agentHint: 'Hermes agent：請檢查' })
+  assert.equal(up.embeds[0].description, 'UP')
+})
+
+test('agentHint 去空白並截斷到 1000 字，避免超過 embed 限制', () => {
+  const body = buildDiscordBody(down, { webhookUrl: 'x', agentHint: `  ${'A'.repeat(1200)}  ` })
+  assert.equal(body.embeds[0].description.split('🤖 ')[1], 'A'.repeat(1000))
+})
+
+test('沒有 agentHint 或設定為非字串時，描述維持原本內容', () => {
+  assert.equal(buildDiscordBody(down, { webhookUrl: 'x' }).embeds[0].description, 'DOWN · CHECK_FAILED')
+  assert.equal(buildDiscordBody(down, { webhookUrl: 'x', agentHint: 42 as any }).embeds[0].description, 'DOWN · CHECK_FAILED')
+})
