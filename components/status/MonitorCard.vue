@@ -83,6 +83,9 @@
         <span v-if="avgPing !== null" class="text-xs text-gray-500 tabular-nums" :title="'Average response time of recent checks'">
           {{ avgPing }} ms
         </span>
+        <span v-if="lastCheckLabel" class="text-xs text-gray-400" :title="'Last check time'">
+          {{ lastCheckLabel }}
+        </span>
 
         <!-- Heartbeat bar -->
         <StatusHeartbeatBar
@@ -155,6 +158,13 @@ const lastHeartbeatStatus = computed(() => {
   const heartbeats = props.monitor.heartbeats
   if (!heartbeats?.length) return -1
   return heartbeats[heartbeats.length - 1].status
+})
+
+const lastCheckLabel = computed(() => {
+  const last = props.monitor.heartbeats?.at(-1)?.time
+  if (!last) return ''
+  const date = new Date(last)
+  return Number.isFinite(date.getTime()) ? date.toLocaleTimeString() : ''
 })
 
 // Recent response time (ms) from the latest observations, excluding failed checks.
