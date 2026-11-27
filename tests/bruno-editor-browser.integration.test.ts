@@ -108,6 +108,13 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
 
     await page.getByRole('tab', {name:/Assert/}).click()
     assert.ok((await page.locator('select.bruno-cell').count()) > 0, 'assertion operator selector is rendered')
+    await page.getByText(/Value format:/).waitFor()
+    const operatorSelect = page.locator('select.bruno-cell').first()
+    await operatorSelect.selectOption('between')
+    assert.equal(await page.getByPlaceholder('200 299').count(), 1, 'between shows its min max format')
+    await operatorSelect.selectOption('in')
+    assert.equal(await page.getByPlaceholder('[200, 201]').count(), 1, 'in shows a JSON array example')
+    await operatorSelect.selectOption('eq')
 
     await page.getByRole('tab', {name:/Auth/}).click()
     await page.getByLabel('Auth mode').selectOption('basic')

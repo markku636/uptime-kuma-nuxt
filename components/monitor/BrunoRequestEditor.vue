@@ -195,13 +195,14 @@
                   <option v-for="operator in operators" :key="operator" :value="operator">{{ operator }}</option>
                 </select>
               </td>
-              <td><input v-if="!isUnary(row.operator)" v-model="row.value" type="text" class="bruno-cell" placeholder="Value" :disabled="disabled"></td>
+              <td><input v-if="!isUnary(row.operator)" v-model="row.value" type="text" class="bruno-cell" :placeholder="valuePlaceholder(row.operator)" :disabled="disabled"></td>
               <td><input v-if="!isUnary(row.operator)" v-model="row.description" type="text" class="bruno-cell" placeholder="Description" :disabled="disabled"></td>
               <td><button type="button" class="bruno-icon" :disabled="disabled" aria-label="Remove assertion" @click="model.assertions.splice(index, 1)">×</button></td>
             </tr>
           </tbody>
         </table></div>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('assert')">+ Add assertion</button>
+        <p class="text-xs text-secondary">Value format: a literal for eq / gt / lt / contains…; a JSON array for <code>in</code> and <code>notIn</code>; <code>min max</code> for <code>between</code>; a bounded regex literal for <code>matches</code> / <code>notMatches</code> (no groups, alternation or backreferences). Unary operators need no value.</p>
       </section>
 
       <!-- Tests (preserved, never executed) -->
@@ -300,6 +301,13 @@ const methods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as 
 const operators = ['eq', 'ne', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'notIn', 'startsWith', 'endsWith', 'length', 'between', 'matches', 'notMatches', 'contains', 'notContains', 'exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isJson', 'isNumber', 'isString', 'isBoolean', 'isArray', 'isDefined', 'isUndefined', 'isTruthy', 'isFalsy'] as const
 const unary = new Set(['exists', 'notExists', 'isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isJson', 'isNumber', 'isString', 'isBoolean', 'isArray', 'isDefined', 'isUndefined', 'isTruthy', 'isFalsy'])
 const isUnary = (operator: string) => unary.has(operator)
+const valuePlaceholder = (operator: string) => {
+  if (operator === 'between') return '200 299'
+  if (operator === 'in' || operator === 'notIn') return '[200, 201]'
+  if (operator === 'matches' || operator === 'notMatches') return 'safe regex literal'
+  if (['startsWith', 'endsWith', 'contains', 'notContains', 'eq', 'ne', 'neq'].includes(operator)) return 'text / number / true'
+  return 'Value'
+}
 const tabs = [
   { key: 'params', label: 'Params' }, { key: 'body', label: 'Body' }, { key: 'headers', label: 'Headers' },
   { key: 'auth', label: 'Auth' }, { key: 'vars', label: 'Vars' }, { key: 'script', label: 'Script' },
