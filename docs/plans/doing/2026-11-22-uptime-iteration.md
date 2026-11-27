@@ -592,3 +592,11 @@ R105 🔵 公開維護窗口（`235ed70`）：新增 `/api/v1/status-pages/{slug
   （沿用 published/password 可見性，回傳 active/scheduled 與時段），composable 載入、
   狀態頁橫幅顯示時段；unit 185、integration 112、typecheck 0。rev336，線上建立
   scheduled maintenance→公開 API 讀到 `R105 live check`→清理。
+
+R106 🔵 RSS 訂閱可見性（`ad936da`）：狀態頁事件歷史加「Subscribe via RSS」連結；
+  `/api/status/{slug}/rss` 的 item 描述併入事件更新時間軸、日期用 updatedAt。
+  unit 185、integration 112、typecheck 0；rev338 Healthy，線上 RSS 200。
+R107 🔵 通知升級（`a59c67c`）：`monitor_notifications.delay_minutes` migration（`5a2fc30c`
+  成功、25 migrations），監控表單可對每個已選通知頻道設定 0–1440 分鐘延遲；
+  DOWN 時依頻道延遲送出（未設則用全域 alertDelay），恢復仍取消；clone/DTO 保留。
+  unit 186、integration 113、typecheck 0；rev341，線上建立 webhook 頻道→表單出現 Delay 輸入→清理。
