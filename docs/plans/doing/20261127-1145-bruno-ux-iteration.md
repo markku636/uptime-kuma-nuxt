@@ -106,3 +106,9 @@ R13 ✅ lab 部署（14:56–15:01 CST，使用者授權「現在部署到 lab �
 - 驗證：`/api/health/ready` = 200；未登入的 `/monitors/61/edit` 正確導向登入頁，故 UI 畫面仍待持有人登入 lab 驗收（不冒稱已人工驗收）。
 - 正式站未部署（使用者只授權 lab）。
 
+R14 ✅ JSON body 即時驗證（15:01–15:05 CST）— commit 待填：
+- json body 輸入時即時檢查；`{{VAR}}` 先以純量替代再檢查，不會把合法 placeholder 誤判為錯誤。
+- Body mode select 補 `aria-label="Body mode"` 方便自動化與鍵盤定位。
+- 驗證：第一次跑 5/6（測試選到 Method 下拉而非 Body mode）→ 補 aria-label 後 `npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：此輪在 R13 lab 部署之後，尚未進 lab。
+

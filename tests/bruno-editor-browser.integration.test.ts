@@ -80,6 +80,15 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByPlaceholder('Name').last().fill('X-Demo')
     await page.getByPlaceholder('Value').last().fill('abc')
 
+    await page.getByRole('tab', {name:/Body/}).click()
+    await page.getByLabel('Body mode').selectOption('json')
+    const jsonBody = page.locator('textarea[placeholder="{ }"]')
+    await jsonBody.fill('{bad')
+    await page.getByText(/JSON body is invalid/).waitFor()
+    await jsonBody.fill('{"token": {{TOKEN}}}')
+    assert.equal(await page.getByText(/JSON body is invalid/).count(), 0, 'placeholders must not be flagged as invalid JSON')
+    await page.getByLabel('Body mode').selectOption('none')
+
     await page.getByRole('tab', {name:/Vars/}).click()
     await page.getByRole('button', {name:'Edit environment variables', exact:true}).click()
     const dialog = page.getByRole('dialog')

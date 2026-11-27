@@ -92,7 +92,7 @@
       <section v-else-if="activeTab === 'body'" class="space-y-2">
         <div class="flex items-center gap-2">
           <label class="input-label mb-0">Body mode</label>
-          <select v-model="model.body.mode" class="select-field w-40" :disabled="disabled">
+          <select v-model="model.body.mode" class="select-field w-40" aria-label="Body mode" :disabled="disabled">
             <option value="none">none</option>
             <option value="json">json</option>
             <option value="text">text</option>
@@ -100,6 +100,7 @@
           </select>
         </div>
         <textarea v-if="model.body.mode !== 'none'" v-model="model.body.content" class="input-field font-mono text-xs" rows="12" spellcheck="false" :disabled="disabled" :placeholder="model.body.mode === 'json' ? '{ }' : model.body.mode === 'formUrlEncoded' ? 'name: value' : 'Body content'" />
+        <p v-if="bodyWarning" role="status" class="text-xs text-amber-500">{{ bodyWarning }}</p>
         <p v-if="model.body.mode === 'formUrlEncoded'" class="text-xs text-secondary">One <code>name: value</code> per line; values keep <code>&#123;&#123;variable&#125;&#125;</code> placeholders.</p>
         <p v-else class="text-sm text-secondary">No request body.</p>
       </section>
@@ -471,6 +472,16 @@ const urlWarning = computed(() => {
   const value = source.trim()
   if (!value || value.startsWith('{{')) return ''
   return /^https?:\/\//i.test(value) ? '' : 'URL should start with http:// or https://.'
+})
+
+/** Placeholders are resolved at check time, so validate JSON with them replaced by a scalar. */
+const bodyWarning = computed(() => {
+  if (mode.value !== 'ui' || model.value?.body.mode !== 'json') return ''
+  const content = model.value.body.content.trim()
+  if (!content) return ''
+  const check = (text: string) => { try { JSON.parse(text); return true } catch { return false } }
+  if (check(content) || check(content.replace(/\{\{[^{}]*\}\}/g, '0'))) return ''
+  return 'JSON body is invalid; {{variable}} placeholders are allowed.'
 })
 
 const issueMessages: Record<string, string> = {
