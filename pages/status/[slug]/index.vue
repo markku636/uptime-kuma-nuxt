@@ -839,6 +839,7 @@ function formatLastUpdated(date: Date | null) {
           <div class="space-y-3">
             <article
               v-for="item in incidents.slice(1)"
+              :id="`incident-${item.id}`"
               :key="item.id"
               class="rounded-lg border border-default bg-white dark:bg-gray-900 p-4 shadow-sm"
             >

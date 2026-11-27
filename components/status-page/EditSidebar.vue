@@ -149,41 +149,10 @@
         <label class="form-check-label" for="showCertificateExpiry">Show Certificate Expiry</label>
       </div>
 
-      <!-- Domain Names -->
-      <div class="form-group">
-        <label class="form-label">
-          Domain Names
-          <button
-            type="button"
-            class="btn-icon-add"
-            @click="addDomain"
-            title="Add domain"
-          >
-            <UIcon name="i-heroicons-plus-circle" />
-          </button>
-        </label>
-        <div class="domain-list">
-          <div
-            v-for="(domain, index) in localConfig.domainNameList"
-            :key="index"
-            class="domain-item"
-          >
-            <input
-              v-model="localConfig.domainNameList[index]"
-              type="text"
-              class="form-control"
-              placeholder="example.com"
-            />
-            <button
-              type="button"
-              class="btn-icon-remove"
-              @click="removeDomain(index)"
-              title="Remove domain"
-            >
-              <UIcon name="i-heroicons-x-mark" />
-            </button>
-          </div>
-        </div>
+      <!-- Custom domains are intentionally unsupported by this deployment -->
+      <div class="form-group domain-note">
+        <span class="form-label">Custom domains</span>
+        <span class="form-text">Custom status-page domains are not available in this deployment. Use the <code>/status/{{ localConfig.slug }}</code> URL or the embed snippet below.</span>
       </div>
 
       <!-- Google Analytics -->

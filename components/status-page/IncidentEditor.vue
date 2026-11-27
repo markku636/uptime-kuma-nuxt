@@ -3,6 +3,7 @@
     <!-- View Mode - Display Incident -->
     <div
       v-if="!isEditing && incident"
+      :id="incident.id ? `incident-${incident.id}` : undefined"
       class="incident-display"
       :class="[`incident-${incident.style}`]"
     >
