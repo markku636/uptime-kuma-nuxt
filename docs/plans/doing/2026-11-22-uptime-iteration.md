@@ -578,3 +578,17 @@ R101 🔵 事件進度時間軸（`49ee69c`）：新增 `incident_updates` migra
   unit 185/185、integration 110/110、typecheck 0；migration `200daa94` 成功套用
   （23 migrations、無 pending），rev327 Healthy/Synced；線上建立事件→更新→公開 API 讀到
   `identified / Live verification update`→清理完成。
+
+R102 🔵 embed 路由修正（`aa643fe`）：原本 `pages/status/[slug]/embed.vue` 被父層 `[slug].vue`
+  當成巢狀子路由，實際渲染成完整狀態頁；改為 `[slug]/index.vue` + `[slug]/embed.vue` 同層。
+  rev329，兩页都實測正常。
+R103 🔵 事件時間軸 bug（`89fd299`）：編輯器使用未註冊的 `<IncidentUpdates>`（應為
+  `StatusIncidentUpdates`），導致更新已入 API 但 UI 不顯示；embed 頁補上標題。rev331，
+  瀏覽器實測時間軸出現 `Monitoring / UI posted update`。
+R104 🔵 搜尋引擎索引控制（`023105f`）：StatusPage 新增 `no_index`（migration `d07fd775`
+  成功、24 migrations），公開 config 回傳 `noIndex`、robots meta 跟隨設定，embed 永遠 noindex。
+  rev334，線上 0→true→false 驗證、embed meta `noindex, nofollow`。
+R105 🔵 公開維護窗口（`235ed70`）：新增 `/api/v1/status-pages/{slug}/maintenances`
+  （沿用 published/password 可見性，回傳 active/scheduled 與時段），composable 載入、
+  狀態頁橫幅顯示時段；unit 185、integration 112、typecheck 0。rev336，線上建立
+  scheduled maintenance→公開 API 讀到 `R105 live check`→清理。
