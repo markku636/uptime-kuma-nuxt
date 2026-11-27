@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { commitMonitorResult } from '../server/services/monitor/commit-result'
 import { parseAlertDelayMinutes } from '../server/utils/alert-delay'
 
-function makeTx(nowIso: string, previousStatus: number, delay: string | null) {
+function makeTx(nowIso: string, previousStatus: number, delay: string | null, channels: any[] = [{ id: 7 }]) {
   const outbox: any[] = []
   const deleted: any[] = []
   const now = new Date(nowIso)
@@ -15,7 +15,7 @@ function makeTx(nowIso: string, previousStatus: number, delay: string | null) {
       upsert: async () => ({}),
     },
     setting: { findUnique: async () => delay === null ? null : { value: delay } },
-    notification: { findMany: async () => [{ id: 7 }] },
+    notification: { findMany: async () => channels },
     notificationDedupe: { createManyAndReturn: async ({ data }: any) => data.map((row: any) => ({ key: row.key })) },
     notificationOutbox: {
       createMany: async ({ data }: any) => { outbox.push(...data) },
@@ -53,6 +53,21 @@ describe('alert delay', () => {
     const { tx, outbox } = makeTx('2026-11-27T00:10:00.000Z', 1, null)
     await commitMonitorResult(tx, monitor, down)
     assert.equal(new Date(outbox[0].nextAttemptAt).toISOString(), '2026-11-27T00:10:00.000Z')
+  })
+
+  it('uses a per-channel delay for escalation tiers', async () => {
+    const { tx, outbox } = makeTx('2026-11-27T00:10:00.000Z', 1, '5', [
+      { id: 7, monitorNotifications: [{ delayMinutes: 0 }] },
+      { id: 8, monitorNotifications: [{ delayMinutes: 30 }] },
+      { id: 9, monitorNotifications: [] },
+    ])
+    await commitMonitorResult(tx, monitor, down)
+    const times = outbox.map((row: any) => [row.notificationId, new Date(row.nextAttemptAt).toISOString()])
+    assert.deepEqual(times, [
+      [7, '2026-11-27T00:15:00.000Z'],
+      [8, '2026-11-27T00:40:00.000Z'],
+      [9, '2026-11-27T00:15:00.000Z'],
+    ])
   })
 
   it('cancels a pending DOWN alert on recovery', async () => {

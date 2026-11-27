@@ -31,10 +31,13 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
     const resend=result.status===0&&!changed&&Number.isInteger(resendEvery)&&resendEvery>0
       &&downMs>=resendEvery*60_000
     if(previous&&changed&&[0,1].includes(result.status)||tlsWarning||slow||resend){
-      const channels=await tx.notification.findMany({where:{workspaceId:monitor.workspaceId,active:true,OR:[{isDefault:true},{monitorNotifications:{some:{monitorId:monitor.id,monitor:{workspaceId:monitor.workspaceId}}}}]},select:{id:true},take:1000})
+      const channels=await tx.notification.findMany({where:{workspaceId:monitor.workspaceId,active:true,OR:[{isDefault:true},{monitorNotifications:{some:{monitorId:monitor.id,monitor:{workspaceId:monitor.workspaceId}}}}]},select:{id:true,monitorNotifications:{where:{monitorId:monitor.id},select:{delayMinutes:true},take:1}},take:1000})
       if(previous&&changed&&[0,1].includes(result.status)&&channels.length){
-        const deliverAt=result.status===0&&alertDelayMinutes>0?new Date(now.getTime()+alertDelayMinutes*60_000):now
-        await tx.notificationOutbox.createMany({data:channels.map((channel:any)=>({runId:monitor.runId,eventType:'status',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,payload:{monitorId:monitor.id,name:monitor.name,status:result.status,ping,code,time:now.toISOString()},nextAttemptAt:deliverAt})),skipDuplicates:true})
+        await tx.notificationOutbox.createMany({data:channels.map((channel:any)=>{
+          const channelDelay=Number(channel.monitorNotifications?.[0]?.delayMinutes)||0
+          const delayMinutes=result.status===0?(channelDelay>0?channelDelay:alertDelayMinutes):0
+          const deliverAt=new Date(now.getTime()+delayMinutes*60_000)
+          return ({runId:monitor.runId,eventType:'status',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,payload:{monitorId:monitor.id,name:monitor.name,status:result.status,ping,code,time:now.toISOString()},nextAttemptAt:deliverAt})}),skipDuplicates:true})
       }
       if(tlsWarning&&channels.length){
         let days=monitor.tlsExpiryDays

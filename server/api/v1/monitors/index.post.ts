@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
   const pushToken = data.type === 'push' ? nanoid(32) : undefined
 
   // Extract tags and notifications for separate handling
-  const { tags, notifications, clearSecrets, ...monitorData } = data
+  const { tags, notifications, notificationDelays, clearSecrets, ...monitorData } = data
 
   const updatedMonitor = await prisma.$transaction(async tx => {
     const tagIds = await assertWorkspaceIds(tx, 'tag', tags || [], session.workspaceId)
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     for(const key of ['assertions','acceptedStatuscodes','tlsExpiryDays']) if(input[key]===null)delete input[key]
     const monitor = await tx.monitor.create({data:monitorDbInput(input)})
     if (tagIds.length) await tx.monitorTag.createMany({ data: tagIds.map(tagId => ({ monitorId: monitor.id, tagId })) })
-    if (notificationIds.length) await tx.monitorNotification.createMany({ data: notificationIds.map(notificationId => ({ monitorId: monitor.id, notificationId })) })
+    if (notificationIds.length) await tx.monitorNotification.createMany({ data: notificationIds.map(notificationId => ({ monitorId: monitor.id, notificationId, delayMinutes: Number(notificationDelays?.[String(notificationId)]) || 0 })) })
     return tx.monitor.findUniqueOrThrow({ where: { id: monitor.id }, include: { tags: { include: { tag: true } }, monitorNotifications: true } })
   })
 

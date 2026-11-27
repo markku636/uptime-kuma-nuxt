@@ -1101,6 +1101,24 @@
             :disabled="loading"
           />
           <span class="text-gray-300 flex-1">{{ notification.name }}</span>
+          <label
+            v-if="isNotificationSelected(notification.id)"
+            class="flex items-center gap-1 text-xs text-gray-400"
+            :title="'Delay this channel by N minutes after a DOWN state (escalation)'"
+            @click.stop
+          >
+            Delay
+            <input
+              v-model.number="form.notificationDelays[notification.id]"
+              type="number"
+              min="0"
+              max="1440"
+              class="w-16 px-1 py-0.5 text-xs bg-gray-800 border border-gray-600 rounded"
+              :aria-label="`Delay for ${notification.name} in minutes`"
+              @change="form.notificationDelays[notification.id] = Math.max(0, Math.min(1440, Number(form.notificationDelays[notification.id]) || 0))"
+            />
+            min
+          </label>
           <span v-if="notification.isDefault" class="px-2 py-0.5 text-xs bg-green-600 rounded">Default</span>
         </label>
       </div>
@@ -1360,6 +1378,7 @@ const form = reactive({
   description: props.initialData?.description || '',
   // Notifications & Tags
   notificationIDList: initNotificationIds(),
+  notificationDelays: { ...(props.initialData?.notificationDelays || {}) } as Record<number, number>,
   selectedTags: initTagIds(),
   // Certificate expiry notification
   expiryNotification: props.initialData?.expiryNotification || false,
@@ -1853,6 +1872,7 @@ const handleSubmit = async (trial=false) => {
   }
 
   data.notifications=Object.keys(form.notificationIDList).filter(id=>form.notificationIDList[Number(id)]).map(Number)
+  data.notificationDelays=Object.fromEntries(Object.entries(form.notificationDelays).filter(([id,value])=>data.notifications.includes(Number(id))&&Number(value)>0).map(([id,value])=>[String(id),Number(value)]))
   data.tags=[...form.selectedTags]
 
   // Certificate expiry notification

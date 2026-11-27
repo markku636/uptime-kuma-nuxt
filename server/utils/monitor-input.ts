@@ -70,4 +70,5 @@ export const createMonitorSchema = z.object({
   // Tags and notifications
   tags: z.array(z.number()).optional().nullable(),
   notifications: z.array(z.number()).optional().nullable(),
+  notificationDelays: z.record(z.string(), z.number().int().min(0).max(1440)).refine(v => Object.keys(v).length <= 100 && Object.keys(v).every(k => /^\d+$/.test(k))).optional(),
 })

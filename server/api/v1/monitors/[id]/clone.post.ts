@@ -12,7 +12,7 @@ export default defineEventHandler(async event=>{
     const input={...data,...initialMonitorSchedule(newId,data.interval,await databaseNow(tx)),configVersion:1,id:newId,name:`${original.name} (Copy)`,active:false,userId:scope.user.id,pushToken:original.type==='push'?nanoid(32):null}
     const monitor=await tx.monitor.create({data:monitorDbInput(input)})
     if(tags.length)await tx.monitorTag.createMany({data:tags.map((row:any)=>({monitorId:monitor.id,tagId:row.tagId,value:row.value}))})
-    if(monitorNotifications.length)await tx.monitorNotification.createMany({data:monitorNotifications.map((row:any)=>({monitorId:monitor.id,notificationId:row.notificationId}))})
+    if(monitorNotifications.length)await tx.monitorNotification.createMany({data:monitorNotifications.map((row:any)=>({monitorId:monitor.id,notificationId:row.notificationId,delayMinutes:row.delayMinutes||0}))})
     return tx.monitor.findUniqueOrThrow({where:{id:monitor.id},include:{tags:{include:{tag:true}},monitorNotifications:true}})
   })
   return {ok:true,data:monitorEditorDTO(result),...(result.pushToken?{provisioning:{pushToken:result.pushToken}}:{})}

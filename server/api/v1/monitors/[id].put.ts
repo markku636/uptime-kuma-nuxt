@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
   // Zod 4 applies defaults even inside partial(); only apply fields explicitly sent.
   const data = Object.fromEntries(Object.entries(result.data).filter(([key]) => Object.hasOwn(body, key))) as typeof result.data
 
-  const { tags, notifications, ...monitorData } = data
+  const { tags, notifications, notificationDelays, ...monitorData } = data
   const monitor = await prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM monitors WHERE id=${id} FOR UPDATE`
     const current=await tx.monitor.findFirstOrThrow({where:{id,workspaceId:session.workspaceId,environmentId:session.environmentId}})
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
     if (notifications) {
       const ids = await assertWorkspaceIds(tx, 'notification', notifications, session.workspaceId)
       await tx.monitorNotification.deleteMany({ where: { monitorId: id } })
-      if (ids.length) await tx.monitorNotification.createMany({ data: ids.map(notificationId => ({ monitorId: id, notificationId })) })
+      if (ids.length) await tx.monitorNotification.createMany({ data: ids.map(notificationId => ({ monitorId: id, notificationId, delayMinutes: Number(notificationDelays?.[String(notificationId)]) || 0 })) })
     }
     // Read again inside the transaction so concurrent partial edits preserve current values.
     const updated:any=await fenceMonitorData(tx,current,monitorSecretUpdate(current,monitorData))

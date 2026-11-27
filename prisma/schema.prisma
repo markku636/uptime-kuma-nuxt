@@ -291,6 +291,7 @@ model Notification {
 model MonitorNotification {
   monitorId      Int @map("monitor_id")
   notificationId Int @map("notification_id")
+  delayMinutes   Int @default(0) @map("delay_minutes")
 
   monitor      Monitor      @relation(fields: [monitorId], references: [id], onDelete: Cascade)
   notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
