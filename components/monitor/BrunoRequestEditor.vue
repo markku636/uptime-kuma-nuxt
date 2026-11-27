@@ -131,14 +131,18 @@
             <option value="bearer">bearer</option>
           </select>
         </div>
+        <label class="flex items-center gap-2 text-xs text-secondary">
+          <input v-model="revealCredentials" type="checkbox" class="mr-1" aria-label="Show credentials" :disabled="disabled"> Show credentials
+        </label>
         <div v-if="model.auth.mode === 'basic'" class="grid gap-3 md:grid-cols-2">
-          <div><label class="input-label">Username</label><input v-model="model.auth.username" type="text" class="input-field" :disabled="disabled"></div>
-          <div><label class="input-label">Password</label><input v-model="model.auth.password" type="text" class="input-field" :disabled="disabled"></div>
+          <div><label class="input-label" for="bruno-username">Username</label><input id="bruno-username" v-model="model.auth.username" type="text" class="input-field" :disabled="disabled"></div>
+          <div><label class="input-label" for="bruno-password">Password</label><input id="bruno-password" v-model="model.auth.password" :type="credentialInputType" class="input-field" autocomplete="off" :disabled="disabled"></div>
         </div>
         <div v-else-if="model.auth.mode === 'bearer'">
-          <label class="input-label" for="bruno-token">Token</label><input id="bruno-token" v-model="model.auth.token" type="text" class="input-field" :disabled="disabled">
+          <label class="input-label" for="bruno-token">Token</label><input id="bruno-token" v-model="model.auth.token" :type="credentialInputType" class="input-field" autocomplete="off" :disabled="disabled">
         </div>
         <p v-else class="text-sm text-secondary">{{ model.auth.mode === 'inherit' ? 'Uses credentials inherited from the collection/folder.' : 'No authentication.' }}</p>
+        <p v-if="model.auth.mode === 'basic' || model.auth.mode === 'bearer'" class="text-xs text-secondary">Stored in the <code>.bru</code> request; the API never returns these values.</p>
       </section>
 
       <!-- Vars -->
@@ -315,7 +319,8 @@ const mode = ref<'raw' | 'ui'>('ui')
 const model = ref<BrunoRequestModel | null>(null)
 const activeTab = ref<(typeof tabs)[number]['key']>('params')
 const resultTab = ref<'headers' | 'body' | 'assert'>('body')
-const busy = ref(false), error = ref(''), envDialogOpen = ref(false), copied = ref(false), dirty = ref(false)
+const busy = ref(false), error = ref(''), envDialogOpen = ref(false), copied = ref(false), dirty = ref(false), revealCredentials = ref(false)
+const credentialInputType = computed(() => revealCredentials.value ? 'text' : 'password')
 async function copySource() {
   if (!rawSource.value) return
   try { await navigator.clipboard.writeText(rawSource.value); copied.value = true; setTimeout(() => { copied.value = false }, 1500) }

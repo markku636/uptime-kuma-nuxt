@@ -110,8 +110,17 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     assert.ok((await page.locator('select.bruno-cell').count()) > 0, 'assertion operator selector is rendered')
 
     await page.getByRole('tab', {name:/Auth/}).click()
+    await page.getByLabel('Auth mode').selectOption('basic')
+    assert.equal(await page.getByLabel('Password').getAttribute('type'), 'password', 'basic password must be masked by default')
     await page.getByLabel('Auth mode').selectOption('bearer')
-    await page.getByLabel('Token').fill('demo-token')
+    const tokenField = page.getByLabel('Token')
+    assert.equal(await tokenField.getAttribute('type'), 'password', 'bearer token must be masked by default')
+    await page.getByLabel('Show credentials').check()
+    assert.equal(await tokenField.getAttribute('type'), 'text', 'the reveal toggle unmasks credentials')
+    await tokenField.fill('demo-token')
+    await page.getByLabel('Show credentials').uncheck()
+    assert.equal(await tokenField.getAttribute('type'), 'password')
+    assert.equal(await tokenField.inputValue(), 'demo-token', 're-hiding keeps the value')
     await page.getByRole('tab', {name:/Docs/}).click()
     await page.getByLabel('Docs').fill('# Demo doc')
 
