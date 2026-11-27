@@ -205,7 +205,15 @@
             </tr>
           </tbody>
         </table></div>
-        <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('assert')">+ Add assertion</button>
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="addRow('assert')">+ Add assertion</button>
+          <select class="select-field w-48 !py-1 text-xs" aria-label="Quick add assertion" :disabled="disabled" @change="addAssertionPreset($event)">
+            <option value="">Quick add…</option>
+            <option value="status200">Status is 200</option>
+            <option value="responseTime">Response time under 1000 ms</option>
+            <option value="jsonField">JSON field equals…</option>
+          </select>
+        </div>
         <p class="text-xs text-secondary">Value format: a literal for eq / gt / lt / contains…; a JSON array for <code>in</code> and <code>notIn</code>; <code>min max</code> for <code>between</code>; a bounded regex literal for <code>matches</code> / <code>notMatches</code> (no groups, alternation or backreferences). Unary operators need no value.</p>
       </section>
 
@@ -564,6 +572,18 @@ function addRow(kind: 'params' | 'headers' | 'vars' | 'assert') {
   if (!model.value || props.disabled) return
   if (kind === 'assert') model.value.assertions.push({expression: '', operator: 'eq', value: '', enabled: true})
   else model.value[kind].push({name: '', value: '', enabled: true})
+}
+
+const assertionPresets: Record<string, {expression: string; operator: string; value: string}> = {
+  status200: {expression: 'res.status', operator: 'eq', value: '200'},
+  responseTime: {expression: 'res.responseTime', operator: 'lt', value: '1000'},
+  jsonField: {expression: 'res.body.data', operator: 'eq', value: ''},
+}
+function addAssertionPreset(event: Event) {
+  const select = event.target as HTMLSelectElement
+  const preset = assertionPresets[select.value]
+  if (preset && model.value && !props.disabled) model.value.assertions.push({...preset, enabled: true, description: ''})
+  select.value = ''
 }
 
 /** Drop rows the user added but never filled so the strict parser is not fed empty names. */

@@ -65,9 +65,15 @@ R6 ✅ Vars 變數清單可篩選（12:07–12:08 CST）— commit `be91b4a`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 
-R7 ✅ 編輯器顯示目前環境（12:08–12:12 CST）— commit 待填：
+R7 ✅ 編輯器顯示目前環境（12:08–12:12 CST）— commit `834d817`：
 - 從 environments API 取回所選環境名稱，工具列顯示 `Environment: <name>`；載入失敗時不顯示，不影響其他功能。
 - browser 測試驗證環境名稱出現（建立的 workspace 預設環境為 `default`）。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：未部署。
+
+R8 ✅ Assert 快速新增（12:12–12:16 CST）— commit 待填：
+- 「Quick add…」下拉提供 Status is 200 / Response time under 1000 ms / JSON field equals…，一鍵帶入 expression、operator、value，不必記 `.bru` 斷言語法。
+- browser 測試選 responseTime 後驗證三欄值都正確填入，選完下拉自動回到提示。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 

@@ -124,6 +124,11 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await operatorSelect.selectOption('in')
     assert.equal(await page.getByPlaceholder('[200, 201]').count(), 1, 'in shows a JSON array example')
     await operatorSelect.selectOption('eq')
+    await page.getByLabel('Quick add assertion').selectOption('responseTime')
+    const newAssertRow = page.locator('table.bruno-table tbody tr').last()
+    assert.equal(await newAssertRow.getByPlaceholder('res.status').inputValue(), 'res.responseTime')
+    assert.equal(await newAssertRow.locator('select').inputValue(), 'lt')
+    assert.equal(await newAssertRow.getByPlaceholder('Value').inputValue(), '1000', 'a preset fills expression, operator and value')
 
     await page.getByRole('tab', {name:/Auth/}).click()
     await page.getByLabel('Auth mode').selectOption('basic')
