@@ -130,3 +130,9 @@ R17 ✅ 無效 URL 擋下 Send（15:11–15:14 CST）— commit `5083b64`：
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab。
 
+R18 ✅ 完整回歸 + lab 再部署 R14–R17（15:14–15:19 CST，沿用 lab 授權）— 無程式 commit：
+- `docs/BRUNO_COMPATIBILITY.md` 補上 R14–R17；`npm run verify:bruno` 全綠（unit 109/109、Bruno 整合 27 pass / 1 skip、typecheck、build）。
+- Artifact `b8b402cd199051e4ef7cd80134c04d6dbad1a8a405126600670be685da5ed674`（204,809,915 bytes；source `272c86f`、working tree clean）；短命 server 拉取後已停。
+- GitOps `be485b1` loader（rev307，Job Succeeded）→ `83d372f` migration（rev308，Job Succeeded，無 pending migrations）→ `215bb95` application（rev309）。
+- rev309 API 2/2、worker 2/2、DB/fixture Healthy，release Healthy / Synced；`/api/health/ready` = 200。正式站仍未部署。
+
