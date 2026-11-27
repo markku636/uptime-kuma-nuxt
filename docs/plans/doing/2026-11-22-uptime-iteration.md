@@ -563,3 +563,18 @@ Bruno：移植精選 collection + Local/Production 環境 + `npm run bruno:smoke
 root filesystem 83%。線上驗證包含：Reports CSV、Check now、TLS 設定讀寫與權限、
 狀態頁 sendUrl 開關、push 心跳逾時→DOWN→恢復、維護窗口抑制誤報、時區格式化、
 incident 編輯端點。測試用 monitor／status page／incident 皆已清除。
+
+## 2026-11-27 晚間竞品差距迭代（R98–R101）
+
+R98 🔵 延遲告警（`397d578`）：全域 `alertDelayMinutes`（0–1440），DOWN 延遲發通知、恢復則取消
+  待送 outbox。unit 181/181、integration 109/109、typecheck 0；rev320 上線，線上讀寫 0→5→0 驗證。
+R99 🔵 群組狀態（`ec9f9aa`）：公開狀態頁 `groupTabs[].status` 由全部關聯 monitor 計算
+  （down/maintenance/pending/up/unknown），分頁 tab 顯示色點；rev322，線上驗證 `Core services: up`。
+R100 🔵 狀態頁嵌入（`acda66e`）：新增 `/status/{slug}/embed` 精簡視圖（無導覽、自動更新）、
+  編輯側欄一鍵複製 iframe snippet；snippet 對 origin/slug/title 做白名單避免注入。
+  unit 183/183、integration 109/109、typecheck 0；rev324，兩域 embed 200。
+R101 🔵 事件進度時間軸（`49ee69c`）：新增 `incident_updates` migration、管理端新增
+  investigating/identified/monitoring/resolved/update 更新、公開 API 與事件歷史時間軸。
+  unit 185/185、integration 110/110、typecheck 0；migration `200daa94` 成功套用
+  （23 migrations、無 pending），rev327 Healthy/Synced；線上建立事件→更新→公開 API 讀到
+  `identified / Live verification update`→清理完成。
