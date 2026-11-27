@@ -59,9 +59,15 @@ R5 ✅ Raw 工具列與轉換回饋（12:04–12:07 CST）— commit `5768d89`�
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6（無視覺回歸）。
 - 部署：未部署。
 
-R6 ✅ Vars 變數清單可篩選（12:07–12:11 CST）— commit 待填：
+R6 ✅ Vars 變數清單可篩選（12:07–12:08 CST）— commit `be91b4a`：
 - Vars 分頁新增 `Filter variables` 輸入框；篩選只套用到清單，`{{` 自動完成仍用完整變數集合。
 - browser 測試：`EDITOR` 看得到、不存在的關鍵字看不到、清空後恢復。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：未部署。
+
+R7 ✅ 編輯器顯示目前環境（12:08–12:12 CST）— commit 待填：
+- 從 environments API 取回所選環境名稱，工具列顯示 `Environment: <name>`；載入失敗時不顯示，不影響其他功能。
+- browser 測試驗證環境名稱出現（建立的 workspace 預設環境為 `default`）。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 

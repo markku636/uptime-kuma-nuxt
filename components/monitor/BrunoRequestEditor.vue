@@ -10,7 +10,7 @@
         <span v-if="dirty" role="status" class="text-xs text-amber-500">Unsaved changes</span>
         <span v-if="busy" role="status" class="text-xs text-secondary">Converting…</span>
       </div>
-      <span class="text-xs text-secondary">Bruno-style request editor · scripts, tests and post-response vars are not executed</span>
+      <span class="text-xs text-secondary">Bruno-style request editor · scripts, tests and post-response vars are not executed<template v-if="envName"> · Environment: <strong>{{ envName }}</strong></template></span>
     </div>
 
     <p v-if="error" role="alert" class="text-sm text-red-400">{{ error }}</p>
@@ -411,16 +411,17 @@ const counts = computed(() => ({
   settings: ignoredBlock('settings') ? 1 : 0,
 }))
 
-const envVariables = ref<Record<string, string>>({}), envSecrets = ref<string[]>([])
+const envVariables = ref<Record<string, string>>({}), envSecrets = ref<string[]>([]), envName = ref('')
 async function loadEnv() {
   const workspaceId = current.value?.id
   if (!workspaceId) return
   try {
-    const response = await $fetch<{ data: Array<{ id: number; variables: Record<string, string>; secretNames: string[] }> }>(`/api/v1/workspaces/${workspaceId}/environments`)
+    const response = await $fetch<{ data: Array<{ id: number; name: string; variables: Record<string, string>; secretNames: string[] }> }>(`/api/v1/workspaces/${workspaceId}/environments`)
     const selected = response.data.find(item => item.id === resolvedEnvironmentId.value) || response.data[0]
     envVariables.value = selected?.variables || {}
     envSecrets.value = selected?.secretNames || []
-  } catch { envVariables.value = {}; envSecrets.value = [] }
+    envName.value = selected?.name || ''
+  } catch { envVariables.value = {}; envSecrets.value = []; envName.value = '' }
 }
 watch([() => current.value?.id, () => resolvedEnvironmentId.value], loadEnv, { immediate: true })
 

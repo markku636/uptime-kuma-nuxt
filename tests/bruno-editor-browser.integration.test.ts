@@ -52,6 +52,7 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.goto(`${base}/monitors/${monitorId}/edit`)
     // UI editor is the default view now.
     await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByText(/Environment: default/).waitFor()
     await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
     const raw = page.locator('textarea.font-mono').first()
     assert.match(await raw.inputValue(), /res\.status: eq 200/, 'existing .bru source must be visible to editors')
