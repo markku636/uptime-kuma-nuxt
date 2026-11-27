@@ -47,8 +47,13 @@ source environment變更與監測寫入同一transaction。Monitor request配置
 | Assert | Expr / Operator / Value / Description，完整安全 operator 下拉 |
 | Docs | `docs {}` block 可讀寫 |
 
-- `{{` 在任何欄位會彈出環境變數自動完成；secret 只顯示 `••••••`。
-- Ctrl/⌘+Enter 立即 Send；結果面板顯示 status / elapsed / Headers / Body / Assertions（含 actual）。
+- 切換順序為 `UI editor | Raw (.bru)`；工具列顯示目前使用的環境名稱，parse/stringify 時顯示 `Converting…`。
+- `{{` 在任何欄位會彈出環境變數自動完成；secret 只顯示 `••••••`；Vars 分頁可篩選變數名稱。
+- Auth 的 Password / Token 預設遮罩，勾選 `Show credentials` 才會顯示明文。
+- Bulk Edit 遇到不合格式的列會在畫面列出行號，不會靜默丟棄。
+- Assert 分頁的 Value  placeholder 會隨 operator 變化（如 `between` → `200 299`），並有 Quick add 一鍵加入現成斷言。
+- URL 不是 http(s) 時即時提示；空白請求在 UI 填完 URL 就能 Send（不必先切 Raw）；Ctrl/⌘+Enter 立即 Send。
+- 結果面板顯示 status / elapsed / Headers / Body / Assertions（含 actual 與「N passed / M failed」摘要）。
 - Raw 模式可 Copy / Download `.bru`，或 Reset 回到已儲存版本。
 - Bruno monitor 可用於單檔與 ZIP 匯出，以及 redacted manifest；字面值會轉成 secret placeholder。
 - 既有 `.bru` 原文只對互動式 editor+ session 可讀；API key 維持 write-only。
