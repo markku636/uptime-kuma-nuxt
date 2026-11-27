@@ -47,8 +47,8 @@
           <form class="mt-6 space-y-4" @submit.prevent="saveVariables">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 class="font-medium">Environment variables</h3>
-                <p class="text-xs text-secondary mt-1">Use <code v-pre>{{variableName}}</code> in URLs, headers and bodies. Values are stored as a JSON object.</p>
+                <h3 class="font-medium">Environment variables <span class="text-xs text-secondary">({{ variableDraftCount }}/200)</span></h3>
+                <p class="text-xs text-secondary mt-1">Use <code v-pre>{{variableName}}</code> in URLs, headers and bodies. Values are stored as a JSON object. Saving reschedules every monitor in this environment.</p>
               </div>
               <div class="flex items-center gap-3">
                 <button type="button" class="text-xs text-primary hover:underline" @click="selectEditingEnvironment()">Reset changes</button>
@@ -121,6 +121,10 @@ const editingEnvironmentId = ref<number>()
 const variableRows = ref<{ key: string; value: string }[]>([])
 const rawJson = ref('{}'), rawMode = ref(false)
 const selectedEnvironment = selectedEnvironmentOf(editingEnvironmentId)
+const variableDraftCount = computed(() => {
+  if (!rawMode.value) return variableRows.value.filter(row => row.key.trim()).length
+  try { return Object.keys(validateVariableMap(JSON.parse(rawJson.value), {checkNames: false})).length } catch { return 0 }
+})
 const previewText = ref('')
 const previewResult = computed(() => {
   const text = previewText.value

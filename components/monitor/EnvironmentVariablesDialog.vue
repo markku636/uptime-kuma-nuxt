@@ -13,7 +13,7 @@
           <p class="font-semibold">GLOBAL variables for {{ selectedEnvironment?.name || 'this environment' }}</p>
           <p class="text-xs text-secondary">
             These variables and secrets apply to every monitor and request in this environment, not just this one.
-            Use <code>&#123;&#123;NAME&#125;&#125;</code> placeholders to reference them.
+            Use <code>&#123;&#123;NAME&#125;&#125;</code> placeholders to reference them. Saving reschedules every monitor in this environment.
           </p>
           <label class="flex flex-wrap items-center gap-2 text-xs text-secondary" for="env-dialog-environment">
             Environment

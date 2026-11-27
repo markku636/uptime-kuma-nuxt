@@ -193,9 +193,14 @@ R29 ✅ Settings 環境變數編輯易用性（15:59–16:01 CST）— commit `c
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
 
-R30 ✅ 嵌入對話框同步易用性（16:01–16:05 CST）— commit 待填：
+R30 ✅ 嵌入對話框同步易用性（16:01–16:04 CST）— commit `740741d`：
 - 對話框新增 Copy token / Reset changes / 非法名稱提示；Preview 改用以尚未儲存的草稿值解析。
 - browser 測試：在監測編輯頁的對話框 Preview 得到解析值、Copy token 寫入剪貼簿、重新開啟後 Reset 還原已存值。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
+- 部署：尚未進 lab。
+
+R31 ✅ 環境編輯副作用提示（16:04–16:08 CST）— commit 待填：
+- Settings 與對話框都標示「Saving reschedules every monitor in this environment.」；Settings 顯示變數草稿數量（N/200）。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 8/8。
 - 部署：尚未進 lab。
 
