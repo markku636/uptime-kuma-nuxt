@@ -167,12 +167,18 @@ R25 ✅ 斷言 expression 自動建議（15:35–15:37 CST）— commit `9bf9753
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab（預計 R26 一起部署）。
 
-## 目前狀態（2026-11-27 15:41 CST，截止 20:00）
+## 目前狀態（2026-11-27 16:15 CST，截止 20:00）
 
-- 本機 HEAD `9bf9753`（26 輪）；工作樹乾淨，commit `f99b38b` → `9bf9753`。
-- lab：`uptime-api-demo-20261114/uptime-api` rev315，Healthy / Synced，artifact `92d8e768…`，API/worker/fixture 全 Healthy，`/api/health/ready` 200。
-- 驗證：`npm run verify:bruno` 全綠；完整整合 107 pass / 0 fail / 1 skip；Bruno editor browser 6/6。
+- 本機 HEAD `0bab011`（32 輪，含環境編輯易用性 R27–R31）；工作樹乾淨，commit `f99b38b` → `0bab011`。
+- lab：`uptime-api-demo-20261114/uptime-api` rev318，Healthy / Synced，artifact `539161e9…`，API/worker/fixture 全 Healthy，`/api/health/ready` 200。
+- 驗證：`npm run verify:bruno` 全綠（unit 109/109、Bruno 整合 29 pass / 1 skip）；完整整合 109 pass / 0 fail / 1 skip；Bruno editor browser 8/8。
 - 未部署正式站（使用者只授權 lab）。待持有人：到 lab／正式站登入後人工驗收 UI（R13 起如實記錄未做）。
+
+R32 ✅ 完整回歸 + lab 部署 R27–R31（16:07–16:15 CST，沿用 lab 授權）— 無程式 commit：
+- `docs/BRUNO_COMPATIBILITY.md` 補上環境編輯入口與功能；`npm run verify:bruno` 全綠、完整整合 109 pass / 0 fail / 1 skip。
+- Artifact `539161e9dfe81a3f1c38da225848338a33ec465173d8508cbfd297abc03a3288`（204,823,738 bytes；source `7631787`、working tree clean）；短命 server 拉取後已停。
+- GitOps `9eea3a7` loader（rev316）→ `b210f02` migration（rev317，無 pending）→ `02ead7c` application（rev318）。
+- rev318 API 2/2、worker 2/2、fixture 1/1 Healthy，release Healthy / Synced；`ready` 200。正式站未部署。
 
 R27 ✅ 監測編輯頁直接編輯環境變數（15:41–15:56 CST）— commit `458e4b3`：
 - `MonitorForm.vue` 在 Basic Information 後新增獨立的 Environment variables 卡片與 `Edit environment variables` 按鈕，所有監測類型都能直接打開對話框（不再只有 Bruno 的 Vars 分頁）。
