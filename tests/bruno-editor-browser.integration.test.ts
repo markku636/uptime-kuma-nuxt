@@ -378,6 +378,9 @@ test('browser sends a request built from scratch in the UI editor', {timeout:600
   try {
     identity = await user('bruno-ui-send')
     scope = await workspace(identity, 'Bruno UI Send')
+    const many: Record<string, string> = {}
+    for (let i = 0; i < 55; i++) many[`VAR_${String(i).padStart(3, '0')}`] = String(i)
+    await data(await request(`/api/v1/workspaces/${scope.workspaceId}/environments/${scope.environmentId}`, 'PUT', identity, scope, {variables: many}))
     const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {type:'bruno', name:'UI Send', active:false}))
     monitorId = created.data.id
     const context = await browser.newContext({viewport:{width:1280,height:900}})
@@ -391,6 +394,9 @@ test('browser sends a request built from scratch in the UI editor', {timeout:600
     page.on('pageerror', error => errors.push(error.message))
     await page.goto(`${base}/monitors/${monitorId}/edit`)
     await page.getByRole('tab', {name:/Params/}).waitFor()
+    await page.getByRole('tab', {name:/Vars/}).click()
+    await page.getByText(/Showing 50 of 55 variables/).waitFor()
+    await page.getByRole('tab', {name:/Params/}).click()
 
     const send = page.getByRole('button', {name:'Send request', exact:true})
     assert.equal(await send.isDisabled(), true, 'Send must stay disabled until a URL is entered')

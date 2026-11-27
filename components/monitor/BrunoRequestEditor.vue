@@ -173,6 +173,7 @@
         <div v-if="environmentNames.length" class="rounded-lg border border-[color-mix(in_srgb,currentColor_15%,transparent)] p-2 space-y-1">
           <p class="text-xs text-secondary">Environment variables · focus a field, then click Insert</p>
           <input v-model="envFilter" type="text" class="input-field !py-1 text-xs" placeholder="Filter variables" aria-label="Filter environment variables" :disabled="disabled">
+          <p v-if="environmentTotal > environmentNames.length" class="text-xs text-secondary">Showing {{ environmentNames.length }} of {{ environmentTotal }} variables — use the filter to find the rest.</p>
           <div v-for="name in filteredEnvironmentNames" :key="name" class="flex items-center justify-between gap-2 text-xs">
             <code class="break-all">{{ variableToken(name) }}</code>
             <span class="flex items-center gap-2">
@@ -479,6 +480,7 @@ async function loadEnv() {
 }
 watch([() => current.value?.id, () => resolvedEnvironmentId.value], loadEnv, { immediate: true })
 
+const environmentTotal = computed(() => new Set([...Object.keys(envVariables.value), ...envSecrets.value]).size)
 const environmentNames = computed(() => [...new Set([...Object.keys(envVariables.value), ...envSecrets.value])].sort().slice(0, 50))
 const envFilter = ref('')
 const filteredEnvironmentNames = computed(() => environmentNames.value.filter(name => name.toLowerCase().includes(envFilter.value.trim().toLowerCase())))
