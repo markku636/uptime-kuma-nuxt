@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
           'checkUpdate',
           'checkBeta',
           'showRuntimeHints',
+          'alertDelayMinutes',
           'statusPageSlug'
         ]
       }
@@ -45,6 +46,7 @@ export default defineEventHandler(async (event) => {
     checkUpdate: true,
     checkBeta: false,
     showRuntimeHints: true,
+    alertDelayMinutes: 0,
     statusPageSlug: ''
   }
 

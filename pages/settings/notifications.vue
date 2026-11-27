@@ -6,6 +6,22 @@ const platformAdmin=ref(false)
 const tlsExpiryDays = ref<number[]>([7, 14, 21])
 const newTlsExpiryDay = ref<number | null>(null)
 
+async function fetchAlertDelay() {
+  try {
+    const settings = await $fetch<any>('/api/settings/general')
+    alertDelay.value = Number(settings?.alertDelayMinutes) || 0
+  } catch { /* default 0 */ }
+}
+
+async function saveAlertDelay() {
+  try {
+    await $fetch('/api/settings/general', { method: 'POST', body: { alertDelayMinutes: alertDelay.value } })
+    toast.add({ title: 'Success', description: 'Alert delay saved', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || 'Failed to save alert delay', color: 'error' })
+  }
+}
+
 async function fetchTlsExpirySettings() {
   try {
     const settings = await $fetch('/api/v1/settings/tls-expiry') as any
@@ -39,10 +55,12 @@ async function saveTlsExpirySettings() {
 }
 onMounted(async()=>{
   await fetchTlsExpirySettings()
+  await fetchAlertDelay()
   platformAdmin.value=!!(await $fetch<{data?:{platformAdmin?:boolean}}>('/api/auth/session')).data?.platformAdmin
   if (platformAdmin.value) await fetchOutbox()
 })
 // Delivery log (platform admin only)
+const alertDelay = ref(0)
 const outbox = ref<any[]>([])
 const outboxStatus = ref('')
 const outboxCursor = ref<string | null>(null)
@@ -70,6 +88,19 @@ async function fetchOutbox(reset = true) {
 </script>
 <template>
 <div class="space-y-8"><SettingsResourceSettings kind="notification" title="Notifications" />
+<section v-if="platformAdmin" class="section-card space-y-4">
+  <div>
+    <h3 class="font-semibold text-lg">Alert delay</h3>
+    <p class="text-sm text-secondary mt-1">Wait before notifying on a DOWN state. If the monitor recovers within the delay, no alert is sent. Set 0 for immediate alerts.</p>
+  </div>
+  <div class="flex flex-wrap items-end gap-3">
+    <label class="block">Delay (minutes)
+      <input v-model.number="alertDelay" type="number" min="0" max="1440" class="input-field mt-1 max-w-40" />
+    </label>
+    <button class="btn btn-primary" @click="saveAlertDelay">Save alert delay</button>
+  </div>
+</section>
+
 <section v-if="platformAdmin" class="section-card space-y-5">
   <div>
     <h3 class="font-semibold text-lg">TLS certificate expiry notifications</h3>
