@@ -167,10 +167,16 @@ R25 ✅ 斷言 expression 自動建議（15:35–15:37 CST）— commit `9bf9753
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab（預計 R26 一起部署）。
 
-## 目前狀態（2026-11-27 15:38 CST，截止 20:00）
+## 目前狀態（2026-11-27 15:41 CST，截止 20:00）
 
-- 本機 HEAD 待更新，25 輪；工作樹乾淨，commit `f99b38b` → R25。
-- lab：`uptime-api-demo-20261114/uptime-api` rev312，Healthy / Synced，artifact `c283ace7…`，API/worker/fixture 全 Healthy，`/api/health/ready` 200。
+- 本機 HEAD `9bf9753`（26 輪）；工作樹乾淨，commit `f99b38b` → `9bf9753`。
+- lab：`uptime-api-demo-20261114/uptime-api` rev315，Healthy / Synced，artifact `92d8e768…`，API/worker/fixture 全 Healthy，`/api/health/ready` 200。
 - 驗證：`npm run verify:bruno` 全綠；完整整合 107 pass / 0 fail / 1 skip；Bruno editor browser 6/6。
 - 未部署正式站（使用者只授權 lab）。待持有人：到 lab／正式站登入後人工驗收 UI（R13 起如實記錄未做）。
+
+R26 ✅ lab 部署 R25（15:37–15:41 CST，沿用 lab 授權）— 無程式 commit：
+- Artifact `92d8e768d7a58e8ffd1b6045755a6a97054faa13e52b1c5c27739b7bc239f18b`（204,817,549 bytes；source `a456e5d`、working tree clean）；短命 server 拉取後已停。
+- GitOps `6b4b474` loader（rev313）→ `f76b4e8` migration（rev314，無 pending）→ `df42987` application（rev315）。
+- rev315 API 2/2、worker 2/2、fixture 1/1 Healthy，release Healthy / Synced；`ready` 200。正式站未部署。
+
 
