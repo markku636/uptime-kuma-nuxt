@@ -313,3 +313,50 @@ test('browser renders the editor at mobile width with scrollable tables', {timeo
     if (identity && scope) await cleanup([identity], [scope])
   }
 })
+
+test('browser sends a request built from scratch in the UI editor', {timeout:60000}, async () => {
+  let identity: Identity | undefined, scope: Scope | undefined, monitorId: number | undefined, hits = 0
+  const fixture = http.createServer((_req, res) => {
+    hits++
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ok: true}))
+  })
+  await new Promise<void>(r => fixture.listen(0, '127.0.0.1', r))
+  const origin = `http://127.0.0.1:${(fixture.address() as any).port}`
+  const browser = await chromium.launch({executablePath:'/usr/bin/google-chrome', headless:true, args:['--no-sandbox','--disable-dev-shm-usage']})
+  try {
+    identity = await user('bruno-ui-send')
+    scope = await workspace(identity, 'Bruno UI Send')
+    const created = await data(await request('/api/v1/monitors', 'POST', identity, scope, {type:'bruno', name:'UI Send', active:false}))
+    monitorId = created.data.id
+    const context = await browser.newContext({viewport:{width:1280,height:900}})
+    const cookies = identity.cookie.split('; ').map(part => { const index = part.indexOf('='); return {name:part.slice(0,index),value:part.slice(index+1),url:base} })
+    await context.addCookies([...cookies,
+      {name:'workspace_id',value:String(scope.workspaceId),url:base},
+      {name:'environment_id',value:String(scope.environmentId),url:base},
+    ])
+    await context.route('**/*', route => ['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort())
+    const page = await context.newPage(), errors: string[] = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.goto(`${base}/monitors/${monitorId}/edit`)
+    await page.getByRole('tab', {name:/Params/}).waitFor()
+
+    const send = page.getByRole('button', {name:'Send request', exact:true})
+    assert.equal(await send.isDisabled(), true, 'Send must stay disabled until a URL is entered')
+    await page.getByText('Enter a URL to enable Send.').waitFor()
+    await page.getByPlaceholder('https://example.com/health', {exact:true}).fill(`${origin}/health`)
+    assert.equal(await send.isEnabled(), true, 'UI edits must enable Send without switching to Raw')
+    await send.click()
+    await page.getByText(/Status\s*200/).waitFor()
+    assert.equal(hits, 1, 'the request built in the UI editor reached the fixture')
+
+    await page.getByRole('button', {name:'Raw (.bru)', exact:true}).click()
+    assert.match(await page.locator('textarea.font-mono').first().inputValue(), new RegExp(origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), 'Send serialized the UI model to .bru')
+    assert.deepEqual(errors, [])
+  } finally {
+    await browser.close()
+    fixture.closeAllConnections()
+    await new Promise<void>(r => fixture.close(() => r()))
+    if (identity && scope) await cleanup([identity], [scope])
+  }
+})

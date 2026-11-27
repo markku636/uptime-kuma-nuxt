@@ -1,10 +1,10 @@
 <template>
-  <div ref="root" class="bruno-editor space-y-3" @focusin="rememberFocus" @input="markDirty" @keydown.esc="autocompleteOpen = false" @keydown.ctrl.enter.prevent="$emit('send')" @keydown.meta.enter.prevent="$emit('send')">
+  <div ref="root" class="bruno-editor space-y-3" @focusin="rememberFocus" @input="markDirty" @keydown.esc="autocompleteOpen = false" @keydown.ctrl.enter.prevent="canSend && $emit('send')" @keydown.meta.enter.prevent="canSend && $emit('send')">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="flex flex-wrap items-center gap-2">
         <div class="inline-flex rounded-lg border border-[color-mix(in_srgb,currentColor_20%,transparent)] p-0.5">
-          <button type="button" class="bruno-toggle" :class="mode === 'raw' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('raw')">Raw (.bru)</button>
           <button type="button" class="bruno-toggle" :class="mode === 'ui' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('ui')">UI editor</button>
+          <button type="button" class="bruno-toggle" :class="mode === 'raw' ? 'bruno-toggle-active' : ''" :disabled="disabled || busy" @click="switchMode('raw')">Raw (.bru)</button>
         </div>
         <button type="button" class="btn btn-outline text-xs" :disabled="disabled || busy" @click="resetToSaved">Reset</button>
         <span v-if="dirty" role="status" class="text-xs text-amber-500">Unsaved changes</span>
@@ -232,8 +232,9 @@
 
     <!-- Trial / Send -->
     <div class="flex flex-wrap items-center gap-2 border-t border-[color-mix(in_srgb,currentColor_12%,transparent)] pt-3">
-      <button type="button" class="btn btn-outline" :disabled="disabled || trialLoading || busy || !rawSource" @click="$emit('send')">{{ trialLoading ? 'Sending…' : 'Send request' }}</button>
+      <button type="button" class="btn btn-outline" :disabled="!canSend" @click="$emit('send')">{{ trialLoading ? 'Sending…' : 'Send request' }}</button>
       <span class="text-xs text-secondary">Ctrl / ⌘ + Enter</span>
+      <span v-if="mode === 'ui' && !model?.url.trim()" class="text-xs text-amber-500">Enter a URL to enable Send.</span>
       <span v-if="trialResult" class="text-sm">{{ trialResult.status === 1 ? 'Passed' : 'Failed' }} · {{ trialResult.code }} · {{ Math.round(trialResult.ping) }} ms</span>
     </div>
     <p v-if="trialError" role="alert" class="text-sm text-red-400">{{ trialError }}</p>
@@ -399,6 +400,10 @@ const urlPreview = computed(() => {
   if (!source || !/\{\{/.test(source)) return null
   return previewEnvironmentVariables(source, envVariables.value, envSecrets.value)
 })
+
+/** UI edits are serialized by sync() before the parent sends, so raw source may still be empty. */
+const canSend = computed(() => !props.disabled && !props.trialLoading && !busy.value
+  && (mode.value === 'ui' ? !!model.value?.url.trim() : !!rawSource.value.trim()))
 
 const issueMessages: Record<string, string> = {
   HTTP_BLOCK_REQUIRED: 'A single GET/POST/… request block is required.',
