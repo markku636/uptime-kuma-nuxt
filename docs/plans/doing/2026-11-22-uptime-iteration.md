@@ -612,3 +612,10 @@ R108 🔵 對抗式審查修補（`2f22632`）：
 - SNMP community／RADIUS password 改寫入既有密封 `radiusSecret` 欄位（原本被 schema 丟棄）。
 - 一般狀態頁管理表單補 noIndex 核取方塊。
 unit 186、integration 113、typecheck 0；rev343 Healthy。線上驗證 RSS 取消固定後内容消失、snippet 正確、slug 唯讀。
+
+R109 🔵 (template honesty)（`b4cebb9`）：移除 Inner editor 不支援的自訂網域欄位（改顯示說明），
+  RSS 的 `#incident-{id}` 連結補上真實 DOM id。rev345。
+R110 🔵 OpenAPI 補全（`20018f6`）：文件新增 status-pages CRUD／incident／update／public maintenance
+  端點，Monitor 增加 notifications／notificationDelays／resendInterval，StatusPage 增加 noIndex，
+  新增 Incident／IncidentUpdate schema；REST contract 測試確保宣告與實作一致。
+  unit 188、integration 113、typecheck 0；rev347，線上 swagger-json 含新端點。
