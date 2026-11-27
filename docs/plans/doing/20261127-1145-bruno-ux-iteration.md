@@ -112,9 +112,15 @@ R14 ✅ JSON body 即時驗證（15:01–15:07 CST）— commit `a399cb9`：
 - 驗證：第一次跑 5/6（測試選到 Method 下拉而非 Body mode）→ 補 aria-label 後 `npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：此輪在 R13 lab 部署之後，尚未進 lab。
 
-R15 ✅ 分頁鍵盤導覽（15:07–15:10 CST）— commit 待填：
+R15 ✅ 分頁鍵盤導覽（15:07–15:09 CST）— commit `11f3bf5`：
 - 分頁按鈕可用 ← / → 切換並自動 focus 到新的分頁（環狀）。
 - browser 測試驗證 ArrowRight / ArrowLeft。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
+- 部署：尚未進 lab。
+
+R16 ✅ 重複欄位警告（15:09–15:13 CST）— commit 待填：
+- 啟用中的 params / headers / vars 若有同名（不分大小寫）即在分頁上方顯示警告；停用列與空名稱忽略。
+- browser 測試加第二個同名 param 出現警告，移除後消失；避免存檔時才被 strict parser 拒絕。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：尚未進 lab。
 

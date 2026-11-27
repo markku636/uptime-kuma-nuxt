@@ -54,6 +54,7 @@
         </div>
       </div>
 
+      <p v-if="duplicateWarning" role="status" class="text-xs text-amber-500">{{ duplicateWarning }}</p>
       <div class="bruno-tabs" role="tablist" aria-label="Bruno request sections">
         <button v-for="tab in tabs" :key="tab.key" type="button" role="tab" class="bruno-tab" :class="activeTab === tab.key ? 'bruno-tab-active' : ''" :aria-selected="activeTab === tab.key" @click="activeTab = tab.key" @keydown.left.prevent="moveTab(-1)" @keydown.right.prevent="moveTab(1)">
           {{ tab.label }} <sup v-if="counts[tab.key]" class="text-xs">{{ counts[tab.key] }}</sup>
@@ -432,6 +433,24 @@ async function resetToSaved() {
   dirty.value = false
   await initializeUi()
 }
+
+const duplicateWarning = computed(() => {
+  if (!model.value) return ''
+  const groups: Array<[string, Array<{name: string; enabled: boolean}>]> = [
+    ['parameters', model.value.params], ['headers', model.value.headers], ['variables', model.value.vars],
+  ]
+  for (const [label, rows] of groups) {
+    const seen = new Map<string, number>()
+    for (const row of rows) {
+      const name = row.name.trim().toLowerCase()
+      if (!name || !row.enabled) continue
+      seen.set(name, (seen.get(name) || 0) + 1)
+    }
+    const duplicates = [...seen.entries()].filter(([, count]) => count > 1).map(([name]) => name)
+    if (duplicates.length) return `Duplicate ${label}: ${duplicates.join(', ')}. Keep one enabled row per name.`
+  }
+  return ''
+})
 
 const counts = computed(() => ({
   params: model.value?.params.filter(row => row.enabled).length || 0,

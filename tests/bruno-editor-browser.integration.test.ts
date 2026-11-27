@@ -80,6 +80,11 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     assert.equal(await paramTable.getByPlaceholder('Name').count(), 2, 'malformed bulk lines are not silently added as rows')
     assert.equal(await paramTable.getByPlaceholder('Name').first().inputValue(), 'token')
     assert.equal(await paramTable.getByPlaceholder('Value').first().inputValue(), 'demo2')
+    await page.getByRole('button', {name:'+ Add parameter', exact:true}).click()
+    await page.getByPlaceholder('Name').last().fill('token')
+    await page.getByText(/Duplicate parameters: token/).waitFor()
+    await page.getByRole('button', {name:'Remove parameter'}).last().click()
+    assert.equal(await page.getByText(/Duplicate parameters/).count(), 0)
 
     await page.getByRole('tab', {name:/Headers/}).click()
     await page.getByRole('button', {name:'+ Add header', exact:true}).click()
