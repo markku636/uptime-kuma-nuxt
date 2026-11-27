@@ -57,8 +57,9 @@ export const publicHeartbeatHandler = defineEventHandler(async (event: H3Event) 
   if (monitorIds.length) {
     const rows=await recentHeartbeats(monitorIds,50)
     for(const row of rows)(heartbeatList[row.monitorId]||=[]).unshift({status:row.status,time:row.time.toISOString(),ping:row.ping})
-    const end=new Date(),uptime=await rawUptimeWindows(monitorIds,[{key:'24',start:new Date(end.getTime()-86400000),end}])
-    for(const id of monitorIds)uptimeList[`${id}_24`]=uptime.get(`${id}:24`)?.uptime??null
+    const end=new Date(),windows=[{key:'24',start:new Date(end.getTime()-86400000),end},{key:'7',start:new Date(end.getTime()-7*86400000),end},{key:'30',start:new Date(end.getTime()-30*86400000),end}]
+    const uptime=await rawUptimeWindows(monitorIds,windows)
+    for(const id of monitorIds)for(const window of windows)uptimeList[`${id}_${window.key}`]=uptime.get(`${id}:${window.key}`)?.uptime??null
   }
   return { ok: true, data: { heartbeatList, uptimeList }, heartbeatList, uptimeList,
     heartbeats: heartbeatList, uptime: uptimeList, timestamp: new Date().toISOString() }

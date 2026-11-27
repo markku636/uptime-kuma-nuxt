@@ -58,6 +58,7 @@ interface PublicMonitor {
   tags?: Tag[]
   heartbeats?: Heartbeat[]
   uptime24?: number
+  uptime30?: number
   validCert?: boolean
   certExpiryDaysRemaining?: number
 }
@@ -286,11 +287,12 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
             if (heartbeatList.value[monitor.id]) {
               monitor.heartbeats = heartbeatList.value[monitor.id]
             }
-            const uptimeKey = `${monitor.id}_24`
-            const value = uptimeList.value[uptimeKey]
-            if (value !== undefined) {
-              // A monitor with no observations has no uptime yet — 0.00% would be misleading.
-              monitor.uptime24 = value === 0 && !(heartbeatList.value[monitor.id] || []).length ? null : value
+            for (const [key, field] of [['24', 'uptime24'], ['30', 'uptime30']] as const) {
+              const value = uptimeList.value[`${monitor.id}_${key}`]
+              if (value !== undefined) {
+                // A monitor with no observations has no uptime yet — 0.00% would be misleading.
+                ;(monitor as any)[field] = value === 0 && !(heartbeatList.value[monitor.id] || []).length ? null : value
+              }
             }
           }
         }

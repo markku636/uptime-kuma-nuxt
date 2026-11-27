@@ -83,6 +83,9 @@
         <span v-if="avgPing !== null" class="text-xs text-gray-500 tabular-nums" :title="'Average response time of recent checks'">
           {{ avgPing }} ms
         </span>
+        <span v-if="typeof monitor.uptime30 === 'number'" class="text-xs text-gray-400" title="30-day uptime">
+          30d {{ monitor.uptime30.toFixed(2) }}%
+        </span>
         <span v-if="lastCheckLabel" class="text-xs text-gray-400" :title="'Last check time'">
           {{ lastCheckLabel }}
         </span>
@@ -119,6 +122,7 @@ interface Monitor {
   sendUrl?: boolean
   type?: string
   uptime24?: number
+  uptime30?: number
   validCert?: boolean
   certExpiryDaysRemaining?: number
   tags?: Tag[]
