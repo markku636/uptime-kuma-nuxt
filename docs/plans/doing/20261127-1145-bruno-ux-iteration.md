@@ -54,8 +54,14 @@ R4 ✅ Bulk Edit 無效列提示（12:00–12:04 CST）— commit `87c4611`：
 - 驗證：第一次跑 5/6（警告被吞）→ 修正後 `npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 
-R5 ✅ Raw 工具列與轉換回饋（12:04–12:07 CST）— commit 待填：
+R5 ✅ Raw 工具列與轉換回饋（12:04–12:07 CST）— commit `5768d89`：
 - Copy / Download 兩顆按鈕加 `gap-2`；parse/stringify 進行中在工具列顯示 `Converting…`。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6（無視覺回歸）。
+- 部署：未部署。
+
+R6 ✅ Vars 變數清單可篩選（12:07–12:11 CST）— commit 待填：
+- Vars 分頁新增 `Filter variables` 輸入框；篩選只套用到清單，`{{` 自動完成仍用完整變數集合。
+- browser 測試：`EDITOR` 看得到、不存在的關鍵字看不到、清空後恢復。
+- 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
 - 部署：未部署。
 

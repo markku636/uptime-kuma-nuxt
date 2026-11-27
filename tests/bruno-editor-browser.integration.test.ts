@@ -93,6 +93,12 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
 
     await page.getByRole('tab', {name:/Vars/}).click()
     await page.getByText('{{EDITOR_VAR}}').waitFor()
+    const varFilter = page.getByLabel('Filter environment variables')
+    await varFilter.fill('EDITOR')
+    assert.equal(await page.getByText('{{EDITOR_VAR}}').count(), 1)
+    await varFilter.fill('no-such-variable')
+    assert.equal(await page.getByText('{{EDITOR_VAR}}').count(), 0, 'the variable list is filterable')
+    await varFilter.fill('')
     await page.getByRole('button', {name:'+ Add variable', exact:true}).click()
     const varValue = page.locator('table.bruno-table input[placeholder="Value"]').first()
     await varValue.click()
