@@ -63,7 +63,8 @@
           <p class="text-xs text-secondary">Query/path parameters · <code>&#123;&#123;variable&#125;&#125;</code> values are resolved from this environment when the check runs.</p>
           <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="toggleBulk('params')">{{ bulkKind === 'params' ? 'Table Edit' : 'Bulk Edit' }}</button>
         </div>
-        <textarea v-if="bulkKind === 'params'" v-model="bulkText" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="name: value" :disabled="disabled" />
+        <p v-if="bulkWarnings.length" role="status" class="text-xs text-amber-500">{{ bulkWarnings.join(' ') }}</p>
+        <textarea v-if="bulkKind === 'params'" v-model="bulkDraft" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="name: value" :disabled="disabled" />
         <div v-else class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-24">Type</th><th class="w-10"></th></tr></thead>
           <tbody>
@@ -105,7 +106,8 @@
         <div class="flex justify-end">
           <button type="button" class="btn btn-outline text-xs" :disabled="disabled" @click="toggleBulk('headers')">{{ bulkKind === 'headers' ? 'Table Edit' : 'Bulk Edit' }}</button>
         </div>
-        <textarea v-if="bulkKind === 'headers'" v-model="bulkText" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="Name: value" :disabled="disabled" />
+        <p v-if="bulkWarnings.length" role="status" class="text-xs text-amber-500">{{ bulkWarnings.join(' ') }}</p>
+        <textarea v-if="bulkKind === 'headers'" v-model="bulkDraft" class="input-field font-mono text-xs" rows="12" spellcheck="false" placeholder="Name: value" :disabled="disabled" />
         <div v-else class="overflow-x-auto"><table class="bruno-table">
           <thead><tr><th class="w-8"></th><th>Name</th><th>Value</th><th class="w-10"></th></tr></thead>
           <tbody>
@@ -335,29 +337,44 @@ async function copySource() {
   catch { error.value = 'Unable to copy; select the text and copy manually.' }
 }
 const bulkKind = ref<'params' | 'headers' | null>(null)
-watch(activeTab, () => { bulkKind.value = null })
+const bulkWarnings = ref<string[]>([])
+const bulkDraft = ref('')
+watch(activeTab, () => { bulkKind.value = null; bulkWarnings.value = [] })
 
+/** Keep the textarea's own draft while typing so invalid lines are not normalized away before the warning is seen. */
+function bulkRowsToText(kind: 'params' | 'headers') {
+  return model.value?.[kind].map(row => `${row.enabled ? '' : '~'}${row.name}: ${row.value}`).join('\n') || ''
+}
 /** Official Bruno bulk editor: one `name: value` per line; a leading `~` marks a disabled row. */
-const bulkText = computed({
-  get: () => model.value && bulkKind.value
-    ? model.value[bulkKind.value].map(row => `${row.enabled ? '' : '~'}${row.name}: ${row.value}`).join('\n')
-    : '',
-  set: text => {
-    if (!model.value || !bulkKind.value) return
-    const previous = model.value[bulkKind.value] as Array<{name: string; value: string; enabled: boolean; type?: 'query' | 'path'}>
-    const rows = text.split(/\r?\n/).map(line => {
-      const match = /^\s*(~?)\s*([^:]+?)\s*:\s?(.*)$/.exec(line)
-      if (!match || !match[2]!.trim()) return null
-      const name = match[2]!.trim(), old = previous.find(row => row.name === name)
-      return {
-        name, value: match[3] ?? '', enabled: match[1] !== '~',
-        ...(bulkKind.value === 'params' && old?.type ? {type: old.type} : {}),
-      }
-    }).filter(row => row !== null)
-    model.value[bulkKind.value] = rows as any
-  },
-})
-function toggleBulk(kind: 'params' | 'headers') { bulkKind.value = bulkKind.value === kind ? null : kind }
+function applyBulkDraft() {
+  if (!model.value || !bulkKind.value) return
+  const kind = bulkKind.value
+  const previous = model.value[kind] as Array<{name: string; value: string; enabled: boolean; type?: 'query' | 'path'}>
+  const rows: Array<{name: string; value: string; enabled: boolean; type?: 'query' | 'path'}> = []
+  const skipped: number[] = []
+  bulkDraft.value.split(/\r?\n/).forEach((line, index) => {
+    const match = /^\s*(~?)\s*([^:]+?)\s*:\s?(.*)$/.exec(line)
+    if (!match || !match[2]!.trim()) {
+      if (line.trim()) skipped.push(index + 1)
+      return
+    }
+    const name = match[2]!.trim(), old = previous.find(row => row.name === name)
+    rows.push({
+      name, value: match[3] ?? '', enabled: match[1] !== '~',
+      ...(kind === 'params' && old?.type ? {type: old.type} : {}),
+    })
+  })
+  bulkWarnings.value = skipped.length
+    ? [`Skipped line${skipped.length > 1 ? 's' : ''} ${skipped.join(', ')}: use "name: value" (prefix ~ to disable).`]
+    : []
+  model.value[kind] = rows as any
+}
+watch(bulkDraft, applyBulkDraft)
+function toggleBulk(kind: 'params' | 'headers') {
+  bulkKind.value = bulkKind.value === kind ? null : kind
+  bulkWarnings.value = []
+  if (bulkKind.value) bulkDraft.value = bulkRowsToText(kind)
+}
 
 function downloadSource() {
   if (!rawSource.value) return

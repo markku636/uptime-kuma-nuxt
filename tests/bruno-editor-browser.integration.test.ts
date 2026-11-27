@@ -66,9 +66,11 @@ test('browser edits a Bruno request with the tabbed editor, saves and tests it',
     await page.getByRole('button', {name:'Bulk Edit', exact:true}).click()
     const bulk = page.locator('textarea[placeholder="name: value"]')
     assert.match(await bulk.inputValue(), /token: demo/)
-    await bulk.fill('token: demo2\n~off: no')
+    await bulk.fill('token: demo2\n~off: no\nbroken line\n: empty')
+    await page.getByText(/Skipped lines 3, 4/).waitFor()
     await page.getByRole('button', {name:'Table Edit', exact:true}).click()
     const paramTable = page.locator('table.bruno-table').first()
+    assert.equal(await paramTable.getByPlaceholder('Name').count(), 2, 'malformed bulk lines are not silently added as rows')
     assert.equal(await paramTable.getByPlaceholder('Name').first().inputValue(), 'token')
     assert.equal(await paramTable.getByPlaceholder('Value').first().inputValue(), 'demo2')
 
