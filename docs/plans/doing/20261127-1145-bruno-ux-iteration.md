@@ -161,7 +161,7 @@ R23 ✅ 最終回歸 + lab 部署 R19–R22（15:27–15:32 CST）— 無程式 
 
 R24 ✅ 完整整合回歸（15:32–15:34 CST，驗證輪）— 無程式變更：`npm run test:integration` 107 pass / 0 fail / 1 skip；lab rev312 不變。
 
-R25 ✅ 斷言 expression 自動建議（15:35–15:38 CST）— commit 待填：
+R25 ✅ 斷言 expression 自動建議（15:35–15:37 CST）— commit `9bf9753`：
 - Assert 分頁 expression 欄位加 `datalist`，提供 `res.status` / `res.responseTime` / `res.body.data` / `res.headers.content-type` 等 6 個建議。
 - browser 測試驗證 datalist 選項與 input 的 `list` 屬性。
 - 驗證：`npm run typecheck` exit=0、`npm run build` 成功、Bruno editor browser 6/6。
