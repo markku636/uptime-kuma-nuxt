@@ -186,6 +186,16 @@ useHead({
   ],
 })
 
+function maintenanceWindow(maintenance: any) {
+  const slot = maintenance.timeslotList?.[0]
+  const start = slot?.startDate || maintenance.startDate
+  const end = slot?.endDate || maintenance.endDate
+  if (!start && !end) return maintenance.strategy === 'manual' ? 'Scheduled' : 'Upcoming window'
+  const fmt = (value?: string | null) => value && Number.isFinite(new Date(value).getTime())
+    ? new Date(value).toLocaleString() : ''
+  return `${fmt(start)} - ${fmt(end)}`.trim()
+}
+
 // Initialize on mount
 onMounted(async () => {
   await init()
@@ -797,7 +807,7 @@ function formatLastUpdated(date: Date | null) {
                 {{ maintenance.description }}
               </p>
               <p class="text-xs text-blue-500 dark:text-blue-400 mt-2">
-                {{ maintenance.startTime }} - {{ maintenance.endTime }}
+                {{ maintenanceWindow(maintenance) }}
               </p>
             </div>
           </div>

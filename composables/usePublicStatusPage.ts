@@ -88,10 +88,12 @@ interface Pagination {
 interface Maintenance {
   id: number
   title: string
-  description?: string
-  startTime?: string
-  endTime?: string
-  // TODO: Add more fields as needed
+  description?: string | null
+  strategy: string
+  status: string
+  startDate?: string | null
+  endDate?: string | null
+  timeslotList?: { startDate: string; endDate: string }[]
 }
 
 // Overall status constants
@@ -240,6 +242,13 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     }
   }
 
+  async function loadMaintenance() {
+    try {
+      const response = await $fetch<any>(`/api/v1/status-pages/${slugRef.value}/maintenances`)
+      if (response.ok) maintenanceList.value = response.data || []
+    } catch { maintenanceList.value = [] }
+  }
+
   async function unlockStatusPage(password: string) {
     passwordError.value = ''
     try {
@@ -364,6 +373,8 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     // Then load with pagination for the first group
     await loadData({ noPagination: false })
     
+    await loadMaintenance()
+
     // Load heartbeat for initial monitors
     const monitorIds = groups.value.flatMap(g => g.monitorList.map(m => m.id))
     if (monitorIds.length) {
@@ -681,6 +692,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
     // Methods
     init,
     loadData,
+    loadMaintenance,
     loadHeartbeat,
     switchTab,
     changePage,

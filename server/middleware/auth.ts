@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   if (method === 'POST' && ['/api/auth/login', '/api/auth/setup'].includes(path)) return
   if (method === 'GET' && ['/api/health', '/api/v1/health', '/api/health/live', '/api/health/ready', '/api/entry-page'].includes(path)) return
   if (method === 'GET' && (/^\/api\/(status\/|badge\/|status-page\/)/.test(path)
-    || /^\/api\/v1\/status-pages?\/[^/]+(?:\/(monitors|heartbeat|incidents|config))?$/.test(path))) return
+    || /^\/api\/v1\/status-pages?\/[^/]+(?:\/(monitors|heartbeat|incidents|config|maintenances))?$/.test(path))) return
   if (method === 'POST' && /^\/api\/v1\/status-pages\/[^/]+\/unlock$/.test(path)) return
   if (['GET', 'POST'].includes(method) && /^\/api\/push\/[^/]+$/.test(path)) return
   const session = await requireRequestSession(event)
