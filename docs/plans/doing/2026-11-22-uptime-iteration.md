@@ -619,3 +619,10 @@ R110 🔵 OpenAPI 補全（`20018f6`）：文件新增 status-pages CRUD／incid
   端點，Monitor 增加 notifications／notificationDelays／resendInterval，StatusPage 增加 noIndex，
   新增 Incident／IncidentUpdate schema；REST contract 測試確保宣告與實作一致。
   unit 188、integration 113、typecheck 0；rev347，線上 swagger-json 含新端點。
+
+R111 🔵 公開卡片回應時間（`b1e586c`）：`recentAveragePing` 只取最近 10 筆有效 ping；
+  狀態頁與 embed 顯示平均 ms。unit 190、integration 113、typecheck 0；rev349。
+R112–R115 🔵 與另一條 session 交錯上線：RSS 事件／嵌入事件與維護橫幅（`3388491`）、
+  群組可收合（`e75625e`，rev365 實測 aria-expanded 與 display:none）、最後檢查時間（`e0f0a4e`）。
+R116–R117 🔵 公開可用率視窗（`5132ea4`）：heartbeat API 同時回 24h/7d/30d，
+  卡片與 embed 顯示 30d；integration 新增公開視窗測試 115/115；rev369 Healthy。
