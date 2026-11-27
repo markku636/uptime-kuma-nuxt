@@ -9,6 +9,22 @@
       <h4 class="incident-title">{{ incident.title }}</h4>
       <div class="incident-content" v-html="contentHtml" />
       
+      <IncidentUpdates v-if="incident.updates?.length" :updates="incident.updates" />
+
+      <div v-if="editMode && incident.id" class="incident-update-form">
+        <label class="form-label">Add progress update</label>
+        <div class="update-row">
+          <select v-model="updateStatus" class="form-control update-status" aria-label="Update status">
+            <option v-for="option in updateStatuses" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+          <input v-model="updateMessage" class="form-control" maxlength="5000" placeholder="What changed?" aria-label="Update message" @keyup.enter="submitUpdate" />
+          <button class="btn btn-light" :disabled="sendingUpdate || !updateMessage.trim()" @click="submitUpdate">
+            {{ sendingUpdate ? 'Posting…' : 'Post update' }}
+          </button>
+        </div>
+        <p v-if="updateError" role="status" class="update-error">{{ updateError }}</p>
+      </div>
+
       <div class="incident-meta">
         <span v-if="incident.createdDate">
           Created: {{ formatDate(incident.createdDate) }} ({{ dateFromNow(incident.createdDate) }})
@@ -113,6 +129,7 @@ interface Incident {
   pin?: boolean
   createdDate?: string
   lastUpdatedDate?: string
+  updates?: { id: number; status: string; message: string; createdDate: string }[]
 }
 
 const props = withDefaults(defineProps<{
@@ -127,10 +144,35 @@ const emit = defineEmits<{
   'post': [incident: Incident]
   'unpin': []
   'cancel': []
+  'update': [payload: { status: string; message: string }]
 }>()
 
 const isEditing = ref(false)
 const previousIncident = ref<Incident | null>(null)
+const updateStatus = ref('update')
+const updateMessage = ref('')
+const sendingUpdate = ref(false)
+const updateError = ref('')
+const updateStatuses = [
+  { value: 'update', label: 'Update' },
+  { value: 'investigating', label: 'Investigating' },
+  { value: 'identified', label: 'Identified' },
+  { value: 'monitoring', label: 'Monitoring' },
+  { value: 'resolved', label: 'Resolved' },
+]
+
+async function submitUpdate() {
+  const message = updateMessage.value.trim()
+  if (!message || sendingUpdate.value) return
+  sendingUpdate.value = true
+  updateError.value = ''
+  try {
+    emit('update', { status: updateStatus.value, message })
+    updateMessage.value = ''
+  } finally {
+    sendingUpdate.value = false
+  }
+}
 
 const localIncident = ref<Incident>({
   title: '',
@@ -277,6 +319,12 @@ function dateFromNow(date: string) {
   opacity: 0.8;
   margin-top: 12px;
 }
+
+.incident-update-form { margin-top: 14px; }
+.update-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+.update-status { flex: 0 0 150px; }
+.update-row input { flex: 1 1 220px; }
+.update-error { margin-top: 6px; font-size: .75rem; color: #b91c1c; }
 
 .incident-actions {
   display: flex;

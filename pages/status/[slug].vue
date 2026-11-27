@@ -439,6 +439,19 @@ async function handleIncidentPost(incidentData: any) {
   }
 }
 
+async function handleIncidentUpdate(payload: { status: string; message: string }) {
+  if (!incident.value?.id) return
+  try {
+    await $fetch(`/api/v1/status-pages/${slug.value}/incidents/${incident.value.id}/updates`, {
+      method: 'POST',
+      body: payload,
+    })
+    await loadData()
+  } catch (error: any) {
+    console.error('Failed to post incident update:', error?.data?.message || error)
+  }
+}
+
 async function handleUnpinIncident() {
   const result = await unpinIncident()
   if (!result.success) {
@@ -796,6 +809,7 @@ function formatLastUpdated(date: Date | null) {
             :edit-mode="editMode"
             @post="handleIncidentPost"
             @unpin="handleUnpinIncident"
+            @update="handleIncidentUpdate"
           />
         </div>
 
@@ -817,6 +831,7 @@ function formatLastUpdated(date: Date | null) {
                 class="incident-history-content text-sm text-gray-600 dark:text-gray-400 mt-2 prose dark:prose-invert prose-sm max-w-none"
                 v-html="incidentContentHtml(item)"
               />
+              <StatusIncidentUpdates v-if="item.updates?.length" :updates="item.updates" compact />
             </article>
           </div>
         </div>

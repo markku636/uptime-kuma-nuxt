@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     else if (activeStatuses.every(status => status === 1)) pageOverallStatus = 'operational'
   }
 
-  const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 20 }) }
+  const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 20, include: { updates: { orderBy: { createdAt: 'asc' }, take: 50 } } }) }
   // Editing is a session capability; API keys never unlock the public editor.
   const session = await getRequestSession(event)
   let editAllowed = false
@@ -282,7 +282,13 @@ function formatIncident(incident: any) {
     style: incident.style,
     pin: incident.pin,
     createdDate: incident.createdAt?.toISOString(),
-    lastUpdatedDate: incident.updatedAt?.toISOString()
+    lastUpdatedDate: incident.updatedAt?.toISOString(),
+    updates: (incident.updates || []).map((update: any) => ({
+      id: update.id,
+      status: update.status,
+      message: update.message,
+      createdDate: update.createdAt?.toISOString(),
+    })),
   }
 }
 

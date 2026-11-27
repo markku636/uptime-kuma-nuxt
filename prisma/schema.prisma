@@ -365,8 +365,21 @@ model Incident {
   updatedAt    DateTime? @map("updated_at")
 
   statusPage StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+  updates   IncidentUpdate[]
 
   @@map("incidents")
+}
+
+model IncidentUpdate {
+  id        Int      @id @default(autoincrement())
+  incidentId Int     @map("incident_id")
+  status    String   @default("update")
+  message   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  incident  Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId, createdAt])
+  @@map("incident_updates")
 }
 
 model Tag {

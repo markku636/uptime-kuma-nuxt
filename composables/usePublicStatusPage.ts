@@ -32,6 +32,7 @@ interface Incident {
   pin: boolean
   createdDate?: string
   lastUpdatedDate?: string
+  updates?: { id: number; status: string; message: string; createdDate: string }[]
 }
 
 interface Heartbeat {
