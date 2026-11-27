@@ -55,7 +55,7 @@
       </div>
 
       <div class="bruno-tabs" role="tablist" aria-label="Bruno request sections">
-        <button v-for="tab in tabs" :key="tab.key" type="button" role="tab" class="bruno-tab" :class="activeTab === tab.key ? 'bruno-tab-active' : ''" :aria-selected="activeTab === tab.key" @click="activeTab = tab.key">
+        <button v-for="tab in tabs" :key="tab.key" type="button" role="tab" class="bruno-tab" :class="activeTab === tab.key ? 'bruno-tab-active' : ''" :aria-selected="activeTab === tab.key" @click="activeTab = tab.key" @keydown.left.prevent="moveTab(-1)" @keydown.right.prevent="moveTab(1)">
           {{ tab.label }} <sup v-if="counts[tab.key]" class="text-xs">{{ counts[tab.key] }}</sup>
         </button>
       </div>
@@ -330,6 +330,16 @@ const tabs = [
   { key: 'settings', label: 'Settings' },
 ] as const
 const resultTabs = [{ key: 'headers', label: 'Headers' }, { key: 'body', label: 'Body' }, { key: 'assert', label: 'Assertions' }] as const
+
+function moveTab(direction: 1 | -1) {
+  const index = tabs.findIndex(tab => tab.key === activeTab.value)
+  const next = tabs[(index + direction + tabs.length) % tabs.length]!
+  activeTab.value = next.key
+  void nextTick(() => {
+    const selected = root.value?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+    selected?.focus()
+  })
+}
 
 const { current, environment } = useWorkspace()
 const resolvedEnvironmentId = computed(() => Number(props.environmentId || environment.value?.id || 0) || undefined)
