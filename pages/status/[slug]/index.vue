@@ -826,7 +826,14 @@ function formatLastUpdated(date: Date | null) {
 
         <!-- Incident history (UptimeRobot-style timeline) -->
         <div v-if="!editMode && incidents.length > 1" class="mb-8">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ 'Incident history' }}</h2>
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ 'Incident history' }}</h2>
+            <a
+              :href="`/api/status/${slug}/rss`"
+              class="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+              rel="noopener"
+            >Subscribe via RSS</a>
+          </div>
           <div class="space-y-3">
             <article
               v-for="item in incidents.slice(1)"

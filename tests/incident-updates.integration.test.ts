@@ -35,6 +35,12 @@ test('incident progress updates are persisted and exposed on the public status p
   assert.deepEqual(listed.updates.map((row: any) => row.status), ['update', 'identified'])
   assert.equal(listed.updates[1].message, 'Root cause found')
 
+  const feed = await fetch(`${process.env.TEST_BASE_URL || 'http://127.0.0.1:32511'}/api/status/${slug}/rss`)
+  assert.equal(feed.status, 200)
+  const xml = await feed.text()
+  assert.ok(xml.includes('API degraded'))
+  assert.ok(xml.includes('Root cause found'))
+
   const publicPost = await request(path, 'POST', undefined, undefined, { message: 'unauthorized' })
   assert.equal(publicPost.status, 401)
 })

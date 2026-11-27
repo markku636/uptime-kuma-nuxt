@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
     where: { statusPageId: statusPage.id },
     orderBy: { createdAt: 'desc' },
     take: 50,
+    include: { updates: { orderBy: { createdAt: 'asc' }, take: 20 } },
   })
 
   // Generate RSS feed
@@ -34,11 +35,14 @@ export default defineEventHandler(async (event) => {
 
   // Add incidents to feed
   for (const incident of incidents) {
+    const timeline = (incident.updates || [])
+      .map((update: any) => `${update.status.toUpperCase()}: ${update.message} (${update.createdAt.toISOString()})`)
+      .join('\n')
     feed.item({
       title: incident.title,
-      description: incident.content,
+      description: [incident.content, timeline].filter(Boolean).join('\n\n'),
       url: `${baseUrl}/status/${slug}#incident-${incident.id}`,
-      date: incident.createdAt,
+      date: incident.updatedAt || incident.createdAt,
       guid: `incident-${incident.id}`
     })
   }
