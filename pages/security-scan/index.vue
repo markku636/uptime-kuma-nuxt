@@ -57,6 +57,10 @@
         <span class="text-sm text-toned">Active probe limit (0–6)</span>
         <input v-model.number="maxProbes" type="number" min="0" max="6" aria-label="Active probe limit" class="input-field mt-1 w-32" />
       </label>
+      <label class="block mt-3">
+        <span class="text-sm text-toned">Schedule threshold (0–100, DOWN below this score)</span>
+        <input v-model.number="minScore" type="number" min="0" max="100" aria-label="Schedule threshold" class="input-field mt-1 w-32" />
+      </label>
 
       <p v-if="error" role="alert" class="text-sm text-red-400 mt-3">{{ error }}</p>
       <div class="flex flex-wrap gap-2 mt-4">
@@ -64,6 +68,7 @@
           {{ busy ? 'Scanning…' : 'Run scan' }}
         </button>
         <button v-if="report" type="button" class="btn btn-secondary" @click="downloadJson">Download JSON</button>
+        <button v-if="report" type="button" class="btn btn-secondary" @click="downloadFindingsCsv">Findings CSV</button>
         <button v-if="report && profile === 'passive'" type="button" class="btn btn-secondary" :disabled="scheduling" @click="schedule">
           {{ scheduling ? 'Scheduling…' : 'Schedule hourly' }}
         </button>
@@ -108,6 +113,9 @@
         <span class="badge" :class="severityClass(report.riskLevel)">Risk: {{ report.riskLevel }}</span>
         <span class="badge badge-secondary">{{ report.profile }}</span>
         <span class="text-sm text-tertiary">{{ report.durationMs }} ms · {{ report.findings.length }} findings</span>
+        <span v-for="severity in severityOrder" :key="severity" class="badge" :class="severityClass(severity)" v-show="severityCounts[severity]">
+          {{ severity }} {{ severityCounts[severity] }}
+        </span>
       </div>
 
       <div class="grid gap-3 md:grid-cols-2 mb-4">
@@ -204,6 +212,13 @@ const enabled = ref<Record<CategoryId, boolean>>({
   fingerprint: true, headers: true, cookies: true, tls: true, dns: true, redirect: true, exposure: true,
 })
 const maxProbes = ref(3)
+const minScore = ref(60)
+const severityOrder = ['critical', 'high', 'medium', 'low', 'info'] as const
+const severityCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const finding of report.value?.findings || []) counts[finding.severity] = (counts[finding.severity] || 0) + 1
+  return counts
+})
 const batchRaw = ref('')
 const batchResult = ref<{ results: Array<{ url: string; status: string; score: number | null; grade: string | null; riskLevel: string | null; findings: number; durationMs: number; error: string | null }>; passed: number; failed: number; errors: number } | null>(null)
 const batchBusy = ref(false)
@@ -318,7 +333,7 @@ async function schedule(): Promise<void> {
   error.value = ''
   try {
     const config = {
-      url: url.value.trim(), minScore: 60,
+      url: url.value.trim(), minScore: Math.max(0, Math.min(100, Number(minScore.value) || 60)),
       categories: Object.fromEntries(categories.map(category => [category.id, enabled.value[category.id] !== false])),
     }
     let name = url.value.trim()
@@ -337,6 +352,25 @@ async function schedule(): Promise<void> {
   } finally {
     scheduling.value = false
   }
+}
+
+function downloadFindingsCsv(): void {
+  if (!report.value) return
+  const lines = [
+    ['severity', 'category', 'rule', 'title', 'detail', 'recommendation', 'cwe', 'refs'].join(','),
+    ...report.value.findings.map(finding => [
+      csvCell(finding.severity), csvCell(finding.category), csvCell(finding.rule),
+      csvCell(finding.title), csvCell(finding.detail), csvCell(finding.recommendation),
+      csvCell(finding.cwe.join(' ')), csvCell(finding.refs.join(' ')),
+    ].join(',')),
+  ]
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+  const link = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = link
+  anchor.download = `security-scan-findings-${Date.now()}.csv`
+  anchor.click()
+  URL.revokeObjectURL(link)
 }
 
 function downloadJson(): void {
