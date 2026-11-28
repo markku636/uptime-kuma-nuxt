@@ -101,11 +101,16 @@ R167 ✅ 合成流程逐步 trace — commit `7c2b1f3` 後；部署 rev574。
   存 flowSteps／耗時／錯誤碼，不存 body）；trial 不寫。監控詳情頁以「最近成功／最近失敗」顯示。
 - unit 280/280、typecheck 0、build 成功。
 
-R168 🔵 Webhook 訂閱者 — 程式完成，待部署。
+R168 ✅ Webhook 訂閱者 — commit `432484c` 後；部署 rev599，typecheck／unit 皆綠。
 - `StatusPageSubscriber` 加 kind／加密 url＋migration；管理端 `POST .../subscribers` 新增 webhook
   （公網 http(s) guard、最多 200 位）；列表只回 `urlConfigured` 不回明文。
 - dispatcher 依 kind 發送 Email 或 JSON webhook（10s timeout、不外送 redirect、失敗重試／死信）。
 - 狀態頁編輯器可新增 webhook；unit 290/290、typecheck 0、build 成功。
+
+R169 🔵 訂閱者測試事件 — 程式完成，待部署。
+- `POST /api/v1/status-pages/{slug}/subscribers/{id}/test` 將合成事件放入 outbox（同一訂閱者避免重複排隊），
+  後台 Webhook 列新增 Test 按鈕＋通知日誌可看投結果；OpenAPI 補端點。
+- unit 290/290、typecheck 0、build 成功。
 
 ## 階段性檢查（2026-11-29 00:12 CST）
 

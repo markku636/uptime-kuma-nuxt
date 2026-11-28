@@ -82,6 +82,16 @@ async function verifySubscriber(id: number): Promise<void> {
   toast.add({ title: 'Subscriber verified', color: 'success' })
   await loadSubscribers()
 }
+async function testSubscriber(id: number): Promise<void> {
+  try {
+    await $fetch(`/api/v1/status-pages/${form.value.slug}/subscribers/${id}/test`, { method: 'POST' })
+    toast.add({ title: 'Test queued', description: 'Check the notification log for delivery.', color: 'success' })
+    await loadSubscribers()
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error?.data?.message || 'Could not queue test', color: 'error' })
+  }
+}
+
 async function deleteSubscriber(id: number): Promise<void> {
   await $fetch(`/api/v1/status-pages/${form.value.slug}/subscribers/${id}`, { method: 'DELETE' })
   toast.add({ title: 'Subscriber removed', color: 'success' })
@@ -338,6 +348,7 @@ const previewUrl = computed(() => {
         <span class="badge" :class="row.verified ? 'badge-success' : 'badge-warning'">{{ row.verified ? 'verified' : 'pending' }}</span>
         <span class="text-xs text-gray-500">{{ new Date(row.createdAt).toLocaleString() }}</span>
         <div class="ml-auto flex gap-2">
+          <UButton v-if="row.kind === 'webhook'" variant="outline" size="xs" @click="testSubscriber(row.id)">Test</UButton>
           <UButton v-if="!row.verified" variant="outline" size="xs" @click="verifySubscriber(row.id)">Verify</UButton>
           <UButton variant="ghost" size="xs" color="error" @click="deleteSubscriber(row.id)">Remove</UButton>
         </div>
