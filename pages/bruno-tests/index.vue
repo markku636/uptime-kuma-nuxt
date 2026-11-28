@@ -74,12 +74,19 @@ onMounted(load)
       </div>
     <div v-else class="card overflow-x-auto">
       <table class="table">
-        <thead><tr><th>Name</th><th>Collection</th><th>Steps</th><th>Updated</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Collection</th><th>Steps</th><th>Last run</th><th>Updated</th><th></th></tr></thead>
         <tbody>
           <tr v-for="row in rows" :key="row.id">
             <td><NuxtLink :to="`/bruno-tests/${row.id}`" class="link">{{ row.name }}</NuxtLink></td>
             <td class="font-mono text-xs">{{ row.collectionId }}</td>
             <td>{{ row.steps }}</td>
+            <td class="text-xs">
+              <template v-if="row.lastRun">
+                <span :class="row.lastRun.status === 'pass' ? 'text-green-500' : 'text-red-400'">{{ row.lastRun.status }}</span>
+                <span class="text-secondary"> · #{{ row.lastRun.id }} {{ new Date(row.lastRun.startedAt).toLocaleString() }}</span>
+              </template>
+              <span v-else class="text-secondary">—</span>
+            </td>
             <td class="text-xs text-secondary">{{ new Date(row.updatedAt).toLocaleString() }}</td>
             <td class="text-right space-x-2">
               <button class="btn btn-primary btn-sm" :disabled="runningId === row.id" @click="runSuite(row.id)">{{ runningId === row.id ? 'Running…' : 'Run' }}</button>
