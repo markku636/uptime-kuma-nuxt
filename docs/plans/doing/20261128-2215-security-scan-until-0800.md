@@ -166,4 +166,19 @@ R173 🔵 MX-aware DNS 檢查 —
 - `server/services/security-scan/dns.ts`：先查 MX；**沒有 MX 就不要求 SPF／DMARC**，並在 warnings 記
   `DNS_MAIL_SKIPPED: no MX records`，避免對不寄信的網站誤報（本站先前就被誤扣 medium+low）。
 - `scan.ts` 改呼叫此模組，deps 加 `resolveMxFn`；`tests/security-scan.test.ts` 加回歸測試並全面注入 MX fake。
-- 文件同步更新。驗證：security-scan 系列 **26/26 pass**、`tsc --noEmit` **0 error**。待 build＋部署。
+- 文件同步更新。驗證：security-scan 系列 **26/26 pass**、`tsc --noEmit` **0 error**。
+- **已上線**：另一條 session 23:04／23:12 的 build 從共用工作樹帶到本輪 commit，
+  rev550 Healthy/Synced 後線上重掃本站得到 **94/100 · A**、2 findings（CSP medium＋1 info）、
+  warnings 出現 `DNS_MAIL_SKIPPED: no MX records`，證明 MX gating 生效。不需我再手動部署。
+
+## 收尾（2026-11-28 23:15 CST，距離截止 08:00 仍有 8h45m）
+
+- 功能已完整上線並端到端驗證；共用工作樹上另一條 session 仍持續 build／部署同一 repo，
+  我不再重複寫 chart，避免互撞。若其後續部署仍包含本線 commit（已確認兩次），功能維持不變。
+- 已交付：被動＋active_light 兩層、擁有權驗證、統一 finding、score/grade、排程 monitor、
+  報告歷史 API/UI、批次掃描、TLS 舊協定與 cookie 規則、本站標頭加固、OpenAPI／README／文件。
+- 最後驗證：unit 266→ full suite、`tsc --noEmit` 0、integration 117/0/1、build exit 0、
+  兩域 200、OpenAPI 四個 path、瀏覽器實測單站／批次／排程／報告面板。
+- 尚未做 live 驗證的項目：active_light 的 DNS TXT／well-known（需改公開 DNS 或放驗證檔），
+  已由 6 項 unit test 覆蓋；正式正式滲透報告仍建議用 nuclei／testssl.sh 等專業工具。
+- 工作樹：只留我自己的 commit；另一條 session 的 WIP 不動。
