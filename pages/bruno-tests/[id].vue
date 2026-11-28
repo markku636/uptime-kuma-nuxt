@@ -127,15 +127,17 @@ onMounted(load)
     <p v-if="error" role="alert" class="text-red-400">{{ error }}</p>
     <p v-if="!suite">Loading…</p>
     <template v-else>
-      <section class="card p-5 space-y-4">
-        <h2 class="font-semibold">Settings</h2>
+      <details class="card p-5">
+        <summary class="cursor-pointer font-semibold">Settings (name, fail-fast, timeout)</summary>
+        <div class="space-y-4 mt-4">
         <div class="grid sm:grid-cols-3 gap-4 items-end">
           <label class="text-sm">Name<input v-model="suite.name" class="input-field mt-1" /></label>
           <label class="flex items-center gap-2 text-sm"><input v-model="suite.failFast" type="checkbox" /> Stop on first failure</label>
           <label class="text-sm">Total timeout (s)<input v-model.number="suite.timeoutSec" type="number" min="30" max="180" class="input-field mt-1" /></label>
         </div>
         <button class="btn btn-secondary btn-sm" @click="saveSettings">Save settings</button>
-      </section>
+        </div>
+      </details>
 
       <section class="card p-5 overflow-x-auto">
         <h2 class="font-semibold mb-3">Steps</h2>

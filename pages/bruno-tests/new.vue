@@ -10,6 +10,7 @@ const source = ref<'files' | 'zip' | 'paste'>('files')
 const files = ref<BrunoFile[]>([])
 const pasted = ref('')
 const zipName = ref('')
+const advanced = ref(false)
 const collectionId = ref('collection')
 const name = ref('')
 const variablesText = ref('')
@@ -19,6 +20,18 @@ const error = ref('')
 const preview = ref<any>(null)
 
 function setSource(value: string) { source.value = value as 'files' | 'zip' | 'paste'; preview.value = null }
+
+function loadExample() {
+  const example = brunoTestExample()
+  name.value = example.name
+  collectionId.value = example.collectionId
+  variablesText.value = ''
+  secretsText.value = ''
+  files.value = example.files
+  pasted.value = ''
+  source.value = 'files'
+  preview.value = null
+}
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const zipInput = ref<HTMLInputElement | null>(null)
@@ -94,7 +107,7 @@ async function create() {
   <div class="space-y-6">
     <div>
       <h1 class="text-2xl font-semibold">New Bruno test</h1>
-      <p class="text-sm text-secondary">Upload or paste a collection. Requests run in file order; <code>vars:post-response</code> values can feed later steps.</p>
+      <p class="text-sm text-secondary">Upload .bru files (or paste one), preview, create, then press Run. No scripts—only simple JSON/header/response extraction is supported.</p>
     </div>
     <section class="card p-5 space-y-4">
       <div class="grid sm:grid-cols-2 gap-4">
@@ -105,9 +118,10 @@ async function create() {
           <input v-model="collectionId" class="input-field mt-1" />
         </label>
       </div>
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-wrap gap-3 items-center">
         <button v-for="item in [{v:'files',l:'.bru files'},{v:'zip',l:'ZIP collection'},{v:'paste',l:'Paste request'}]" :key="item.v"
           class="btn btn-sm" :class="source === item.v ? 'btn-primary' : 'btn-secondary'" @click="setSource(item.v)">{{ item.l }}</button>
+        <button class="btn btn-secondary btn-sm" @click="loadExample">Load example</button>
       </div>
       <div v-if="source === 'files'">
         <input ref="fileInput" type="file" multiple accept=".bru,.json" class="block text-sm" @change="onFiles" />
@@ -120,12 +134,17 @@ async function create() {
       <div v-else>
         <textarea v-model="pasted" rows="12" class="input-field w-full font-mono text-xs" placeholder="Paste one .bru request"></textarea>
       </div>
-      <label class="block text-sm">Extra variables (one <code>name: value</code> per line)
-        <textarea v-model="variablesText" rows="3" class="input-field w-full mt-1" placeholder="baseUrl: https://api.example.com"></textarea>
-      </label>
-      <label v-if="canManage" class="block text-sm">Secrets (stored encrypted, never returned)
-        <textarea v-model="secretsText" rows="3" class="input-field w-full mt-1" placeholder="token: abc123"></textarea>
-      </label>
+      <details class="text-sm" :open="advanced">
+        <summary class="cursor-pointer text-secondary">Advanced: variables &amp; secrets</summary>
+        <div class="space-y-3 mt-3">
+          <label class="block">Extra variables (one <code>name: value</code> per line)
+            <textarea v-model="variablesText" rows="3" class="input-field w-full mt-1" placeholder="baseUrl: https://api.example.com"></textarea>
+          </label>
+          <label v-if="canManage" class="block">Secrets (stored encrypted, never returned)
+            <textarea v-model="secretsText" rows="3" class="input-field w-full mt-1" placeholder="token: abc123"></textarea>
+          </label>
+        </div>
+      </details>
       <div class="flex gap-3">
         <button class="btn btn-secondary" :disabled="busy || !manifestFiles.length" @click="doPreview">{{ busy ? 'Working…' : 'Preview' }}</button>
         <button class="btn btn-primary" :disabled="busy || !preview?.ok || !name.trim()" @click="create">Create test</button>
