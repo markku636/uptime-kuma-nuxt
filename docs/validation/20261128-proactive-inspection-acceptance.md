@@ -21,7 +21,7 @@
 - 本日共 25+ 輪，每輪只 commit 自己修改的檔案，走 v-terminal GitOps
   `uptime-api-demo-20261114/uptime-api`：loader → migration → application。
 - 最終版本 artifact `8e9be589b6d847859f194a4ed44d6c503508533ba1786bb45946dadfe6e7016e`
-  （331,700,281 bytes；source `4d27887`）；release **rev492**、Healthy／Synced，
+  （331,700,281 bytes；source commit `732241f`）；release **rev492**、Healthy／Synced，
   `uptime.markkulab.net`／`uptime.226network.com` 皆 200。artifact releases 已 prune 到 2 個。
 - 測試：unit **234 pass / 0 fail**；typecheck **0 error**；完整整合
   **117 pass / 0 fail / 1 skip**。
