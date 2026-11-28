@@ -218,3 +218,13 @@ R178 🔵 Browser flows 補動作 —
 - `browser-flow-checker.test.ts` 加 fakePage 的 url/title/keyboard/waitForTimeout 並補一項整合測試。
 - 驗證：browser-flow 系列 **17/17**、完整 unit **288/288**、`tsc --noEmit` 0、build exit 0。
 - 待部署與瀏覽器實測。
+
+R179 ✅ Browser flows 上線驗收 —
+- 線上 `/browser-flows` action 下拉出現 17 個選項（含 5 個新動作）。
+- 第一次試跑遇到「Step 2: assertTitle 不使用 selector」——切換 action 後 disabled input 仍留舊 selector。
+  修正 `utils/browser-flow-editor.ts` 改成忽略殘值（commit `d9da1a2`），17/17 測試通過。
+- 重載後實測：`goto` + `assertTitle(Example Domain)` → **FLOW_OK · 298 ms**（2 steps 全 pass）。
+  再加 `selectOption(#lang, tw)` → **FLOW_STEP_FAILED**（等不到元素），而非 `CONFIG_ERROR`，
+  證明 value 已正確送到 checker（先前會被靜默丟掉）。
+- 部署：另一條 session 01:10 的 build 帶到修正，rev594 Healthy/Synced，兩域 200。
+  我自己的 artifact `89912e33…` _loader 被對方改寫覆蓋，故未重複部署。
