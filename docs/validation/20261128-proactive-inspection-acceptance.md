@@ -8,9 +8,9 @@
 | 功能 | 入口 | 支援 |
 | --- | --- | --- |
 | 單站健檢 | Dashboard → Website audit | HTTP／TLS／DNS／6 項 security headers／metadata／同站連結／混合內容／關鍵字；分數 0–100＋A–F；選擇性檢查可關閉 |
-| 批量健檢 | Dashboard → Bulk audit → `/site-audit` | 1–20 URL、併發 3、保留順序、逐筆錯誤隔離、CSV 下載 |
+| 批量健檢 | Dashboard → Bulk audit → `/site-audit` | 1–20 URL、併發 3、保留順序、逐筆錯誤隔離、CSV 下載；另可兩站並排比較並匯出 CSV |
 | 排程健檢 | 健檢對話框 → Schedule (hourly) | `site-audit` monitor；分數進心跳、低於 minScore 發 DOWN；最近 20 份去敏感報告＋JSON 下載＋分數差異 |
-| 合成瀏覽器流程 | `/browser-flows` | 11 種宣告式 action、逐步計時／斷言、每小時間隔、失敗截圖＋trace；不執行任意 JS |
+| 合成瀏覽器流程 | `/browser-flows` | 12 種宣告式 action（含 check／selectOption／assertCount）、逐步計時／斷言、每小時間隔、失敗截圖＋trace；不執行任意 JS |
 | 多步驟 API 測試 | `/bruno-tests` | Bruno collection suite、跨步驟白名單變數萃取、手動執行、JSON／CSV 報告（另一條 session 交付） |
 | 失敗自動事件 | Settings → General | DOWN 時在已發布狀態頁自動開事件，UP 時 resolved＋unpin |
 | 憑證到期概覽 | Dashboard → Certificate expiry | 依到期日排序的 HTTPS monitor 清單 |
@@ -20,10 +20,10 @@
 
 - 本日共 25+ 輪，每輪只 commit 自己修改的檔案，走 v-terminal GitOps
   `uptime-api-demo-20261114/uptime-api`：loader → migration → application。
-- 最終版本 artifact `53f5013a53d3e94260ae3a9995591ee38aaf3f9ce14208ef02c062cdcaf76778`
-  （331,688,777 bytes；source `6b25e6a`）；release **rev467**、Healthy／Synced，
-  `uptime.markkulab.net`／`uptime.226network.com` 皆 200。
-- 測試：unit **231 pass / 0 fail**；typecheck **0 error**；完整整合
+- 最終版本 artifact `8e9be589b6d847859f194a4ed44d6c503508533ba1786bb45946dadfe6e7016e`
+  （331,700,281 bytes；source `4d27887`）；release **rev492**、Healthy／Synced，
+  `uptime.markkulab.net`／`uptime.226network.com` 皆 200。artifact releases 已 prune 到 2 個。
+- 測試：unit **234 pass / 0 fail**；typecheck **0 error**；完整整合
   **117 pass / 0 fail / 1 skip**。
 - 瀏覽器實測：site-audit（example.com 80/B）、batch（兩筆）、browser-flow（Trial／Save／Test now、
   失敗截圖 89,648 bytes）、Bruno 兩步驟 suite（pass／萃取 `status`／CSV）、自動事件
