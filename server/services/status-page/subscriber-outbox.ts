@@ -2,6 +2,7 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../../utils/prisma'
 import { sendSubscriberMail } from './subscriber-mail'
+import { openSubscriberUrl, sendSubscriberWebhook } from './subscriber-webhook'
 
 export type StatusPageEvent = 'incident-created' | 'incident-updated' | 'incident-resolved' | 'maintenance-started' | 'maintenance-ended'
 
@@ -82,19 +83,26 @@ export class SubscriberOutboxDispatcher {
           SELECT id FROM status_page_notification_outbox
           WHERE status='pending' AND next_attempt_at<=statement_timestamp()
           ORDER BY id LIMIT 10 FOR UPDATE SKIP LOCKED
-        ) RETURNING id, subscriber_id, payload
-      `) as Array<{ id: bigint; subscriber_id: number; payload: SubscriberPayload }>
+        ) RETURNING id, subscriber_id, status_page_id, payload
+      `) as Array<{ id: bigint; subscriber_id: number; status_page_id: number; payload: SubscriberPayload }>
       await Promise.all(rows.map(row => this.deliver(row)))
     } catch { /* 下一輪再試 */ } finally { this.polling = false }
   }
 
-  private async deliver(row: { id: bigint; subscriber_id: number; payload: SubscriberPayload }): Promise<void> {
+  private async deliver(row: { id: bigint; subscriber_id: number; status_page_id: number; payload: SubscriberPayload }): Promise<void> {
     this.metrics.claimed++
     try {
-      const subscriber = await this.db.statusPageSubscriber.findUnique({ where: { id: row.subscriber_id }, select: { email: true } })
+      const subscriber = await this.db.statusPageSubscriber.findUnique({ where: { id: row.subscriber_id }, select: { email: true, kind: true, url: true } })
       if (!subscriber) { await this.finish(row.id, 'cancelled'); return }
-      const mail = formatSubscriberMail(row.payload)
-      await sendSubscriberMail(subscriber.email, mail.subject, mail.text)
+      if (subscriber.kind === 'webhook') {
+        const page = await this.db.statusPage.findUnique({ where: { id: row.status_page_id }, select: { workspaceId: true } })
+        const target = page ? openSubscriberUrl(subscriber.url, page.workspaceId, row.status_page_id) : null
+        if (!target) { await this.finish(row.id, 'dead'); return }
+        await sendSubscriberWebhook(target, { event: row.payload.event, title: row.payload.title, message: row.payload.message, pageSlug: row.payload.pageSlug, incidentId: row.payload.incidentId })
+      } else {
+        const mail = formatSubscriberMail(row.payload)
+        await sendSubscriberMail(subscriber.email, mail.subject, mail.text)
+      }
       await this.finish(row.id, 'delivered')
       this.metrics.delivered++
     } catch (error: any) {

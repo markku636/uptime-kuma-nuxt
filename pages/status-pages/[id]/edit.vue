@@ -51,6 +51,7 @@ const newDomain = ref('')
 // Email subscribers (loaded only for saved pages)
 const subscribers = ref<any[]>([])
 const outboxRows = ref<any[]>([])
+const webhookUrl = ref('')
 const loadingSubscribers = ref(false)
 async function loadSubscribers(): Promise<void> {
   if (!isEdit.value || !form.value.slug) return
@@ -64,6 +65,18 @@ async function loadSubscribers(): Promise<void> {
     outboxRows.value = outbox?.data || []
   } catch { subscribers.value = []; outboxRows.value = [] } finally { loadingSubscribers.value = false }
 }
+async function addWebhookSubscriber(): Promise<void> {
+  if (!webhookUrl.value) return
+  try {
+    await $fetch(`/api/v1/status-pages/${form.value.slug}/subscribers`, { method: 'POST', body: { url: webhookUrl.value } })
+    webhookUrl.value = ''
+    toast.add({ title: 'Webhook subscriber added', color: 'success' })
+    await loadSubscribers()
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error?.data?.message || 'Could not add webhook', color: 'error' })
+  }
+}
+
 async function verifySubscriber(id: number): Promise<void> {
   await $fetch(`/api/v1/status-pages/${form.value.slug}/subscribers/${id}/verify`, { method: 'POST' })
   toast.add({ title: 'Subscriber verified', color: 'success' })
@@ -314,10 +327,14 @@ const previewUrl = computed(() => {
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Email subscribers</h2>
         <button class="text-sm underline" :disabled="loadingSubscribers" @click="loadSubscribers">Refresh</button>
       </div>
-      <p class="text-sm text-gray-500 mb-3">Visitors subscribe from the public page and confirm by email. Confirm manually here if no SMTP relay is configured.</p>
+      <p class="text-sm text-gray-500 mb-3">Visitors subscribe from the public page and confirm by email. Confirm manually here if no SMTP relay is configured. Webhook subscribers receive the same incident and maintenance events as JSON.</p>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input v-model="webhookUrl" type="url" maxlength="2048" aria-label="Webhook URL" placeholder="https://hooks.example.com/sealwatch" class="input-field max-w-md flex-1" />
+        <button class="btn btn-secondary" :disabled="!webhookUrl" @click="addWebhookSubscriber">Add webhook</button>
+      </div>
       <p v-if="!subscribers.length" class="text-sm text-gray-500">No subscribers yet.</p>
       <div v-for="row in subscribers" :key="row.id" class="flex flex-wrap items-center gap-3 border-t border-gray-200 dark:border-gray-700 py-3">
-        <span class="text-sm text-gray-900 dark:text-gray-100">{{ row.email }}</span>
+        <span class="text-sm text-gray-900 dark:text-gray-100">{{ row.kind === 'webhook' ? 'Webhook' : row.email }}</span>
         <span class="badge" :class="row.verified ? 'badge-success' : 'badge-warning'">{{ row.verified ? 'verified' : 'pending' }}</span>
         <span class="text-xs text-gray-500">{{ new Date(row.createdAt).toLocaleString() }}</span>
         <div class="ml-auto flex gap-2">

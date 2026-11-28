@@ -835,6 +835,8 @@ model StatusPageSubscriber {
   id           Int       @id @default(autoincrement())
   statusPageId Int       @map("status_page_id")
   email        String    @db.VarChar(320)
+  kind         String    @default("email") @map("kind") // email | webhook
+  url          String?   @map("url") // encrypted webhook destination
   token        String    @unique @db.VarChar(64)
   verifiedAt   DateTime? @map("verified_at") @db.Timestamptz(3)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)

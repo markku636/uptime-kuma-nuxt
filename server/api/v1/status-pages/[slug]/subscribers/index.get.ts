@@ -9,7 +9,10 @@ export default defineEventHandler(async event => {
   if (!page) throw createError({ statusCode: 404, message: 'Status page not found' })
   const rows = await prisma.statusPageSubscriber.findMany({
     where: { statusPageId: page.id }, orderBy: { createdAt: 'desc' }, take: 200,
-    select: { id: true, email: true, verifiedAt: true, createdAt: true },
+    select: { id: true, email: true, kind: true, url: true, verifiedAt: true, createdAt: true },
   })
-  return { ok: true, data: rows.map(row => ({ ...row, verified: !!row.verifiedAt })) }
+  return { ok: true, data: rows.map(row => ({
+    id: row.id, email: row.email, kind: row.kind, verified: !!row.verifiedAt,
+    urlConfigured: !!row.url, createdAt: row.createdAt,
+  })) }
 })
