@@ -11,6 +11,10 @@
           <UIcon name="i-heroicons-cursor-arrow-rays" class="w-4 h-4 mr-2" />
           Browser flows
         </NuxtLink>
+        <NuxtLink v-if="canEdit" to="/site-audit" class="btn btn-secondary">
+          <UIcon name="i-heroicons-list-bullet" class="w-4 h-4 mr-2" />
+          Bulk audit
+        </NuxtLink>
         <button v-if="canEdit" class="btn btn-secondary" @click="auditOpen = true">
           <UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 mr-2" />
           Website audit
