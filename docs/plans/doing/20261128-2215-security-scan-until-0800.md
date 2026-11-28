@@ -53,3 +53,14 @@ R160 ✅ 弱點掃描引擎與 finding 格式 — commit 待填。
 - 新增 `tests/security-scan.test.ts` 8 項（含 SSRF 阻擋、降級、探測上限、TLS 過期、DNS 命中、排序）。
 - 驗證：targeted **8/8 pass**、`tsc --noEmit` **0 error**；未跑 build（避免與另一條 session 的 artifact 封裝打架）。
 - 下一步 R161：API（rate limit／擁有權 token 驗證）與 zod schema。
+
+R161 ✅ API 與擁有權驗證 — commit 待填。
+- 新增 `server/api/v1/security-scan.post.ts`：editor、zod strict（url／profile／verify／categories／maxProbes 0–6）、
+  每使用者 5 次/分、全域 2 個並行；把 workspaceId 綁進 `verifyOwnershipFor`。
+- 新增 `server/api/v1/security-scan/verify-token.get.ts`：只發給 editor，回 DNS TXT 名稱／值與 well-known URL，
+  每次取得就輪替舊 token，10 次/分。
+- 新增 `server/services/security-scan/verify.ts`：token 存既有 Setting 表（無 migration），90 天效期；
+  DNS TXT 比完整值、well-known 比完全相同的內容；擋 private IP／metadata／userinfo URL。
+- 新增 `tests/security-scan-verify.test.ts` 6 項（輪替／過期／跨工作區／內容不符／private URL）。
+- 驗證：14/14 pass、`tsc --noEmit` 0 error。未 build（另一條 session 尚在改 openapi.ts 等檔）。
+- 下一步 R162：UI（`/security-scan` 頁面 + dashboard 入口）。
