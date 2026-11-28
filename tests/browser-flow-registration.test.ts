@@ -17,6 +17,11 @@ test('browser-flow is a scheduled type and appears as scheduled in list DTOs', (
   assert.equal(dto.runtimeStatus, 'scheduled')
 })
 
+test('site-audit is scheduled too', () => {
+  assert.equal(supportedScheduledTypes.includes('site-audit'), true)
+  assert.equal(monitorSummary({ ...base, type: 'site-audit' }).runtimeStatus, 'scheduled')
+})
+
 test('browser-flow has monitor type metadata instead of falling back to basic', () => {
   const type = getMonitorType('browser-flow')
   assert.equal(type.supportsConditions, true)

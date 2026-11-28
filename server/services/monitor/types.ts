@@ -258,6 +258,11 @@ const browserFlowMonitorType: MonitorType = {
   ]
 }
 
+const siteAuditMonitorType: MonitorType = {
+  supportsConditions: true,
+  conditionVariables: [{ id: 'response_time', operators: numericOperators }]
+}
+
 const tailscalePingMonitorType: MonitorType = {
   supportsConditions: true,
   conditionVariables: [
@@ -346,6 +351,7 @@ export const monitorTypeList: Record<string, MonitorType> = {
   'real-browser': realBrowserMonitorType,
   'visual-diff': visualDiffMonitorType,
   'browser-flow': browserFlowMonitorType,
+  'site-audit': siteAuditMonitorType,
   'tailscale-ping': tailscalePingMonitorType,
   'group': groupMonitorType,
   'manual': manualMonitorType,

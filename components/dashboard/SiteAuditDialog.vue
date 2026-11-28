@@ -21,9 +21,17 @@
           <input v-model="keyword" type="text" maxlength="200" aria-label="Expected keyword"
             placeholder="Welcome" class="input-field mt-1" />
         </label>
+        <label class="block">
+          <span class="text-sm text-toned">Schedule threshold <span class="text-tertiary">(0–100, default 60)</span></span>
+          <input v-model.number="minScore" type="number" min="0" max="100" aria-label="Minimum score"
+            class="input-field mt-1 w-40" />
+        </label>
         <p v-if="error" role="alert" class="text-sm text-red-400">{{ error }}</p>
-        <div class="flex justify-end gap-2">
+        <div class="flex flex-wrap justify-end gap-2">
           <button type="button" class="btn btn-secondary" @click="close">Close</button>
+          <button type="button" class="btn btn-secondary" :disabled="busy || !url" @click="schedule">
+            Schedule (hourly)
+          </button>
           <button type="submit" class="btn btn-primary" :disabled="busy || !url">
             {{ busy ? 'Auditing…' : 'Run audit' }}
           </button>
@@ -76,8 +84,10 @@ interface AuditReportView {
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ (event: 'close'): void }>()
 
+const toast = useToast()
 const url = ref('')
 const keyword = ref('')
+const minScore = ref(60)
 const busy = ref(false)
 const error = ref('')
 const report = ref<AuditReportView | null>(null)
@@ -86,6 +96,7 @@ watch(() => props.open, value => {
   if (!value) return
   url.value = ''
   keyword.value = ''
+  minScore.value = 60
   error.value = ''
   report.value = null
   busy.value = false
@@ -108,6 +119,27 @@ async function run(): Promise<void> {
     report.value = response.data
   } catch (caught: any) {
     error.value = caught?.data?.message || caught?.message || 'Audit failed.'
+  } finally {
+    busy.value = false
+  }
+}
+
+async function schedule(): Promise<void> {
+  if (!url.value || busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    const config = { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), minScore: Math.max(0, Math.min(100, Number(minScore.value) || 60)) }
+    let name = url.value.trim()
+    try { name = new URL(name).hostname.replace(/^www\./, '') } catch { /* keep raw input */ }
+    await $fetch('/api/v1/monitors', {
+      method: 'POST',
+      body: { name: `Audit · ${name.slice(0, 160)}`, type: 'site-audit', url: url.value.trim(), body: JSON.stringify(config), interval: 3600, timeout: 30, method: 'GET', active: true },
+    })
+    toast.add({ title: 'Audit scheduled', description: 'Runs hourly; score becomes the monitor heartbeat.', color: 'success' })
+    emit('close')
+  } catch (caught: any) {
+    error.value = caught?.data?.message || caught?.message || 'Could not schedule audit.'
   } finally {
     busy.value = false
   }

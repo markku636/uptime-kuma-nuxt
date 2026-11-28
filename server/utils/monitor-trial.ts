@@ -4,7 +4,7 @@ let total=0
 /** Trials share the actual checker, but never write history or dispatch notifications.
  *  The optional checker argument exists only so unit tests can inject a recorder. */
 export async function trialMonitor(userId:number,monitor:any,checker:typeof checkMonitor=checkMonitor) {
-  if(!['http','keyword','json-query','bruno','browser-flow'].includes(monitor.type))throw createError({statusCode:400,message:'Trial does not support this monitor type'})
+  if(!['http','keyword','json-query','bruno','browser-flow','site-audit'].includes(monitor.type))throw createError({statusCode:400,message:'Trial does not support this monitor type'})
   const now=Date.now(),window=windows.get(userId)
   const current=window&&now-window.time<60000?window:{time:now,count:0}
   if(current.count>=10||active.has(userId)||total>=8)throw createError({statusCode:429,message:'Trial capacity reached; retry shortly'})
