@@ -20,7 +20,8 @@
 - Bruno `.bru` 宣告式子集 preview／原子 paused import／placeholder export；monitor 編輯頁提供 **Bruno 風格 UI 編輯器**（Params/Body/Headers/Auth/Vars/Script/Assert/Tests/Docs/Settings 十分頁、Raw 切換、Bulk Edit、`{{變數}}` 自動完成、頁內環境變數編輯、Send 回應面板）。JavaScript scripts/tests **保留但永不執行**；未支援 auth 與格式會明確拒絕，見 [相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
 - **Website audit（網站健檢）**：dashboard 一鍵對 URL 做 bounded 巡檢——HTTP 狀態／重新導向、
   TLS 憑證（有效期／信任／SAN）、DNS、六項 security headers、頁面 metadata、同站連結與混合內容，
-  另可指定預期關鍵字；輸出 0–100 分／A–F 等級與逐項結果。走 `POST /api/v1/site-audit`，
+  另可指定預期關鍵字與預期 HTTP 狀態碼；輸出 0–100 分／A–F 等級與逐項結果（含重新導向鏈）。
+  Bulk audit 頁面可一次查多筆 URL 或並排比較兩個站點。走 `POST /api/v1/site-audit`，
   強制 deny private/metadata 目的地，不寫歷史、不發通知。對話框的「Schedule (hourly)」可建立
   `site-audit` monitor，分數進心跳、低於門檻發 DOWN 通知，最近 20 份去敏感報告可在監控詳情頁查看／下載。
 - **Browser flows（合成瀏覽器流程）**：`/browser-flows` 提供宣告式步驟編輯器
