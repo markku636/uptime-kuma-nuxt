@@ -69,6 +69,27 @@
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-amber-500/50" @click="filterByStatus('stale')"><div class="stat-label">Stale</div><div class="stat-value text-amber-500">{{stats.stale}}</div></div>
     </div>
 
+    <!-- TLS certificate expiry overview -->
+    <div v-if="expiringCerts.length" class="card card-body mb-6">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <h2 class="section-title !mb-0">Certificate expiry</h2>
+        <span class="text-sm text-secondary">{{ expiringCerts.length }} with certificate data</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead><tr><th>Monitor</th><th>Host</th><th>Days left</th><th>Issuer</th></tr></thead>
+          <tbody>
+            <tr v-for="cert in expiringCerts.slice(0, 8)" :key="cert.id">
+              <td><NuxtLink :to="`/monitors/${cert.id}`" class="link">{{ cert.name }}</NuxtLink></td>
+              <td class="text-secondary text-sm">{{ cert.host || '—' }}</td>
+              <td><span class="badge" :class="cert.daysRemaining < 14 ? 'badge-danger' : cert.daysRemaining < 30 ? 'badge-warning' : 'badge-success'">{{ cert.daysRemaining }}d</span></td>
+              <td class="text-secondary text-sm max-w-xs truncate">{{ cert.issuer || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Search and Filter Bar -->
     <div class="card card-body mb-6">
       <div class="flex flex-col md:flex-row gap-4">
@@ -377,6 +398,7 @@ let socket:any=null
 // Quick add (UptimeRobot-style single URL flow)
 const toast = useToast()
 const auditOpen = ref(false)
+const expiringCerts = ref<Array<{ id: number; name: string; host: string; daysRemaining: number; issuer: string; valid: boolean }>>([])
 const quickAddOpen = ref(false)
 const quickAddUrl = ref('')
 const quickAddBusy = ref(false)
@@ -436,7 +458,10 @@ const {monitors,pending,error,page,summary:stats,next,back,canBack,refresh}=useM
 function useMonitorPageForDashboard(){const result=useMonitorPage();watch(searchQuery,value=>result.search.value=value);watch(statusFilter,value=>result.status.value=value);watch(typeFilter,value=>result.type.value=value);return result}
 const monitorsWithLiveData=computed(()=>monitors.value.map((m:any)=>{const beats=heartbeatsMap.value[m.id]||m.heartbeats||[],latest=beats[0],now=renderNow.value??0,fresh=latest&&now-new Date(latest.time).getTime()<=Math.max(m.interval*2,m.interval+m.timeout)*1000;return {...m,viewStatus:!m.active?'paused':!latest?'pending':!fresh?'stale':latest.status===1?'up':latest.status===0?'down':latest.status===3?'maintenance':'pending',heartbeats:beats}}))
 const groups=ref<any[]>([]),groupFilter=ref('')
-onMounted(async()=>{try{const result=await $fetch<any>('/api/v1/groups');groups.value=Array.isArray(result)?result:(result?.data?.groups||[])}catch{groups.value=[]}})
+onMounted(async()=>{
+  try{const result=await $fetch<any>('/api/v1/groups');groups.value=Array.isArray(result)?result:(result?.data?.groups||[])}catch{groups.value=[]}
+  try{const result=await $fetch<any>('/api/v1/monitors/certificates',{query:{limit:50}});expiringCerts.value=result?.data||[]}catch{expiringCerts.value=[]}
+})
 const filteredMonitors=computed(()=>groupFilter.value?monitorsWithLiveData.value.filter((m:any)=>String(m.groupId||'')===groupFilter.value):monitorsWithLiveData.value)
 const {data:eventData,refresh:refreshEvents}=await useFetch<any>('/api/v1/monitors/events',{headers:useRequestHeaders(['cookie'])})
 let historySequence=0
