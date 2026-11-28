@@ -80,8 +80,8 @@
           </UBadge>
         </div>
         
-        <span v-if="avgPing !== null" class="text-xs text-gray-500 tabular-nums" :title="'Average response time of recent checks'">
-          {{ avgPing }} ms
+        <span v-if="avgPing !== null" class="text-xs text-gray-500 tabular-nums" :title="isAuditMonitor ? 'Average audit score of recent checks' : 'Average response time of recent checks'">
+          {{ avgPing }}{{ isAuditMonitor ? '/100' : ' ms' }}
         </span>
         <span v-if="typeof monitor.uptime30 === 'number'" class="text-xs text-gray-400" title="30-day uptime">
           30d {{ monitor.uptime30.toFixed(2) }}%
@@ -173,6 +173,8 @@ const lastCheckLabel = computed(() => {
 
 // Recent response time (ms) from the latest observations, excluding failed checks.
 const avgPing = computed(() => recentAveragePing(props.monitor.heartbeats))
+// site-audit 的心跳 ping 是分數；用 checkCode 判定，不需更動公開 API 形狀。
+const isAuditMonitor = computed(() => (props.monitor.heartbeats || []).some((beat: any) => /^AUDIT_/.test(String(beat?.checkCode || ''))))
 
 // Certificate expiry color and text
 const certExpiryColor = computed((): 'error' | 'success' | 'neutral' => {

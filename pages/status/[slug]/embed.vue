@@ -71,7 +71,7 @@ onMounted(async () => { await init() })
         <li v-for="monitor in monitors" :key="monitor.id" class="sw-row">
           <span class="sw-monitor-dot" :style="{ background: monitor.heartbeats?.at(-1)?.status === 0 ? '#ef4444' : monitor.heartbeats?.at(-1)?.status === 1 ? '#10b981' : '#9ca3af' }"></span>
           <span class="sw-name">{{ monitor.name }}</span>
-          <span v-if="recentAveragePing(monitor.heartbeats) !== null" class="sw-uptime">{{ recentAveragePing(monitor.heartbeats) }} ms</span>
+          <span v-if="recentAveragePing(monitor.heartbeats) !== null" class="sw-uptime">{{ recentAveragePing(monitor.heartbeats) }}{{ (monitor.heartbeats || []).some((beat: any) => /^AUDIT_/.test(String(beat?.checkCode || ''))) ? '/100' : ' ms' }}</span>
           <span v-if="typeof monitor.uptime30 === 'number'" class="sw-uptime" title="30-day uptime">30d {{ monitor.uptime30.toFixed(2) }}%</span>
           <span v-if="typeof monitor.uptime24 === 'number'" class="sw-uptime">{{ monitor.uptime24.toFixed(2) }}%</span>
         </li>
