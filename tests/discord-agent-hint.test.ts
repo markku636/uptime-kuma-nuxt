@@ -35,6 +35,11 @@ test('有 monitorId 時 Discord embed 帶 Monitor ID 欄位', () => {
   assert.equal(buildDiscordBody(down, { webhookUrl: 'x' }).embeds[0].fields.some((f: any) => f.name === 'Monitor ID'), false)
 })
 
+test('allowed_mentions 預設只允許 user/role，mentionEveryone 才放行 everyone', () => {
+  assert.deepEqual(buildDiscordBody(down, { webhookUrl: 'x' }).allowed_mentions, { parse: ['users', 'roles'] })
+  assert.deepEqual(buildDiscordBody(down, { webhookUrl: 'x', mentionEveryone: true }).allowed_mentions, { parse: ['users', 'roles', 'everyone'] })
+})
+
 test('monitorUrlBase 搭配 monitorId 產生可點擊的 embed 標題連結，非法值忽略', () => {
   const body = buildDiscordBody({ ...down, monitorId: 65 }, { webhookUrl: 'x', monitorUrlBase: 'https://uptime.markkulab.net/monitors/' })
   assert.equal(body.embeds[0].url, 'https://uptime.markkulab.net/monitors/65')

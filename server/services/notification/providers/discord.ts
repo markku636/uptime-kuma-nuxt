@@ -20,6 +20,11 @@ export interface DiscordConfig {
    * 而不是把可能被當成 secret 的目標網址放進通知。
    */
   monitorUrlBase?: string
+  /**
+   * 是否允許 @everyone／@here。預設 false：webhook 通知只允許提及特定 user/role，
+   * 避免操作者手滑或設定錯誤時把整個頻道洗頻。
+   */
+  mentionEveryone?: boolean
 }
 
 function monitorLink(base: unknown, id?: number): string | undefined {
@@ -49,6 +54,7 @@ export function buildDiscordBody(message: NotificationMessage, config: DiscordCo
   return {
     username: config.username || 'SealWatch',
     ...(content ? { content } : {}),
+    allowed_mentions: { parse: config.mentionEveryone === true ? ['users', 'roles', 'everyone'] : ['users', 'roles'] },
     embeds: [{
       title: message.title,
       ...(link ? { url: link } : {}),

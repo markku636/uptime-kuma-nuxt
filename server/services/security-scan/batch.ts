@@ -1,7 +1,8 @@
 // server/services/security-scan/batch.ts
 // 多站弱點檢查：有界併發、保留順序、單筆失敗隔離。一律 passive（批次沒有人可以在場驗證擁有權）。
 
-import { runSecurityScan, type SecurityScanReport } from './scan'
+import { runSecurityScan } from './scan'
+import type { SecurityScanReport } from '../../../shared/types/security-scan'
 
 export interface BatchScanRow {
   url: string
