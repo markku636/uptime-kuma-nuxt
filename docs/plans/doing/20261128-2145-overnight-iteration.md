@@ -84,10 +84,15 @@ R164 ✅ JSON Schema 斷言 — commit `f22d9a1` 後；部署 rev559。
 - unit 277/277、typecheck 0、build 成功。部署 rev559。
   （期間別條 session 的 artifact 造成短暫 `.complete` 缺失／rollout Degraded，其後自行恢復 200。）
 
-R165 🔵 事件影響程度 — 程式完成，待部署。
+R165 ✅ 事件影響程度 — commit `0e43e91` 後；部署 rev564，實測建立 degraded 事件後公開 banner 從 unknown 變 degraded-performance，測試事件已刪除。
 - `Incident.impact`（none／degraded／partial／major／maintenance）＋migration；建立／編輯 API 與
   IncidentEditor 下拉；公開 `formatIncident` 回傳 impact；`raiseStatusByIncidents()` 依影響程度
   提高狀態頁 banner（major > partial > degraded > maintenance > operational），resolved 忽略。
 - 狀態頁與 embed 加 degraded-performance 樣式；自動事件設 major。
 - unit 279/279、typecheck 0、build 成功。
+- 完整整合測試 119 pass / 0 fail / 1 skip。
+
+R166 🔵 維護通知訂閱 — 程式完成，待部署。
+- `maintenanceHandler` 在 active 狀態切換且有綁定狀態頁時 enqueue `maintenance-started`／
+  `maintenance-ended` 給已驗證訂閱者；訂閱通知失敗不影響維護設定。unit 279/279、typecheck 0。
 - unit 266/266；build 成功（第一次與另一條 session 並行 build 撞 cache，重跑通過）。

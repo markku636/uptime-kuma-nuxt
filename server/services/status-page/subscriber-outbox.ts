@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../../utils/prisma'
 import { sendSubscriberMail } from './subscriber-mail'
 
-export type StatusPageEvent = 'incident-created' | 'incident-updated' | 'incident-resolved' | 'maintenance-started'
+export type StatusPageEvent = 'incident-created' | 'incident-updated' | 'incident-resolved' | 'maintenance-started' | 'maintenance-ended'
 
 export interface SubscriberPayload {
   pageSlug?: string
@@ -47,7 +47,8 @@ export function formatSubscriberMail(payload: SubscriberPayload): { subject: str
     'incident-created': 'New incident',
     'incident-updated': 'Incident update',
     'incident-resolved': 'Incident resolved',
-    'maintenance-started': 'Maintenance update',
+    'maintenance-started': 'Maintenance started',
+    'maintenance-ended': 'Maintenance ended',
   }
   return {
     subject: `[${payload.pageTitle || 'Status'}] ${label[payload.event]}: ${payload.title}`.slice(0, 200),

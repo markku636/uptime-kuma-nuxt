@@ -5,6 +5,7 @@ import {requireWorkspace,assertWorkspaceIds} from './workspace'
 import {fenceMonitorIds} from './monitor-mutation'
 import {normalizeMaintenance} from './maintenance-input'
 import {maintenanceToPublicJSON} from '../services/maintenance/scheduler'
+import {enqueueSubscriberNotifications} from '../services/status-page/subscriber-outbox'
 import {encodeCursor,decodeCursor} from './pagination'
 import {parseBoundedQuery} from './monitor-query'
 const listQuery=z.object({limit:z.coerce.number().int().min(1).max(200).default(100),cursor:z.string().max(2048).optional()})
@@ -27,6 +28,7 @@ export function maintenanceHandler(action:'list'|'get'|'create'|'update'|'delete
    return {ok:true,data:await dto(row)}
   }
   const body=action==='delete'?null:['pause','resume'].includes(action)?{active:action==='resume'}:await readBody(event)
+  let wasActive=false
   const result=await prisma.$transaction(async tx=>{
    let existing:any=null
    if(action!=='create'){
@@ -35,6 +37,7 @@ export function maintenanceHandler(action:'list'|'get'|'create'|'update'|'delete
     if(!(rows as any[]).length)throw createError({statusCode:404,message:'Maintenance not found'})
     existing=await tx.maintenance.findFirst({where:{id,workspaceId:scope.workspaceId,...environmentWhere},include:related});if(!existing)throw createError({statusCode:404,message:'Maintenance not found'})
    }
+   wasActive=!!existing?.active
    const oldIds=existing?.monitors.map((row:any)=>row.monitorId)||[]
    if(action==='delete'){await fenceMonitorIds(tx,scope.workspaceId,oldIds);await tx.maintenance.delete({where:{id,workspaceId:scope.workspaceId}});return null}
    let input:ReturnType<typeof normalizeMaintenance>
@@ -48,6 +51,12 @@ export function maintenanceHandler(action:'list'|'get'|'create'|'update'|'delete
    if(pages){await tx.maintenanceStatusPage.deleteMany({where:{maintenanceId:maintenance.id}});if(pages.length)await tx.maintenanceStatusPage.createMany({data:pages.map(statusPageId=>({maintenanceId:maintenance.id,statusPageId}))})}
    return tx.maintenance.findUniqueOrThrow({where:{id:maintenance.id},include:related})
   },{timeout:10000,maxWait:2000})
+  if(result&&result.statusPages?.length&&wasActive!==!!result.active){
+    const event=result.active?'maintenance-started':'maintenance-ended'
+    try{
+      for(const link of result.statusPages)await enqueueSubscriberNotifications(prisma,link.statusPageId,{event,title:result.title,message:`${event==='maintenance-started'?'Starting':'Ended'} maintenance: ${result.title}`})
+    }catch{/* 訂閱通知失敗不影響維護設定 */}
+  }
   return result?{ok:true,data:await dto(result)}:{ok:true}
  })
 }
