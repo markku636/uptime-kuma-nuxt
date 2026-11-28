@@ -14,5 +14,11 @@ const manifest={workingTreeSha256:sourceHash.digest('hex'),sourceFileCount:sourc
 writeFileSync(path.join(destination,'runtime-manifest.json'),JSON.stringify(manifest,null,2)+'\n')
 const archive=path.join(destination,'runtime-bundle.tgz'),result=spawnSync('tar',['--exclude=.env*','--exclude=.git','--exclude=*.log','--exclude=.cache','-czf',archive,...allow,'-C',destination,'runtime-manifest.json'],{stdio:'inherit'})
 if(result.status)throw Error('Artifact archive failed')
+// 並行 build 可能在 tar 讀取時重寫 .output；封裝後立刻核對 loader 要求的檔案，
+// 避免產生一個 SHA 正確但沒有 server entrypoint 的 artifact。
+const listed=spawnSync('tar',['-tzf',archive],{encoding:'utf8',maxBuffer:64*1024**2})
+if(listed.status)throw Error('Artifact listing failed')
+const names=new Set(listed.stdout.split('\n'))
+for(const required of ['.output/server/index.mjs','scripts/migrate.mjs','prisma/schema.prisma','node_modules/prisma/build/index.js'])if(!names.has(required))throw Error(`Artifact missing ${required}`)
 const sha256=await hashArchive(archive),report={...manifest,archive,sha256,bytes:statSync(archive).size}
 writeFileSync(path.join(destination,'artifact.json'),JSON.stringify(report,null,2)+'\n');console.info(JSON.stringify(report))
