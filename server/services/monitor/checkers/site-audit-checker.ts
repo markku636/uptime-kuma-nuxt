@@ -32,6 +32,7 @@ export function redactAuditReport(report: AuditReport): AuditReport {
     checks: report.checks.map(check => ({
       ...check, summary: clean(check.summary), detail: check.detail?.map(clean),
     })),
+    ...(report.redirectChain ? { redirectChain: report.redirectChain.map(clean) } : {}),
   }
 }
 

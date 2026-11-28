@@ -20,6 +20,7 @@ export interface AuditReport {
   score: number
   grade: 'A' | 'B' | 'C' | 'D' | 'F'
   checks: AuditCheck[]
+  redirectChain?: string[]
 }
 export type AuditCheckId = 'tls' | 'dns' | 'headers' | 'meta' | 'links' | 'keyword'
 export const auditChecksSchema = z.object({
@@ -40,6 +41,7 @@ export interface AuditFetchResult {
   elapsed: number
   finalUrl: string
   tlsInfo?: TLSInfo | null
+  redirectChain?: string[]
 }
 export type AuditFetcher = (url: string, method: 'GET' | 'HEAD') => Promise<AuditFetchResult>
 export interface AuditDeps { fetcher?: AuditFetcher; lookupFn?: typeof lookup }
@@ -74,6 +76,7 @@ export const defaultAuditFetcher: AuditFetcher = async (urlString, method) => {
   let url: URL
   try { url = new URL(urlString) } catch { throw new HttpCheckError('CONFIG_ERROR') }
   const started = Date.now()
+  const redirectChain: string[] = []
   for (let hop = 0; hop <= 2; hop++) {
     await assertPublicDestination(url, lookup)
     // maxRedirects:0 makes follow() return the raw 3xx response; its internal
@@ -91,10 +94,11 @@ export const defaultAuditFetcher: AuditFetcher = async (urlString, method) => {
       let next: URL
       try { next = new URL(response.location, url) } catch { throw new HttpCheckError('INVALID_RESPONSE') }
       if (url.protocol === 'https:' && next.protocol !== 'https:') throw new HttpCheckError('DESTINATION_DENIED')
+      redirectChain.push(url.href)
       url = next
       continue
     }
-    return { ...response, finalUrl: url.href }
+    return { ...response, finalUrl: url.href, redirectChain }
   }
   throw new HttpCheckError('REDIRECT_LIMIT')
 }
@@ -195,7 +199,7 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
       id: 'http', label: 'HTTP response',
       status: status >= 200 && status < 300 ? 'pass' : status < 400 || status === 401 || status === 403 ? 'warn' : 'fail',
       summary: `HTTP ${status} · ${page.elapsed} ms`,
-      detail: page.finalUrl !== input.url ? [`重新導向至 ${page.finalUrl}`] : undefined,
+      detail: page.redirectChain?.length ? page.redirectChain.map((from, index) => `${index + 1}. ${from}`) : page.finalUrl !== input.url ? [`重新導向至 ${page.finalUrl}`] : undefined,
     })
   } catch (error) {
     checks.push({ id: 'http', label: 'HTTP response', status: 'fail', summary: `連線失敗：${errorSummary(error)}` })
@@ -298,5 +302,6 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
   return {
     url: input.url, finalUrl: page?.finalUrl || input.url, checkedAt: new Date().toISOString(),
     durationMs: Date.now() - started, score, grade, checks,
+    redirectChain: page?.redirectChain || [],
   }
 }
