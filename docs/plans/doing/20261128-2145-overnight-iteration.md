@@ -37,9 +37,16 @@ R157 ✅ 狀態頁訂閱者資料模型與公開 API — commit `cde58ad` 後。
 
 - 部署 rev495（migration `20261128220000` 成功）；線上實測訂閱回 `pending/mail:unavailable`（未設 SMTP），後台可列出並刪除，測試資料已清除。
 
-R158 🔵 事件 outbox 與派送器 — 程式完成，待部署。
+R158 ✅ 事件 outbox 與派送器 — commit `d9d7a85` 後。部署 rev498。
 - `StatusPageNotificationOutbox` durable outbox＋`SubscriberOutboxDispatcher`（每 5 秒、批 10 筆、FOR UPDATE SKIP LOCKED、5 次重試；SMTP 未設定直接 dead）。
 - 事件建立／更新／resolved 與 auto-incident 的 DOWN／UP 都 enqueue 給已驗證訂閱者；通知失敗不影響事件本身。
 - worker runtime 啟動／drain 時一併管理派送器。unit 240/240、typecheck 0。
 
-（後續 R159 做 UI）
+- 部署 rev498，migration 已套用。
+  
+R159 🔵 訂閱 UI 與管理端 — 程式完成，待部署。
+- 公開狀態頁新增 Email 訂閱表單（雙重確認提示、SMTP 未設定明確告知、確認成功提示）。
+- 狀態頁編輯頁新增 Email subscribers 面板（列表／手動 Verify／Remove）；新增
+  `POST /api/v1/status-pages/{slug}/subscribers/{id}/verify` 供 SMTP 不可用時維運確認。
+- OpenAPI 補 4 個端點。unit 249/249、build 成功；typecheck 我觸摸的檔案 0 error，
+  全 repo 仍有另一條 session 正開發 security-scan 的 `NO_FETCHER` 型別錯誤（未碰其檔案）。

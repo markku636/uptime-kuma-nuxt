@@ -133,6 +133,34 @@ const canEdit = computed(() => !!statusPage.value?.canEdit)
 const connected = ref(true)
 const hasLoaded = computed(() => !loading.value)
 
+// Email subscription (double opt-in through the public API)
+const subscribeEmail = ref('')
+const subscribing = ref(false)
+const subscribeMessage = ref('')
+async function subscribe(): Promise<void> {
+  if (!subscribeEmail.value || subscribing.value) return
+  subscribing.value = true
+  subscribeMessage.value = ''
+  try {
+    const result = await $fetch<any>(`/api/status/${slug.value}/subscribers`, {
+      method: 'POST', body: { email: subscribeEmail.value },
+    })
+    subscribeMessage.value = result?.data?.alreadySubscribed
+      ? 'This email is already subscribed.'
+      : result?.data?.mail === 'unavailable'
+        ? 'Subscription saved. Email delivery is not configured; ask the operator to confirm it.'
+        : 'Check your inbox to confirm the subscription.'
+    subscribeEmail.value = ''
+  } catch (error: any) {
+    subscribeMessage.value = error?.data?.message || error?.message || 'Could not subscribe.'
+  } finally {
+    subscribing.value = false
+  }
+}
+onMounted(() => {
+  if (useRoute().query.subscribed === '1') subscribeMessage.value = 'Subscription confirmed. You will receive incident updates.'
+})
+
 // Markdown rendering for description and footer
 const { renderMarkdown } = useMarkdown()
 const descriptionHtml = computed(() => renderMarkdown(statusPage.value?.description))
@@ -1083,6 +1111,20 @@ function formatLastUpdated(date: Date | null) {
           <p class="empty-state-text">
             This status page doesn't have any monitors yet. Once monitors are added, their live status and uptime will appear here.
           </p>
+        </div>
+
+        <!-- Email subscribers (Checkly/Supercheck style: visitors subscribe to updates) -->
+        <div v-if="!editMode" class="card card-body mb-8">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ 'Subscribe to updates' }}</h2>
+          <p class="text-sm text-gray-500 mb-3">{{ 'Get an email when an incident is opened, updated or resolved.' }}</p>
+          <form class="flex flex-wrap gap-2" @submit.prevent="subscribe">
+            <input v-model="subscribeEmail" type="email" required maxlength="320" aria-label="Subscriber email"
+              placeholder="you@example.com" class="input-field max-w-sm flex-1" />
+            <button type="submit" class="btn btn-primary" :disabled="subscribing || !subscribeEmail">
+              {{ subscribing ? 'Submitting…' : 'Subscribe' }}
+            </button>
+          </form>
+          <p v-if="subscribeMessage" role="status" class="text-sm text-gray-500 mt-2">{{ subscribeMessage }}</p>
         </div>
 
         <!-- Footer -->

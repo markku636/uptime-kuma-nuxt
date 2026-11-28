@@ -48,6 +48,29 @@ const clearPassword=ref(false)
 const loading = ref(false)
 const newDomain = ref('')
 
+// Email subscribers (loaded only for saved pages)
+const subscribers = ref<any[]>([])
+const loadingSubscribers = ref(false)
+async function loadSubscribers(): Promise<void> {
+  if (!isEdit.value || !form.value.slug) return
+  loadingSubscribers.value = true
+  try {
+    const res = await $fetch<any>(`/api/v1/status-pages/${form.value.slug}/subscribers`)
+    subscribers.value = res?.data || []
+  } catch { subscribers.value = [] } finally { loadingSubscribers.value = false }
+}
+async function verifySubscriber(id: number): Promise<void> {
+  await $fetch(`/api/v1/status-pages/${form.value.slug}/subscribers/${id}/verify`, { method: 'POST' })
+  toast.add({ title: 'Subscriber verified', color: 'success' })
+  await loadSubscribers()
+}
+async function deleteSubscriber(id: number): Promise<void> {
+  await $fetch(`/api/v1/status-pages/${form.value.slug}/subscribers/${id}`, { method: 'DELETE' })
+  toast.add({ title: 'Subscriber removed', color: 'success' })
+  await loadSubscribers()
+}
+onMounted(loadSubscribers)
+
 // Initialize form with status page data
 watch(statusPage, (response) => {
   const val=response?.data
@@ -279,6 +302,24 @@ const previewUrl = computed(() => {
           </UButton>
         </div>
       </form>
+    </div>
+
+    <div v-if="isEdit" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mt-6 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Email subscribers</h2>
+        <button class="text-sm underline" :disabled="loadingSubscribers" @click="loadSubscribers">Refresh</button>
+      </div>
+      <p class="text-sm text-gray-500 mb-3">Visitors subscribe from the public page and confirm by email. Confirm manually here if no SMTP relay is configured.</p>
+      <p v-if="!subscribers.length" class="text-sm text-gray-500">No subscribers yet.</p>
+      <div v-for="row in subscribers" :key="row.id" class="flex flex-wrap items-center gap-3 border-t border-gray-200 dark:border-gray-700 py-3">
+        <span class="text-sm text-gray-900 dark:text-gray-100">{{ row.email }}</span>
+        <span class="badge" :class="row.verified ? 'badge-success' : 'badge-warning'">{{ row.verified ? 'verified' : 'pending' }}</span>
+        <span class="text-xs text-gray-500">{{ new Date(row.createdAt).toLocaleString() }}</span>
+        <div class="ml-auto flex gap-2">
+          <UButton v-if="!row.verified" variant="outline" size="xs" @click="verifySubscriber(row.id)">Verify</UButton>
+          <UButton variant="ghost" size="xs" color="error" @click="deleteSubscriber(row.id)">Remove</UButton>
+        </div>
+      </div>
     </div>
   </div>
 </template>
