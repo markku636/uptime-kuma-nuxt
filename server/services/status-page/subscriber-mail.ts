@@ -39,6 +39,6 @@ export function confirmationText(slug: string, token: string): { subject: string
   const link = `${base}/api/status/${encodeURIComponent(slug)}/subscribers/verify?token=${encodeURIComponent(token)}`
   return {
     subject: 'Confirm your status page subscription',
-    text: `You subscribed to ${slug} status updates.\n\nConfirm: ${link}\n\nUnsubscribe: ${base}/status/${encodeURIComponent(slug)}?unsubscribed=1&token=${encodeURIComponent(token)}`,
+    text: `You subscribed to ${slug} status updates.\n\nConfirm: ${link}\n\nUnsubscribe: ${base}/api/status/${encodeURIComponent(slug)}/subscribers/unsubscribe?token=${encodeURIComponent(token)}`,
   }
 }

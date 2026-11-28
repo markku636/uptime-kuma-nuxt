@@ -112,6 +112,11 @@ R169 ✅ 訂閱者測試事件 — commit `f149bdd1` 後；部署 rev602。
   後台 Webhook 列新增 Test 按鈕＋通知日誌可看投結果；OpenAPI 補端點。
 - unit 290/290、typecheck 0、build 成功。
 
+R170 ✅ 訂閱退訂連結 — 程式完成，待部署。
+- 確認信的 Unsubscribe 改為 `GET /api/status/{slug}/subscribers/unsubscribe?token=` 真正退訂
+  （清待送 outbox 並重定向），公開頁顯示退訂成功提示；OpenAPI 補 verify／unsubscribe。
+- unit 290/290、typecheck 0、build 成功。
+
 ## 文件更新（01:45 CST）
 
 - README 補狀態頁訂閱／webhook／ Monitoring as code／調查證據包說明。

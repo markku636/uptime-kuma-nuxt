@@ -158,7 +158,9 @@ async function subscribe(): Promise<void> {
   }
 }
 onMounted(() => {
-  if (useRoute().query.subscribed === '1') subscribeMessage.value = 'Subscription confirmed. You will receive incident updates.'
+  const query = useRoute().query
+  if (query.subscribed === '1') subscribeMessage.value = 'Subscription confirmed. You will receive incident updates.'
+  else if (query.unsubscribed === '1') subscribeMessage.value = 'You have been unsubscribed from updates.'
 })
 
 // Markdown rendering for description and footer

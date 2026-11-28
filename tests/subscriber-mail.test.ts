@@ -15,7 +15,7 @@ test('confirmation text carries tokenised links only through env base URL', () =
   try {
     const message = confirmationText('api-platform-demo', 'a'.repeat(64))
     assert.match(message.text, /https:\/\/uptime\.markkulab\.net\/api\/status\/api-platform-demo\/subscribers\/verify\?token=a{64}/)
-    assert.match(message.text, /Unsubscribe:/)
+    assert.match(message.text, /\/api\/status\/api-platform-demo\/subscribers\/unsubscribe\?token=a{64}/)
   } finally {
     if (previous === undefined) delete process.env.NUXT_PUBLIC_APP_URL
     else process.env.NUXT_PUBLIC_APP_URL = previous
