@@ -13,6 +13,7 @@ import type {
 } from '../../../shared/types/security-scan'
 import { SECURITY_SCAN_SEVERITIES } from '../../../shared/types/security-scan'
 import type { AuditFetchResult, AuditFetcher } from '../site-audit/audit'
+import { defaultAuditFetcher } from '../site-audit/audit'
 import { HttpCheckError, isForbiddenAddress } from '../monitor/checkers/http-request'
 
 export { SECURITY_SCAN_SEVERITIES }
@@ -319,6 +320,11 @@ async function exposureFindings(
   return { findings, probesUsed, warnings }
 }
 
+/** 對外公開是為了回歸測試：調度端沒注入 fetcher 時必須用真正的 site-audit fetcher。 */
+export function resolveAuditFetcher(deps: SecurityScanDeps): AuditFetcher {
+  return deps.fetcher || defaultAuditFetcher
+}
+
 export function scoreFindings(findings: SecurityFinding[]): { score: number; grade: SecurityScanReport['grade']; riskLevel: SecurityScanReport['riskLevel'] } {
   const penalty = findings.reduce((sum, finding) => sum + (PENALTY[finding.severity] || 0), 0)
   const score = Math.max(0, Math.min(100, 100 - penalty))
@@ -329,7 +335,7 @@ export function scoreFindings(findings: SecurityFinding[]): { score: number; gra
 }
 
 export async function runSecurityScan(input: SecurityScanInput, deps: SecurityScanDeps = {}): Promise<SecurityScanReport> {
-  const fetcher = deps.fetcher || (async () => { throw new HttpCheckError('NO_FETCHER') })
+  const fetcher = resolveAuditFetcher(deps)
   const lookupFn = deps.lookupFn || lookup
   const resolveTxtFn = deps.resolveTxtFn || resolveTxt
   const started = Date.now()

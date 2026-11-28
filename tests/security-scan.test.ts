@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { AuditFetchResult, AuditFetcher } from '../server/services/site-audit/audit'
-import { runSecurityScan, scoreFindings, SEVERITY_RANK } from '../server/services/security-scan/scan'
+import { runSecurityScan, scoreFindings, resolveAuditFetcher, SEVERITY_RANK } from '../server/services/security-scan/scan'
+import { defaultAuditFetcher } from '../server/services/site-audit/audit'
 import type { SecurityFinding } from '../shared/types/security-scan'
 import { lookup, resolveTxt } from 'node:dns/promises'
 
@@ -133,6 +134,12 @@ test('categories 可關閉整類檢查', async () => {
   assert.deepEqual(report.findings, [])
   assert.equal(report.score, 100)
   assert.equal(report.grade, 'A')
+})
+
+test('沒有注入 fetcher 時使用真正的 site-audit fetcher（避免 NO_FETCHER 空報告）', () => {
+  assert.equal(resolveAuditFetcher({}), defaultAuditFetcher)
+  const injected: AuditFetcher = async () => page()
+  assert.equal(resolveAuditFetcher({ fetcher: injected }), injected)
 })
 
 test('scoreFindings 依嚴重度扣分並給風險等級', () => {

@@ -79,3 +79,24 @@ R163 🔵 OpenAPI／文件完成，待 commit —
 - 驗證：unit **255/255 pass**、`tsc --noEmit` **0 error**、`npm run build` **exit 0**
   （`.output/server/chunks/routes/api/v1/security-scan.post.mjs` 與 `verify-token.get.mjs` 皆產出）。
 - 下一步 R164：部署（等另一條 session 的 R159 部署完成），再實際掃 `uptime.markkulab.net`。
+
+R164 ✅ 部署rev508 — 來源 commit `090f9bc`／artifact `f8882a70166096072a693db1fb3f14a78d558fea1d591096f62cbc094f0a1d9d`
+（331,751,176 bytes，私用 `ARTIFACT_OUTPUT_DIR=/tmp/opencode/uptime-artifacts` 打包）。
+- GitOps：`deploy_commit_push` loader `22edda1`（rev507，Job `uptime-artifact-f8882a701660-1` 1/1 done）
+  → app `bfb0dfc`（rev508，Healthy 2/2 api + 2/2 worker + 1/1 fixture）。無 DB migration（新功能只用既有 Setting 表）。
+- 短命 artifact server `192.168.50.57:32493` 已停止。另一條 session 隨後在 chart 上排入自己的 artifact
+  （因此短暫 OutOfSync），**未去動它**；我的 application artifactSha 仍是 f8882a。
+- 線上驗證：`uptime.markkulab.net/login` 與 `uptime.226network.com/login` 皆 200；
+  `/security-scan` 匿名轉 login（302）；`POST /api/v1/security-scan` 與 verify-token 匿名皆 401（路由存在且有授權閘門）。
+- 下一步 R165：用登入後的工作階段實際掃本站，依 finding 加固；R166 做排程 monitor。
+
+R165 ❌→✅ 線上實測抓到 `NO_FETCHER` 空報告並修正 — commit 待填。
+- 22:24 用登入後的瀏覽器在 `/security-scan` 對 `https://uptime.markkulab.net/` 跑被動掃描：
+  頁面與 API 都正常，但報告出現 `FETCH_FAILED: NO_FETCHER`、HTTP 0、無指紋——
+  根因是引擎的 default fetcher 被寫成 throwing stub，而 API 沒有注入 fetcher。
+- 修正：`scan.ts` 改用 `defaultAuditFetcher`，並 export `resolveAuditFetcher()` 供回歸測試；
+  `tests/security-scan.test.ts` 新增「沒注入時必須是 defaultAuditFetcher」。
+- 驗證：15/15 pass、`tsc --noEmit` 0 error。
+- 同次線上報告仍拿到真實 finding：缺 DMARC(medium)／SPF(low)、缺 CSP／X-Frame-Options(medium)、
+  缺 X-Content-Type-Options／Referrer-Policy(low)；列為 S7 加固項目。
+- 下一步：重新 build／部署修正，再重跑本站掃描確認 HTTP/TLS 指紋出現。
