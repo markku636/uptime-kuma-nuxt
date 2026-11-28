@@ -325,6 +325,8 @@ model StatusPage {
 
   groups    StatusPageGroup[]
   incidents Incident[]
+  subscribers StatusPageSubscriber[]
+  notificationOutbox StatusPageNotificationOutbox[]
 
   @@index([userId])
   @@map("status_pages")
@@ -824,4 +826,35 @@ model NotificationDedupe {
  notification Notification @relation(fields:[notificationId,workspaceId],references:[id,workspaceId],onDelete:Cascade)
  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
  @@map("notification_dedupe")
+}
+
+model StatusPageSubscriber {
+  id           Int       @id @default(autoincrement())
+  statusPageId Int       @map("status_page_id")
+  email        String    @db.VarChar(320)
+  token        String    @unique @db.VarChar(64)
+  verifiedAt   DateTime? @map("verified_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  statusPage   StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+
+  @@unique([statusPageId, email])
+  @@index([statusPageId, verifiedAt])
+  @@map("status_page_subscribers")
+}
+
+model StatusPageNotificationOutbox {
+  id             BigInt   @id @default(autoincrement())
+  statusPageId   Int      @map("status_page_id")
+  subscriberId   Int      @map("subscriber_id")
+  eventType      String   @map("event_type")
+  payload        Json
+  status         String   @default("pending")
+  attempts       Int      @default(0)
+  nextAttemptAt  DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz(3)
+  statusPage     StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@map("status_page_notification_outbox")
 }
