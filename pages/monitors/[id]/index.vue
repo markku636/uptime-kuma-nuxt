@@ -50,6 +50,10 @@
           
           <!-- Actions -->
           <div v-if="canEdit" class="flex items-center gap-2 flex-wrap">
+            <button @click="openInvestigation" :disabled="loadingInvestigation" class="btn btn-secondary">
+              <UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 mr-1" />
+              {{ loadingInvestigation ? 'Loading…' : 'Investigate' }}
+            </button>
             <button @click="checkNow" :disabled="checkingNow" class="btn btn-secondary">
               <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-1" />
               {{ checkingNow ? $t('Queuing…') : $t('Check now') }}
@@ -460,6 +464,41 @@
     </div>
     </Transition>
 
+    <!-- Investigation evidence bundle -->
+    <div v-if="investigationOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" @click.self="investigationOpen = false">
+      <div class="card w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-lg font-semibold text-highlighted">Investigation bundle</h2>
+            <p class="text-sm text-toned mt-1">Evidence from heartbeats, TLS, audit reports and alert delivery. No secrets included.</p>
+          </div>
+          <button class="text-toned hover:text-highlighted text-xl leading-none" aria-label="Close" @click="investigationOpen = false">&times;</button>
+        </div>
+        <p v-if="investigationError" role="alert" class="text-sm text-red-400">{{ investigationError }}</p>
+        <template v-if="investigation">
+          <pre class="text-xs text-toned whitespace-pre-wrap break-all bg-[var(--bg-secondary)] rounded p-3 max-h-64 overflow-auto">{{ investigation.agentHint }}</pre>
+          <div class="grid gap-3 md:grid-cols-3 mt-4 text-sm">
+            <div class="card card-body !p-3">
+              <div class="text-xs text-tertiary">Latest</div>
+              <div class="font-medium text-highlighted">{{ investigation.latest?.checkCode || '—' }}</div>
+              <div class="text-xs text-toned">{{ investigation.latest?.time || '' }}</div>
+            </div>
+            <div class="card card-body !p-3">
+              <div class="text-xs text-tertiary">Recent DOWN</div>
+              <div class="font-medium text-highlighted">{{ investigation.heartbeats.filter((beat: any) => beat.status === 0).length }} / {{ investigation.heartbeats.length }}</div>
+            </div>
+            <div class="card card-body !p-3">
+              <div class="text-xs text-tertiary">TLS days left</div>
+              <div class="font-medium text-highlighted">{{ investigation.tls?.daysRemaining ?? '—' }}</div>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-4">
+            <button class="btn btn-secondary" @click="downloadInvestigation">Download JSON</button>
+          </div>
+        </template>
+      </div>
+    </div>
+
     <!-- Badge Generator Modal -->
     <MonitorBadgeGeneratorModal 
       v-if="monitor"
@@ -519,6 +558,35 @@ const perPage = 25
 const visualArtifacts = ref<any[]>([])
 const loadingVisual = ref(false)
 const acceptingViewport = ref('')
+const investigationOpen = ref(false)
+const investigation = ref<any>(null)
+const loadingInvestigation = ref(false)
+const investigationError = ref('')
+async function openInvestigation(): Promise<void> {
+  investigationOpen.value = true
+  investigation.value = null
+  investigationError.value = ''
+  loadingInvestigation.value = true
+  try {
+    const res = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/investigation`)
+    investigation.value = res.data
+  } catch (error: any) {
+    investigationError.value = error?.data?.message || error?.message || 'Failed to load investigation.'
+  } finally {
+    loadingInvestigation.value = false
+  }
+}
+function downloadInvestigation(): void {
+  if (!investigation.value) return
+  const blob = new Blob([JSON.stringify(investigation.value, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `investigation-${monitorId.value}-${Date.now()}.json`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
 const showVisualPanel = computed(() => ['visual-diff', 'browser-flow'].includes(monitor.value?.type))
 // site-audit 的心跳 ping 是 0–100 分數，不是毫秒。
 const isScoreMonitor = computed(() => ['site-audit', 'security-scan'].includes(monitor.value?.type || ''))
