@@ -1,5 +1,7 @@
 // Supercheck 風格：失敗時自動在公開狀態頁開事件，恢復時標為 resolved。
 // 用既有 setting 表做全域開關，不新增欄位；事件以標題前綴綁定 monitor。
+import { enqueueSubscriberNotifications } from '../status-page/subscriber-outbox'
+
 export const AUTO_INCIDENT_SETTING_KEY = 'autoIncidentOnDown'
 
 export interface AutoIncidentDeps { enabled: () => Promise<boolean> }
@@ -43,12 +45,18 @@ export async function syncAutoIncident(
           style: 'danger', pin: true,
         } })
         await tx.incidentUpdate.create({ data: { incidentId: incident.id, status: 'investigating', message: `${monitor.name} went DOWN.` } })
+        try { await enqueueSubscriberNotifications(tx, Number(statusPageId), {
+          event: 'incident-created', title, message: `${monitor.name} went DOWN.`, incidentId: Number(incident.id),
+        }) } catch { /* 訂閱通知失敗不影響事件本身 */ }
         affected++
       }
     } else if (open.length) {
       for (const incident of open) {
         await tx.incidentUpdate.create({ data: { incidentId: incident.id, status: 'resolved', message: `${monitor.name} recovered.` } })
         await tx.incident.update({ where: { id: incident.id }, data: { pin: false } })
+        try { await enqueueSubscriberNotifications(tx, Number(statusPageId), {
+          event: 'incident-resolved', title, message: `${monitor.name} recovered.`, incidentId: Number(incident.id),
+        }) } catch { /* 訂閱通知失敗不影響事件本身 */ }
         affected++
       }
     }

@@ -1,6 +1,7 @@
 import { prisma } from '~/server/utils/prisma'
 import { requireStatusPageEditor } from '~/server/utils/status-page-editor'
 import { parseIncidentUpdateMessage, parseIncidentUpdateStatus } from '~/server/utils/incident-updates'
+import { enqueueSubscriberNotifications } from '~/server/services/status-page/subscriber-outbox'
 
 export default defineEventHandler(async event => {
   const scope = await requireStatusPageEditor(event)
@@ -13,7 +14,7 @@ export default defineEventHandler(async event => {
 
   const statusPage = await prisma.statusPage.findFirst({ where: { slug, workspaceId: scope.workspaceId }, select: { id: true } })
   if (!statusPage) throw createError({ statusCode: 404, message: 'Status page not found' })
-  const incident = await prisma.incident.findFirst({ where: { id: incidentId, statusPageId: statusPage.id }, select: { id: true } })
+  const incident = await prisma.incident.findFirst({ where: { id: incidentId, statusPageId: statusPage.id }, select: { id: true, title: true } })
   if (!incident) throw createError({ statusCode: 404, message: 'Incident not found' })
 
   const body = await readBody(event)
@@ -25,6 +26,11 @@ export default defineEventHandler(async event => {
     prisma.incidentUpdate.create({ data: { incidentId, status, message } }),
     prisma.incident.update({ where: { id: incidentId }, data: { updatedAt: new Date() } }),
   ])
+  await enqueueSubscriberNotifications(prisma, statusPage.id, {
+    event: status === 'resolved' ? 'incident-resolved' : 'incident-updated',
+    title: incident.title, message, incidentId,
+  })
+
   return {
     ok: true,
     data: {

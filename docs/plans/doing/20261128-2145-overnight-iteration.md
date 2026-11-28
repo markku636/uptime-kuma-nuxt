@@ -25,7 +25,7 @@
 
 格式：`R<n> ✅/❌ 標題 — commit／映像／驗證證據`
 
-R157 🔵 狀態頁訂閱者資料模型與公開 API — 程式完成，待部署。
+R157 ✅ 狀態頁訂閱者資料模型與公開 API — commit `cde58ad` 後。
 - 參考 Supercheck（subscribers 收 Email／Slack／webhook 的事件與狀態更新）與 Checkly（訪客可訂閱更新）：
   新增 `StatusPageSubscriber`（email／token／verifiedAt，unique(statusPageId,email)）與
   `StatusPageNotificationOutbox`（事件、payload、重試狀態）兩張表＋migration `20261128220000`。
@@ -35,4 +35,11 @@ R157 🔵 狀態頁訂閱者資料模型與公開 API — 程式完成，待部�
 - 信件只走操作者 SMTP relay，收件者／host／base URL 都驗證；無 SMTP 時回 `mail:unavailable` 而非假成功。
 - 驗證：typecheck 0、unit 236/236。
 
-（後續 R158 做 outbox dispatcher／事件掛鉤，R159 做 UI）
+- 部署 rev495（migration `20261128220000` 成功）；線上實測訂閱回 `pending/mail:unavailable`（未設 SMTP），後台可列出並刪除，測試資料已清除。
+
+R158 🔵 事件 outbox 與派送器 — 程式完成，待部署。
+- `StatusPageNotificationOutbox` durable outbox＋`SubscriberOutboxDispatcher`（每 5 秒、批 10 筆、FOR UPDATE SKIP LOCKED、5 次重試；SMTP 未設定直接 dead）。
+- 事件建立／更新／resolved 與 auto-incident 的 DOWN／UP 都 enqueue 給已驗證訂閱者；通知失敗不影響事件本身。
+- worker runtime 啟動／drain 時一併管理派送器。unit 240/240、typecheck 0。
+
+（後續 R159 做 UI）

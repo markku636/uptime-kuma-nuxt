@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireStatusPageEditor } from '~/server/utils/status-page-editor'
+import { enqueueSubscriberNotifications } from '~/server/services/status-page/subscriber-outbox'
 
 const createIncidentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -49,6 +50,10 @@ export default defineEventHandler(async (event) => {
       ...result.data,
       statusPageId: statusPage.id,
     }
+  })
+
+  await enqueueSubscriberNotifications(prisma, statusPage.id, {
+    event: 'incident-created', title: incident.title, message: incident.content, incidentId: incident.id,
   })
 
   return {
