@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { checkBrowserFlow, defaultDeps } from '../server/services/monitor/checkers/browser-flow-checker'
+import { checkBrowserFlow, defaultDeps, assertPublicUrl } from '../server/services/monitor/checkers/browser-flow-checker'
 import { parseBrowserFlowConfig } from '../server/utils/browser-flow-config'
 
 function fakePage() {
@@ -101,6 +101,17 @@ test('failed assertion stops the flow and identifies the step', async () => {
   assert.equal(result.flowSteps?.length, 2)
   assert.equal(result.flowSteps?.[1]?.detail, 'TEXT_MISMATCH')
   assert.deepEqual(page.clicks, [])
+})
+
+test('zero step timeout is rejected (Playwright treats 0 as no timeout)', () => {
+  assert.throws(() => parseBrowserFlowConfig(JSON.stringify({ steps: [{ action: 'waitFor', selector: '#x', timeoutMs: 0 }] })))
+})
+
+test('public URL guard denies loopback, private and metadata destinations', async () => {
+  for (const url of ['http://127.0.0.1/', 'http://10.0.0.5/', 'http://169.254.169.254/latest/meta-data/', 'http://metadata.google.internal/']) {
+    await assert.rejects(() => assertPublicUrl(url), /DENIED/)
+  }
+  assert.equal(typeof defaultDeps.resolve, 'function')
 })
 
 test('default dependencies include the failure artifact writer', () => {

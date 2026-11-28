@@ -83,6 +83,8 @@ export const defaultAuditFetcher: AuditFetcher = async (urlString, method) => {
       method,
       timeout: 10,
       maxRedirects: 0,
+      // 與 assertPublicDestination 同一輪都強制 deny 私網，避免 DNS rebinding 在第二次解析時穿過去。
+      strictPrivate: true,
       headers: { 'user-agent': UA, accept: 'text/html,application/xhtml+xml,*/*' },
     }, started) as Awaited<ReturnType<typeof executeHttpRequest>> & { location?: string }
     if ([301, 302, 303, 307, 308].includes(response.status) && response.location && hop < 2) {

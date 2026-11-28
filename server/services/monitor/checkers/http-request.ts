@@ -38,14 +38,14 @@ function abortable<T>(promise:Promise<T>,signal:AbortSignal):Promise<T>{
     promise.then(value=>{signal.removeEventListener('abort',abort);if(signal.aborted)reject(new HttpCheckError('TIMEOUT'));else resolve(value)},error=>{signal.removeEventListener('abort',abort);reject(error)})
   })
 }
-export async function resolveDestination(url:URL,signal:AbortSignal){
+export async function resolveDestination(url:URL,signal:AbortSignal,allowPrivate=process.env.HTTP_ALLOW_PRIVATE!=='false'){
   if(!['http:','https:'].includes(url.protocol)||url.href.length>8192)throw new HttpCheckError('CONFIG_ERROR')
   const hostname=url.hostname.replace(/^\[|\]$/g,'').toLowerCase().replace(/\.$/,'')
   if(metadataHosts.has(hostname))throw new HttpCheckError('DESTINATION_DENIED')
   const allowlist=(process.env.HTTP_ALLOWED_HOSTS||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean)
   if(allowlist.length&&!allowlist.some(host=>host.startsWith('*.')?hostname.endsWith(host.slice(1))&&hostname!==host.slice(2):hostname===host))throw new HttpCheckError('DESTINATION_DENIED')
   const addresses=isIP(hostname)?[{address:hostname,family:isIP(hostname)}]:await abortable(lookup(hostname,{all:true}),signal)
-  if(!addresses.length||addresses.some(({address})=>isForbiddenAddress(address)))throw new HttpCheckError('DESTINATION_DENIED')
+  if(!addresses.length||addresses.some(({address})=>isForbiddenAddress(address,allowPrivate)))throw new HttpCheckError('DESTINATION_DENIED')
   return addresses[0]!
 }
 export interface HttpRequestResult { status:number; headers:Record<string,string>; body:string; elapsed:number; tlsInfo?:TLSInfo|null }
@@ -72,8 +72,8 @@ function normalizeHeaders(input:unknown):Record<string,string>{
   }
   return headers
 }
-async function rawSingleRequest(url:URL,method:string,headers:Record<string,string>,body:string|undefined,ignoreTls:boolean,signal:AbortSignal,start:number):Promise<HttpRequestResult & {location?:string}>{
-  const destination=await resolveDestination(url,signal)
+async function rawSingleRequest(url:URL,method:string,headers:Record<string,string>,body:string|undefined,ignoreTls:boolean,signal:AbortSignal,start:number,allowPrivate?:boolean):Promise<HttpRequestResult & {location?:string}>{
+  const destination=await resolveDestination(url,signal,allowPrivate)
   if(signal.aborted)throw new HttpCheckError('TIMEOUT')
   return new Promise((resolve,reject)=>{
     let complete=false;const streams:Readable[]=[]
@@ -145,7 +145,7 @@ async function follow(urlString:string,method:string,headers:Record<string,strin
   if(body&&Buffer.byteLength(body)>MAX_RESPONSE_BYTES)throw new HttpCheckError('REQUEST_TOO_LARGE')
   const maximum=Number.isInteger(monitor.maxRedirects)?Math.max(0,Math.min(10,monitor.maxRedirects)):10
   for(let redirects=0;;redirects++){
-    const response=await singleRequest(url,method,headers,body,!!monitor.ignoreTls,signal,start)
+    const response=await singleRequest(url,method,headers,body,!!monitor.ignoreTls,signal,start,monitor.strictPrivate===true?false:undefined)
     if(!('location' in response)||maximum===0)return response
     if(redirects>=maximum)throw new HttpCheckError('REDIRECT_LIMIT')
     let next:URL;try{next=new URL(response.location!,url)}catch{throw new HttpCheckError('INVALID_RESPONSE')}

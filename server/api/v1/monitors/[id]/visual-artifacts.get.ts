@@ -32,11 +32,13 @@ export default defineEventHandler(async (event) => {
     return true
   })
 
+  // browser-flow 的失敗截圖可能包含頁面內容；viewer 只能看 visual-diff 的跑版證據。
+  const canReadFlowEvidence = scope.role !== 'viewer' && event.context.authMethod !== 'api-key'
   return {
     ok: true,
     monitorType: monitor.type,
     configVersion: monitor.configVersion,
-    data: latestPerViewport.map((row) => {
+    data: latestPerViewport.filter(row => canReadFlowEvidence || !row.viewportLabel.startsWith('flow-')).map((row) => {
       const baseline = baselineByLabel.get(row.viewportLabel)
       return {
         id: String(row.id),

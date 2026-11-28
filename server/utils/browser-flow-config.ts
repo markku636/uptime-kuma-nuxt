@@ -7,7 +7,8 @@ const stepSchema = z.object({
   action: z.enum(['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked']),
   selector: z.string().min(1).max(512).optional(),
   value: z.string().max(4096).optional(),
-  timeoutMs: z.number().int().min(0).max(30000).optional(),
+  // 0 在 Playwright 代表「不逾時」，會讓 trial 永久佔住 slot，故禁止。
+  timeoutMs: z.number().int().min(1).max(30000).optional(),
 }).strict().superRefine((step, ctx) => {
   const needsSelector = step.action !== 'goto'
   if (needsSelector && !step.selector) ctx.addIssue({ code: 'custom', message: 'selector is required', path: ['selector'] })

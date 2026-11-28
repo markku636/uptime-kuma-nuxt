@@ -2,9 +2,11 @@
 // 不執行任意 JS：只允許固定 action 列表，selector/value 有長度上限。
 import { chromium } from 'playwright'
 import { Prisma } from '@prisma/client'
+import { lookup } from 'node:dns/promises'
+import { isIP } from 'node:net'
 import type { CheckResult } from '../checker'
 import { workerPrisma } from '../../../utils/worker-prisma'
-import { resolveDestination, HttpCheckError } from './http-request'
+import { isForbiddenAddress, HttpCheckError } from './http-request'
 import { parseBrowserFlowConfig } from '../../../utils/browser-flow-config'
 import type { BrowserFlowConfig, BrowserFlowStep } from '../../../../shared/types/browser-flow'
 
@@ -26,9 +28,28 @@ export interface FlowFailureArtifact {
 export interface BrowserFlowDeps {
   launch: () => Promise<any>
   parse: (raw: unknown) => BrowserFlowConfig
-  resolve?: (url: URL, signal: AbortSignal) => Promise<unknown>
+  /** 每次導向／請求都要重新驗證，不能用起點的一次解析代替。 */
+  resolve?: (url: URL) => Promise<unknown>
   saveFailure?: (artifact: FlowFailureArtifact) => Promise<void>
 }
+
+const METADATA_HOSTS = new Set(['metadata.google.internal', 'metadata.google', 'instance-data.ec2.internal', 'metadata.azure.internal'])
+
+/** 強制 deny RFC1918／loopback／metadata；與 HTTP checker 的寬鬆預設不同。 */
+export async function assertPublicUrl(raw: string): Promise<void> {
+  const url = new URL(raw)
+  if (!['http:', 'https:'].includes(url.protocol) || url.href.length > 8192 || url.username || url.password) {
+    throw new HttpCheckError('DESTINATION_DENIED')
+  }
+  const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase().replace(/\.$/, '')
+  if (!host || METADATA_HOSTS.has(host)) throw new HttpCheckError('DESTINATION_DENIED')
+  const family = isIP(host)
+  const addresses = family ? [{ address: host, family }] : await lookup(host, { all: true })
+  if (!addresses.length || addresses.some(({ address }) => isForbiddenAddress(address, false))) {
+    throw new HttpCheckError('DESTINATION_DENIED')
+  }
+}
+const strictResolve = async (url: URL): Promise<void> => { await assertPublicUrl(url.href) }
 
 const defaultSaveFailure: NonNullable<BrowserFlowDeps['saveFailure']> = async artifact => {
   // 只保留最近一張失敗截圖，避免每次檢查都新增一列。
@@ -49,7 +70,7 @@ async function launchBrowser(): Promise<any> {
     }
   }
 }
-export const defaultDeps: BrowserFlowDeps = { launch: launchBrowser, parse: parseBrowserFlowConfig, saveFailure: defaultSaveFailure }
+export const defaultDeps: BrowserFlowDeps = { launch: launchBrowser, parse: parseBrowserFlowConfig, resolve: strictResolve, saveFailure: defaultSaveFailure }
 
 function failure(startTime: number, code: string, msg: string, flowSteps?: FlowStepResult[]): CheckResult {
   return { status: 0, ping: Date.now() - startTime, code, msg, ...(flowSteps ? { flowSteps } : {}) }
@@ -66,7 +87,7 @@ async function runStep(page: any, step: BrowserFlowStep, config: BrowserFlowConf
       const target = step.value || monitorUrl
       let url: URL
       try { url = new URL(target) } catch { return 'INVALID_URL' }
-      await resolve(url, AbortSignal.timeout(5000))
+      await resolve(url)
       const response = await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout })
       if (!response || response.status() >= 400) return `HTTP_${response?.status() ?? 0}`
       return undefined
@@ -128,9 +149,10 @@ export async function checkBrowserFlow(
   const startUrl = config.startUrl || monitor.url
   try {
     if (!startUrl) return failure(startTime, 'CONFIG_ERROR', 'URL is required for browser-flow monitors')
-    new URL(startUrl)
-  } catch {
-    return failure(startTime, 'CONFIG_ERROR', 'Invalid monitor URL')
+    await (deps.resolve || strictResolve)(new URL(startUrl))
+  } catch (error: any) {
+    const code = error instanceof HttpCheckError ? error.code : 'CONFIG_ERROR'
+    return failure(startTime, code, `Invalid or denied monitor URL (${code})`)
   }
 
   const steps: FlowStepResult[] = []
@@ -143,6 +165,15 @@ export async function checkBrowserFlow(
     })
     const page = await context.newPage()
     page.setDefaultTimeout(config.waitTimeoutMs)
+    // 每次請求（含 redirect、click 後的導向、子資源）都重新驗目的地，
+    // 只驗起點會被 302→內網／metadata 或被 click 導向繞過。
+    const guard = deps.resolve || strictResolve
+    if (typeof page.route === 'function') {
+      await page.route('**/*', async (route: any) => {
+        try { await guard(new URL(route.request().url())); await route.continue() }
+        catch { await route.abort('blockedbyclient') }
+      })
+    }
     const abortPage = () => { void page.close().catch(() => {}) }
     signal?.addEventListener('abort', abortPage, { once: true })
     // 只有排程檢查留證據；trial 不寫 DB。截圖上限 2 MiB，失敗時不影響回傳結果。
@@ -163,7 +194,8 @@ export async function checkBrowserFlow(
       const step = config.steps[index]!
       const before = Date.now()
       try {
-        const errorCode = await runStep(page, step, config, startUrl, deps.resolve || resolveDestination)
+        const errorCode = await runStep(page, step, config, startUrl, guard)
+        if (!errorCode && typeof page.url === 'function') await guard(new URL(page.url()))
         const elapsedMs = Date.now() - before
         if (errorCode) {
           steps.push({ index: index + 1, action: step.action, status: 'fail', elapsedMs, detail: errorCode })

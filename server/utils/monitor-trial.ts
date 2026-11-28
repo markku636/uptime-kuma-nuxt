@@ -12,7 +12,8 @@ export async function trialMonitor(userId:number,monitor:any,checker:typeof chec
   if(windows.size>=10000&&!windows.has(userId))throw createError({statusCode:503,message:'Trial capacity reached'})
   current.count++;windows.set(userId,current);active.add(userId);total++
   try {
-    const result=await checker({...monitor, includeTrialResponse:true})
+    const deadline=AbortSignal.timeout(Math.max(1000,Math.min(120000,(Number(monitor.timeout)||30)*1000)))
+    const result=await checker({...monitor, includeTrialResponse:true},deadline)
     return {ok:true,data:{status:result.status,ping:result.ping,code:result.code||'CHECK_COMPLETE',
       msg:result.status===1?'Check passed':'Check failed',
       ...(String(result.code||'').startsWith('FLOW')?{detail:result.msg}:{}),
