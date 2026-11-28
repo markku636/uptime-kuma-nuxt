@@ -130,3 +130,17 @@ R168 ✅ 修正版部署與線上端到端驗收 — artifact
   `scheduleSupported=true`）；`POST /api/v1/monitors/80/test` 回 `SCAN_OK · ping 86` 與 findings 摘要；
   測試 monitor 已刪除。
 - 下一步 R169：完整整合測試＋OpenAPI 核對；R170：歷史報告 API／UI。
+
+R169 ✅ 完整驗證 —
+- `npm run test:integration`（`TEST_PG_ADMIN_URL=postgresql://uptime@127.0.0.1:55464/postgres`）：
+  **117 pass / 0 fail / 1 skip**，隔離 DB 自動建立並銷毀，未動正式資料。
+- 線上 `/api/swagger-json`：`/v1/security-scan`、`/v1/security-scan/verify-token` 與 `SecurityScanRequest` schema 都存在。
+
+R170 🔵 歷史報告 API 與 UI —
+- 新增 `GET /api/v1/monitors/{id}/security-reports`（limit 1–20，workspace 範圍，再服務端 redact 一次）。
+- 監控詳情頁新增「Security scan reports」面板：分數／等級／風險／發現數、增減、展開 findings、JSON 下載、
+  「Run scan now」立即試跑；onMounted 一起載入。
+- OpenAPI 補 path；`docs/SECURITY_SCAN.md` 補排程與歷史說明。
+- 驗證：unit **266/266 pass**、`tsc --noEmit` **0 error**、build exit 0
+  （第一次 build 遇到另一條 session 並行 `prisma generate` 的 tmp engine ENOENT，重跑即通過）。
+- 待部署與線上驗收。

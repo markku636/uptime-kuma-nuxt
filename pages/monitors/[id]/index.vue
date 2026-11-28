@@ -193,6 +193,44 @@
         </div>
       </div>
 
+      <!-- Security scan：最近 20 次去敏感弱點報告 -->
+      <div v-if="showSecurityReports" class="section-card space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="section-title">Security scan reports</h3>
+          <div class="flex gap-3">
+            <button class="text-sm underline" :disabled="runningSecurityScan" @click="runSecurityNow">{{ runningSecurityScan ? '執行中…' : 'Run scan now' }}</button>
+            <button class="text-sm underline" :disabled="loadingSecurityReports" @click="loadSecurityReports">重新整理</button>
+          </div>
+        </div>
+        <p v-if="securityTrial" class="text-sm text-secondary">上次試跑：{{ securityTrial }}</p>
+        <p v-if="loadingSecurityReports" class="text-sm text-secondary">載入中…</p>
+        <p v-else-if="!securityReports.length" class="text-sm text-secondary">尚無報告。</p>
+        <div v-for="(item, index) in securityReports" :key="item.id" class="border rounded-lg p-3 text-sm">
+          <div class="flex flex-wrap items-center gap-3 justify-between">
+            <div>
+              <span class="font-semibold">{{ item.score }}/100</span>
+              <span v-if="securityDelta(index) !== null" class="ml-1 text-xs" :class="securityDelta(index)! >= 0 ? 'text-emerald-400' : 'text-red-400'">
+                {{ securityDelta(index)! >= 0 ? '▲' : '▼' }} {{ Math.abs(securityDelta(index)!) }}
+              </span>
+              <span class="badge ml-2" :class="gradeClass(item.grade)">{{ item.grade }}</span>
+              <span class="badge badge-danger ml-2">{{ item.riskLevel }}</span>
+              <span class="text-secondary ml-2">{{ formatDateTime(item.checkedAt) }}</span>
+            </div>
+            <button class="text-sm underline" @click="downloadSecurityReport(item)">Download JSON</button>
+          </div>
+          <details class="mt-2">
+            <summary class="cursor-pointer text-secondary">Findings ({{ item.report?.findings?.length || 0 }})</summary>
+            <ul class="mt-2 space-y-1">
+              <li v-for="finding in item.report?.findings || []" :key="finding.key" class="flex flex-wrap gap-2">
+                <span class="badge badge-danger">{{ finding.severity }}</span>
+                <span class="font-medium">{{ finding.title }}</span>
+                <span class="text-secondary">{{ finding.detail }}</span>
+              </li>
+            </ul>
+          </details>
+        </div>
+      </div>
+
       <!-- Status & Heartbeat Bar -->
       <div class="card card-body mb-6 card-interactive">
         <div class="flex flex-col lg:flex-row lg:items-center gap-6">
@@ -591,6 +629,11 @@ const showVisualPanel = computed(() => ['visual-diff', 'browser-flow'].includes(
 // site-audit 的心跳 ping 是 0–100 分數，不是毫秒。
 const isScoreMonitor = computed(() => ['site-audit', 'security-scan'].includes(monitor.value?.type || ''))
 const showAuditReports = computed(() => monitor.value?.type === 'site-audit')
+const showSecurityReports = computed(() => monitor.value?.type === 'security-scan')
+const securityReports = ref<any[]>([])
+const loadingSecurityReports = ref(false)
+const runningSecurityScan = ref(false)
+const securityTrial = ref('')
 const auditReports = ref<any[]>([])
 const loadingAuditReports = ref(false)
 const runningAudit = ref(false)
@@ -639,6 +682,51 @@ function downloadAuditReport(item: any) {
   const anchor = document.createElement('a')
   anchor.href = url
   anchor.download = `audit-${monitorId.value}-${item.id}.json`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+async function runSecurityNow() {
+  if (!monitor.value || runningSecurityScan.value) return
+  runningSecurityScan.value = true
+  securityTrial.value = ''
+  try {
+    let config: any = {}
+    try { config = JSON.parse(monitor.value.body || '{}') } catch { config = {} }
+    const res = await $fetch<any>('/api/v1/monitors/test', {
+      method: 'POST',
+      body: { ...monitor.value, url: config.url || monitor.value.url, type: 'security-scan' },
+    })
+    securityTrial.value = `${res.data?.msg || 'done'} · ${res.data?.code || ''} · ${res.data?.detail || ''}`
+    void loadSecurityReports()
+  } catch (error: any) {
+    securityTrial.value = error?.data?.message || error?.message || 'Scan failed.'
+  } finally {
+    runningSecurityScan.value = false
+  }
+}
+async function loadSecurityReports() {
+  if (!showSecurityReports.value) return
+  loadingSecurityReports.value = true
+  try {
+    const res = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/security-reports`, { query: { limit: 20 } })
+    securityReports.value = res?.data || []
+  } catch {
+    securityReports.value = []
+  } finally {
+    loadingSecurityReports.value = false
+  }
+}
+function securityDelta(index: number): number | null {
+  const current = securityReports.value[index], previous = securityReports.value[index + 1]
+  if (!current || !previous || typeof current.score !== 'number' || typeof previous.score !== 'number') return null
+  return current.score - previous.score
+}
+function downloadSecurityReport(item: any) {
+  const blob = new Blob([JSON.stringify(item.report ?? item, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `security-${monitorId.value}-${item.id}.json`
   anchor.click()
   URL.revokeObjectURL(url)
 }
@@ -778,6 +866,7 @@ onMounted(async () => {
     void loadPingSeries()
     void loadVisualArtifacts()
     void loadAuditReports()
+    void loadSecurityReports()
 
     // Fetch certificate info for HTTPS monitors
     if (monitor.value?.tlsConfigured) {

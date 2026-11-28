@@ -49,7 +49,9 @@ grade A–F，並回傳最高嚴重度 `riskLevel`。
 - 內建版本目錄只收錄能從公開文件查到、且可從被動指紋可靠判定的舊版本；其餘只陳述「看到什麼」，不憑空給 CVE。
 - 主動探測只用固定 allowlist 的 6 條路徑、HEAD、次數可調（0–6），不看回應內容、不跟大量重新導向。
 - 單次報告最多 100 筆 finding；API 限制每使用者 5 次/分、全域 2 個並行。
-- 不會寫入歷史、不建立 monitor；如有需要可另外用 site-audit 的排程 monitor 模式。
+- on-demand 掃描不會寫入歷史；點報告上的 **Schedule hourly** 會建立 `security-scan` monitor（每小時）。
+  排程一律用被動檢查（背景沒有即得擁有權驗證），分數進心跳、低於 `minScore`（預設 60）發 DOWN 通知；
+  最近 20 份去敏感報告可由 `GET /api/v1/monitors/{id}/security-reports` 取得，監控詳情頁也有面板與 JSON 下載。
 
 ## API
 
