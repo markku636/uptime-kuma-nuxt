@@ -24,6 +24,9 @@
         <NuxtLink to="/site-audit" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Site Audit</span>
         </NuxtLink>
+        <NuxtLink to="/security-scan" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-shield-check" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Security Scan</span>
+        </NuxtLink>
         <NuxtLink to="/maintenance" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-wrench-screwdriver" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Maintenance</span>
         </NuxtLink>
@@ -102,6 +105,13 @@
               active-class="nav-link-active"
             >
               Site Audit
+            </NuxtLink>
+            <NuxtLink
+              to="/security-scan"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              Security Scan
             </NuxtLink>
             <NuxtLink
               to="/settings"
@@ -246,6 +256,14 @@
               @click="mobileMenuOpen = false"
             >
               Site Audit
+            </NuxtLink>
+            <NuxtLink
+              to="/security-scan"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              Security Scan
             </NuxtLink>
             <NuxtLink
               to="/reports"

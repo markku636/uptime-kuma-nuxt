@@ -64,3 +64,12 @@ R161 ✅ API 與擁有權驗證 — commit 待填。
 - 新增 `tests/security-scan-verify.test.ts` 6 項（輪替／過期／跨工作區／內容不符／private URL）。
 - 驗證：14/14 pass、`tsc --noEmit` 0 error。未 build（另一條 session 尚在改 openapi.ts 等檔）。
 - 下一步 R162：UI（`/security-scan` 頁面 + dashboard 入口）。
+
+R162 🔵 UI 完成，待 build 驗證 — commit 待填。
+- 新增 `pages/security-scan/index.vue`：目標 URL、passive／active_light、取得驗證碼（DNS TXT／well-known）、
+  七類檢查開關、probe 上限、報告（分數／等級／風險／指紋／warnings）、嚴重度篩選、JSON 下載。
+  明確提示「只掃自己擁有或已授權的網站」。
+- `pages/dashboard/index.vue` 加「Security scan」入口；`layouts/default.vue` 側邊／桌面／手機選單各加一項。
+- 驗證：`tsc --noEmit` 0 error；**未跑 build**——22:14 另一條 session 正在跑兩個 `nuxt build`，
+  避免共用 `.output` 打架；待其完成後再跑 build／部署。
+- 下一步 R163：OpenAPI 與文件，同時等安全時機 build＋部署。

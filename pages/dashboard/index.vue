@@ -15,6 +15,10 @@
           <UIcon name="i-heroicons-list-bullet" class="w-4 h-4 mr-2" />
           Bulk audit
         </NuxtLink>
+        <NuxtLink v-if="canEdit" to="/security-scan" class="btn btn-secondary">
+          <UIcon name="i-heroicons-shield-check" class="w-4 h-4 mr-2" />
+          Security scan
+        </NuxtLink>
         <button v-if="canEdit" class="btn btn-secondary" @click="auditOpen = true">
           <UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 mr-2" />
           Website audit
