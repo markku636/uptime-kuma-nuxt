@@ -21,10 +21,21 @@ export interface BrowserFlowEditorInput {
 export const BROWSER_FLOW_ACTIONS = [
   'goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor',
   'assertVisible', 'assertText', 'assertValue', 'assertChecked', 'assertCount',
+  'assertUrl', 'assertTitle', 'assertHidden', 'press', 'waitForTimeout',
 ] as const
 
-const VALUE_ACTIONS = new Set<string>(['goto', 'fill', 'selectOption', 'assertText', 'assertValue', 'assertCount'])
-const REQUIRED_VALUE_ACTIONS = new Set<string>(['fill', 'selectOption', 'assertText', 'assertValue', 'assertCount'])
+const VALUE_ACTIONS = new Set<string>([
+  'goto', 'fill', 'selectOption', 'assertText', 'assertValue', 'assertCount',
+  'assertUrl', 'assertTitle', 'press', 'waitForTimeout',
+])
+const REQUIRED_VALUE_ACTIONS = new Set<string>([
+  'fill', 'selectOption', 'assertText', 'assertValue', 'assertCount',
+  'assertUrl', 'assertTitle', 'press', 'waitForTimeout',
+])
+const SELECTOR_OPTIONAL = new Set<string>(['goto', 'assertUrl', 'assertTitle', 'press', 'waitForTimeout'])
+
+export const usesValue = (action: string): boolean => VALUE_ACTIONS.has(action)
+export const usesSelector = (action: string): boolean => !SELECTOR_OPTIONAL.has(action)
 
 export interface CleanStep {
   action: string
@@ -41,29 +52,29 @@ export function cleanBrowserFlowSteps(steps: BrowserFlowEditorStep[]): CleanStep
     const n = index + 1
     if (!(BROWSER_FLOW_ACTIONS as readonly string[]).includes(step.action)) throw new Error(`Step ${n}: unsupported action`)
     const clean: CleanStep = { action: step.action }
-    if (step.action === 'goto') {
-      if (step.selector?.trim()) throw new Error(`Step ${n}: goto 不使用 selector`)
-      const target = (step.value || '').trim()
-      if (target) {
-        let parsed: URL
-        try { parsed = new URL(target) } catch { throw new Error(`Step ${n}: goto URL invalid`) }
-        if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error(`Step ${n}: goto URL must be http/https`)
-        clean.value = target
-      }
-    } else {
-      const selector = (step.selector || '').trim()
-      if (!selector) throw new Error(`Step ${n}: selector is required`)
-      if (selector.length > 512) throw new Error(`Step ${n}: selector too long`)
-      clean.selector = selector
-      if (REQUIRED_VALUE_ACTIONS.has(step.action)) {
-        if (step.value === undefined || step.value === '') throw new Error(`Step ${n}: value is required`)
-        if (step.value.length > 4096) throw new Error(`Step ${n}: value too long`)
-        if (step.action === 'assertCount' && !/^\d{1,5}$/.test(step.value)) throw new Error(`Step ${n}: count must be a non-negative integer`)
-        clean.value = step.value
-      } else if (VALUE_ACTIONS.has(step.action) && step.value) {
-        clean.value = step.value
-      }
+    const rawSelector = (step.selector || '').trim()
+    if (!SELECTOR_OPTIONAL.has(step.action)) {
+      if (!rawSelector) throw new Error(`Step ${n}: selector is required`)
+      if (rawSelector.length > 512) throw new Error(`Step ${n}: selector too long`)
+      clean.selector = rawSelector
+    } else if (step.action === 'press' && rawSelector) {
+      // press 可以只對某個元素送按鍵；其他動作的 selector 是切換 action 後的殘值，忽略即可。
+      if (rawSelector.length > 512) throw new Error(`Step ${n}: selector too long`)
+      clean.selector = rawSelector
     }
+
+    const value = step.value ?? ''
+    if (REQUIRED_VALUE_ACTIONS.has(step.action) && !value) throw new Error(`Step ${n}: value is required`)
+    if (value && value.length > 4096) throw new Error(`Step ${n}: value too long`)
+    if (['goto', 'assertUrl'].includes(step.action) && value) {
+      let parsed: URL
+      try { parsed = new URL(value) } catch { throw new Error(`Step ${n}: ${step.action} URL invalid`) }
+      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error(`Step ${n}: ${step.action} URL must be http/https`)
+    }
+    if (step.action === 'assertCount' && value && !/^\d{1,5}$/.test(value)) throw new Error(`Step ${n}: count must be a non-negative integer`)
+    if (step.action === 'waitForTimeout' && value && (!/^\d{1,5}$/.test(value) || Number(value) > 30000)) throw new Error(`Step ${n}: wait must be 0–30000 ms`)
+    if (step.action === 'press' && value.length > 100) throw new Error(`Step ${n}: key too long`)
+    if (VALUE_ACTIONS.has(step.action) && value) clean.value = value
     if (step.timeoutMs !== null && step.timeoutMs !== undefined) {
       const timeout = Number(step.timeoutMs)
       if (!Number.isSafeInteger(timeout) || timeout < 1 || timeout > 30000) throw new Error(`Step ${n}: timeout must be 1–30000 ms`)

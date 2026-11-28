@@ -32,7 +32,10 @@ test('缺 value / selector 與非法 count 會明確拒絕', () => {
   assert.throws(() => cleanBrowserFlowSteps([step('selectOption', { selector: 'select' })]), /value is required/)
   assert.throws(() => cleanBrowserFlowSteps([step('assertCount', { selector: '.x', value: 'abc' })]), /non-negative integer/)
   assert.throws(() => cleanBrowserFlowSteps([step('click')]), /selector is required/)
-  assert.throws(() => cleanBrowserFlowSteps([step('goto', { selector: 'h1' })]), /goto/)
+  // 切換 action 後舊 selector 仍留在 disabled input，應該被忽略而不是報錯
+  const stale = cleanBrowserFlowSteps([step('assertTitle', { selector: 'h1', value: 'Done' })])
+  assert.equal(stale[0]!.selector, undefined)
+  assert.equal(stale[0]!.value, 'Done')
   assert.throws(() => cleanBrowserFlowSteps([step('click', { selector: 'h1', timeoutMs: 0 })]), /timeout/)
 })
 
