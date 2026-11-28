@@ -49,7 +49,7 @@ async function launchBrowser(): Promise<any> {
     }
   }
 }
-const defaultDeps: BrowserFlowDeps = { launch: launchBrowser, parse: parseBrowserFlowConfig }
+export const defaultDeps: BrowserFlowDeps = { launch: launchBrowser, parse: parseBrowserFlowConfig, saveFailure: defaultSaveFailure }
 
 function failure(startTime: number, code: string, msg: string, flowSteps?: FlowStepResult[]): CheckResult {
   return { status: 0, ping: Date.now() - startTime, code, msg, ...(flowSteps ? { flowSteps } : {}) }

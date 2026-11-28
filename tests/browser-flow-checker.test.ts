@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { checkBrowserFlow } from '../server/services/monitor/checkers/browser-flow-checker'
+import { checkBrowserFlow, defaultDeps } from '../server/services/monitor/checkers/browser-flow-checker'
 import { parseBrowserFlowConfig } from '../server/utils/browser-flow-config'
 
 function fakePage() {
@@ -75,6 +75,10 @@ test('failed assertion stops the flow and identifies the step', async () => {
   assert.equal(result.flowSteps?.length, 2)
   assert.equal(result.flowSteps?.[1]?.detail, 'TEXT_MISMATCH')
   assert.deepEqual(page.clicks, [])
+})
+
+test('default dependencies include the failure artifact writer', () => {
+  assert.equal(typeof defaultDeps.saveFailure, 'function')
 })
 
 test('scheduled failures save one screenshot artifact; trials do not', async () => {
