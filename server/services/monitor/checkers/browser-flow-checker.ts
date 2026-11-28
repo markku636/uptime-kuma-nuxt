@@ -77,6 +77,20 @@ async function runStep(page: any, step: BrowserFlowStep, config: BrowserFlowConf
     case 'fill':
       await page.fill(step.selector!, step.value ?? '', { timeout })
       return undefined
+    case 'selectOption':
+      await page.selectOption(step.selector!, step.value ?? '', { timeout })
+      return undefined
+    case 'check':
+      await page.check(step.selector!, { timeout })
+      return undefined
+    case 'uncheck':
+      await page.uncheck(step.selector!, { timeout })
+      return undefined
+    case 'assertChecked': {
+      const checked = await page.locator(step.selector!).first().isChecked({ timeout })
+      if (!checked) return 'NOT_CHECKED'
+      return undefined
+    }
     case 'waitFor':
       await page.waitForSelector(step.selector!, { timeout, state: 'visible' })
       return undefined

@@ -4,10 +4,14 @@ export type BrowserFlowAction =
   | 'goto'
   | 'click'
   | 'fill'
+  | 'selectOption'
+  | 'check'
+  | 'uncheck'
   | 'waitFor'
   | 'assertVisible'
   | 'assertText'
   | 'assertValue'
+  | 'assertChecked'
 
 export interface BrowserFlowStep {
   action: BrowserFlowAction

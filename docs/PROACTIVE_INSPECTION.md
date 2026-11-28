@@ -50,6 +50,9 @@
   "steps": [
     { "action": "goto" },
     { "action": "fill", "selector": "#email", "value": "me@example.com" },
+    { "action": "selectOption", "selector": "#country", "value": "TW" },
+    { "action": "check", "selector": "#agree" },
+    { "action": "assertChecked", "selector": "#agree" },
     { "action": "click", "selector": "#submit" },
     { "action": "waitFor", "selector": "#dashboard" },
     { "action": "assertVisible", "selector": "#welcome" },
@@ -64,10 +67,10 @@
 | action | 用途 |
 | --- | --- |
 | `goto` | 導向 `value`（若填）或 `startUrl`／monitor URL；`value` 也走 public-destination guard |
-| `click` / `fill` | CSS selector 操作；`fill` 需 `value` |
+| `click` / `fill` / `selectOption` / `check` / `uncheck` | CSS selector 操作；`fill`／`selectOption` 需 `value` |
 | `waitFor` | 等待 selector 可見 |
 | `assertVisible` | 元素存在且可見 |
-| `assertText` / `assertValue` | 包含指定文字／input 值完全相等 |
+| `assertText` / `assertValue` / `assertChecked` | 包含指定文字／input 值完全相等／核取方塊已勾選 |
 
 安全邊界：未知欄位、未知 action 一律拒絕；最多 20 步，selector ≤512 字、value ≤4096 字、
 `waitTimeoutMs` ≤30000。**不執行 JavaScript**、不支援登入態 cookie 注入、不做截圖比對

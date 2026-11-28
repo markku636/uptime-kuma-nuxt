@@ -43,7 +43,7 @@
             <option v-for="action in actions" :key="action" :value="action">{{ action }}</option>
           </select>
           <input v-model="step.selector" type="text" maxlength="512" class="input-field" :aria-label="`Step ${index + 1} selector`" :placeholder="step.action === 'goto' ? '(uses start URL)' : 'CSS selector'" :disabled="step.action === 'goto'" />
-          <input v-model="step.value" type="text" maxlength="4096" class="input-field" :aria-label="`Step ${index + 1} value`" :placeholder="valuePlaceholder(step.action)" :disabled="!['fill', 'assertText', 'assertValue', 'goto'].includes(step.action)" />
+          <input v-model="step.value" type="text" maxlength="4096" class="input-field" :aria-label="`Step ${index + 1} value`" :placeholder="valuePlaceholder(step.action)" :disabled="!['fill', 'selectOption', 'assertText', 'assertValue', 'goto'].includes(step.action)" />
           <input v-model.number="step.timeoutMs" type="number" min="0" max="30000" class="input-field" :aria-label="`Step ${index + 1} timeout`" placeholder="default" />
           <button v-if="canEdit" type="button" class="action-btn" :aria-label="`Remove step ${index + 1}`" @click="steps.splice(index, 1)">&times;</button>
         </div>
@@ -104,7 +104,7 @@ interface FlowRow { id: number; name: string; viewStatus: string; scheduleSuppor
 
 const { canEdit } = useWorkspace()
 const toast = useToast()
-const actions = ['goto', 'click', 'fill', 'waitFor', 'assertVisible', 'assertText', 'assertValue'] as const
+const actions = ['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked'] as const
 const name = ref('')
 const url = ref('')
 const interval = ref(3600)
@@ -118,7 +118,12 @@ const trial = ref<TrialResult | null>(null)
 const flows = ref<FlowRow[]>([])
 
 function valuePlaceholder(action: string): string {
-  return action === 'fill' ? 'text to type' : action === 'assertText' ? 'expected text' : action === 'assertValue' ? 'expected value' : action === 'goto' ? 'optional URL override' : '—'
+  if (action === 'fill') return 'text to type'
+  if (action === 'selectOption') return 'option value'
+  if (action === 'assertText') return 'expected text'
+  if (action === 'assertValue') return 'expected value'
+  if (action === 'goto') return 'optional URL override'
+  return '—'
 }
 function addStep(): void {
   steps.value.push({ action: 'assertVisible', selector: '', value: '', timeoutMs: null })

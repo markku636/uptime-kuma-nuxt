@@ -4,14 +4,14 @@ import { z } from 'zod'
 import type { BrowserFlowConfig } from '../../shared/types/browser-flow'
 
 const stepSchema = z.object({
-  action: z.enum(['goto', 'click', 'fill', 'waitFor', 'assertVisible', 'assertText', 'assertValue']),
+  action: z.enum(['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked']),
   selector: z.string().min(1).max(512).optional(),
   value: z.string().max(4096).optional(),
   timeoutMs: z.number().int().min(0).max(30000).optional(),
 }).strict().superRefine((step, ctx) => {
   const needsSelector = step.action !== 'goto'
   if (needsSelector && !step.selector) ctx.addIssue({ code: 'custom', message: 'selector is required', path: ['selector'] })
-  if (['fill', 'assertText', 'assertValue'].includes(step.action) && step.value === undefined) {
+  if (['fill', 'selectOption', 'assertText', 'assertValue'].includes(step.action) && step.value === undefined) {
     ctx.addIssue({ code: 'custom', message: 'value is required', path: ['value'] })
   }
   if (step.action === 'goto' && step.selector) ctx.addIssue({ code: 'custom', message: 'goto 不使用 selector', path: ['selector'] })
