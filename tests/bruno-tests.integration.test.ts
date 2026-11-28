@@ -71,6 +71,20 @@ test('a Bruno collection runs in order, extracts a token and produces a redacted
   assert.equal((await request(`/api/v1/bruno/tests/${created.data.id}/runs/${run.data.runId}`, 'GET', viewer, scope)).status, 200)
 })
 
+test('a suite can opt into a bounded schedule and reject unsupported intervals', { timeout: 40000 }, async () => {
+  const body = manifest('Scheduled flow')
+  const prepared = await data(await request('/api/v1/bruno/tests/preview', 'POST', owner, scope, body))
+  const suite = await data(await request('/api/v1/bruno/tests', 'POST', owner, scope, { ...body, digest: prepared.digest }))
+  const invalid = await request(`/api/v1/bruno/tests/${suite.data.id}`, 'PUT', owner, scope, { scheduleIntervalSec: 60 })
+  assert.equal(invalid.status, 400)
+  const updated = await data(await request(`/api/v1/bruno/tests/${suite.data.id}`, 'PUT', owner, scope, { scheduleIntervalSec: 300 }))
+  assert.equal(updated.data.scheduleIntervalSec, 300)
+  assert.ok(updated.data.nextRunAt)
+  const off = await data(await request(`/api/v1/bruno/tests/${suite.data.id}`, 'PUT', owner, scope, { scheduleIntervalSec: 0 }))
+  assert.equal(off.data.scheduleIntervalSec, null)
+  assert.equal(off.data.nextRunAt, null)
+})
+
 test('unsafe extraction blocks suite creation and concurrent runs are rejected', { timeout: 40000 }, async () => {
   const body = manifest('Rejected flow')
   body.files[1]!.content = body.files[1]!.content.replace('token: res.body.token', 'token: bru.setVar("t", res.body.token)')

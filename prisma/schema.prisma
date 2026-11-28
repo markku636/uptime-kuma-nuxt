@@ -630,6 +630,8 @@ model BrunoTestSuite {
   definition Json
   testSecrets String? @map("test_secrets")
   sourceFingerprint String @map("source_fingerprint") @db.VarChar(64)
+  scheduleIntervalSec Int? @map("schedule_interval_sec")
+  nextRunAt DateTime? @map("next_run_at") @db.Timestamptz(3)
   createdBy Int @map("created_by")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

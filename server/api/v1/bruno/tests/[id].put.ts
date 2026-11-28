@@ -27,7 +27,11 @@ export default defineEventHandler(async event => {
   try {
     const updated = await prisma.brunoTestSuite.update({
       where: { id },
-      data: { ...(body.name ? { name: body.name } : {}), definition },
+      data: { ...(body.name ? { name: body.name } : {}), definition,
+      ...(body.scheduleIntervalSec !== undefined ? {
+        scheduleIntervalSec: body.scheduleIntervalSec || null,
+        nextRunAt: body.scheduleIntervalSec ? new Date(Date.now() + body.scheduleIntervalSec * 1000) : null,
+      } : {}) },
     })
     return { ok: true, data: suiteDTO(updated) }
   } catch (error: any) {

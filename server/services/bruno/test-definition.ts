@@ -159,6 +159,7 @@ export function suiteDTO(row: any) {
     id: row.id, workspaceId: row.workspaceId, environmentId: row.environmentId,
     collectionId: row.collectionId, name: row.name,
     steps: definition?.steps?.length || 0, failFast: !!definition?.failFast, timeoutSec: definition?.timeoutSec || 180,
-    secretNames: definition?.secretNames || [], createdAt: row.createdAt, updatedAt: row.updatedAt,
+    secretNames: definition?.secretNames || [], scheduleIntervalSec: row.scheduleIntervalSec ?? null,
+    nextRunAt: row.nextRunAt || null, createdAt: row.createdAt, updatedAt: row.updatedAt,
   }
 }

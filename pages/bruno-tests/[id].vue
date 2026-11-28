@@ -105,7 +105,8 @@ async function saveSettings() {
   try {
     const stepExtract = collectExtract()
     await $fetch(`/api/v1/bruno/tests/${id.value}`, { method: 'PUT', body: {
-      name: suite.value.name, failFast: suite.value.failFast, timeoutSec: suite.value.timeoutSec, stepExtract,
+      name: suite.value.name, failFast: suite.value.failFast, timeoutSec: suite.value.timeoutSec,
+      scheduleIntervalSec: Number(suite.value.scheduleIntervalSec || 0), stepExtract,
     } })
     toast.add({ title: 'Settings saved', color: 'success' })
   } catch (e: any) { error.value = e.data?.message || 'Save failed' }
@@ -134,7 +135,16 @@ onMounted(load)
           <label class="text-sm">Name<input v-model="suite.name" class="input-field mt-1" /></label>
           <label class="flex items-center gap-2 text-sm"><input v-model="suite.failFast" type="checkbox" /> Stop on first failure</label>
           <label class="text-sm">Total timeout (s)<input v-model.number="suite.timeoutSec" type="number" min="30" max="180" class="input-field mt-1" /></label>
+          <label class="text-sm">Schedule
+            <select v-model.number="suite.scheduleIntervalSec" class="input-field mt-1">
+              <option :value="0">Off (manual only)</option>
+              <option :value="300">Every 5 minutes</option>
+              <option :value="900">Every 15 minutes</option>
+              <option :value="3600">Every hour</option>
+            </select>
+          </label>
         </div>
+        <p v-if="suite.nextRunAt" class="text-xs text-secondary">Next scheduled run: {{ new Date(suite.nextRunAt).toLocaleString() }}</p>
         <button class="btn btn-secondary btn-sm" @click="saveSettings">Save settings</button>
         </div>
       </details>

@@ -19,6 +19,7 @@ export const brunoTestUpdateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   failFast: z.boolean().optional(),
   timeoutSec: z.number().int().min(30).max(180).optional(),
+  scheduleIntervalSec: z.number().int().refine(value => [0, 300, 900, 3600].includes(value), 'Unsupported schedule interval').optional(),
   stepExtract: z.record(z.string().max(256), z.array(z.object({
     name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/).max(128),
     source: z.enum(['status', 'responseTime', 'header', 'json']),
