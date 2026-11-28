@@ -89,6 +89,7 @@
 
 <script setup lang="ts">
 import { useWorkspace } from '../../composables/useWorkspace'
+import { buildBrowserFlowPayload, BROWSER_FLOW_ACTIONS } from '../../utils/browser-flow-editor'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -107,7 +108,7 @@ const { canEdit } = useWorkspace()
 const toast = useToast()
 const variableHint = '{{' + 'variable' + '}}'
 const baseUrlHint = '{{' + 'baseUrl' + '}}'
-const actions = ['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked', 'assertCount'] as const
+const actions = BROWSER_FLOW_ACTIONS
 const name = ref('')
 const url = ref('')
 const interval = ref(3600)
@@ -132,19 +133,14 @@ function valuePlaceholder(action: string): string {
 function addStep(): void {
   steps.value.push({ action: 'assertVisible', selector: '', value: '', timeoutMs: null })
 }
-function payload() {
-  const clean = steps.value
-    .filter(step => step.action === 'goto' || !!step.selector.trim())
-    .map(step => ({
-      action: step.action,
-      ...(step.action === 'goto' ? {} : { selector: step.selector.trim() }),
-      ...(['fill', 'assertText', 'assertValue'].includes(step.action) ? { value: step.value } : {}),
-      ...(step.timeoutMs && step.timeoutMs > 0 ? { timeoutMs: Number(step.timeoutMs) } : {}),
-    }))
-  return {
-    name: name.value.trim(), type: 'browser-flow', url: url.value.trim(),
-    body: JSON.stringify({ startUrl: url.value.trim(), steps: clean, viewport: { width: 1280, height: 800 }, waitTimeoutMs: 8000, ignoreTls: false }),
-    interval: interval.value, timeout: 30, method: 'GET', active: true,
+function payload(): Record<string, unknown> | null {
+  try {
+    return buildBrowserFlowPayload({
+      name: name.value, url: url.value, steps: steps.value, interval: interval.value,
+    })
+  } catch (error: any) {
+    formError.value = error?.message || 'Invalid browser flow'
+    return null
   }
 }
 async function runTrial(body: Record<string, unknown>): Promise<void> {
@@ -161,15 +157,17 @@ async function runTrial(body: Record<string, unknown>): Promise<void> {
   }
 }
 function testDraft(): void {
-  if (!url.value.trim()) return
-  void runTrial(payload())
+  const body = payload()
+  if (!body) return
+  void runTrial(body)
 }
 async function saveFlow(): Promise<void> {
-  if (!name.value.trim() || !url.value.trim()) return
+  const body = payload()
+  if (!body) return
   busy.value = true
   formError.value = ''
   try {
-    await $fetch('/api/v1/monitors', { method: 'POST', body: payload() })
+    await $fetch('/api/v1/monitors', { method: 'POST', body })
     toast.add({ title: 'Browser flow saved', color: 'success' })
     await load()
   } catch (error: any) {
