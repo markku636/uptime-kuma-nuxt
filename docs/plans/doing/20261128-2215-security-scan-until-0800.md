@@ -101,8 +101,18 @@ R165 ❌→✅ 線上實測抓到 `NO_FETCHER` 空報告並修正 — commit 待
   缺 X-Content-Type-Options／Referrer-Policy(low)；列為 S7 加固項目。
 - 下一步：重新 build／部署修正，再重跑本站掃描確認 HTTP/TLS 指紋出現。
 
-R166 🔵 本站加固：基本安全標頭 —
+R166 ✅ 本站加固：基本安全標頭 — commit `13cb5a3`。
 - 新增 `server/middleware/10-security-headers.ts`：所有回應加 X-Content-Type-Options: nosniff、
   Referrer-Policy、Permissions-Policy；非 `/status/<slug>/embed`（供第三方 iframe）加 X-Frame-Options: DENY。
   刻意不加正式 CSP（Nuxt 需要 inline script/style，會壞站），留作日後 report-only 觀察。
 - 驗證：`tsc --noEmit` 0 error、security-scan 15/15 pass；待與 R165 一起 build／部署後重掃本站。
+
+R167 🔵 排程弱點監控 —
+- 新增 `server/services/monitor/checkers/security-scan-checker.ts`：只跑 passive（背景沒有即得擁有權驗證），
+  score 進心跳 `ping`、`SCAN_OK`／`SCAN_LOW`／`SCAN_ERROR`，去敏感報告寫入 `visualCheckArtifact`
+  （label `security-report`，最多 20 份）；trial 不寫 DB。
+- 註冊：checkers/index、checker dispatch、`types.ts` 型別、runtime-config、leases SQL、serialize、
+  monitor-secrets（只加 scheduleSupported，不回 body）、monitor-trial（SCAN_* 回 detail）。
+- `/security-scan` 報告加「Schedule hourly」；dashboard 與監控詳情把 score 顯示擴充到 `security-scan`。
+- 新增 `tests/security-scan-checker.test.ts` 5 項。
+- 驗證：unit **261/261 pass**、`tsc --noEmit` **0 error**；待 build＋部署。

@@ -64,6 +64,9 @@
           {{ busy ? 'Scanning…' : 'Run scan' }}
         </button>
         <button v-if="report" type="button" class="btn btn-secondary" @click="downloadJson">Download JSON</button>
+        <button v-if="report && profile === 'passive'" type="button" class="btn btn-secondary" :disabled="scheduling" @click="schedule">
+          {{ scheduling ? 'Scheduling…' : 'Schedule hourly' }}
+        </button>
       </div>
     </div>
 
@@ -171,6 +174,7 @@ const enabled = ref<Record<CategoryId, boolean>>({
 })
 const maxProbes = ref(3)
 const busy = ref(false)
+const scheduling = ref(false)
 const issuing = ref(false)
 const error = ref('')
 const report = ref<Report | null>(null)
@@ -230,6 +234,33 @@ async function run(): Promise<void> {
     error.value = caught?.data?.message || caught?.message || 'Security scan failed.'
   } finally {
     busy.value = false
+  }
+}
+
+async function schedule(): Promise<void> {
+  if (!url.value || scheduling.value || profile.value !== 'passive') return
+  scheduling.value = true
+  error.value = ''
+  try {
+    const config = {
+      url: url.value.trim(), minScore: 60,
+      categories: Object.fromEntries(categories.map(category => [category.id, enabled.value[category.id] !== false])),
+    }
+    let name = url.value.trim()
+    try { name = new URL(name).hostname.replace(/^www\./, '') } catch { /* keep raw input */ }
+    await $fetch('/api/v1/monitors', {
+      method: 'POST',
+      body: {
+        name: `Security scan · ${name.slice(0, 160)}`, type: 'security-scan',
+        url: url.value.trim(), body: JSON.stringify(config),
+        interval: 3600, timeout: 60, method: 'GET', active: true,
+      },
+    })
+    error.value = 'Scheduled: runs hourly; the score becomes the monitor heartbeat.'
+  } catch (caught: any) {
+    error.value = caught?.data?.message || caught?.message || 'Could not schedule scan.'
+  } finally {
+    scheduling.value = false
   }
 }
 

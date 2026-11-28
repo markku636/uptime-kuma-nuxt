@@ -2,7 +2,7 @@
 export function monitorSummary(monitor: any) {
   return {
     id: monitor.id, workspaceId: monitor.workspaceId, environmentId: monitor.environmentId, name: monitor.name, description: monitor.description, type: monitor.type,
-    active: monitor.active, scheduleSupported:['http','keyword','json-query','bruno','visual-diff','browser-flow','site-audit'].includes(monitor.type),runtimeStatus:monitor.type==='push'?'push':!monitor.active?'paused':['http','keyword','json-query','bruno','visual-diff','browser-flow','site-audit'].includes(monitor.type)?'scheduled':'unsupported', interval: monitor.interval, retryInterval: monitor.retryInterval,
+    active: monitor.active, scheduleSupported:['http','keyword','json-query','bruno','visual-diff','browser-flow','site-audit','security-scan'].includes(monitor.type),runtimeStatus:monitor.type==='push'?'push':!monitor.active?'paused':['http','keyword','json-query','bruno','visual-diff','browser-flow','site-audit','security-scan'].includes(monitor.type)?'scheduled':'unsupported', interval: monitor.interval, retryInterval: monitor.retryInterval,
     timeout: monitor.timeout, maxretries: monitor.maxretries, weight: monitor.weight,
     createdAt: monitor.createdAt, parent: monitor.parent, groupId: monitor.groupId ?? null, tags: monitor.tags || [],
     heartbeats: (monitor.heartbeats || []).map(heartbeatSummary),

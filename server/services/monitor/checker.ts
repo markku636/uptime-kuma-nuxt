@@ -25,7 +25,8 @@ import {
   checkSnmp,
   checkVisualDiff,
   checkBrowserFlow,
-  checkSiteAudit
+  checkSiteAudit,
+  checkSecurityScan
 } from './checkers'
 
 export interface CheckResult {
@@ -135,6 +136,9 @@ export async function checkMonitor(monitor: any, signal?: AbortSignal): Promise<
 
       case 'site-audit':
         return await checkSiteAudit(monitor, startTime, signal)
+
+      case 'security-scan':
+        return await checkSecurityScan(monitor, startTime, signal)
 
       default:
         throw new Error(`Unknown monitor type: ${monitor.type}`)

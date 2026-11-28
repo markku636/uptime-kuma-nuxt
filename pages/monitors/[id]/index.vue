@@ -521,7 +521,7 @@ const loadingVisual = ref(false)
 const acceptingViewport = ref('')
 const showVisualPanel = computed(() => ['visual-diff', 'browser-flow'].includes(monitor.value?.type))
 // site-audit 的心跳 ping 是 0–100 分數，不是毫秒。
-const isScoreMonitor = computed(() => monitor.value?.type === 'site-audit')
+const isScoreMonitor = computed(() => ['site-audit', 'security-scan'].includes(monitor.value?.type || ''))
 const showAuditReports = computed(() => monitor.value?.type === 'site-audit')
 const auditReports = ref<any[]>([])
 const loadingAuditReports = ref(false)
