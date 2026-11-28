@@ -1311,5 +1311,15 @@
   "dashAllGroups": "所有群組（本頁）",
   "dashAllTypes": "所有類型",
   "dashPreviousPage": "上一頁",
-  "dashNextPage": "下一頁"
+  "dashNextPage": "下一頁",
+  "appearanceTheme": "主題",
+  "appearancePrimaryColor": "主要顏色",
+  "appearanceLanguage": "語言",
+  "appearanceUptimeStyle": "可用率顯示方式",
+  "appearanceHeartbeatStyle": "心跳列樣式",
+  "appearanceElapsedStyle": "經過時間樣式",
+  "appearanceCertificate": "顯示憑證到期天數",
+  "appearanceCompatNote": "相容性設定 — 已儲存，但此运行環境不會套用。",
+  "appearancePageNote": "相容性設定 — 由各公開狀態頁自行控制。",
+  "appearanceSelectLanguage": "選擇偏好語言"
 }

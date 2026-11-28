@@ -1286,5 +1286,15 @@
   "dashAllGroups": "すべてのグループ（このページ）",
   "dashAllTypes": "すべての種類",
   "dashPreviousPage": "前のページ",
-  "dashNextPage": "次のページ"
+  "dashNextPage": "次のページ",
+  "appearanceTheme": "テーマ",
+  "appearancePrimaryColor": "プライマリカラー",
+  "appearanceLanguage": "言語",
+  "appearanceUptimeStyle": "稼働率の表示形式",
+  "appearanceHeartbeatStyle": "ハートビートバーのスタイル",
+  "appearanceElapsedStyle": "経過時間のスタイル",
+  "appearanceCertificate": "証明書の有効期限日数を表示",
+  "appearanceCompatNote": "互換性設定 — 保存されますが、このランタイムでは適用されません。",
+  "appearancePageNote": "互換性設定 — 公開ステータスページごとに制御します。",
+  "appearanceSelectLanguage": "優先言語を選択"
 }

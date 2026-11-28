@@ -1321,5 +1321,15 @@
   "dashAllGroups": "所有分组（本页）",
   "dashAllTypes": "所有类型",
   "dashPreviousPage": "上一页",
-  "dashNextPage": "下一页"
+  "dashNextPage": "下一页",
+  "appearanceTheme": "主题",
+  "appearancePrimaryColor": "主色",
+  "appearanceLanguage": "语言",
+  "appearanceUptimeStyle": "可用率显示方式",
+  "appearanceHeartbeatStyle": "心跳条样式",
+  "appearanceElapsedStyle": "耗时样式",
+  "appearanceCertificate": "显示证书到期天数",
+  "appearanceCompatNote": "兼容设置 — 已保存，但当前运行环境不会应用。",
+  "appearancePageNote": "兼容设置 — 由各公开状态页控制。",
+  "appearanceSelectLanguage": "选择首选语言"
 }

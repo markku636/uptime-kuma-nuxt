@@ -5,7 +5,7 @@
     <form @submit.prevent="saveAppearance" class="space-y-6">
       <!-- Theme -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Theme</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ $t('appearanceTheme') }}</label>
         <div class="flex gap-4">
           <button v-for="t in themeOptions" :key="t.value" type="button"
             class="flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all"
@@ -19,7 +19,7 @@
 
       <!-- Primary Color -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Primary Color</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ $t('appearancePrimaryColor') }}</label>
         <div class="flex gap-3 flex-wrap">
           <button v-for="color in colorOptions" :key="color.value" type="button"
             class="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all"
@@ -35,14 +35,14 @@
 
       <!-- Language -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('appearanceLanguage') }}</label>
         <CommonLanguageSelector />
-        <p class="text-xs text-gray-500 mt-1">Select your preferred language</p>
+        <p class="text-xs text-gray-500 mt-1">{{ $t('appearanceSelectLanguage') }}</p>
       </div>
 
       <!-- Uptime Display -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Uptime Display Style</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('appearanceUptimeStyle') }}</label>
         <div class="space-y-2">
           <label class="flex items-center gap-2 cursor-pointer">
             <input v-model="uptimeDisplayStyle" type="radio" name="uptimeStyle" value="percentage" />
@@ -57,8 +57,8 @@
 
       <!-- Heartbeat Bar Style -->
       <div>
-        <p class="text-xs text-secondary mb-2">Compatibility setting — stored but not applied by this runtime.</p>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Heartbeat Bar Style</label>
+        <p class="text-xs text-secondary mb-2">{{ $t('appearanceCompatNote') }}</p>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ $t('appearanceHeartbeatStyle') }}</label>
         <div class="flex gap-4">
           <button v-for="style in heartbeatBarOptions" :key="style.value" type="button"
             class="flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all"
@@ -71,8 +71,8 @@
 
       <!-- Elapsed Time Style -->
       <div>
-        <p class="text-xs text-secondary mb-2">Compatibility setting — stored but not applied by this runtime.</p>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Elapsed Time Style</label>
+        <p class="text-xs text-secondary mb-2">{{ $t('appearanceCompatNote') }}</p>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ $t('appearanceElapsedStyle') }}</label>
         <div class="flex gap-4 flex-wrap">
           <button v-for="style in elapsedTimeOptions" :key="style.value" type="button"
             class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all"
@@ -85,10 +85,10 @@
 
       <!-- Show Certificate Expiry -->
       <div>
-        <p class="text-xs text-secondary mb-2">Compatibility setting — public status pages control this per page.</p>
+        <p class="text-xs text-secondary mb-2">{{ $t('appearancePageNote') }}</p>
         <label class="flex items-center gap-2 cursor-pointer">
           <input v-model="showCertificateExpiry" type="checkbox" />
-          <span class="text-gray-700 dark:text-gray-300">Show Certificate Expiry Days</span>
+          <span class="text-gray-700 dark:text-gray-300">{{ $t('appearanceCertificate') }}</span>
         </label>
       </div>
 

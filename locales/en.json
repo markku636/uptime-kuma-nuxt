@@ -1270,5 +1270,15 @@
   "dashAllGroups": "All groups (this page)",
   "dashAllTypes": "All Types",
   "dashPreviousPage": "Previous page",
-  "dashNextPage": "Next page"
+  "dashNextPage": "Next page",
+  "appearanceTheme": "Theme",
+  "appearancePrimaryColor": "Primary Color",
+  "appearanceLanguage": "Language",
+  "appearanceUptimeStyle": "Uptime Display Style",
+  "appearanceHeartbeatStyle": "Heartbeat Bar Style",
+  "appearanceElapsedStyle": "Elapsed Time Style",
+  "appearanceCertificate": "Show Certificate Expiry Days",
+  "appearanceCompatNote": "Compatibility setting — stored but not applied by this runtime.",
+  "appearancePageNote": "Compatibility setting — public status pages control this per page.",
+  "appearanceSelectLanguage": "Select your preferred language"
 }
