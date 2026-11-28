@@ -45,6 +45,11 @@ export function buildDiscordBody(message: NotificationMessage, config: DiscordCo
           value: `${message.ping}ms`,
           inline: true
         },
+        ...(typeof message.monitorId === 'number' ? [{
+          name: 'Monitor ID',
+          value: String(message.monitorId),
+          inline: true
+        }] : []),
         ...(message.monitorUrl ? [{
           name: 'URL',
           value: message.monitorUrl,

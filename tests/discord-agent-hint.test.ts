@@ -29,6 +29,12 @@ test('沒有 agentHint 或設定為非字串時，描述維持原本內容', () 
   assert.equal(buildDiscordBody(down, { webhookUrl: 'x', agentHint: 42 as any }).embeds[0].description, 'DOWN · CHECK_FAILED')
 })
 
+test('有 monitorId 時 Discord embed 帶 Monitor ID 欄位', () => {
+  const body = buildDiscordBody({ ...down, monitorId: 65 }, { webhookUrl: 'x' })
+  assert.deepEqual(body.embeds[0].fields.find((f: any) => f.name === 'Monitor ID'), { name: 'Monitor ID', value: '65', inline: true })
+  assert.equal(buildDiscordBody(down, { webhookUrl: 'x' }).embeds[0].fields.some((f: any) => f.name === 'Monitor ID'), false)
+})
+
 test('content 可自訂純文字前導且截斷到 1000 字，未設定時不帶此欄位', () => {
   assert.equal('content' in buildDiscordBody(down, { webhookUrl: 'x' }), false)
   const body = buildDiscordBody(down, { webhookUrl: 'x', content: '  CHECK THIS  ' })

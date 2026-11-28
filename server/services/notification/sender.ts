@@ -24,6 +24,7 @@ export interface NotificationMessage {
   title: string
   body: string
   monitorName: string
+  monitorId?: number
   monitorUrl?: string
   status: 'up' | 'down'
   ping: number
@@ -42,6 +43,7 @@ function formatMessage(monitor: any, result: CheckResult): NotificationMessage {
     title: `${statusEmoji} ${monitor.name} is ${statusText}`,
     body: Number.isInteger(monitor.certificateDays)?`Certificate expires in ${monitor.certificateDays} days`:`${statusText}${result.code&&/^[A-Z0-9_]{1,64}$/.test(result.code)?' · '+result.code:''}`,
     monitorName: monitor.name,
+    monitorId: typeof monitor.id === 'number' ? monitor.id : undefined,
     monitorUrl: undefined,
     status,
     ping: result.ping,
