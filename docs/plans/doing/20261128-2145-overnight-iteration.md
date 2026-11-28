@@ -64,8 +64,15 @@ R161 ✅失敗调查證據包 — commit `cd3dc5f` 後。部署 rev523，實測 
 - unit 263/263；typecheck 我觸摸的檔案 0 error，另一條 session 的 security-scan-checker
   仍有型別錯誤（未碰其檔案）。
 
-R162 🔵 Monitoring as code（匯出／diff） — 程式完成，待部署。
+R162 ✅ Monitoring as code（匯出／diff） — commit `636a34f` 後；最終 rev542 Healthy/Synced。
 - `GET /api/v1/monitoring/export` 輸出 versioned JSON（URL 去 username/password/query；一般 HTTP body 不匯出，
   browser-flow／site-audit 的宣告式 body 保留）；`POST /api/v1/monitoring/plan` 回 create／update／nochange
-  與欄位差異。宣告式 schema 拒絕未知欄位。
+  與欄位差異。宣告式 schema 拒絕未知欄位。期間與另一條 session 多次 GitOps 寫入碰撞
+  （兩次短暫 502 為其滾動更新），在其 quiescent 視窗重試成功。
+  
+R163 🔵 Monitoring as code（套用／UI） — 程式完成，待部署。
+- `applyDeclarative()` 在同一 transaction 內建立／更新 monitor；預設新建為 paused，
+  `activate=true` 才啟用；重複名稱／非法欄位／機密 body 均拒絕。API `POST /api/v1/monitoring/apply`（owner）。
+- `/monitoring-as-code` 頁面：下載現況、Preview diff、Apply、Activate 選項；sidebar／桌面／手機 nav 加「As Code」。
+- OpenAPI 補 export／plan／apply。unit 274/274、typecheck 0、build 成功。
 - unit 266/266；build 成功（第一次與另一條 session 並行 build 撞 cache，重跑通過）。

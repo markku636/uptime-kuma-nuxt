@@ -24,6 +24,9 @@
         <NuxtLink to="/site-audit" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Site Audit</span>
         </NuxtLink>
+        <NuxtLink to="/monitoring-as-code" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-code-bracket" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>As Code</span>
+        </NuxtLink>
         <NuxtLink to="/security-scan" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-shield-check" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Security Scan</span>
         </NuxtLink>
@@ -105,6 +108,13 @@
               active-class="nav-link-active"
             >
               Site Audit
+            </NuxtLink>
+            <NuxtLink
+              to="/monitoring-as-code"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              As Code
             </NuxtLink>
             <NuxtLink
               to="/security-scan"
@@ -256,6 +266,14 @@
               @click="mobileMenuOpen = false"
             >
               Site Audit
+            </NuxtLink>
+            <NuxtLink
+              to="/monitoring-as-code"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              As Code
             </NuxtLink>
             <NuxtLink
               to="/security-scan"
