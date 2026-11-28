@@ -227,4 +227,13 @@ R179 ✅ Browser flows 上線驗收 —
   再加 `selectOption(#lang, tw)` → **FLOW_STEP_FAILED**（等不到元素），而非 `CONFIG_ERROR`，
   證明 value 已正確送到 checker（先前會被靜默丟掉）。
 - 部署：另一條 session 01:10 的 build 帶到修正，rev594 Healthy/Synced，兩域 200。
-  我自己的 artifact `89912e33…` _loader 被對方改寫覆蓋，故未重複部署。
+  我自己的 artifact `89912e33…` loader 被對方改寫覆蓋，故未重複部署。
+
+## 最終驗證（2026-11-29 01:27 CST）
+
+- 完整 unit **288/288**、`tsc --noEmit` **0 error**、`npm run build` exit 0。
+- Integration 重跑 **118 pass / 0 fail / 1 skip**（第一次 5 fail 是另一條 session 正在做 i18n／profile 的 WIP，
+  其後續 commit 修掉 4 項）。剩下 1 項 `scale-browser` 找不到 "Monitor overview"：
+  對方把 dashboard 標題改成 `$t('dashMonitorOverview')`，zh-TW 為「監控總覽」，屬平行 i18n 變更，
+  非本線 browser-flow／security-scan／logo 造成；已如實回報，不代改共用 i18n。
+- 線上 live console 無 CSP violation；rev594 Healthy/Synced、兩域 200。
