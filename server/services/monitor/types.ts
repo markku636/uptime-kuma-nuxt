@@ -250,6 +250,14 @@ const visualDiffMonitorType: MonitorType = {
 /**
  * Tailscale Ping Monitor Type
  */
+/** 合成瀏覽器流程（宣告式步驟，不執行任意 JS） */
+const browserFlowMonitorType: MonitorType = {
+  supportsConditions: true,
+  conditionVariables: [
+    { id: 'response_time', operators: numericOperators }
+  ]
+}
+
 const tailscalePingMonitorType: MonitorType = {
   supportsConditions: true,
   conditionVariables: [
@@ -337,6 +345,7 @@ export const monitorTypeList: Record<string, MonitorType> = {
   'push': pushMonitorType,
   'real-browser': realBrowserMonitorType,
   'visual-diff': visualDiffMonitorType,
+  'browser-flow': browserFlowMonitorType,
   'tailscale-ping': tailscalePingMonitorType,
   'group': groupMonitorType,
   'manual': manualMonitorType,

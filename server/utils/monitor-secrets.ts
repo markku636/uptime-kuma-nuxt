@@ -62,13 +62,13 @@ export function monitorEditorDTO(monitor:any, options:{includeBody?:boolean} = {
   delete result.pushToken
   delete result.monitorNotifications
   // The Bruno source can contain plaintext credentials: only interactive editor sessions may read it.
-  if (options.includeBody && monitor.type === 'bruno') result.body = typeof hydrated.body === 'string' ? hydrated.body : ''
+  if (options.includeBody && ['bruno', 'browser-flow'].includes(monitor.type)) result.body = typeof hydrated.body === 'string' ? hydrated.body : ''
   result.notifications=(monitor.monitorNotifications||[]).map((row:any)=>row.notificationId)
   result.notificationDelays=Object.fromEntries((monitor.monitorNotifications||[]).filter((row:any)=>Number(row.delayMinutes)>0).map((row:any)=>[String(row.notificationId),Number(row.delayMinutes)]))
   result.tlsConfigured=typeof hydrated.url==='string'&&hydrated.url.startsWith('https://')
   result.configuredSecrets=configuredSecrets
   result.pushTokenConfigured=!!monitor.pushToken
-  result.scheduleSupported=['http','keyword','json-query','bruno','visual-diff'].includes(monitor.type)
+  result.scheduleSupported=['http','keyword','json-query','bruno','visual-diff','browser-flow'].includes(monitor.type)
   result.runtimeStatus=monitor.type==='push'?'push':!monitor.active?'paused':result.scheduleSupported?'scheduled':'unsupported'
   return result
 }

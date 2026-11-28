@@ -7,6 +7,10 @@
     <!-- Header with Connection Status -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-2">
+        <NuxtLink v-if="canEdit" to="/browser-flows" class="btn btn-secondary">
+          <UIcon name="i-heroicons-cursor-arrow-rays" class="w-4 h-4 mr-2" />
+          Browser flows
+        </NuxtLink>
         <button v-if="canEdit" class="btn btn-secondary" @click="auditOpen = true">
           <UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 mr-2" />
           Website audit
