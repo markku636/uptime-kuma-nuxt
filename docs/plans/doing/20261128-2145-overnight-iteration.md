@@ -96,8 +96,15 @@ R166 ✅ 維護通知訂閱 — commit `3865e12` 後；部署 rev571。
 - `maintenanceHandler` 在 active 狀態切換且有綁定狀態頁時 enqueue `maintenance-started`／
   `maintenance-ended` 給已驗證訂閱者；訂閱通知失敗不影響維護設定。unit 279/279、typecheck 0。
 
-R167 🔵 合成流程逐步 trace — 程式完成，待部署。
+R167 ✅ 合成流程逐步 trace — commit `7c2b1f3` 後；部署 rev574。
 - 排程 browser-flow 成功時也寫入 `visualCheckArtifact`（`viewportLabel='flow-trace'`，只留最近一筆，
   存 flowSteps／耗時／錯誤碼，不存 body）；trial 不寫。監控詳情頁以「最近成功／最近失敗」顯示。
 - unit 280/280、typecheck 0、build 成功。
-- unit 266/266；build 成功（第一次與另一條 session 並行 build 撞 cache，重跑通過）。
+
+## 階段性檢查（2026-11-29 00:12 CST）
+
+- B1（Monitoring as code）／B2（調查證據包）／B3（JSON Schema 斷言）／B4（狀態頁訂閱與通知）全部完成並上線。
+- 目前 release **rev574**、Healthy／Synced；兩域 `/login` 皆 200；artifact releases 已 prune 至 2 個。
+- unit **280 pass / 0 fail**、typecheck **0 error**、完整整合 **119 pass / 0 fail / 1 skip**。
+- 工作樹乾淨（自己的檔案皆已 commit；另一條 session 的 WIP 未動）。
+- 後續檢查點：03:00／06:00／07:45，截止 08:00 CST。
