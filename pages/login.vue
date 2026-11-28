@@ -4,7 +4,7 @@
       <form @submit.prevent="handleLogin" class="space-y-6">
         <!-- Brand -->
         <div class="login-brand">
-          <img src="/sealwatch-login.png" alt="SealWatch" class="login-brand-image" />
+          <img :src="loginLogoSrc" alt="SealWatch" class="login-brand-image" />
         </div>
 
         <!-- Username -->
@@ -94,6 +94,8 @@ definePageMeta({
 })
 
 const { fetch: refreshSession } = useUserSession()
+const colorMode = useColorMode()
+const loginLogoSrc = computed(() => colorMode.value === 'dark' ? '/sealwatch-login-dark.png' : '/sealwatch-login.png')
 
 const form = reactive({
   username: '',
