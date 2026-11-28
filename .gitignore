@@ -13,6 +13,9 @@ node_modules
 logs
 *.log
 
+# Vendored Playwright browsers (packaged into the runtime artifact, not source)
+.playwright/
+
 # Misc
 .DS_Store
 .fleet

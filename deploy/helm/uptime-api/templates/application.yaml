@@ -66,6 +66,7 @@ spec:
             - {name: HOST, value: "0.0.0.0"}
             - {name: PORT, value: "3000"}
             - {name: RELEASE_SHA, value: {{ $sha | quote }}}
+            - {name: PLAYWRIGHT_BROWSERS_PATH, value: "/app/.playwright"}
             - {name: NODE_NAME, valueFrom: {fieldRef: {fieldPath: spec.nodeName}}}
           envFrom:
             - configMapRef: {name: uptime-config}

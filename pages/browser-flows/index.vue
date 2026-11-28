@@ -49,6 +49,7 @@
         <div class="flex items-center gap-3 mb-2">
           <span class="badge" :class="trial.status === 1 ? 'badge-success' : 'badge-danger'">{{ trial.status === 1 ? 'PASS' : 'FAIL' }}</span>
           <span class="text-sm text-toned">{{ trial.code }} · {{ trial.ping }} ms</span>
+          <span v-if="trial.detail" class="text-sm text-toned truncate" :title="trial.detail">{{ trial.detail }}</span>
         </div>
         <div v-for="step in trial.flowSteps || []" :key="step.index" class="flex flex-wrap items-center gap-2 text-sm py-1">
           <span class="text-tertiary w-10">#{{ step.index }}</span>
@@ -86,6 +87,7 @@ interface TrialResult {
   status: number
   code: string
   msg: string
+  detail?: string
   ping: number
   flowSteps?: Array<{ index: number; action: string; status: string; elapsedMs: number; detail?: string }>
 }

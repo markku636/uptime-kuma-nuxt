@@ -4,7 +4,7 @@ import {mkdirSync,writeFileSync,createReadStream,readFileSync,lstatSync,readdirS
 import path from 'node:path'
 async function hashArchive(file){const hash=createHash('sha256');for await(const chunk of createReadStream(file))hash.update(chunk);return hash.digest('hex')}
 const root=process.cwd(),destination=path.resolve(process.env.ARTIFACT_OUTPUT_DIR||'.data/artifacts');mkdirSync(destination,{recursive:true})
-const allow=['.output','node_modules','prisma','scripts/migrate.mjs','scripts/check-runtime.mjs','scripts/create-demos.ts','scripts/demo-fixture.mjs','package.json','package-lock.json']
+const allow=['.output','node_modules','.playwright','prisma','scripts/migrate.mjs','scripts/check-runtime.mjs','scripts/create-demos.ts','scripts/demo-fixture.mjs','package.json','package-lock.json']
 function validate(file){const full=path.join(root,file),info=lstatSync(full);if(info.isSymbolicLink()){const target=path.resolve(path.dirname(full),readlinkSync(full));if(!target.startsWith(root+path.sep))throw Error('Archive symlink escapes source')}else if(info.isDirectory())for(const name of readdirSync(full))validate(path.join(file,name));else if(!info.isFile())throw Error('Unsupported archive member')}
 for(const file of allow)validate(file)
 const git=(...args)=>{const result=spawnSync('git',args,{encoding:'utf8',maxBuffer:32*1024**2});if(result.status)throw Error('Git manifest failed');return result.stdout.trim()}

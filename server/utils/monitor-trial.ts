@@ -14,7 +14,9 @@ export async function trialMonitor(userId:number,monitor:any,checker:typeof chec
   try {
     const result=await checker({...monitor, includeTrialResponse:true})
     return {ok:true,data:{status:result.status,ping:result.ping,code:result.code||'CHECK_COMPLETE',
-      msg:result.status===1?'Check passed':'Check failed',assertionResults:result.assertionResults,
+      msg:result.status===1?'Check passed':'Check failed',
+      ...(String(result.code||'').startsWith('FLOW')?{detail:result.msg}:{}),
+      assertionResults:result.assertionResults,
       ...(result.flowSteps?{flowSteps:result.flowSteps}:{}),
       ...(result.response?{response:result.response}:{})}}
   }finally{active.delete(userId);total--}
