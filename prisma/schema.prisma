@@ -591,6 +591,7 @@ model Workspace {
   apiKeys ApiKey[]
   remoteBrowsers RemoteBrowser[]
   monitorGroups MonitorGroup[]
+  brunoTestSuites BrunoTestSuite[]
   @@map("workspaces")
 }
 
@@ -616,6 +617,57 @@ model Environment {
   @@unique([workspaceId, name])
   @@unique([id, workspaceId])
   @@map("environments")
+}
+
+model BrunoTestSuite {
+  id Int @id @default(autoincrement())
+  workspaceId Int @map("workspace_id")
+  environmentId Int @map("environment_id")
+  collectionId String @map("collection_id") @db.VarChar(100)
+  name String @db.VarChar(200)
+  definition Json
+  testSecrets String? @map("test_secrets")
+  sourceFingerprint String @map("source_fingerprint") @db.VarChar(64)
+  createdBy Int @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  runs BrunoTestRun[]
+  @@unique([workspaceId, environmentId, collectionId, name], map: "bruno_test_suite_identity")
+  @@map("bruno_test_suites")
+}
+
+model BrunoTestRun {
+  id BigInt @id @default(autoincrement())
+  workspaceId Int @map("workspace_id")
+  suiteId Int @map("suite_id")
+  status String @db.VarChar(16)
+  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz(3)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
+  triggeredBy Int @map("triggered_by")
+  summary Json
+  suite BrunoTestSuite @relation(fields: [suiteId], references: [id], onDelete: Cascade)
+  steps BrunoTestStep[]
+  @@index([workspaceId, suiteId, startedAt], map: "bruno_test_run_scope")
+  @@map("bruno_test_runs")
+}
+
+model BrunoTestStep {
+  id BigInt @id @default(autoincrement())
+  runId BigInt @map("run_id")
+  stepIndex Int @map("step_index")
+  path String @db.VarChar(256)
+  name String @db.VarChar(200)
+  method String @db.VarChar(16)
+  status String @db.VarChar(16)
+  httpStatus Int? @map("http_status")
+  elapsedMs Int @map("elapsed_ms")
+  errorCode String? @map("error_code") @db.VarChar(64)
+  assertions Json
+  extractedNames String[] @default([]) @map("extracted_names")
+  run BrunoTestRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  @@unique([runId, stepIndex], map: "bruno_test_step_index")
+  @@map("bruno_test_steps")
 }
 
 model BrunoSource {

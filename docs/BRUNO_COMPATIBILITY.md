@@ -60,3 +60,18 @@ source environment變更與監測寫入同一transaction。Monitor request配置
 - Raw 模式可 Copy / Download `.bru`，或 Reset 回到已儲存版本。
 - Bruno monitor 可用於單檔與 ZIP 匯出，以及 redacted manifest；字面值會轉成 secret placeholder。
 - 既有 `.bru` 原文只對互動式 editor+ session 可讀；API key 維持 write-only。
+
+## Bruno 整合測試（2026-11-28）
+
+`Bruno Tests`（`/bruno-tests`）是**另一種執行模式**，不是 monitor：上傳多支 `.bru` 後順序執行、逐筆報告，
+不進排程、不算 availability、不發通知。它重用同一套 parser、HTTP 安全 guard 與 assertion 引擎。
+
+- **`vars:post-response` 在此模式下會被執行，但只支援宣告式白名單**：`res.status`、
+  `res.responseTime`、`res.headers.<name>`、`res.body[.<JSON path>]`；其他 JS／函式形式會在
+  preview 回 `UNSUPPORTED_EXTRACTION` 並拒絕建立。一般的 Bruno monitor 仍然永遠不執行它。
+- 萃取值只存在該次 run 的記憶體，可覆蓋到後續 step 的 URL／body／header／query／basic auth；
+  不寫回環境、不進報告，也不會出現在 JSON／CSV 下載。
+- 限制：20 steps、單步 10 秒、整次 180 秒、單一萃取值 4096 bytes、同時一個 suite 只能有一個 run
+  （DB partial unique index；第二個請求回 409）。
+- 報告只保存 status／HTTP status／耗時／assertion 摘要／萃取變數**名稱**，不保存 response body；
+  assertion actual 值對含 token／secret／password／authorization／cookie／key 的路徑一律省略。

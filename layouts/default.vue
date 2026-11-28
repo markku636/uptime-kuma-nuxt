@@ -15,6 +15,9 @@
         <NuxtLink to="/monitors/groups" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-folder" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Groups</span>
         </NuxtLink>
+        <NuxtLink to="/bruno-tests" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-play-circle" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Bruno Tests</span>
+        </NuxtLink>
         <NuxtLink to="/maintenance" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-wrench-screwdriver" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Maintenance</span>
         </NuxtLink>
@@ -72,6 +75,13 @@
               active-class="nav-link-active"
             >
               Maintenance
+            </NuxtLink>
+            <NuxtLink
+              to="/bruno-tests"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              Bruno Tests
             </NuxtLink>
             <NuxtLink
               to="/settings"
@@ -192,6 +202,14 @@
               @click="mobileMenuOpen = false"
             >
               Maintenance
+            </NuxtLink>
+            <NuxtLink
+              to="/bruno-tests"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              Bruno Tests
             </NuxtLink>
             <NuxtLink
               to="/reports"
