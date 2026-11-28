@@ -18,6 +18,17 @@
 - Push 回報與漏報偵測（超過間隔兩倍、至少 60 秒沒回報就轉為 DOWN 並發通知）；
   workspace／environment 隔離、API key 權限、加密且不可回讀的 request／環境 secrets。
 - Bruno `.bru` 宣告式子集 preview／原子 paused import／placeholder export；monitor 編輯頁提供 **Bruno 風格 UI 編輯器**（Params/Body/Headers/Auth/Vars/Script/Assert/Tests/Docs/Settings 十分頁、Raw 切換、Bulk Edit、`{{變數}}` 自動完成、頁內環境變數編輯、Send 回應面板）。JavaScript scripts/tests **保留但永不執行**；未支援 auth 與格式會明確拒絕，見 [相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
+- **Website audit（網站健檢）**：dashboard 一鍵對 URL 做 bounded 巡檢——HTTP 狀態／重新導向、
+  TLS 憑證（有效期／信任／SAN）、DNS、六項 security headers、頁面 metadata、同站連結與混合內容，
+  另可指定預期關鍵字；輸出 0–100 分／A–F 等級與逐項結果。走 `POST /api/v1/site-audit`，
+  強制 deny private/metadata 目的地，不寫歷史、不發通知。
+- **Browser flows（合成瀏覽器流程）**：`/browser-flows` 提供宣告式步驟編輯器
+  （goto／click／fill／waitFor／assertVisible／assertText／assertValue）、Test draft、Save、Test now；
+  worker 以 Playwright headless Chromium 順序執行、逐步計時與失敗原因，不執行任意 JS。
+  artifact 已內建 Chromium 與 bookworm 系統函式庫（`PLAYWRIGHT_BROWSERS_PATH`／`LD_LIBRARY_PATH`）。
+- **Bruno multi-API tests**：Bruno collection 可宣告式建立測試流程（suite），跨步驟以
+  `res.body.token` 等白名單萃取變數帶到下一步，手動執行後在站內看逐步報告並下載 JSON／CSV；
+  不執行 Bruno script/tests、不進 availability／通知，見 [Bruno 相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
 - PostgreSQL lease/fencing、多 API／worker、Kubernetes 多節點部署設定。
 
 舊 TCP、Ping、DNS、Docker、gRPC、database、MQTT、Kafka、RabbitMQ、GameDig 等配置可保留，但目前分散 worker 沒有對應 bounded adapter，會顯示 unsupported；不要視為已可排程。HTTP proxy、NTLM/mTLS 同樣未支援，不會悄悄改成直接連線。
@@ -53,6 +64,12 @@ Email 僅能走操作者設定的 SMTP relay（`SMTP_HOST`／`SMTP_PORT`／`SMTP
 - 🔒 Proxy／Remote Browser 設定有安全憑證管理；不代表本版 HTTP worker 已整合這些 transport
 
 ---
+
+近期迭代（2026-11-28）：
+- 新增 Website audit 與 Browser flows，兩者都只做 bounded、明確拒絕私網目的地；
+  browser-flow 為可排程 monitor（心跳／通知沿用既有機制），Website audit 為按需檢查不落 DB。
+- OpenAPI 補 `/v1/site-audit`、`SiteAuditRequest`、`BrowserFlowConfig`，並更新可排程型別說明。
+- 既有 Bruno 測試流程（多支 `.bru` 順序執行＋跨步驟變數＋JSON/CSV 報告）上線。
 
 近期迭代（2026-11-22）：
 - 首頁／監控列表顯示近期 uptime%（24h，無資料時回退 30d），Quick add 單一 URL 建立 HTTP 監控。
