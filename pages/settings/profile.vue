@@ -72,14 +72,10 @@ async function save() {
                 :disabled="!interactive || saving"
                 aria-label="Profile timezone"
                 class="input-field w-full"
-                list="profile-timezones"
                 maxlength="100"
                 placeholder="UTC or Asia/Taipei"
                 required
               />
-              <datalist id="profile-timezones">
-                <option v-for="zone in commonTimezones" :key="zone" :value="zone"></option>
-              </datalist>
               <p class="text-xs text-gray-400 mt-1">Use an IANA timezone name, e.g. <code>Asia/Taipei</code>.</p>
               <button type="button" class="btn btn-secondary btn-sm mt-2" :disabled="!interactive || saving" @click="useBrowserTimezone">Use my browser timezone</button>
             </div>
