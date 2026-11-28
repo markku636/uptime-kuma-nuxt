@@ -18,11 +18,15 @@
         Interactive UI could not load from the CDN. Showing the embedded endpoint list; the
         <a :href="swaggerJsonUrl" class="link">full OpenAPI JSON</a> is also available.
       </p>
+      <div class="flex items-center gap-3 mb-3">
+        <input v-model="endpointSearch" class="input-field max-w-sm" placeholder="Filter endpoints by path, method or summary" aria-label="Filter endpoints" />
+        <span class="text-xs text-secondary">{{ filteredEndpoints.length }} / {{ endpoints.length }} endpoints</span>
+      </div>
       <div class="overflow-x-auto">
         <table class="table">
           <thead><tr><th>Method</th><th>Path</th><th>Summary</th></tr></thead>
           <tbody>
-            <tr v-for="endpoint in endpoints" :key="endpoint.method + endpoint.path">
+            <tr v-for="endpoint in filteredEndpoints" :key="endpoint.method + endpoint.path">
               <td><span class="uppercase text-xs font-semibold text-primary">{{ endpoint.method }}</span></td>
               <td class="font-mono text-sm">{{ endpoint.path }}</td>
               <td class="text-secondary">{{ endpoint.summary }}</td>
@@ -48,6 +52,12 @@ const swaggerJsonUrl = '/api/swagger-json'
 
 const loadError=ref(false)
 const endpoints=ref<{ method: string; path: string; summary: string }[]>([])
+const endpointSearch=ref('')
+const filteredEndpoints=computed(()=>{
+  const term=endpointSearch.value.trim().toLowerCase()
+  if(!term)return endpoints.value
+  return endpoints.value.filter(row=>[row.method,row.path,row.summary].join(' ').toLowerCase().includes(term))
+})
 let swaggerUIBundle: any = null
 
 const methods = ['get', 'post', 'put', 'patch', 'delete']
