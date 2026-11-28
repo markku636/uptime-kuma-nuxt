@@ -33,7 +33,7 @@ website scan（兩層 profile、擁有權驗證、統一 finding 格式），並
 | `headers` | 缺少 CSP／X-Frame-Options／X-Content-Type-Options／Referrer-Policy／Permissions-Policy、HSTS max-age 過短、CSP `unsafe-inline` | info–medium |
 | `cookies` | 工作階段 cookie 缺少 Secure／HttpOnly／SameSite | medium–high |
 | `tls` | 憑證過期／即將過期、SAN 不含該 host、仍接受 TLS 1.0／1.1（只做 handshake，釘 IP 避免 rebinding） | high–critical |
-| `dns` | 缺少 SPF／DMARC | low–medium |
+| `dns` | 有 MX 但未發布 SPF／DMARC（沒有 MX 的網站不誤報） | low–medium |
 | `fingerprint` | `Server`／`X-Powered-By` 等版本揭露、舊版 jQuery（CVE-2020-11022／11023） | info–high |
 | `redirect` | HTTPS 降級至 HTTP、過長的重新導向鏈 | info–high |
 | `exposure` | 固定路徑回 200 且非 HTML（active_light 限定） | high |

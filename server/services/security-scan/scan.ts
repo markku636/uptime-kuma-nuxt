@@ -5,7 +5,7 @@
 //   - 不做注入、模糊測試、DoS；不送資料給第三方；所有請求都強制 deny 私網／metadata 位址。
 // 被動指紋的結果只陳述「看到什麼版本」，不聲稱未經驗證的 CVE；內建的小目錄才給 CVE 參考。
 
-import { lookup, resolveTxt } from 'node:dns/promises'
+import { lookup, resolveMx, resolveTxt } from 'node:dns/promises'
 import { isIP } from 'node:net'
 import type {
   SecurityFinding, SecurityScanCategory, SecurityScanInput, SecurityScanProfile,
@@ -15,6 +15,7 @@ import { SECURITY_SCAN_SEVERITIES } from '../../../shared/types/security-scan'
 import type { AuditFetchResult, AuditFetcher } from '../site-audit/audit'
 import { defaultAuditFetcher } from '../site-audit/audit'
 import { defaultTlsProber, type TlsProber } from './tls-probe'
+import { dnsFindings } from './dns'
 import { HttpCheckError, isForbiddenAddress } from '../monitor/checkers/http-request'
 
 export { SECURITY_SCAN_SEVERITIES }
@@ -33,6 +34,7 @@ export interface SecurityScanDeps {
   fetcher?: AuditFetcher
   lookupFn?: typeof lookup
   resolveTxtFn?: typeof resolveTxt
+  resolveMxFn?: typeof resolveMx
   /** 由 API 注入：只有持有該 host 的驗證 token 才回 true。引擎本身不信任 input.verify。 */
   verifyOwnership?: (input: SecurityScanInput) => Promise<boolean>
   /** TLS 版本探測；可注入以便測試，不注入時用釘 IP 的 handshake。 */
@@ -263,36 +265,6 @@ function redirectFindings(page: AuditFetchResult, target: URL, url: string): Fin
   return out
 }
 
-async function dnsFindings(target: URL, lookupFn: typeof lookup, resolveTxtFn: typeof resolveTxt, url: string): Promise<FindingInput[]> {
-  const host = normalizedHost(target)
-  const addresses = isIP(host) ? [{ address: host, family: isIP(host) }] : await lookupFn(host, { all: true })
-  if (!addresses.length || addresses.some(({ address }) => isForbiddenAddress(address, false))) return []
-  const txt = async (name: string): Promise<string[]> => {
-    try {
-      const records = await resolveTxtFn(name)
-      return records.map(parts => parts.join(''))
-    } catch { return [] }
-  }
-  const out: FindingInput[] = []
-  const spf = (await txt(host)).find(value => /^v=spf1\b/i.test(value))
-  if (!spf) out.push({
-    rule: 'dns.spf.missing', category: 'dns', severity: 'low',
-    title: '未發現 SPF 記錄', detail: `${host} 沒有 v=spf1 TXT 記錄。`,
-    recommendation: '若此網域會寄信，請發布 SPF 記錄；不寄信則可忽略。',
-    location: { url, host }, evidence: { host }, cwe: [],
-    refs: ['https://datatracker.ietf.org/doc/html/rfc7208'], tags: ['passive', 'dns'],
-  })
-  const dmarc = (await txt(`_dmarc.${host}`)).find(value => /^v=dmarc1\b/i.test(value))
-  if (!dmarc) out.push({
-    rule: 'dns.dmarc.missing', category: 'dns', severity: 'medium',
-    title: '未發現 DMARC 記錄', detail: `_dmarc.${host} 沒有 v=DMARC1 TXT 記錄。`,
-    recommendation: '若此網域會寄信，請先發布 SPF／DKIM 再逐步启用 DMARC（p=none 起步）。',
-    location: { url, host }, evidence: { host }, cwe: [],
-    refs: ['https://datatracker.ietf.org/doc/html/rfc7489'], tags: ['passive', 'dns'],
-  })
-  return out
-}
-
 /** active_light：只對少數眾所周知的路徑送出 HEAD，不看內容、不注入、不跟大量重新導向。 */
 const EXPOSURE_PATHS = [
   { path: '/.env', label: '環境變數檔', cwe: 'CWE-538' },
@@ -405,8 +377,13 @@ export async function runSecurityScan(input: SecurityScanInput, deps: SecuritySc
   if (enabled('redirect')) findings.push(...redirectFindings(page, target, target.href))
 
   if (enabled('dns')) {
-    try { findings.push(...await dnsFindings(target, lookupFn, resolveTxtFn, target.href)) }
-    catch (error) { warnings.push(`DNS_FAILED: ${error instanceof Error ? error.message.slice(0, 100) : 'ERROR'}`) }
+    try {
+      const dns = await dnsFindings(normalizedHost(target), target.href, {
+        lookupFn, resolveTxtFn, resolveMxFn: deps.resolveMxFn || resolveMx,
+      })
+      findings.push(...dns.findings)
+      warnings.push(...dns.warnings)
+    } catch (error) { warnings.push(`DNS_FAILED: ${error instanceof Error ? error.message.slice(0, 100) : 'ERROR'}`) }
   }
 
   let probesUsed = 0

@@ -156,4 +156,14 @@ R172 🔵 批次掃描 —
 - `POST /api/v1/security-scan/batch`（editor，3 次/分、全域 2 個批次）。
 - `/security-scan` 頁新增 Batch scan 文字框、結果表與 CSV 下載（公式注入防護）。
 - OpenAPI／文件更新；`tests/security-scan-batch.test.ts` 3 項。
-- 驗證：security-scan 系列 **25/25 pass**、`tsc --noEmit` **0 error**。待 build＋部署。
+- 驗證：security-scan 系列 **25/25 pass**、`tsc --noEmit` **0 error**。已 build＋部署：
+  artifact `83f72ea6bf695e8ee503465bfa42db8787764b80d52e22d2fc9c037270017992` →
+  loader `3be4ffa`（rev539 前一步）→ app `471400e`（**rev539**，Healthy/Synced，兩域 200）。
+  線上 Batch scan 實測 example.com 84/B、uptime.markkulab.net 86/B，2 healthy / 0 errors；
+  `/api/swagger-json` 四個 security path 與 schema 皆在。
+
+R173 🔵 MX-aware DNS 檢查 —
+- `server/services/security-scan/dns.ts`：先查 MX；**沒有 MX 就不要求 SPF／DMARC**，並在 warnings 記
+  `DNS_MAIL_SKIPPED: no MX records`，避免對不寄信的網站誤報（本站先前就被誤扣 medium+low）。
+- `scan.ts` 改呼叫此模組，deps 加 `resolveMxFn`；`tests/security-scan.test.ts` 加回歸測試並全面注入 MX fake。
+- 文件同步更新。驗證：security-scan 系列 **26/26 pass**、`tsc --noEmit` **0 error**。待 build＋部署。
