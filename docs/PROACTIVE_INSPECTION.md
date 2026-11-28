@@ -3,6 +3,9 @@
 這兩個功能對應 Supercheck 的 website/SSL monitor 與 Checkly 的 Synthetic／Browser Check，
 但刻意只做**有界、可預期、不執行任意程式碼**的子集。
 
+批量入口：`/site-audit`（Dashboard →「Bulk audit」）一次貼 1–20 筆 URL，
+併發上限 3、保留原順序、單筆失敗隔離，結果可匯出 CSV（含公式注入防護）。
+
 ## 1. Website audit（按需網站健檢）
 
 入口：Dashboard →「Website audit」。API：`POST /api/v1/site-audit`（需 workspace editor）。
@@ -82,6 +85,13 @@ Test draft／Test now 面板；排程檢查的心跳只保留 `FLOW_OK`／`FLOW_
 排程失敗會額外截圖（≤2 MiB）寫入 `visualCheckArtifact`（`viewportLabel='flow-fail'`，只留最近一張），
 `metrics` 記錄失敗步驟與錯誤；監控詳情頁的「瀏覽器流程失敗證據」會顯示截圖與逐步摘要。
 試跑不寫任何證據。建立時可選間隔，預設每小時（避免每分鐘啟動 Chromium 拖垮 worker）。
+
+失敗告警的 body 會附上分數或失敗步驟（`AUDIT_*`／`FLOW_*`）；寫入 outbox 前會移除 URL 的
+userinfo/query，其他檢查類型的 msg 不會寫入 outbox。
+
+Settings › General 的 `Auto-open status page incidents…` 開啟後，Linked monitor 轉 DOWN 會在
+已發布狀態頁自動開事件（含 investigating 更新），轉 UP 時補 resolved 並取消 pin；事件標題
+以 `[monitor:<id>] incident` 綁定，不會重複開立。
 
 部署前提：artifact 必須包含 `.playwright/chromium_headless_shell-*` 與 `.playwright/lib/*.so*`，
 且 pod 需有 `PLAYWRIGHT_BROWSERS_PATH=/app/.playwright`、`LD_LIBRARY_PATH=/app/.playwright/lib`。
