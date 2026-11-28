@@ -182,3 +182,27 @@ R173 🔵 MX-aware DNS 檢查 —
 - 尚未做 live 驗證的項目：active_light 的 DNS TXT／well-known（需改公開 DNS 或放驗證檔），
   已由 6 項 unit test 覆蓋；正式正式滲透報告仍建議用 nuclei／testssl.sh 等專業工具。
 - 工作樹：只留我自己的 commit；另一條 session 的 WIP 不動。
+
+## 00:22 後續（使用者回覆 "continous"）
+
+R174 ✅ Security scan UI 精修 — commit `742609d`。
+- 可調 `minScore`（排程 DOWN 門檻）、报告標題列 severity counts、單筆報告 Findings CSV。
+- unit 282/282、`tsc --noEmit` 0、build 0。
+
+R175 ✅ CSP — commit `2a83433`。補 `Content-Security-Policy`（Nuxt 需要 unsafe-inline；embed 頁不設 frame-ancestors）。
+- 線上 `/login` 已見到完整 CSP header。本站自掃從 94/A → 預期只餘 info。
+
+R176 ✅ Logo 暗黑版 — commits `cc926b1`／`2b31716`。
+- 新增 `public/sealwatch-sidebar-dark.png`、`public/sealwatch-login-dark.png`：
+  "Seal" 改白、"Watch" 改亮綠、海豹加淺藍描邊以在暗底可見。
+- 起初用 `useColorMode()` 的 computed src，但**首次載入 system dark 時 value 仍是 light**（hydration 問題），
+  改為「兩張圖 + CSS」：`@media (prefers-color-scheme: dark)` 顧首次繪製，`html.dark` 顧手動切換。
+- 部署：artifact `9f1b76ba…` → loader `900f2e8` → app `5f68a51`（**rev583** Healthy/Synced，兩域 200）。
+- 瀏覽器實測：system dark 首次載入即顯示暗版；切到 light 顯亮版；login 頁暗版截圖確認文字清楚。
+
+## 待辦：Browser flows（使用者 00:28 要求「優化完善」）
+
+盤點到的真問題：`pages/browser-flows/index.vue` 的 `payload()` 只把 value 放進
+`fill/assertText/assertValue`，但 config schema 要求 `selectOption`／`assertCount` 也必须有 value，
+且 `goto` 的 value 是 URL override。→ 這三種步驟存檔後會 CONFIG_ERROR 或行為不正確（P1）。
+下一輪先修 payload 並抽成可測函式，再考慮補 `assertUrl`／`assertTitle`／`assertAttribute`／`press` 等動作。
