@@ -1,5 +1,5 @@
-export const assertionSources = ['status','responseTime','header','text','json'] as const
-export const assertionOperators = ['equals','notEquals','contains','notContains','gt','gte','lt','lte','in','notIn','matches','notMatches','startsWith','endsWith','length','between','exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray','isDefined','isUndefined','isTruthy','isFalsy'] as const
+export const assertionSources = ['status','responseTime','header','text','json','jsonSchema'] as const
+export const assertionOperators = ['equals','notEquals','contains','notContains','gt','gte','lt','lte','in','notIn','matches','notMatches','startsWith','endsWith','length','between','exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray','isDefined','isUndefined','isTruthy','isFalsy','schemaValid'] as const
 export type AssertionSource = typeof assertionSources[number]
 export type AssertionOperator = typeof assertionOperators[number]
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key:string]: JsonValue }

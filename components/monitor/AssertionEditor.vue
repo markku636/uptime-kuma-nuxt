@@ -6,11 +6,11 @@ type Draft={id:string,source:AssertionSource,path:string,operator:AssertionOpera
 const mode=ref<'all'|'any'>(props.modelValue?.mode||'all')
 const rules=ref<Draft[]>((props.modelValue?.rules||[]).map((rule,index)=>({id:rule.id||`rule-${index+1}`,source:rule.source,path:rule.path||'',operator:rule.operator,expectedText:JSON.stringify(rule.expected)??''})))
 const error=ref('')
-const sources:AssertionSource[]=['status','responseTime','header','text','json']
+const sources:AssertionSource[]=['status','responseTime','header','text','json','jsonSchema']
 const unaryOperators:AssertionOperator[]=['exists','notExists','isNull','isNotNull','isEmpty','isNotEmpty','isJson','isNumber','isString','isBoolean','isArray','isDefined','isUndefined','isTruthy','isFalsy']
-const operators:AssertionOperator[]=['equals','notEquals','contains','notContains','gt','gte','lt','lte','in','notIn','startsWith','endsWith','length','between','matches','notMatches',...unaryOperators]
-const sourceLabels:Record<AssertionSource,string>={status:'HTTP status',responseTime:'Response time (ms)',header:'Response header',text:'Response body text',json:'JSON body'}
-const operatorLabels:Record<AssertionOperator,string>={equals:'=',notEquals:'≠',contains:'contains',notContains:'does not contain',gt:'>',gte:'≥',lt:'<',lte:'≤',in:'in',notIn:'not in',startsWith:'starts with',endsWith:'ends with',length:'length',between:'between',matches:'matches',notMatches:'does not match',exists:'exists',notExists:'does not exist',isNull:'is null',isNotNull:'is not null',isEmpty:'is empty',isNotEmpty:'is not empty',isJson:'is JSON',isNumber:'is number',isString:'is string',isBoolean:'is boolean',isArray:'is array',isDefined:'is defined',isUndefined:'is undefined',isTruthy:'is truthy',isFalsy:'is falsy'}
+const operators:AssertionOperator[]=['equals','notEquals','contains','notContains','gt','gte','lt','lte','in','notIn','startsWith','endsWith','length','between','matches','notMatches','schemaValid',...unaryOperators]
+const sourceLabels:Record<AssertionSource,string>={status:'HTTP status',responseTime:'Response time (ms)',header:'Response header',text:'Response body text',json:'JSON body',jsonSchema:'JSON Schema (subset)'}
+const operatorLabels:Record<AssertionOperator,string>={equals:'=',notEquals:'≠',contains:'contains',notContains:'does not contain',gt:'>',gte:'≥',lt:'<',lte:'≤',in:'in',notIn:'not in',startsWith:'starts with',endsWith:'ends with',length:'length',between:'between',matches:'matches',notMatches:'does not match',exists:'exists',notExists:'does not exist',isNull:'is null',isNotNull:'is not null',isEmpty:'is empty',isNotEmpty:'is not empty',isJson:'is JSON',isNumber:'is number',isString:'is string',isBoolean:'is boolean',isArray:'is array',isDefined:'is defined',isUndefined:'is undefined',isTruthy:'is truthy',isFalsy:'is falsy',schemaValid:'matches schema'}
 const presets:{label:string;rule:Omit<Draft,'id'>}[]=[
   {label:'Status is 200',rule:{source:'status',path:'',operator:'equals',expectedText:'200'}},
   {label:'Status is 2xx (200-299)',rule:{source:'status',path:'',operator:'gte',expectedText:'200'}},
@@ -18,6 +18,7 @@ const presets:{label:string;rule:Omit<Draft,'id'>}[]=[
   {label:'Content-Type contains json',rule:{source:'header',path:'content-type',operator:'contains',expectedText:'"json"'}},
   {label:'JSON field success is true',rule:{source:'json',path:'$.success',operator:'equals',expectedText:'true'}},
   {label:'JSON field exists',rule:{source:'json',path:'$.data',operator:'exists',expectedText:''}},
+  {label:'JSON matches schema',rule:{source:'jsonSchema',path:'',operator:'schemaValid',expectedText:'{"type":"object","required":["success"],"properties":{"success":{"type":"boolean"}}}'}},
 ]
 const preset=ref('')
 const needsValue=(operator:string)=>!unaryOperators.includes(operator as AssertionOperator)
@@ -79,13 +80,13 @@ watch([mode,rules],()=>update(),{deep:true})
           <select v-model="rule.source" class="select-field mt-1"><option v-for="source in sources" :key="source" :value="source">{{ sourceLabels[source] }}</option></select>
         </label>
         <label class="block">Operator
-          <select v-model="rule.operator" class="select-field mt-1"><option v-for="operator in operators" :key="operator" :value="operator">{{ operatorLabels[operator] }} ({{ operator }})</option></select>
+          <select v-model="rule.operator" class="select-field mt-1"><option v-for="operator in rule.source==='jsonSchema'?['schemaValid']:operators" :key="operator" :value="operator">{{ operatorLabels[operator] }} ({{ operator }})</option></select>
         </label>
       </div>
       <label v-if="['header','json'].includes(rule.source)" class="block">{{ rule.source==='json'?'JSON path':'Header name' }}
         <input v-model="rule.path" class="input-field mt-1" :placeholder="rule.source==='json'?'$.success':'content-type'">
       </label>
-      <label v-if="needsValue(rule.operator)" class="block">Expected JSON value
+      <label v-if="needsValue(rule.operator)" class="block">{{ rule.source==='jsonSchema'?'JSON Schema (subset) Values use a bounded subset: type, required, properties, items, enum, minimum, maximum, minLength, maxLength, pattern.':'Expected JSON value' }}
         <textarea v-model="rule.expectedText" class="input-field font-mono mt-1" rows="2" />
       </label>
     </div>

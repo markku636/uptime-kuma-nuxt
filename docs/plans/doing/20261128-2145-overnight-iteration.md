@@ -70,9 +70,16 @@ R162 ✅ Monitoring as code（匯出／diff） — commit `636a34f` 後；最終
   與欄位差異。宣告式 schema 拒絕未知欄位。期間與另一條 session 多次 GitOps 寫入碰撞
   （兩次短暫 502 為其滾動更新），在其 quiescent 視窗重試成功。
   
-R163 🔵 Monitoring as code（套用／UI） — 程式完成，待部署。
+R163 ✅ Monitoring as code（套用／UI） — commit `9ea4467` 後；部署 rev548。
 - `applyDeclarative()` 在同一 transaction 內建立／更新 monitor；預設新建為 paused，
   `activate=true` 才啟用；重複名稱／非法欄位／機密 body 均拒絕。API `POST /api/v1/monitoring/apply`（owner）。
 - `/monitoring-as-code` 頁面：下載現況、Preview diff、Apply、Activate 選項；sidebar／桌面／手機 nav 加「As Code」。
 - OpenAPI 補 export／plan／apply。unit 274/274、typecheck 0、build 成功。
+  rev548 實測：匯出 33 個 monitor、改 interval 的 plan 回 update/nochange、頁面正常。
+
+R164 🔵 JSON Schema 斷言 — 程式完成，待部署。
+- 新增非執行式 JSON Schema 子集（`type`／`required`／`properties`／`items`／`enum`／數值與字串限制／
+  `pattern`），未知關鍵字（含 `$ref`）拒絕；`assertionSources` 加 `jsonSchema`、
+  `assertionOperators` 加 `schemaValid`；AssertionEditor 加 source／preset／schema 輸入框。
+- unit 277/277、typecheck 0、build 成功。
 - unit 266/266；build 成功（第一次與另一條 session 並行 build 撞 cache，重跑通過）。

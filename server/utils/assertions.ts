@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { isDeepStrictEqual } from 'node:util'
 import { safePatternMatch } from './safe-pattern'
+import { schemaNodeSchema, validateSchemaSubset, type SchemaNode } from './json-schema-subset'
 import { assertionSources, assertionOperators, type AssertionSet, type AssertionRule, type AssertionEvaluation, type AssertionRuleResult, type JsonValue } from '../../shared/types/assertions'
 const blocked = new Set(['__proto__','prototype','constructor'])
 
@@ -71,7 +72,12 @@ export function parseSafeJson(text:string):unknown{
 const expectedSchema=z.unknown().superRefine((value,ctx)=>{try{validateJsonBudget(value,4096)}catch{ctx.addIssue({code:'custom',message:'Expected value must be bounded JSON'})}})
 const ruleSchema=z.object({id:z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),source:z.enum(assertionSources),path:z.string().max(256).optional(),
   operator:z.enum(assertionOperators),expected:expectedSchema.optional()}).strict().superRefine((rule,ctx)=>{
-  if(rule.source==='json'){try{parseSelector(rule.path||'')}catch{ctx.addIssue({code:'custom',message:'Use a supported JSON selector'})}}
+  if(rule.source==='jsonSchema'){
+    if(rule.operator!=='schemaValid'||!rule.expected||typeof rule.expected!=='object'||Array.isArray(rule.expected))ctx.addIssue({code:'custom',message:'jsonSchema rules require a bounded schema object'})
+    else{try{schemaNodeSchema.parse(rule.expected)}catch{ctx.addIssue({code:'custom',message:'Unsupported JSON Schema keyword'})}}
+    if(rule.path!==undefined)ctx.addIssue({code:'custom',message:'jsonSchema does not take a path'})
+  }
+  else if(rule.source==='json'){try{parseSelector(rule.path||'')}catch{ctx.addIssue({code:'custom',message:'Use a supported JSON selector'})}}
   else if(rule.source==='header'){
     if(!rule.path||!/^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,256}$/.test(rule.path))ctx.addIssue({code:'custom',message:'A valid header name is required'})
   }else if(rule.path!==undefined)ctx.addIssue({code:'custom',message:'This source does not take a path'})
@@ -98,6 +104,7 @@ export interface AssertionResponse{status:number;elapsed:number;headers:Record<s
 export function evaluateRule(rule:AssertionRule,exists:boolean,value:unknown):AssertionRuleResult{
   let passed=false,reason:AssertionRuleResult['reason']='value_mismatch'
   switch(rule.operator){
+    case 'schemaValid':passed=validateSchemaSubset(value,rule.expected as SchemaNode).length===0;reason='value_mismatch';break
     case 'exists':passed=exists;reason='missing';break
     case 'notExists':passed=!exists;reason='unexpected_value';break
     case 'isNull':passed=exists&&value===null;reason=exists?'not_null':'missing';break
@@ -160,11 +167,12 @@ export function evaluateAssertions(input:unknown,response:AssertionResponse,incl
   const parsed=assertionsSchema.safeParse(input)
   if(!parsed.success)return {passed:false,rules:[],error:'CONFIG_ERROR'}
   const set=parsed.data as AssertionSet;let json:unknown
-  if(set.rules.some(rule=>rule.source==='json')){try{json=parseSafeJson(response.body)}catch{return {passed:false,rules:[],error:'INVALID_JSON'}}}
+  if(set.rules.some(rule=>rule.source==='json'||rule.source==='jsonSchema')){try{json=parseSafeJson(response.body)}catch{return {passed:false,rules:[],error:'INVALID_JSON'}}}
   const headers=Object.fromEntries(Object.entries(response.headers).map(([name,value])=>[name.toLowerCase(),value]))
   const rules=set.rules.map(rule=>{
     let selected:{exists:boolean;value:unknown}
     if(rule.source==='json')selected=selectValue(json,rule.path!)
+    else if(rule.source==='jsonSchema')selected={exists:true,value:json}
     else if(rule.source==='header')selected={exists:Object.hasOwn(headers,rule.path!.toLowerCase()),value:headers[rule.path!.toLowerCase()]}
     else selected={exists:true,value:rule.source==='status'?response.status:rule.source==='responseTime'?response.elapsed:response.body}
     const result=evaluateRule(rule,selected.exists,selected.value)
