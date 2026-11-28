@@ -38,6 +38,12 @@
 - **Bruno multi-API tests**：Bruno collection 可宣告式建立測試流程（suite），跨步驟以
   `res.body.token` 等白名單萃取變數帶到下一步，手動執行後在站內看逐步報告並下載 JSON／CSV；
   不執行 Bruno script/tests、不進 availability／通知，見 [Bruno 相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
+- **狀態頁訂閱**：公開頁可 Email 訂閱（雙重確認、退訂），管理端可加 webhook 訂閱者（公網 guard、
+  加密存放、Test 按鈕）；事件建立／更新／解決與維護開始／結束都有 durable outbox 投遞與通知日誌。
+  事件的 `impact`（major／partial／degraded／maintenance／none）會提高狀態頁整體狀態。
+- **Monitoring as code**：`/monitoring-as-code` 可匯出宣告式 JSON（去 secret）、預覽 diff、原子套用；
+  browser-flow／site-audit 的宣告式 body 會保留，一般 HTTP body 不匯出。
+- **調查證據包**：監控詳情「Investigate」彙整心跳／TLS／健檢報告／流程 trace／通知狀態，可下載 JSON。
 - **失敗自動事件**：Settings › General 開啟 `autoIncidentOnDown` 後，monitor 轉為 DOWN 時會在
   已發布且包含該 monitor 的狀態頁自動開一件事件（含 investigating 更新），恢復 UP 時補 resolved
   並從公開頁隱藏；以事件標題綁定 monitor，避免重複開立。

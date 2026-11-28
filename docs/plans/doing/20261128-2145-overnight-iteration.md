@@ -107,10 +107,14 @@ R168 ✅ Webhook 訂閱者 — commit `432484c` 後；部署 rev599，typecheck�
 - dispatcher 依 kind 發送 Email 或 JSON webhook（10s timeout、不外送 redirect、失敗重試／死信）。
 - 狀態頁編輯器可新增 webhook；unit 290/290、typecheck 0、build 成功。
 
-R169 🔵 訂閱者測試事件 — 程式完成，待部署。
+R169 ✅ 訂閱者測試事件 — commit `f149bdd1` 後；部署 rev602。
 - `POST /api/v1/status-pages/{slug}/subscribers/{id}/test` 將合成事件放入 outbox（同一訂閱者避免重複排隊），
   後台 Webhook 列新增 Test 按鈕＋通知日誌可看投結果；OpenAPI 補端點。
 - unit 290/290、typecheck 0、build 成功。
+
+## 文件更新（01:45 CST）
+
+- README 補狀態頁訂閱／webhook／ Monitoring as code／調查證據包說明。
 
 ## 階段性檢查（2026-11-29 00:12 CST）
 
