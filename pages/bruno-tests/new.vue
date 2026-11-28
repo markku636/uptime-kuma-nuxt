@@ -90,13 +90,18 @@ async function doPreview() {
   finally { busy.value = false }
 }
 
-async function create() {
+async function create(andRun = false) {
   if (!preview.value?.digest) return
   busy.value = true
   error.value = ''
   try {
     const result = await $fetch<any>('/api/v1/bruno/tests', { method: 'POST', body: payload(preview.value.digest) })
-    toast.add({ title: 'Bruno test created', description: `${result.data.steps} steps ready`, color: 'success' })
+    if (andRun) {
+      const run = await $fetch<any>(`/api/v1/bruno/tests/${result.data.id}/run`, { method: 'POST' })
+      toast.add({ title: `Test ${run.data.status}`, description: `${result.data.steps} steps executed`, color: run.data.status === 'pass' ? 'success' : 'error' })
+    } else {
+      toast.add({ title: 'Bruno test created', description: `${result.data.steps} steps ready`, color: 'success' })
+    }
     router.push(`/bruno-tests/${result.data.id}`)
   } catch (e: any) { error.value = e.data?.message || 'Create failed' }
   finally { busy.value = false }
@@ -147,7 +152,8 @@ async function create() {
       </details>
       <div class="flex gap-3">
         <button class="btn btn-secondary" :disabled="busy || !manifestFiles.length" @click="doPreview">{{ busy ? 'Working…' : 'Preview' }}</button>
-        <button class="btn btn-primary" :disabled="busy || !preview?.ok || !name.trim()" @click="create">Create test</button>
+        <button class="btn btn-primary" :disabled="busy || !preview?.ok || !name.trim()" @click="create()">Create test</button>
+        <button class="btn btn-secondary" :disabled="busy || !preview?.ok || !name.trim()" @click="create(true)">Create &amp; run</button>
       </div>
       <p v-if="error" role="alert" class="text-red-400">{{ error }}</p>
     </section>
