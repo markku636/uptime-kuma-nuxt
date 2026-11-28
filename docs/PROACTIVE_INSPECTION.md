@@ -78,6 +78,9 @@
 | `assertVisible` | 元素存在且可見 |
 | `assertText` / `assertValue` / `assertChecked` | 包含指定文字／input 值完全相等／核取方塊已勾選 |
 
+`startUrl`／selector／value／URL 可用工作區環境變數與 secret（例如 `{{baseUrl}}`）：
+`resolveMonitorConfig` 會在排程與 trial 前解析 `body` 中的變數，值不寫入心跳或通知。
+
 安全邊界：未知欄位、未知 action 一律拒絕；最多 20 步，selector ≤512 字、value ≤4096 字、
 `waitTimeoutMs` ≤30000。**不執行 JavaScript**、不支援登入態 cookie 注入、不做截圖比對
 （跑版請用既有 `visual-diff` monitor）。每一步結果（行動／耗時／狀態／錯誤碼）會出現在
