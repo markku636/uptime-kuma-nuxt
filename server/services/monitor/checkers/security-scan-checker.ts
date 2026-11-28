@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import type { CheckResult } from '../checker'
 import { runSecurityScan } from '../../security-scan/scan'
-import type { SecurityScanReport } from '../../../../shared/types/security-scan'
+import type { SecurityScanReport, SecurityRule } from '../../../../shared/types/security-scan'
 import { SECURITY_SCAN_CATEGORIES } from '../../../../shared/types/security-scan'
 import { workerPrisma } from '../../../utils/worker-prisma'
 
@@ -20,7 +20,7 @@ export const securityScanConfigSchema = z.object({
 }).strict()
 
 export interface SecurityScanCheckDeps {
-  scan: (input: { url: string; categories?: Record<string, boolean | undefined> }) => Promise<SecurityScanReport>
+  scan: (input: { url: string; categories?: Record<string, boolean | undefined> }, options?: { rules?: SecurityRule[] }) => Promise<SecurityScanReport>
   saveReport?: (monitorId: number, report: SecurityScanReport) => Promise<void>
 }
 
@@ -67,7 +67,7 @@ export async function checkSecurityScan(
   monitor: any,
   startTime: number,
   signal?: AbortSignal,
-  deps: SecurityScanCheckDeps = { scan: runSecurityScan, saveReport: defaultSaveReport },
+  deps: SecurityScanCheckDeps = { scan: (input, options) => runSecurityScan(input, options || {}), saveReport: defaultSaveReport },
 ): Promise<CheckResult> {
   let config: z.infer<typeof securityScanConfigSchema>
   try { config = securityScanConfigSchema.parse(typeof monitor.body === 'string' ? JSON.parse(monitor.body) : monitor.body || {}) }
@@ -77,7 +77,20 @@ export async function checkSecurityScan(
   if (signal?.aborted) return { status: 0, ping: Date.now() - startTime, code: 'ABORTED', msg: 'Check aborted' }
 
   try {
-    const report = await deps.scan({ url: target, ...(config.categories ? { categories: config.categories } : {}) })
+    let rules: SecurityRule[] = []
+    try {
+      const rows = await workerPrisma.securityRule.findMany({ where: { workspaceId: monitor.workspaceId, active: true }, take: 100 })
+      rules = rows.map(row => ({
+        key: row.key, source: row.source as SecurityRule['source'], sourceUrl: row.sourceUrl, product: row.product,
+        signature: row.signature, ...(row.maxVersion ? { maxVersion: row.maxVersion } : {}),
+        severity: row.severity as SecurityRule['severity'], title: row.title, detail: row.detail,
+        recommendation: row.recommendation,
+        refs: Array.isArray(row.refs) ? row.refs as string[] : [],
+        cwe: Array.isArray(row.cwe) ? row.cwe as string[] : [],
+        active: row.active,
+      }))
+    } catch { /* 規則庫讀取失敗時仍執行內建掃描 */ }
+    const report = await deps.scan({ url: target, ...(config.categories ? { categories: config.categories } : {}) }, { rules })
     if (signal?.aborted) return { status: 0, ping: Date.now() - startTime, code: 'ABORTED', msg: 'Check aborted' }
     if (!monitor.includeTrialResponse && monitor.id && deps.saveReport) {
       try { await deps.saveReport(monitor.id, report) } catch { /* 報告保存失敗不影響判定 */ }

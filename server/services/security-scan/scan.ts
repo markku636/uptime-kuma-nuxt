@@ -9,7 +9,7 @@ import { lookup, resolveMx, resolveTxt } from 'node:dns/promises'
 import { isIP } from 'node:net'
 import type {
   SecurityFinding, SecurityScanCategory, SecurityScanInput, SecurityScanProfile,
-  SecurityScanReport, SecurityScanSeverity, SecurityScanFingerprint,
+  SecurityScanReport, SecurityScanSeverity, SecurityScanFingerprint, SecurityRule,
 } from '../../../shared/types/security-scan'
 import { SECURITY_SCAN_SEVERITIES } from '../../../shared/types/security-scan'
 import type { AuditFetchResult, AuditFetcher } from '../site-audit/audit'
@@ -40,6 +40,8 @@ export interface SecurityScanDeps {
   /** TLS 版本探測；可注入以便測試，不注入時用釘 IP 的 handshake。 */
   tlsProber?: TlsProber
   now?: Date
+  /** 由 workspace 規則庫注入；每條規則都附來源，報告會一併呈現。 */
+  rules?: SecurityRule[]
 }
 
 type FindingInput = Omit<SecurityFinding, 'key'>
@@ -319,6 +321,49 @@ export function scoreFindings(findings: SecurityFinding[]): { score: number; gra
   return { score, grade, riskLevel }
 }
 
+export function compareVersion(left: string, right: string): number {
+  const parse = (value: string) => value.split('.').map(part => Number(part) || 0)
+  const a = parse(left), b = parse(right)
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const diff = (a[i] || 0) - (b[i] || 0)
+    if (diff) return diff > 0 ? 1 : -1
+  }
+  return 0
+}
+
+/** 只做大小寫不敏感的字串比對＋Safety 舊版本比對；不執行規則提供的正則。 */
+export function ruleFindings(page: AuditFetchResult, rules: SecurityRule[], url: string): FindingInput[] {
+  const sources = [
+    ...Object.entries(page.headers).map(([name, value]) => `${name}: ${value}`),
+    page.body.slice(0, 200_000),
+  ]
+  const out: FindingInput[] = []
+  for (const rule of rules.slice(0, 100)) {
+    if (rule.active === false || !rule.signature) continue
+    const needle = rule.signature.toLowerCase()
+    const text = sources.find(source => source.toLowerCase().includes(needle))
+    if (!text) continue
+    let matchedVersion: string | undefined
+    if (rule.maxVersion) {
+      const escaped = rule.signature.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const match = new RegExp(`${escaped}[^0-9]{0,16}(\\d+(?:\\.\\d+){1,3})`, 'i').exec(text)
+      if (!match || compareVersion(match[1]!, rule.maxVersion) > 0) continue
+      matchedVersion = match[1]
+    }
+    out.push({
+      rule: `vuln.${rule.key}`, category: 'vulnerabilities', severity: rule.severity,
+      title: rule.title,
+      detail: `${rule.detail}（來源：${rule.source}${rule.sourceUrl ? ` · ${rule.sourceUrl}` : ''}）`,
+      recommendation: rule.recommendation,
+      location: { url },
+      evidence: { signature: rule.signature, matchedVersion: matchedVersion || '', source: rule.source, sourceUrl: rule.sourceUrl },
+      cwe: rule.cwe || [], refs: [...(rule.sourceUrl ? [rule.sourceUrl] : []), ...(rule.refs || [])],
+      tags: ['vulnerability-db', rule.source],
+    })
+  }
+  return out
+}
+
 export async function runSecurityScan(input: SecurityScanInput, deps: SecurityScanDeps = {}): Promise<SecurityScanReport> {
   const fetcher = resolveAuditFetcher(deps)
   const lookupFn = deps.lookupFn || lookup
@@ -375,6 +420,7 @@ export async function runSecurityScan(input: SecurityScanInput, deps: SecuritySc
     }
   }
   if (enabled('redirect')) findings.push(...redirectFindings(page, target, target.href))
+  if (enabled('vulnerabilities') && deps.rules?.length) findings.push(...ruleFindings(page, deps.rules, target.href))
 
   if (enabled('dns')) {
     try {

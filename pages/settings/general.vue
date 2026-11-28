@@ -26,6 +26,22 @@
           </select>
         </div>
 
+        <!-- Usage mode -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Usage mode</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input v-model="form.usageMode" type="radio" name="usageMode" value="personal" class="text-green-500" />
+              <span class="text-gray-700 dark:text-gray-200">Personal — security scans stay passive and risk notes are written for个人 sites</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input v-model="form.usageMode" type="radio" name="usageMode" value="company" class="text-green-500" />
+              <span class="text-gray-700 dark:text-gray-200">Company — allow verified light probes and enterprise risk notes</span>
+            </label>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Security Scan uses this to choose the default profile and the wording of recommendations.</p>
+        </div>
+
         <!-- Auto incidents -->
         <div>
           <label class="flex items-center gap-2 cursor-pointer">
@@ -139,7 +155,8 @@ const form = reactive({
   dnsServers: '',
   statusPageSlug: '',
   showRuntimeHints: true,
-  autoIncidentOnDown: false
+  autoIncidentOnDown: false,
+  usageMode: 'personal'
 })
 
 const loading = ref(false)
@@ -199,7 +216,8 @@ const saveSettings = async () => {
         dnsServers: form.dnsServers,
         statusPageSlug: form.entryPage === 'status' ? form.statusPageSlug : undefined,
         showRuntimeHints: form.showRuntimeHints,
-        autoIncidentOnDown: form.autoIncidentOnDown
+        autoIncidentOnDown: form.autoIncidentOnDown,
+        usageMode: form.usageMode
       }
     })
     // Reflect the new values immediately instead of waiting for a reload.
@@ -230,6 +248,7 @@ onMounted(async () => {
       form.dnsServers = settings.dnsServers || '8.8.8.8\n1.1.1.1'
       form.statusPageSlug = settings.statusPageSlug || ''
       form.autoIncidentOnDown = settings.autoIncidentOnDown ?? false
+      form.usageMode = settings.usageMode || 'personal'
     }
     const pages = await $fetch<any>('/api/v1/status-pages')
     statusPages.value = pages?.data || []

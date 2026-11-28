@@ -7,7 +7,7 @@ export type SecurityScanProfile = (typeof SECURITY_SCAN_PROFILES)[number]
 export const SECURITY_SCAN_SEVERITIES = ['info', 'low', 'medium', 'high', 'critical'] as const
 export type SecurityScanSeverity = (typeof SECURITY_SCAN_SEVERITIES)[number]
 
-export const SECURITY_SCAN_CATEGORIES = ['fingerprint', 'headers', 'cookies', 'tls', 'dns', 'redirect', 'exposure'] as const
+export const SECURITY_SCAN_CATEGORIES = ['fingerprint', 'headers', 'cookies', 'tls', 'dns', 'redirect', 'exposure', 'vulnerabilities'] as const
 export type SecurityScanCategory = (typeof SECURITY_SCAN_CATEGORIES)[number]
 
 export interface SecurityFinding {
@@ -62,4 +62,28 @@ export interface SecurityScanInput {
   categories?: Partial<Record<SecurityScanCategory, boolean>>
   /** 主動探測的路徑上限（0–6，伺服器端會夾制）。 */
   maxProbes?: number
+}
+
+/** 漏洞規則可由使用者維護；source/sourceUrl 顯示在規則清單與掃描報告，便於追溯。 */
+export const SECURITY_RULE_SOURCES = ['NVD', 'OWASP', 'CISA KEV', 'GitHub Advisory', 'Custom'] as const
+export type SecurityRuleSource = typeof SECURITY_RULE_SOURCES[number]
+
+export interface SecurityRule {
+  key: string
+  source: SecurityRuleSource
+  sourceUrl: string
+  product: string
+  /** 出現在 header／HTML 的可見字串；只做大小寫不敏感的字串比對，不執行正則。 */
+  signature: string
+  /** 比對到的版本 <= 此值才通報；空值表示只做資訊提示。 */
+  maxVersion?: string
+  severity: SecurityScanSeverity
+  title: string
+  detail: string
+  recommendation: string
+  refs: string[]
+  cwe: string[]
+  active?: boolean
+  id?: number
+  updatedAt?: string
 }

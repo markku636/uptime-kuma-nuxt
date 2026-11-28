@@ -3,7 +3,7 @@
     <div class="mb-6 flex items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold text-primary">Security scan</h1>
-        <p class="text-secondary mt-1">Bounded vulnerability checks against sites you own — passive by default, light probes only after ownership is verified.</p>
+        <p class="text-secondary mt-1">{{ riskHint }}</p>
       </div>
       <NuxtLink to="/dashboard" class="btn btn-secondary">Back to dashboard</NuxtLink>
     </div>
@@ -22,7 +22,7 @@
             <span class="text-tertiary">(browser-like requests)</span>
           </label>
           <label class="flex items-center gap-1 text-sm text-toned">
-            <input v-model="profile" type="radio" value="active_light" aria-label="Active light profile" /> Active light
+            <input v-model="profile" type="radio" value="active_light" aria-label="Active light profile" :disabled="usageMode === 'personal'" /> Active light
             <span class="text-tertiary">(needs ownership proof)</span>
           </label>
         </div>
@@ -106,6 +106,59 @@
       </div>
     </div>
 
+    <div class="card card-body mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div>
+          <h2 class="section-title !mb-0">Vulnerability database</h2>
+          <p class="text-sm text-secondary">Curated rules from NVD, OWASP, CISA KEV and GitHub Advisory. Every rule and finding shows its source.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn btn-secondary" :disabled="rulesBusy" @click="updateBuiltin">更新內建規則</button>
+          <button type="button" class="btn btn-secondary" :disabled="rulesBusy" @click="exportRules">Export JSON</button>
+          <label class="btn btn-secondary cursor-pointer">Import JSON<input type="file" accept="application/json,.json" class="hidden" :disabled="rulesBusy" @change="importRulesFile" /></label>
+        </div>
+      </div>
+      <p v-if="ruleMessage" role="status" class="text-sm text-emerald-400 mb-2">{{ ruleMessage }}</p>
+
+      <div class="grid gap-3 md:grid-cols-2 mb-4">
+        <label class="block text-sm">Key<input v-model="ruleForm.key" class="input-field mt-1" placeholder="nvd-example-2024" /></label>
+        <label class="block text-sm">Source<select v-model="ruleForm.source" class="input-field mt-1"><option v-for="source in ruleSources" :key="source" :value="source">{{ source }}</option></select></label>
+        <label class="block text-sm">Source URL<input v-model="ruleForm.sourceUrl" class="input-field mt-1" placeholder="https://nvd.nist.gov/vuln/detail/CVE-..." /></label>
+        <label class="block text-sm">Product<input v-model="ruleForm.product" class="input-field mt-1" placeholder="jQuery" /></label>
+        <label class="block text-sm">Signature (string, not regex)<input v-model="ruleForm.signature" class="input-field mt-1" placeholder="jquery" /></label>
+        <label class="block text-sm">Max vulnerable version<input v-model="ruleForm.maxVersion" class="input-field mt-1" placeholder="3.5.1" /></label>
+        <label class="block text-sm">Severity<select v-model="ruleForm.severity" class="input-field mt-1"><option v-for="level in severityOrder" :key="level" :value="level">{{ level }}</option></select></label>
+        <label class="block text-sm">Title<input v-model="ruleForm.title" class="input-field mt-1" /></label>
+        <label class="block md:col-span-2 text-sm">Detail<textarea v-model="ruleForm.detail" rows="2" class="input-field mt-1"></textarea></label>
+        <label class="block md:col-span-2 text-sm">Recommendation<textarea v-model="ruleForm.recommendation" rows="2" class="input-field mt-1"></textarea></label>
+        <label class="block text-sm">Refs (one URL per line)<textarea :value="ruleForm.refs.join('\n')" rows="2" class="input-field mt-1" @input="ruleForm.refs = ($event.target as HTMLTextAreaElement).value.split('\n').filter(Boolean)"></textarea></label>
+        <label class="block text-sm">CWE (comma separated)<input :value="ruleForm.cwe.join(', ')" class="input-field mt-1" @input="ruleForm.cwe = ($event.target as HTMLInputElement).value.split(',').map(x=>x.trim()).filter(Boolean)" /></label>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button type="button" class="btn btn-primary" :disabled="rulesBusy || !ruleForm.key || !ruleForm.signature" @click="saveRule">{{ editingRuleId ? '更新規則' : '新增規則' }}</button>
+        <button v-if="editingRuleId" type="button" class="btn btn-secondary" @click="ruleForm = blankRule(); editingRuleId = null">Cancel</button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead><tr><th>Key</th><th>Source</th><th>Product</th><th>Signature</th><th>Max</th><th>Severity</th><th>Active</th><th></th></tr></thead>
+          <tbody>
+            <tr v-for="rule in rules" :key="rule.id || rule.key">
+              <td class="font-mono text-xs">{{ rule.key }}</td>
+              <td class="text-xs"><a v-if="rule.sourceUrl" :href="rule.sourceUrl" target="_blank" rel="noopener noreferrer" class="link">{{ rule.source }}</a><template v-else>{{ rule.source }}</template></td>
+              <td>{{ rule.product }}</td>
+              <td class="font-mono text-xs">{{ rule.signature }}</td>
+              <td>{{ rule.maxVersion || '—' }}</td>
+              <td>{{ rule.severity }}</td>
+              <td>{{ rule.active ? 'yes' : 'no' }}</td>
+              <td class="space-x-2"><button class="btn btn-secondary btn-sm" @click="editRule(rule)">Edit</button><button class="btn btn-danger btn-sm" @click="deleteRule(rule.id)">Delete</button></td>
+            </tr>
+            <tr v-if="!rules.length"><td colspan="8" class="text-secondary">尚無規則，按「更新內建規則」匯入策展規則。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div v-if="report" class="card card-body">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h2 class="section-title !mb-0">Report</h2>
@@ -133,7 +186,7 @@
 
       <div class="overflow-x-auto">
         <table class="table">
-          <thead><tr><th>Severity</th><th>Category</th><th>Finding</th><th>Recommendation</th></tr></thead>
+          <thead><tr><th>Severity</th><th>Category</th><th>Finding</th><th>Source</th><th>Recommendation</th></tr></thead>
           <tbody>
             <tr v-for="finding in visibleFindings" :key="finding.key">
               <td><span class="badge" :class="severityClass(finding.severity)">{{ finding.severity }}</span></td>
@@ -143,9 +196,13 @@
                 <p class="text-sm text-secondary">{{ finding.detail }}</p>
                 <p v-if="finding.refs.length" class="text-xs text-tertiary break-all">{{ finding.refs.join(' · ') }}</p>
               </td>
+              <td class="text-xs text-tertiary">
+                <template v-if="finding.evidence?.source">{{ finding.evidence.source }}<span v-if="finding.evidence?.sourceUrl"> · {{ finding.evidence.sourceUrl }}</span></template>
+                <template v-else>—</template>
+              </td>
               <td class="text-sm text-secondary">{{ finding.recommendation }}</td>
             </tr>
-            <tr v-if="!visibleFindings.length"><td colspan="4" class="text-secondary">No findings in this view.</td></tr>
+            <tr v-if="!visibleFindings.length"><td colspan="5" class="text-secondary">No findings in this view.</td></tr>
           </tbody>
         </table>
       </div>
@@ -200,6 +257,7 @@ const categories = [
   { id: 'cookies', label: 'Cookies' }, { id: 'tls', label: 'TLS' },
   { id: 'dns', label: 'DNS' }, { id: 'redirect', label: 'Redirect' },
   { id: 'exposure', label: 'Exposure' },
+  { id: 'vulnerabilities', label: 'Vuln DB' },
 ] as const
 type CategoryId = typeof categories[number]['id']
 
@@ -209,10 +267,82 @@ const verifyMethod = ref<'dns-txt' | 'well-known'>('dns-txt')
 const token = ref('')
 const issued = ref<{ token: string; dnsName: string; dnsValue: string; wellKnownUrl: string; expiresAt: string; instructions: string[] } | null>(null)
 const enabled = ref<Record<CategoryId, boolean>>({
-  fingerprint: true, headers: true, cookies: true, tls: true, dns: true, redirect: true, exposure: true,
+  fingerprint: true, headers: true, cookies: true, tls: true, dns: true, redirect: true, exposure: true, vulnerabilities: true,
 })
 const maxProbes = ref(3)
 const minScore = ref(60)
+const usageMode = ref<'personal' | 'company'>('personal')
+const riskHint = computed(() => usageMode.value === 'company'
+  ? 'Company mode: verified light probes are available and recommendations include enterprise risk context.'
+  : 'Personal mode: scans stay passive and focus on sites you own; no active probes are sent.')
+
+interface VulnRule {
+  id?: number; key: string; source: string; sourceUrl: string; product: string; signature: string
+  maxVersion?: string; severity: Finding['severity']; title: string; detail: string; recommendation: string
+  refs: string[]; cwe: string[]; active: boolean
+}
+const blankRule = (): VulnRule => ({ key: '', source: 'Custom', sourceUrl: 'https://nvd.nist.gov/', product: '', signature: '', severity: 'medium', title: '', detail: '', recommendation: '', refs: [], cwe: [], active: true })
+const rules = ref<VulnRule[]>([])
+const ruleForm = ref<VulnRule>(blankRule())
+const editingRuleId = ref<number | null>(null)
+const rulesBusy = ref(false)
+const ruleMessage = ref('')
+const ruleSources = ['NVD', 'OWASP', 'CISA KEV', 'GitHub Advisory', 'Custom']
+
+async function loadRules() {
+  try {
+    const response = await $fetch<{ data: VulnRule[] }>('/api/v1/security-rules')
+    rules.value = response.data || []
+  } catch { rules.value = [] }
+}
+
+async function saveRule() {
+  rulesBusy.value = true; ruleMessage.value = ''
+  try {
+    const body = { ...ruleForm.value }
+    if (editingRuleId.value) await $fetch(`/api/v1/security-rules/${editingRuleId.value}`, { method: 'PUT', body })
+    else await $fetch('/api/v1/security-rules', { method: 'POST', body })
+    ruleForm.value = blankRule(); editingRuleId.value = null; ruleMessage.value = 'Rule saved.'
+    await loadRules()
+  } catch (caught: any) { ruleMessage.value = caught?.data?.message || 'Rule save failed.' }
+  finally { rulesBusy.value = false }
+}
+
+function editRule(rule: VulnRule) { ruleForm.value = { ...rule }; editingRuleId.value = rule.id || null }
+
+async function deleteRule(id?: number) {
+  if (!id || !confirm('Delete this rule?')) return
+  await $fetch(`/api/v1/security-rules/${id}`, { method: 'DELETE' })
+  if (editingRuleId.value === id) { ruleForm.value = blankRule(); editingRuleId.value = null }
+  await loadRules()
+}
+
+async function updateBuiltin() {
+  rulesBusy.value = true; ruleMessage.value = ''
+  try {
+    const result = await $fetch<{ created: number; updated: number }>('/api/v1/security-rules/update', { method: 'POST' })
+    ruleMessage.value = `內建規則已更新：新增 ${result.created}、更新 ${result.updated}。`
+    await loadRules()
+  } catch (caught: any) { ruleMessage.value = caught?.data?.message || 'Update failed.' }
+  finally { rulesBusy.value = false }
+}
+
+async function importRulesFile(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  rulesBusy.value = true; ruleMessage.value = ''
+  try {
+    const parsed = JSON.parse(await file.text())
+    const list = Array.isArray(parsed) ? parsed : parsed?.rules
+    const result = await $fetch<{ imported: number; skipped: number }>('/api/v1/security-rules/import', { method: 'POST', body: { rules: list } })
+    ruleMessage.value = `匯入 ${result.imported} 筆，略過 ${result.skipped} 筆。`
+    await loadRules()
+  } catch (caught: any) { ruleMessage.value = caught?.data?.message || 'Import failed.' }
+  finally { rulesBusy.value = false; (event.target as HTMLInputElement).value = '' }
+}
+
+function exportRules() { window.location.href = '/api/v1/security-rules/export' }
+
 const severityOrder = ['critical', 'high', 'medium', 'low', 'info'] as const
 const severityCounts = computed(() => {
   const counts: Record<string, number> = {}
@@ -383,4 +513,12 @@ function downloadJson(): void {
   anchor.click()
   URL.revokeObjectURL(link)
 }
+onMounted(async () => {
+  try {
+    const settings = await $fetch<any>('/api/settings/general')
+    usageMode.value = settings?.usageMode === 'company' ? 'company' : 'personal'
+    if (usageMode.value === 'personal') profile.value = 'passive'
+  } catch { /* keep personal defaults */ }
+  await loadRules()
+})
 </script>

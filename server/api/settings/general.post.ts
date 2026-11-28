@@ -24,7 +24,8 @@ const schema = z.object({
   checkBeta: z.boolean().optional(),
   showRuntimeHints: z.boolean().optional(),
   alertDelayMinutes: z.number().int().min(0).max(1440).optional(),
-  autoIncidentOnDown: z.boolean().optional()
+  autoIncidentOnDown: z.boolean().optional(),
+  usageMode: z.enum(['personal', 'company']).optional()
 })
 
 export default defineEventHandler(async (event) => {

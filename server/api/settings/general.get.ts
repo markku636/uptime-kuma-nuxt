@@ -25,7 +25,8 @@ export default defineEventHandler(async (event) => {
           'showRuntimeHints',
           'alertDelayMinutes',
           'statusPageSlug',
-          'autoIncidentOnDown'
+          'autoIncidentOnDown',
+          'usageMode'
         ]
       }
     }
@@ -49,7 +50,8 @@ export default defineEventHandler(async (event) => {
     showRuntimeHints: true,
     alertDelayMinutes: 0,
     statusPageSlug: '',
-    autoIncidentOnDown: false
+    autoIncidentOnDown: false,
+    usageMode: 'personal'
   }
 
   settings.forEach(setting => {

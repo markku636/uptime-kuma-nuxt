@@ -510,6 +510,30 @@ model MaintenanceStatusPage {
   @@map("maintenance_status_pages")
 }
 
+model SecurityRule {
+  id Int @id @default(autoincrement())
+  workspaceId Int @map("workspace_id")
+  key String @db.VarChar(120)
+  source String @db.VarChar(40)
+  sourceUrl String @map("source_url") @db.VarChar(512)
+  product String @db.VarChar(120)
+  signature String @db.VarChar(160)
+  maxVersion String? @map("max_version") @db.VarChar(40)
+  severity String @db.VarChar(16)
+  title String @db.VarChar(300)
+  detail String
+  recommendation String
+  refs Json
+  cwe Json
+  active Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@unique([workspaceId, key], map: "security_rule_identity")
+  @@index([workspaceId, active], map: "security_rule_scope")
+  @@map("security_rules")
+}
+
 model ApiKey {
   scope String @default("read")
   environmentId Int? @map("environment_id")
@@ -595,6 +619,7 @@ model Workspace {
   remoteBrowsers RemoteBrowser[]
   monitorGroups MonitorGroup[]
   brunoTestSuites BrunoTestSuite[]
+  securityRules SecurityRule[]
   @@map("workspaces")
 }
 
