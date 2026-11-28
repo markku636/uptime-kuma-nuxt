@@ -33,6 +33,38 @@
       </div>
     </div>
 
+    <div class="card card-body mb-6">
+      <h2 class="section-title">Compare two sites</h2>
+      <div class="grid gap-3 md:grid-cols-2">
+        <label class="block">
+          <span class="text-sm text-toned">Site A</span>
+          <input v-model="compareA" type="url" maxlength="8192" aria-label="Compare site A" class="input-field mt-1" placeholder="https://example.com" />
+        </label>
+        <label class="block">
+          <span class="text-sm text-toned">Site B</span>
+          <input v-model="compareB" type="url" maxlength="8192" aria-label="Compare site B" class="input-field mt-1" placeholder="https://example.org" />
+        </label>
+      </div>
+      <div class="mt-4">
+        <button type="button" class="btn btn-secondary" :disabled="comparing || !compareA || !compareB" @click="compare">
+          {{ comparing ? 'Comparing…' : 'Compare' }}
+        </button>
+      </div>
+      <div v-if="compareResult" class="overflow-x-auto mt-4">
+        <table class="table">
+          <thead><tr><th>Check</th><th>A · {{ compareA }}</th><th>B · {{ compareB }}</th></tr></thead>
+          <tbody>
+            <tr v-for="row in compareRows" :key="row.id">
+              <td class="font-medium">{{ row.label }}</td>
+              <td :class="row.diff ? 'text-amber-500' : 'text-secondary'">{{ row.a }}</td>
+              <td :class="row.diff ? 'text-amber-500' : 'text-secondary'">{{ row.b }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-sm text-secondary mt-2">Score: {{ compareResult.a?.score }} vs {{ compareResult.b?.score }}</p>
+      </div>
+    </div>
+
     <div v-if="result" class="card card-body">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h2 class="section-title !mb-0">Results</h2>
@@ -77,6 +109,23 @@ interface BatchResult { results: BatchRow[]; passed: number; failed: number; err
 
 const rawUrls = ref('')
 const keyword = ref('')
+const compareA = ref('')
+const compareB = ref('')
+const comparing = ref(false)
+const compareResult = ref<{ a: any; b: any } | null>(null)
+const compareRows = computed(() => {
+  const a = new Map<string, any>((compareResult.value?.a?.checks || []).map((check: any) => [check.id, check]))
+  const b = new Map<string, any>((compareResult.value?.b?.checks || []).map((check: any) => [check.id, check]))
+  return [...new Set([...a.keys(), ...b.keys()])].map(id => {
+    const left = a.get(id), right = b.get(id)
+    return {
+      id, label: left?.label || right?.label || id,
+      a: left ? `${left.status} · ${left.summary}` : '—',
+      b: right ? `${right.status} · ${right.summary}` : '—',
+      diff: (left?.status || '') !== (right?.status || '') || (left?.summary || '') !== (right?.summary || ''),
+    }
+  })
+})
 const checkOptions = [
   { id: 'tls', label: 'TLS' }, { id: 'dns', label: 'DNS' }, { id: 'headers', label: 'Headers' },
   { id: 'meta', label: 'Metadata' }, { id: 'links', label: 'Links' }, { id: 'keyword', label: 'Keyword' },
@@ -107,6 +156,23 @@ async function run(): Promise<void> {
     error.value = caught?.data?.message || caught?.message || 'Batch audit failed.'
   } finally {
     busy.value = false
+  }
+}
+
+async function compare(): Promise<void> {
+  if (!compareA.value || !compareB.value || comparing.value) return
+  comparing.value = true
+  error.value = ''
+  compareResult.value = null
+  try {
+    const body = { checks: Object.fromEntries(checkOptions.map(option => [option.id, enabledChecks.value[option.id] !== false])), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}) }
+    const [a, b] = await Promise.all([compareA.value, compareB.value].map(url =>
+      $fetch<{ ok: boolean; data: any }>('/api/v1/site-audit', { method: 'POST', body: { ...body, url } })))
+    compareResult.value = { a: a.data, b: b.data }
+  } catch (caught: any) {
+    error.value = caught?.data?.message || caught?.message || 'Compare failed.'
+  } finally {
+    comparing.value = false
   }
 }
 
