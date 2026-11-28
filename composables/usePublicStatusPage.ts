@@ -59,6 +59,7 @@ interface PublicMonitor {
   heartbeats?: Heartbeat[]
   uptime24?: number
   uptime30?: number
+  uptime7?: number
   validCert?: boolean
   certExpiryDaysRemaining?: number
 }
@@ -287,7 +288,7 @@ export function usePublicStatusPage(slug: Ref<string> | string) {
             if (heartbeatList.value[monitor.id]) {
               monitor.heartbeats = heartbeatList.value[monitor.id]
             }
-            for (const [key, field] of [['24', 'uptime24'], ['30', 'uptime30']] as const) {
+            for (const [key, field] of [['24', 'uptime24'], ['7', 'uptime7'], ['30', 'uptime30']] as const) {
               const value = uptimeList.value[`${monitor.id}_${key}`]
               if (value !== undefined) {
                 // A monitor with no observations has no uptime yet — 0.00% would be misleading.
