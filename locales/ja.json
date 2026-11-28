@@ -1276,5 +1276,15 @@
   "settingsDeliveryLogHint": "Recent notification attempts. Payloads and integration URLs are never shown.",
   "settingsIncidentHistory": "Incident history",
   "dashboardAllGroups": "All groups (this page)",
-  "runtimeHintOverview": "About API, workers and check slots"
+  "runtimeHintOverview": "About API, workers and check slots",
+  "dash.monitorOverview": "モニター概要",
+  "dash.healthRecent": "選択した環境の状態と最近のイベント。",
+  "dash.quickStats": "クイック統計",
+  "dash.certificateExpiry": "証明書の有効期限",
+  "dash.searchMonitors": "モニターを検索...",
+  "dash.allStatus": "すべてのステータス",
+  "dash.allGroups": "すべてのグループ（このページ）",
+  "dash.allTypes": "すべての種類",
+  "dash.previousPage": "前のページ",
+  "dash.nextPage": "次のページ"
 }

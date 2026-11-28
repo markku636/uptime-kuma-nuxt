@@ -12,14 +12,25 @@ const availableLocales = computed(() => {
   return options.sort((a, b) => a.label.localeCompare(b.label))
 })
 
+async function persistLanguage(code: string) {
+  try {
+    await $fetch('/api/settings/appearance', { method: 'POST', body: { language: code } })
+  } catch {
+    // Public pages have no session; the selection still applies for this visit.
+  }
+}
+
 const currentLocale = computed({
   get: () => locale.value,
-  set: (value: string) => setLocale(value as Parameters<typeof setLocale>[0])
+  set: (value: string) => {
+    setLocale(value as Parameters<typeof setLocale>[0])
+    void persistLanguage(value)
+  },
 })
 </script>
 
 <template>
-  <USelectMenu
+  <CommonAppSelect
     v-model="currentLocale"
     :items="availableLocales"
     value-key="value"
@@ -28,7 +39,5 @@ const currentLocale = computed({
     search-placeholder="Search language…"
     placeholder="Select language"
     class="w-full sm:w-56"
-    :content="{ side: 'bottom', sideOffset: 6, collisionPadding: 12 }"
-    :ui="{ content: 'z-50 max-h-72 overflow-y-auto w-[var(--reka-select-trigger-width)]' }"
   />
 </template>

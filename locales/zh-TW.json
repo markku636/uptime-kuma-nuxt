@@ -1301,5 +1301,15 @@
   "settingsDeliveryLogHint": "最近的通知投遞嘗試。不會顯示 payload 或整合網址。",
   "settingsIncidentHistory": "事件歷史",
   "dashboardAllGroups": "所有群組（僅本頁）",
-  "runtimeHintOverview": "關於 API、worker 與檢查 slots"
+  "runtimeHintOverview": "關於 API、worker 與檢查 slots",
+  "dash.monitorOverview": "監控總覽",
+  "dash.healthRecent": "所選環境的健康狀態與近期事件。",
+  "dash.quickStats": "快速統計",
+  "dash.certificateExpiry": "憑證到期",
+  "dash.searchMonitors": "搜尋監控...",
+  "dash.allStatus": "所有狀態",
+  "dash.allGroups": "所有群組（本頁）",
+  "dash.allTypes": "所有類型",
+  "dash.previousPage": "上一頁",
+  "dash.nextPage": "下一頁"
 }

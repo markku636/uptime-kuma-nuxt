@@ -65,6 +65,9 @@ test('a Bruno collection runs in order, extracts a token and produces a redacted
   const csv = await (await request(`/api/v1/bruno/tests/${created.data.id}/runs/${run.data.runId}/export?format=csv`, 'GET', owner, scope)).text()
   assert.match(csv, /Login/)
   assert.ok(!csv.includes('fixture-token'))
+  const html = await (await request(`/api/v1/bruno/tests/${created.data.id}/runs/${run.data.runId}/export?format=html`, 'GET', owner, scope)).text()
+  assert.ok(html.startsWith('<!doctype html>'))
+  assert.ok(html.includes('Login'))
 
   assert.equal((await request(`/api/v1/bruno/tests/${created.data.id}/run`, 'POST', viewer, scope)).status, 403)
   assert.equal((await request(`/api/v1/bruno/tests/${created.data.id}`, 'GET', owner, other)).status, 404)

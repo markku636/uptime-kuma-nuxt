@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <UFormField label="Authentication Type">
-      <USelectMenu
+      <CommonAppSelect
         v-model="formData.authMethod"
         :items="authMethods"
         value-key="value"

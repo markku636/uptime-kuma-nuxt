@@ -78,7 +78,7 @@
 
         <!-- Add Monitor -->
         <div class="p-3 border-t border-gray-200 dark:border-gray-700">
-          <USelectMenu
+          <CommonAppSelect
             :model-value="null"
             :items="availableMonitors(groupIndex)"
             value-key="id"

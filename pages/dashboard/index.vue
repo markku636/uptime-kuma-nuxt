@@ -1,8 +1,8 @@
 <template>
   <div class="page-container">
     <div class="mb-6">
-      <div class="flex items-center gap-2"><h1 class="text-2xl font-bold text-primary">Monitor overview</h1><CommonRuntimeHint /></div>
-      <p class="text-secondary mt-1">Health and recent events in your selected environment.</p>
+      <div class="flex items-center gap-2"><h1 class="text-2xl font-bold text-primary">{{ $t('dash.monitorOverview') }}</h1><CommonRuntimeHint /></div>
+      <p class="text-secondary mt-1">{{ $t('dash.healthRecent') }}</p>
     </div>
     <!-- Header with Connection Status -->
     <div class="flex items-center justify-between mb-6">
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Quick Stats -->
-    <h2 class="section-title">Quick Stats</h2>
+    <h2 class="section-title">{{ $t('dash.quickStats') }}</h2>
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
       <div class="stat-card cursor-pointer hover:ring-2 hover:ring-emerald-500/50" @click="filterByStatus('up')">
         <div class="stat-label">Up</div>
@@ -76,7 +76,7 @@
     <!-- TLS certificate expiry overview -->
     <div v-if="expiringCerts.length" class="card card-body mb-6">
       <div class="flex items-center justify-between gap-3 mb-2">
-        <h2 class="section-title !mb-0">Certificate expiry</h2>
+        <h2 class="section-title !mb-0">{{ $t('dash.certificateExpiry') }}</h2>
         <span class="text-sm text-secondary">{{ expiringCerts.length }} with certificate data</span>
       </div>
       <div class="overflow-x-auto">
@@ -103,12 +103,12 @@
             v-model="searchQuery"
             type="text"
             class="input-field !pl-10"
-            placeholder="Search monitors..." aria-label="Search monitors" data-search-input maxlength="200"
+            :placeholder="$t('dash.searchMonitors')" :aria-label="$t('dash.searchMonitors')" data-search-input maxlength="200"
           />
         </div>
         <div class="flex gap-2">
           <select v-model="statusFilter" class="select-field">
-            <option value="all">All Status</option>
+            <option value="all">{{ $t('dash.allStatus') }}</option>
             <option value="up">Up</option>
             <option value="down">Down</option>
             <option value="maintenance">Maintenance</option>
@@ -116,11 +116,11 @@
             <option value="paused">Paused</option><option value="stale">Stale</option>
           </select>
           <select v-model="groupFilter" class="select-field" aria-label="Group filter">
-            <option value="">{{ 'All groups (this page)' }}</option>
+            <option value="">{{ $t('dash.allGroups') }}</option>
             <option v-for="group in groups" :key="group.id" :value="String(group.id)">{{ group.name }}</option>
           </select>
           <select v-model="typeFilter" class="select-field">
-            <option value="all">All Types</option>
+            <option value="all">{{ $t('dash.allTypes') }}</option>
             <option value="http">HTTP(s)</option>
             <option value="tcp">TCP</option>
             <option value="ping">Ping</option>

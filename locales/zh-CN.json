@@ -1311,5 +1311,15 @@
   "settingsDeliveryLogHint": "Recent notification attempts. Payloads and integration URLs are never shown.",
   "settingsIncidentHistory": "Incident history",
   "dashboardAllGroups": "All groups (this page)",
-  "runtimeHintOverview": "About API, workers and check slots"
+  "runtimeHintOverview": "About API, workers and check slots",
+  "dash.monitorOverview": "监控总览",
+  "dash.healthRecent": "所选环境的健康状况与近期事件。",
+  "dash.quickStats": "快速统计",
+  "dash.certificateExpiry": "证书到期",
+  "dash.searchMonitors": "搜索监控...",
+  "dash.allStatus": "所有状态",
+  "dash.allGroups": "所有分组（本页）",
+  "dash.allTypes": "所有类型",
+  "dash.previousPage": "上一页",
+  "dash.nextPage": "下一页"
 }

@@ -1260,5 +1260,15 @@
   "settingsDeliveryLogHint": "Recent notification attempts. Payloads and integration URLs are never shown.",
   "settingsIncidentHistory": "Incident history",
   "dashboardAllGroups": "All groups (this page)",
-  "runtimeHintOverview": "About API, workers and check slots"
+  "runtimeHintOverview": "About API, workers and check slots",
+  "dash.monitorOverview": "Monitor overview",
+  "dash.healthRecent": "Health and recent events in your selected environment.",
+  "dash.quickStats": "Quick Stats",
+  "dash.certificateExpiry": "Certificate expiry",
+  "dash.searchMonitors": "Search monitors...",
+  "dash.allStatus": "All Status",
+  "dash.allGroups": "All groups (this page)",
+  "dash.allTypes": "All Types",
+  "dash.previousPage": "Previous page",
+  "dash.nextPage": "Next page"
 }

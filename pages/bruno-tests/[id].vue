@@ -210,6 +210,7 @@ onMounted(load)
           <div v-if="report" class="flex gap-2">
             <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=json`">Download JSON</a>
             <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=csv`">Download CSV</a>
+            <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=html`">Download HTML</a>
           </div>
         </div>
         <div v-if="!runs.length" class="text-sm text-secondary">No runs yet. Press “Run test” to generate the first report.</div>

@@ -22,7 +22,7 @@
         class="flex items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
       >
         <!-- Variable -->
-        <USelectMenu
+        <CommonAppSelect
           v-model="condition.variable"
           :items="variables"
           value-key="value"
@@ -32,7 +32,7 @@
         />
 
         <!-- Operator -->
-        <USelectMenu
+        <CommonAppSelect
           v-model="condition.operator"
           :items="getOperatorsForVariable(condition.variable)"
           value-key="value"
@@ -49,7 +49,7 @@
         />
 
         <!-- Result -->
-        <USelectMenu
+        <CommonAppSelect
           v-model="condition.result"
           :items="results"
           value-key="value"

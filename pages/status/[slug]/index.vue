@@ -926,7 +926,7 @@ function formatLastUpdated(date: Date | null) {
             <label class="block text-sm font-medium mb-2 edit-mode-label">
               Add a monitor:
             </label>
-            <USelectMenu
+            <CommonAppSelect
               v-model="selectedMonitorToAdd"
               :items="availableMonitorOptions"
               placeholder="Search and select a monitor..."
@@ -952,7 +952,7 @@ function formatLastUpdated(date: Date | null) {
                   </template>
                 </div>
               </template>
-            </USelectMenu>
+            </CommonAppSelect>
 
             <!-- Add to Group Button Row -->
             <div v-if="selectedMonitorToAdd" class="flex items-center gap-2 mt-2">
