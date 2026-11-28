@@ -46,7 +46,7 @@ export class NotificationDispatcher {
       if(!channel){if(await acknowledgeNotification(row,'cancelled','CHANNEL_UNAVAILABLE',0,this.db))this.metrics.cancelled++;return}
       const notification=hydrateResource('notification',channel),payload=row.payload
       if(controller.signal.aborted)return
-      await sendNotification({type:notification.type,config:notification.config},{id:payload.monitorId,name:payload.name,eventTime:payload.time,certificateDays:payload.certificateDays},{status:payload.status,ping:payload.ping,code:payload.code,msg:'State changed',eventType:payload.eventType,threshold:payload.threshold,downMinutes:payload.downMinutes},controller.signal)
+      await sendNotification({type:notification.type,config:notification.config},{id:payload.monitorId,name:payload.name,eventTime:payload.time,certificateDays:payload.certificateDays},{status:payload.status,ping:payload.ping,code:payload.code,msg:typeof payload.detail==='string'&&payload.detail?payload.detail:'State changed',eventType:payload.eventType,threshold:payload.threshold,downMinutes:payload.downMinutes},controller.signal)
       if(!lost&&!controller.signal.aborted){if(await acknowledgeNotification(row,'delivered',null,0,this.db))this.metrics.delivered++;else this.metrics.stale++}
     }catch(error:any){
       if(!lost&&!controller.signal.aborted){

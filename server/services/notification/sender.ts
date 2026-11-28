@@ -34,14 +34,17 @@ export interface NotificationMessage {
 /**
  * Format notification message
  */
-function formatMessage(monitor: any, result: CheckResult): NotificationMessage {
+export function formatMessage(monitor: any, result: CheckResult): NotificationMessage {
   const status = result.status === 1 ? 'up' : 'down'
   const statusEmoji = result.status === 1 ? '🟢' : '🔴'
   const statusText = result.status === 1 ? 'UP' : 'DOWN'
 
+  const reason = result.code && /^(AUDIT_|FLOW_)/.test(result.code) && result.msg && result.msg !== 'State changed'
+    ? `${statusText} · ${result.code} · ${result.msg}`.slice(0, 400)
+    : null
   return {
     title: `${statusEmoji} ${monitor.name} is ${statusText}`,
-    body: Number.isInteger(monitor.certificateDays)?`Certificate expires in ${monitor.certificateDays} days`:`${statusText}${result.code&&/^[A-Z0-9_]{1,64}$/.test(result.code)?' · '+result.code:''}`,
+    body: reason ?? (Number.isInteger(monitor.certificateDays)?`Certificate expires in ${monitor.certificateDays} days`:`${statusText}${result.code&&/^[A-Z0-9_]{1,64}$/.test(result.code)?' · '+result.code:''}`),
     monitorName: monitor.name,
     monitorId: typeof monitor.id === 'number' ? monitor.id : undefined,
     monitorUrl: undefined,
