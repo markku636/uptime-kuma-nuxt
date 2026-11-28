@@ -13,6 +13,11 @@ export type BrowserFlowAction =
   | 'assertValue'
   | 'assertChecked'
   | 'assertCount'
+  | 'assertUrl'
+  | 'assertTitle'
+  | 'assertHidden'
+  | 'press'
+  | 'waitForTimeout'
 
 export interface BrowserFlowStep {
   action: BrowserFlowAction

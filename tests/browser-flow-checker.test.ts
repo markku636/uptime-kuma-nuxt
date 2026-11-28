@@ -16,10 +16,15 @@ function fakePage() {
     async check(selector: string) { state[selector] = 'checked' },
     async uncheck(selector: string) { state[selector] = '' },
     async waitForSelector() { return true },
+    url() { return 'https://example.com/dashboard?ok=1' },
+    async title() { return 'Dashboard · SealWatch' },
+    async waitForTimeout() { return true },
+    keyboard: { async press(key: string) { clicks.push('key:' + key) } },
     locator(selector: string) {
       const first = () => ({
         count: async () => state[selector] === undefined ? 0 : 1,
         isVisible: async () => true,
+        press: async (key: string) => { clicks.push(`${selector}:${key}`) },
         textContent: async () => state[selector] ?? '',
         inputValue: async () => state[selector] ?? '',
         isChecked: async () => state[selector] === 'checked',
@@ -67,6 +72,28 @@ test('browser flow executes ordered steps and reports each one', async () => {
   assert.equal(result.flowSteps?.every(step => step.status === 'pass'), true)
   assert.equal(page.state['#email'], 'me@example.com')
   assert.deepEqual(page.clicks, ['#submit'])
+})
+
+test('url/title/hidden/press/wait actions run through the checker', async () => {
+  const page = fakePage()
+  const config = {
+    steps: [
+      { action: 'goto' },
+      { action: 'assertUrl', value: 'https://example.com/dashboard' },
+      { action: 'assertTitle', value: 'Dashboard' },
+      { action: 'assertHidden', selector: '#missing' },
+      { action: 'press', value: 'Enter' },
+      { action: 'waitForTimeout', value: '1' },
+    ],
+  }
+  const result = await checkBrowserFlow({ url: 'https://example.com', body: JSON.stringify(config) }, Date.now(), undefined, deps(page))
+  assert.equal(result.code, 'FLOW_OK')
+  assert.equal(result.flowSteps?.length, 6)
+  assert.ok(page.clicks.includes('key:Enter'))
+  const bad = { steps: [{ action: 'goto' }, { action: 'assertTitle', value: 'Not there' }] }
+  const failed = await checkBrowserFlow({ url: 'https://example.com', body: JSON.stringify(bad) }, Date.now(), undefined, deps(page))
+  assert.equal(failed.code, 'FLOW_STEP_FAILED')
+  assert.match(failed.msg || '', /TITLE_MISMATCH/)
 })
 
 test('form controls and checked assertions are supported', async () => {

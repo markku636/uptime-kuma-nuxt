@@ -150,6 +150,32 @@ async function runStep(page: any, step: BrowserFlowStep, config: BrowserFlowConf
       if (value !== (step.value ?? '')) return 'VALUE_MISMATCH'
       return undefined
     }
+    case 'assertUrl': {
+      const current = typeof page.url === 'function' ? page.url() : ''
+      if (!current || !current.includes(step.value || '')) return 'URL_MISMATCH'
+      return undefined
+    }
+    case 'assertTitle': {
+      const title = typeof page.title === 'function' ? await page.title() : ''
+      if (!title.includes(step.value || '')) return 'TITLE_MISMATCH'
+      return undefined
+    }
+    case 'assertHidden': {
+      const locator = page.locator(step.selector!).first()
+      if (await locator.count() > 0 && await locator.isVisible()) return 'ELEMENT_VISIBLE'
+      return undefined
+    }
+    case 'press': {
+      if (step.selector) await page.locator(step.selector).first().press(step.value!, { timeout })
+      else await page.keyboard.press(step.value!)
+      return undefined
+    }
+    case 'waitForTimeout': {
+      const ms = Number(step.value)
+      if (!Number.isSafeInteger(ms) || ms < 0 || ms > 30000) return 'INVALID_WAIT'
+      await page.waitForTimeout(ms)
+      return undefined
+    }
     default:
       return 'UNSUPPORTED_ACTION'
   }

@@ -206,3 +206,15 @@ R176 ✅ Logo 暗黑版 — commits `cc926b1`／`2b31716`。
 `fill/assertText/assertValue`，但 config schema 要求 `selectOption`／`assertCount` 也必须有 value，
 且 `goto` 的 value 是 URL override。→ 這三種步驟存檔後會 CONFIG_ERROR 或行為不正確（P1）。
 下一輪先修 payload 並抽成可測函式，再考慮補 `assertUrl`／`assertTitle`／`assertAttribute`／`press` 等動作。
+
+R177 ✅ Browser flows 表單修正 — commit `62fc751`。
+- 新增 `utils/browser-flow-editor.ts`（純函式）：`selectOption`／`assertCount`／`goto` 的 value 不再被丟掉；
+  非法 selector／value／timeout／URL 直接顯示訊息而非靜默變成 CONFIG_ERROR。
+- `tests/browser-flow-editor.test.ts` 4 項；完整 unit 286/286、`tsc` 0。
+
+R178 🔵 Browser flows 補動作 —
+- 新增 `assertUrl`、`assertTitle`、`assertHidden`、`press`、`waitForTimeout`：
+  shared types／zod schema／checker runStep／UI actions 與 placeholder／OpenAPI enum／文件同步。
+- `browser-flow-checker.test.ts` 加 fakePage 的 url/title/keyboard/waitForTimeout 並補一項整合測試。
+- 驗證：browser-flow 系列 **17/17**、完整 unit **288/288**、`tsc --noEmit` 0、build exit 0。
+- 待部署與瀏覽器實測。

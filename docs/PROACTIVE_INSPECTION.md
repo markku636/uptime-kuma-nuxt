@@ -63,7 +63,12 @@
     { "action": "click", "selector": "#submit" },
     { "action": "waitFor", "selector": "#dashboard" },
     { "action": "assertVisible", "selector": "#welcome" },
-    { "action": "assertText", "selector": "#welcome", "value": "Hello" }
+    { "action": "assertText", "selector": "#welcome", "value": "Hello" },
+    { "action": "assertUrl", "value": "/dashboard" },
+    { "action": "assertTitle", "value": "Dashboard" },
+    { "action": "assertHidden", "selector": "#login-error" },
+    { "action": "press", "value": "Enter" },
+    { "action": "waitForTimeout", "value": "500" }
   ],
   "viewport": { "width": 1280, "height": 800 },
   "waitTimeoutMs": 8000,
@@ -78,6 +83,10 @@
 | `waitFor` | 等待 selector 可見 |
 | `assertVisible` | 元素存在且可見 |
 | `assertText` / `assertValue` / `assertChecked` / `assertCount` | 包含指定文字／input 值完全相等／核取方塊已勾選／元素數量等於指定值 |
+| `assertUrl` / `assertTitle` | 目前網址／標題包含指定字串（`assertUrl` 的 value 須為 http(s) URL） |
+| `assertHidden` | 元素不存在或不可見 |
+| `press` | 對 selector（若填）或整頁送出按鍵，例如 `Enter` |
+| `waitForTimeout` | 固定等待 0–30000 ms |
 
 `startUrl`／selector／value／URL 可用工作區環境變數與 secret（例如 `{{baseUrl}}`）：
 `resolveMonitorConfig` 會在排程與 trial 前解析 `body` 中的變數，值不寫入心跳或通知。

@@ -43,6 +43,24 @@ test('空 value 的 goto 代表使用 startUrl，乾淨步驟不放 value', () =
   assert.doesNotThrow(() => parseBrowserFlowConfig({ steps: clean }))
 })
 
+test('新增動作保留 value 且通過 server schema', () => {
+  const steps = [
+    step('goto'),
+    step('assertUrl', { value: 'https://example.com/done' }),
+    step('assertTitle', { value: 'Done' }),
+    step('assertHidden', { selector: '#error' }),
+    step('press', { value: 'Enter' }),
+    step('waitForTimeout', { value: '250' }),
+  ]
+  const payload = buildBrowserFlowPayload(input(steps))
+  const body = JSON.parse(String(payload.body))
+  assert.equal(body.steps[1].value, 'https://example.com/done')
+  assert.equal(body.steps[4].value, 'Enter')
+  assert.doesNotThrow(() => parseBrowserFlowConfig(body))
+  assert.throws(() => cleanBrowserFlowSteps([step('waitForTimeout', { value: '99999' })]), /30000/)
+  assert.throws(() => cleanBrowserFlowSteps([step('assertUrl', { value: 'javascript:alert(1)' })]), /http\/https/)
+})
+
 test('表單基本欄位驗證', () => {
   assert.throws(() => buildBrowserFlowPayload({ ...input([step('goto')]), name: '' }), /name/)
   assert.throws(() => buildBrowserFlowPayload({ ...input([step('goto')]), url: 'javascript:alert(1)' }), /http\/https/)

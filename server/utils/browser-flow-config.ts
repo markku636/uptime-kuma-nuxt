@@ -4,16 +4,25 @@ import { z } from 'zod'
 import type { BrowserFlowConfig } from '../../shared/types/browser-flow'
 
 const stepSchema = z.object({
-  action: z.enum(['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked', 'assertCount']),
+  action: z.enum(['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked', 'assertCount', 'assertUrl', 'assertTitle', 'assertHidden', 'press', 'waitForTimeout']),
   selector: z.string().min(1).max(512).optional(),
   value: z.string().max(4096).optional(),
   // 0 在 Playwright 代表「不逾時」，會讓 trial 永久佔住 slot，故禁止。
   timeoutMs: z.number().int().min(1).max(30000).optional(),
 }).strict().superRefine((step, ctx) => {
-  const needsSelector = step.action !== 'goto'
-  if (needsSelector && !step.selector) ctx.addIssue({ code: 'custom', message: 'selector is required', path: ['selector'] })
-  if (['fill', 'selectOption', 'assertText', 'assertValue', 'assertCount'].includes(step.action) && step.value === undefined) {
-    ctx.addIssue({ code: 'custom', message: 'value is required', path: ['value'] })
+  const selectorOptional = ['goto', 'assertUrl', 'assertTitle', 'press', 'waitForTimeout'].includes(step.action)
+  if (!selectorOptional && !step.selector) ctx.addIssue({ code: 'custom', message: 'selector is required', path: ['selector'] })
+  const needsValue = ['fill', 'selectOption', 'assertText', 'assertValue', 'assertCount', 'assertUrl', 'assertTitle', 'press', 'waitForTimeout'].includes(step.action)
+  if (needsValue && !step.value) ctx.addIssue({ code: 'custom', message: 'value is required', path: ['value'] })
+  if (step.action === 'assertCount' && step.value !== undefined && !/^\d{1,5}$/.test(step.value)) {
+    ctx.addIssue({ code: 'custom', message: 'count must be a non-negative integer', path: ['value'] })
+  }
+  if (step.action === 'waitForTimeout' && step.value !== undefined && (!/^\d{1,5}$/.test(step.value) || Number(step.value) > 30000)) {
+    ctx.addIssue({ code: 'custom', message: 'wait must be 0–30000 ms', path: ['value'] })
+  }
+  if (['goto', 'assertUrl'].includes(step.action) && step.value) {
+    try { const url = new URL(step.value); if (!['http:', 'https:'].includes(url.protocol)) throw new Error() }
+    catch { ctx.addIssue({ code: 'custom', message: 'value must be an http(s) URL', path: ['value'] }) }
   }
   if (step.action === 'goto' && step.selector) ctx.addIssue({ code: 'custom', message: 'goto 不使用 selector', path: ['selector'] })
 })
