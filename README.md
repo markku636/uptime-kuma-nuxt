@@ -21,10 +21,12 @@
 - **Website audit（網站健檢）**：dashboard 一鍵對 URL 做 bounded 巡檢——HTTP 狀態／重新導向、
   TLS 憑證（有效期／信任／SAN）、DNS、六項 security headers、頁面 metadata、同站連結與混合內容，
   另可指定預期關鍵字；輸出 0–100 分／A–F 等級與逐項結果。走 `POST /api/v1/site-audit`，
-  強制 deny private/metadata 目的地，不寫歷史、不發通知。
+  強制 deny private/metadata 目的地，不寫歷史、不發通知。對話框的「Schedule (hourly)」可建立
+  `site-audit` monitor，分數進心跳、低於門檻發 DOWN 通知，最近 20 份去敏感報告可在監控詳情頁查看／下載。
 - **Browser flows（合成瀏覽器流程）**：`/browser-flows` 提供宣告式步驟編輯器
-  （goto／click／fill／waitFor／assertVisible／assertText／assertValue）、Test draft、Save、Test now；
-  worker 以 Playwright headless Chromium 順序執行、逐步計時與失敗原因，不執行任意 JS。
+  （goto／click／fill／waitFor／assertVisible／assertText／assertValue）、Test draft、Save、Test now、
+  間隔（預設每小時）；worker 以 Playwright headless Chromium 順序執行、逐步計時與失敗原因，不執行任意 JS。
+  排程失敗會在監控詳情頁留一張截圖與逐步 trace。
   artifact 已內建 Chromium 與 bookworm 系統函式庫（`PLAYWRIGHT_BROWSERS_PATH`／`LD_LIBRARY_PATH`）。
 - **Bruno multi-API tests**：Bruno collection 可宣告式建立測試流程（suite），跨步驟以
   `res.body.token` 等白名單萃取變數帶到下一步，手動執行後在站內看逐步報告並下載 JSON／CSV；

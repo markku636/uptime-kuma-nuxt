@@ -30,7 +30,12 @@
 7. `keyword`：選填，檢查回應內文是否包含指定字串。
 
 限制：每次最多 10 次/分鐘/使用者、全域同時 3 次；單一回應 1 MiB、單步 10 秒。
-**不寫資料庫、不進心跳、不發通知**，純粹是按需報告。
+按需呼叫**不寫資料庫、不進心跳、不發通知**；若要定期巡檢，用對話框的「Schedule (hourly)」
+建立 `type=site-audit` monitor（設定放在 `body`：`{url, keyword, minScore}`，預設門檻 60）：
+- 心跳 `ping` 就是 0–100 分數，低於門檻為 DOWN 並走既有通知。
+- 每次排程檢查把完整報告去敏感（URL 只留 origin + pathname）存入既有
+  `visualCheckArtifact`，最多 20 筆；`GET /api/v1/monitors/:id/audit-reports` 可讀，
+  監控詳情頁可展開檢查項目並下載單筆 JSON。trial 不寫報告。
 
 ## 2. Browser flows（合成瀏覽器流程）
 
@@ -68,6 +73,9 @@
 `waitTimeoutMs` ≤30000。**不執行 JavaScript**、不支援登入態 cookie 注入、不做截圖比對
 （跑版請用既有 `visual-diff` monitor）。每一步結果（行動／耗時／狀態／錯誤碼）會出現在
 Test draft／Test now 面板；排程檢查的心跳只保留 `FLOW_OK`／`FLOW_STEP_FAILED` 代碼。
+排程失敗會額外截圖（≤2 MiB）寫入 `visualCheckArtifact`（`viewportLabel='flow-fail'`，只留最近一張），
+`metrics` 記錄失敗步驟與錯誤；監控詳情頁的「瀏覽器流程失敗證據」會顯示截圖與逐步摘要。
+試跑不寫任何證據。建立時可選間隔，預設每小時（避免每分鐘啟動 Chromium 拖垮 worker）。
 
 部署前提：artifact 必須包含 `.playwright/chromium_headless_shell-*` 與 `.playwright/lib/*.so*`，
 且 pod 需有 `PLAYWRIGHT_BROWSERS_PATH=/app/.playwright`、`LD_LIBRARY_PATH=/app/.playwright/lib`。

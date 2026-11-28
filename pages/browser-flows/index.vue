@@ -21,6 +21,15 @@
           <span class="text-sm text-toned">Start URL</span>
           <input v-model="url" type="url" maxlength="8192" aria-label="Flow URL" class="input-field mt-1" placeholder="https://example.com" />
         </label>
+        <label class="block">
+          <span class="text-sm text-toned">Run interval</span>
+          <select v-model.number="interval" class="select-field mt-1" aria-label="Flow interval">
+            <option :value="60">Every minute</option>
+            <option :value="300">Every 5 minutes</option>
+            <option :value="900">Every 15 minutes</option>
+            <option :value="3600">Every hour (recommended)</option>
+          </select>
+        </label>
       </div>
 
       <div class="mt-5 flex items-center justify-between">
@@ -98,6 +107,7 @@ const toast = useToast()
 const actions = ['goto', 'click', 'fill', 'waitFor', 'assertVisible', 'assertText', 'assertValue'] as const
 const name = ref('')
 const url = ref('')
+const interval = ref(3600)
 const steps = ref<FlowStep[]>([
   { action: 'goto', selector: '', value: '', timeoutMs: null },
   { action: 'assertVisible', selector: 'h1', value: '', timeoutMs: null },
@@ -125,7 +135,7 @@ function payload() {
   return {
     name: name.value.trim(), type: 'browser-flow', url: url.value.trim(),
     body: JSON.stringify({ startUrl: url.value.trim(), steps: clean, viewport: { width: 1280, height: 800 }, waitTimeoutMs: 8000, ignoreTls: false }),
-    interval: 60, timeout: 30, method: 'GET', active: true,
+    interval: interval.value, timeout: 30, method: 'GET', active: true,
   }
 }
 async function runTrial(body: Record<string, unknown>): Promise<void> {
