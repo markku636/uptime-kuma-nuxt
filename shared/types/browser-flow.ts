@@ -17,6 +17,7 @@ export interface BrowserFlowStep {
 }
 
 export interface BrowserFlowConfig {
+  startUrl?: string
   steps: BrowserFlowStep[]
   viewport: { width: number; height: number }
   waitTimeoutMs: number

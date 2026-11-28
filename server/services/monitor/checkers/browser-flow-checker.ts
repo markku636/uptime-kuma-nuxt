@@ -91,9 +91,10 @@ export async function checkBrowserFlow(
   try { config = deps.parse(monitor.body) } catch (error: any) {
     return failure(startTime, 'CONFIG_ERROR', `Browser flow config invalid: ${String(error?.message || error).slice(0, 200)}`)
   }
+  const startUrl = config.startUrl || monitor.url
   try {
-    if (!monitor.url) return failure(startTime, 'CONFIG_ERROR', 'URL is required for browser-flow monitors')
-    new URL(monitor.url)
+    if (!startUrl) return failure(startTime, 'CONFIG_ERROR', 'URL is required for browser-flow monitors')
+    new URL(startUrl)
   } catch {
     return failure(startTime, 'CONFIG_ERROR', 'Invalid monitor URL')
   }
@@ -116,7 +117,7 @@ export async function checkBrowserFlow(
       const step = config.steps[index]!
       const before = Date.now()
       try {
-        const errorCode = await runStep(page, step, config, monitor.url, deps.resolve || resolveDestination)
+        const errorCode = await runStep(page, step, config, startUrl, deps.resolve || resolveDestination)
         const elapsedMs = Date.now() - before
         if (errorCode) {
           steps.push({ index: index + 1, action: step.action, status: 'fail', elapsedMs, detail: errorCode })

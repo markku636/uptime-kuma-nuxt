@@ -124,7 +124,7 @@ function payload() {
     }))
   return {
     name: name.value.trim(), type: 'browser-flow', url: url.value.trim(),
-    body: JSON.stringify({ steps: clean, viewport: { width: 1280, height: 800 }, waitTimeoutMs: 8000, ignoreTls: false }),
+    body: JSON.stringify({ startUrl: url.value.trim(), steps: clean, viewport: { width: 1280, height: 800 }, waitTimeoutMs: 8000, ignoreTls: false }),
     interval: 60, timeout: 30, method: 'GET', active: true,
   }
 }
@@ -168,7 +168,9 @@ async function load(): Promise<void> {
 async function testSaved(id: number): Promise<void> {
   try {
     const detail = await $fetch<{ ok: boolean; data: Record<string, any> }>(`/api/v1/monitors/${id}`)
-    await runTrial(detail.data as Record<string, unknown>)
+    let startUrl = ''
+    try { startUrl = JSON.parse(detail.data.body || '{}').startUrl || '' } catch { startUrl = '' }
+    await runTrial({ ...detail.data, ...(startUrl ? { url: startUrl } : {}) } as Record<string, unknown>)
   } catch (error: any) {
     formError.value = error?.data?.message || error?.message || 'Could not load flow.'
   }

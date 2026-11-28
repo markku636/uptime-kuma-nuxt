@@ -18,6 +18,7 @@ const stepSchema = z.object({
 })
 
 export const browserFlowConfigSchema = z.object({
+  startUrl: z.string().url().max(8192).optional(),
   steps: z.array(stepSchema).min(1).max(20),
   viewport: z.object({ width: z.number().int().min(320).max(3840), height: z.number().int().min(400).max(4320) }).strict().default({ width: 1440, height: 900 }),
   waitTimeoutMs: z.number().int().min(100).max(30000).default(5000),
@@ -25,6 +26,7 @@ export const browserFlowConfigSchema = z.object({
 }).strict()
 
 export const DEFAULT_BROWSER_FLOW_CONFIG: BrowserFlowConfig = {
+  startUrl: undefined,
   steps: [{ action: 'goto' }],
   viewport: { width: 1440, height: 900 },
   waitTimeoutMs: 5000,
