@@ -5,6 +5,17 @@ const loading = ref(true)
 const error = ref('')
 const router = useRouter()
 const trying = ref(false)
+const runningId = ref<number | null>(null)
+
+async function runSuite(id: number) {
+  runningId.value = id
+  error.value = ''
+  try {
+    await $fetch(`/api/v1/bruno/tests/${id}/run`, { method: 'POST' })
+    router.push(`/bruno-tests/${id}`)
+  } catch (e: any) { error.value = e.data?.message || 'Run failed' }
+  finally { runningId.value = null }
+}
 
 async function tryExample() {
   trying.value = true
@@ -70,7 +81,10 @@ onMounted(load)
             <td class="font-mono text-xs">{{ row.collectionId }}</td>
             <td>{{ row.steps }}</td>
             <td class="text-xs text-secondary">{{ new Date(row.updatedAt).toLocaleString() }}</td>
-            <td class="text-right"><button class="btn btn-danger btn-sm" @click="remove(row.id)">Delete</button></td>
+            <td class="text-right space-x-2">
+              <button class="btn btn-primary btn-sm" :disabled="runningId === row.id" @click="runSuite(row.id)">{{ runningId === row.id ? 'Running…' : 'Run' }}</button>
+              <button class="btn btn-danger btn-sm" @click="remove(row.id)">Delete</button>
+            </td>
           </tr>
         </tbody>
       </table>
