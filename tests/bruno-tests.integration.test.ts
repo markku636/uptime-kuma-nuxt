@@ -71,6 +71,20 @@ test('a Bruno collection runs in order, extracts a token and produces a redacted
   assert.equal((await request(`/api/v1/bruno/tests/${created.data.id}/runs/${run.data.runId}`, 'GET', viewer, scope)).status, 200)
 })
 
+test('a suite step request can be edited afterwards and stays runnable', { timeout: 40000 }, async () => {
+  const body = manifest('Editable flow')
+  const prepared = await data(await request('/api/v1/bruno/tests/preview', 'POST', owner, scope, body))
+  const suite = await data(await request('/api/v1/bruno/tests', 'POST', owner, scope, { ...body, digest: prepared.digest }))
+  const detail = await data(await request(`/api/v1/bruno/tests/${suite.data.id}`, 'GET', owner, scope))
+  assert.ok(detail.data.steps[0].source.includes('/login'))
+  const updatedSource = body.files[1]!.content.replace('/login', '/list')
+  const invalid = await request(`/api/v1/bruno/tests/${suite.data.id}`, 'PUT', owner, scope, { stepSources: { 'login.bru': 'not a bru request' } })
+  assert.equal(invalid.status, 400)
+  await data(await request(`/api/v1/bruno/tests/${suite.data.id}`, 'PUT', owner, scope, { stepSources: { 'login.bru': updatedSource } }))
+  const after = await data(await request(`/api/v1/bruno/tests/${suite.data.id}`, 'GET', owner, scope))
+  assert.ok(after.data.steps[0].source.includes('/list'))
+})
+
 test('a suite can opt into a bounded schedule and reject unsupported intervals', { timeout: 40000 }, async () => {
   const body = manifest('Scheduled flow')
   const prepared = await data(await request('/api/v1/bruno/tests/preview', 'POST', owner, scope, body))

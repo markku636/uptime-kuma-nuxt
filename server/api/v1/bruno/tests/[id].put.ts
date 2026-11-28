@@ -1,6 +1,6 @@
 import { prisma } from '~/server/utils/prisma'
 import { brunoTestUpdateSchema } from '~/server/utils/bruno-test-input'
-import { suiteDTO, validateExtractionRules } from '~/server/services/bruno/test-definition'
+import { suiteDTO, validateExtractionRules, prepareTestSuite } from '~/server/services/bruno/test-definition'
 
 export default defineEventHandler(async event => {
   const scope = await requireWorkspace(event, 'editor')
@@ -15,6 +15,21 @@ export default defineEventHandler(async event => {
   if (body.name) definition.name = body.name
   if (body.failFast !== undefined) definition.failFast = body.failFast
   if (body.timeoutSec !== undefined) definition.timeoutSec = body.timeoutSec
+  if (body.stepSources) {
+    try {
+      for (const step of definition.steps || []) {
+        const source = body.stepSources[step.path]
+        if (!source) continue
+        const prepared = await prepareTestSuite(scope, { collectionId: row.collectionId, mode: 'create',
+          files: [{ path: step.path, content: source }] })
+        if (!prepared.ok || prepared.definition.steps.length !== 1) throw new Error('INVALID_SOURCE')
+        const next = prepared.definition.steps[0]!
+        step.source = source; step.name = next.name; step.method = next.method; step.extract = next.extract
+      }
+    } catch {
+      throw createError({ statusCode: 400, message: 'Unsupported Bruno request source' })
+    }
+  }
   if (body.stepExtract) {
     try {
       for (const step of definition.steps || []) {

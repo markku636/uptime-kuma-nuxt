@@ -11,6 +11,8 @@ const error = ref('')
 
 const editingStep = ref<string | null>(null)
 const expandedSteps = ref<Set<number>>(new Set())
+const editingSource = ref<string | null>(null)
+const sourceDrafts = ref<Record<string, string>>({})
 function toggleDetail(index: number) {
   const next = new Set(expandedSteps.value)
   if (next.has(index)) next.delete(index); else next.add(index)
@@ -43,6 +45,7 @@ function initDrafts() {
     next[step.path] = (step.extract || []).map((rule: any) => ({ name: rule.name, expression: ruleToExpression(rule) }))
   }
   drafts.value = next
+  sourceDrafts.value = Object.fromEntries((suite.value?.steps || []).filter((step: any) => typeof step.source === 'string').map((step: any) => [step.path, step.source]))
 }
 
 function addRule(path: string) {
@@ -99,6 +102,17 @@ async function run() {
   } catch (e: any) {
     error.value = e.data?.message || 'Run failed'
   } finally { busy.value = false }
+}
+
+async function saveSource(path: string) {
+  try {
+    await $fetch(`/api/v1/bruno/tests/${id.value}`, { method: 'PUT', body: { stepSources: { [path]: sourceDrafts.value[path] || '' } } })
+    toast.add({ title: 'Request saved', color: 'success' })
+    editingSource.value = null
+    await load()
+  } catch (e: any) {
+    error.value = e.data?.message || 'Request save failed'
+  }
 }
 
 async function saveSettings() {
@@ -159,7 +173,18 @@ onMounted(load)
                 <td>{{ Number(index) + 1 }}</td><td>{{ step.name }}</td><td>{{ step.method }}</td>
                 <td class="font-mono text-xs">{{ step.path }}</td>
                 <td class="text-xs">{{ step.extract.map((rule: any) => rule.name).join(', ') || '—' }}</td>
-                <td class="text-right"><button class="btn btn-secondary btn-sm" @click="editingStep = editingStep === step.path ? null : step.path">{{ editingStep === step.path ? 'Close' : 'Edit extract' }}</button></td>
+                <td class="text-right space-x-1">
+                  <button v-if="typeof step.source === 'string'" class="btn btn-secondary btn-sm" @click="editingSource = editingSource === step.path ? null : step.path">{{ editingSource === step.path ? 'Close .bru' : 'Edit .bru' }}</button>
+                  <button class="btn btn-secondary btn-sm" @click="editingStep = editingStep === step.path ? null : step.path">{{ editingStep === step.path ? 'Close' : 'Edit extract' }}</button>
+                </td>
+              </tr>
+              <tr v-if="editingSource === step.path">
+                <td colspan="6" class="bg-[var(--bg-secondary)]">
+                  <div class="space-y-2 py-2">
+                    <textarea v-model="sourceDrafts[step.path]" rows="14" class="input-field w-full font-mono text-xs" :aria-label="`Raw Bruno source for ${step.name}`"></textarea>
+                    <button class="btn btn-primary btn-sm" @click="saveSource(step.path)">Save request</button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="editingStep === step.path">
                 <td colspan="6" class="bg-[var(--bg-secondary)]">

@@ -10,7 +10,9 @@ export default defineEventHandler(async event => {
   })
   if (!row) throw createError({ statusCode: 404, message: 'Bruno test suite not found' })
   const definition = typeof row.definition === 'string' ? JSON.parse(row.definition) : row.definition
+  const canEditSource = event.context.authMethod === 'session' && ['owner', 'editor'].includes((scope as any).role)
   return { ok: true, data: { ...suiteDTO(row), steps: definition?.steps?.map((step: any) => ({
     path: step.path, name: step.name, method: step.method, extract: step.extract || [],
+    ...(canEditSource ? { source: step.source || '' } : {}),
   })) || [] } }
 })
