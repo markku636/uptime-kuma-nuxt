@@ -100,3 +100,9 @@ R165 ❌→✅ 線上實測抓到 `NO_FETCHER` 空報告並修正 — commit 待
 - 同次線上報告仍拿到真實 finding：缺 DMARC(medium)／SPF(low)、缺 CSP／X-Frame-Options(medium)、
   缺 X-Content-Type-Options／Referrer-Policy(low)；列為 S7 加固項目。
 - 下一步：重新 build／部署修正，再重跑本站掃描確認 HTTP/TLS 指紋出現。
+
+R166 🔵 本站加固：基本安全標頭 —
+- 新增 `server/middleware/10-security-headers.ts`：所有回應加 X-Content-Type-Options: nosniff、
+  Referrer-Policy、Permissions-Policy；非 `/status/<slug>/embed`（供第三方 iframe）加 X-Frame-Options: DENY。
+  刻意不加正式 CSP（Nuxt 需要 inline script/style，會壞站），留作日後 report-only 觀察。
+- 驗證：`tsc --noEmit` 0 error、security-scan 15/15 pass；待與 R165 一起 build／部署後重掃本站。
