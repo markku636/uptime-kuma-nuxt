@@ -21,6 +21,12 @@
           <input v-model="keyword" type="text" maxlength="200" aria-label="Expected keyword"
             placeholder="Welcome" class="input-field mt-1" />
         </label>
+        <div class="flex flex-wrap gap-3">
+          <label v-for="item in checkOptions" :key="item.id" class="flex items-center gap-1 text-sm text-toned">
+            <input v-model="enabledChecks[item.id]" type="checkbox" :aria-label="`Enable ${item.id} check`" />
+            {{ item.label }}
+          </label>
+        </div>
         <label class="block">
           <span class="text-sm text-toned">Schedule threshold <span class="text-tertiary">(0–100, default 60)</span></span>
           <input v-model.number="minScore" type="number" min="0" max="100" aria-label="Minimum score"
@@ -88,6 +94,11 @@ const toast = useToast()
 const url = ref('')
 const keyword = ref('')
 const minScore = ref(60)
+const checkOptions = [
+  { id: 'tls', label: 'TLS' }, { id: 'dns', label: 'DNS' }, { id: 'headers', label: 'Headers' },
+  { id: 'meta', label: 'Metadata' }, { id: 'links', label: 'Links' }, { id: 'keyword', label: 'Keyword' },
+] as const
+const enabledChecks = ref<Record<string, boolean>>({ tls: true, dns: true, headers: true, meta: true, links: true, keyword: true })
 const busy = ref(false)
 const error = ref('')
 const report = ref<AuditReportView | null>(null)
@@ -97,6 +108,7 @@ watch(() => props.open, value => {
   url.value = ''
   keyword.value = ''
   minScore.value = 60
+  enabledChecks.value = { tls: true, dns: true, headers: true, meta: true, links: true, keyword: true }
   error.value = ''
   report.value = null
   busy.value = false
@@ -104,6 +116,10 @@ watch(() => props.open, value => {
 
 function close(): void {
   if (!busy.value) emit('close')
+}
+
+function checksConfig(): Record<string, boolean> {
+  return Object.fromEntries(checkOptions.map(option => [option.id, enabledChecks.value[option.id] !== false]))
 }
 
 async function run(): Promise<void> {
@@ -114,7 +130,7 @@ async function run(): Promise<void> {
   try {
     const response = await $fetch<{ ok: boolean; data: AuditReportView }>('/api/v1/site-audit', {
       method: 'POST',
-      body: { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}) },
+      body: { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), checks: checksConfig() },
     })
     report.value = response.data
   } catch (caught: any) {
@@ -129,7 +145,7 @@ async function schedule(): Promise<void> {
   busy.value = true
   error.value = ''
   try {
-    const config = { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), minScore: Math.max(0, Math.min(100, Number(minScore.value) || 60)) }
+    const config = { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), checks: checksConfig(), minScore: Math.max(0, Math.min(100, Number(minScore.value) || 60)) }
     let name = url.value.trim()
     try { name = new URL(name).hostname.replace(/^www\./, '') } catch { /* keep raw input */ }
     await $fetch('/api/v1/monitors', {

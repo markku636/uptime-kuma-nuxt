@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { requireWorkspace } from '../../utils/workspace'
-import { runSiteAudit } from '../../services/site-audit/audit'
+import { runSiteAudit, auditChecksSchema } from '../../services/site-audit/audit'
 
 const auditInput = z.object({
   url: z.string().trim().url().max(8192),
   keyword: z.string().trim().min(1).max(200).optional(),
+  checks: auditChecksSchema.optional(),
+  linkLimit: z.number().int().min(1).max(20).optional(),
 })
 
 const WINDOW_MS = 60_000

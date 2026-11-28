@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { requireWorkspace } from '../../../utils/workspace'
 import { runBatchAudit } from '../../../services/site-audit/batch'
+import { auditChecksSchema } from '../../../services/site-audit/audit'
 
 const batchInput = z.object({
   urls: z.array(z.string().trim().url().max(8192)).min(1).max(20),
   keyword: z.string().trim().min(1).max(200).optional(),
+  checks: auditChecksSchema.optional(),
 }).strict()
 
 const WINDOW_MS = 60_000
@@ -28,7 +30,7 @@ export default defineEventHandler(async event => {
   windows.set(scope.user.id, window)
   active++
   try {
-    const data = await runBatchAudit(parsed.data.urls, parsed.data.keyword)
+    const data = await runBatchAudit(parsed.data.urls, parsed.data.keyword, undefined, 3, parsed.data.checks)
     return { ok: true, data }
   } finally {
     active--

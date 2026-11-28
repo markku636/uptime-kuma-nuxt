@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { lookup } from 'node:dns/promises'
 import { isIP } from 'node:net'
 import type { TLSInfo } from '../monitor/checkers/tls-checker'
@@ -20,7 +21,18 @@ export interface AuditReport {
   grade: 'A' | 'B' | 'C' | 'D' | 'F'
   checks: AuditCheck[]
 }
-export interface AuditInput { url: string; keyword?: string }
+export type AuditCheckId = 'tls' | 'dns' | 'headers' | 'meta' | 'links' | 'keyword'
+export const auditChecksSchema = z.object({
+  tls: z.boolean().optional(), dns: z.boolean().optional(), headers: z.boolean().optional(),
+  meta: z.boolean().optional(), links: z.boolean().optional(), keyword: z.boolean().optional(),
+}).strict()
+export interface AuditInput {
+  url: string
+  keyword?: string
+  /** 可關閉個別檢查；HTTP 必做，其餘預設開啟。 */
+  checks?: Partial<Record<AuditCheckId, boolean>>
+  linkLimit?: number
+}
 export interface AuditFetchResult {
   status: number
   headers: Record<string, string>
@@ -171,6 +183,8 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
   const lookupFn = deps.lookupFn || lookup
   const started = Date.now()
   const checks: AuditCheck[] = []
+  const enabled = (id: AuditCheckId): boolean => input.checks?.[id] !== false
+  const skipped = (id: AuditCheckId, label: string): AuditCheck => ({ id, label, status: 'skip', summary: 'Disabled in this audit' })
   let page: AuditFetchResult | null = null
   try {
     page = await fetcher(input.url, 'GET')
@@ -189,7 +203,8 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
   try { target = new URL(page?.finalUrl || input.url) } catch { target = new URL(input.url) }
   const isHttps = target.protocol === 'https:'
 
-  if (isHttps && page?.tlsInfo) {
+  if (!enabled('tls')) checks.push(skipped('tls', 'TLS certificate'))
+  else if (isHttps && page?.tlsInfo) {
     const tls = page.tlsInfo
     const names = tls.subjectAltName || []
     const host = normalizedHost(target)
@@ -210,7 +225,8 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
     checks.push({ id: 'tls', label: 'TLS certificate', status: 'skip', summary: '目標非 HTTPS，不適用' })
   }
 
-  try {
+  if (!enabled('dns')) checks.push(skipped('dns', 'DNS resolution'))
+  else try {
     const addresses = isIP(normalizedHost(target)) ? [{ address: normalizedHost(target), family: isIP(normalizedHost(target)) }] : await lookupFn(normalizedHost(target), { all: true })
     const blocked = addresses.filter(({ address }) => isForbiddenAddress(address, false))
     checks.push({
@@ -222,10 +238,13 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
     checks.push({ id: 'dns', label: 'DNS resolution', status: 'fail', summary: `解析失敗：${errorSummary(error)}` })
   }
 
-  checks.push(page ? checkSecurityHeaders(page.headers, isHttps) : { id: 'headers', label: 'Security headers', status: 'fail', summary: '無法讀取回應標頭' })
+  checks.push(enabled('headers')
+    ? page ? checkSecurityHeaders(page.headers, isHttps) : { id: 'headers', label: 'Security headers', status: 'fail', summary: '無法讀取回應標頭' }
+    : skipped('headers', 'Security headers'))
 
   const contentType = String(page?.headers['content-type'] || '').toLowerCase()
-  if (page && /html/.test(contentType)) {
+  if (!enabled('meta')) checks.push(skipped('meta', 'Page metadata'))
+  else if (page && /html/.test(contentType)) {
     const meta = parsePageMeta(page.body)
     const missing = [
       ...(meta.title ? [] : ['title']),
@@ -243,8 +262,9 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
     checks.push({ id: 'meta', label: 'Page metadata', status: 'skip', summary: '非 HTML 內容，不適用' })
   }
 
-  const links = page ? extractLinks(page.body, page.finalUrl) : []
-  if (!links.length) {
+  const links = enabled('links') && page ? extractLinks(page.body, page.finalUrl, Math.max(1, Math.min(20, input.linkLimit ?? MAX_LINKS))) : []
+  if (!enabled('links')) checks.push(skipped('links', 'Local links'))
+  else if (!links.length) {
     checks.push({ id: 'links', label: 'Local links', status: 'skip', summary: '沒有可檢查的同站連結' })
   } else {
     const broken: string[] = []
@@ -264,7 +284,8 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
     })
   }
 
-  if (input.keyword) {
+  if (!enabled('keyword')) checks.push(skipped('keyword', 'Keyword'))
+  else if (input.keyword) {
     const found = !!page && page.body.toLowerCase().includes(input.keyword.toLowerCase())
     checks.push({ id: 'keyword', label: 'Keyword', status: found ? 'pass' : 'fail', summary: found ? `Found "${input.keyword}"` : `Not found "${input.keyword}"` })
   } else {

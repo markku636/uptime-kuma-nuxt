@@ -1,4 +1,4 @@
-import { runSiteAudit, type AuditReport } from './audit'
+import { runSiteAudit, type AuditReport, type AuditInput } from './audit'
 
 export interface BatchAuditRow {
   url: string
@@ -18,8 +18,9 @@ const CONCURRENCY = 3
 export async function runBatchAudit(
   urls: string[],
   keyword: string | undefined,
-  audit: (input: { url: string; keyword?: string }) => Promise<AuditReport> = runSiteAudit,
+  audit: (input: AuditInput) => Promise<AuditReport> = runSiteAudit,
   concurrency = CONCURRENCY,
+  checks?: AuditInput['checks'],
 ): Promise<BatchAuditResult> {
   const limit = Math.max(1, Math.min(5, concurrency))
   const rows: BatchAuditRow[] = new Array(urls.length)
@@ -29,7 +30,7 @@ export async function runBatchAudit(
       const index = cursor++
       const url = urls[index]!
       try {
-        const report = await audit({ url, ...(keyword ? { keyword } : {}) })
+        const report = await audit({ url, ...(keyword ? { keyword } : {}), ...(checks ? { checks } : {}) })
         rows[index] = {
           url, status: 'ok', score: report.score, grade: report.grade,
           finalUrl: report.finalUrl, durationMs: report.durationMs,

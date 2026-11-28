@@ -96,6 +96,17 @@ test('site audit reports failures and does not throw on network errors', async (
   assert.equal(byId.headers, 'fail')
 })
 
+test('site audit honours disabled checks without scoring them', async () => {
+  const report = await runSiteAudit({
+    url: 'https://example.com/',
+    checks: { tls: false, dns: false, headers: false, meta: false, links: false, keyword: false },
+  }, { fetcher: fakeFetcher({ status: 503, body: '', headers: {} }), lookupFn: fakeLookup })
+  const byId = Object.fromEntries(report.checks.map(check => [check.id, check.status]))
+  assert.deepEqual(byId, { http: 'fail', tls: 'skip', dns: 'skip', headers: 'skip', meta: 'skip', links: 'skip', keyword: 'skip' })
+  const allPass = await runSiteAudit({ url: 'https://example.com/' }, { fetcher: fakeFetcher(), lookupFn: fakeLookup })
+  assert.equal(allPass.score > report.score, true)
+})
+
 test('site audit skips TLS for plain HTTP', async () => {
   const fetcher = fakeFetcher({ finalUrl: 'http://example.com/', tlsInfo: null })
   const report = await runSiteAudit({ url: 'http://example.com/' }, { fetcher, lookupFn: fakeLookup })

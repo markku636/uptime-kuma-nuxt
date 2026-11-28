@@ -3,13 +3,14 @@
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import type { CheckResult } from '../checker'
-import { runSiteAudit, type AuditReport } from '../../site-audit/audit'
+import { runSiteAudit, auditChecksSchema, type AuditReport } from '../../site-audit/audit'
 import { workerPrisma } from '../../../utils/worker-prisma'
 
 export const siteAuditConfigSchema = z.object({
   url: z.string().url().max(8192).optional(),
   keyword: z.string().min(1).max(200).optional(),
   minScore: z.number().int().min(0).max(100).default(60),
+  checks: auditChecksSchema.optional(),
 }).strict()
 
 export interface SiteAuditCheckDeps {
@@ -63,7 +64,7 @@ export async function checkSiteAudit(
   if (signal?.aborted) return { status: 0, ping: Date.now() - startTime, code: 'ABORTED', msg: 'Check aborted' }
 
   try {
-    const report = await deps.audit({ url: target, ...(config.keyword ? { keyword: config.keyword } : {}) })
+    const report = await deps.audit({ url: target, ...(config.keyword ? { keyword: config.keyword } : {}), ...(config.checks ? { checks: config.checks } : {}) })
     if (signal?.aborted) return { status: 0, ping: Date.now() - startTime, code: 'ABORTED', msg: 'Check aborted' }
     if (!monitor.includeTrialResponse && monitor.id && deps.saveReport) {
       try { await deps.saveReport(monitor.id, report) } catch { /* 報告保存失敗不影響判定 */ }
