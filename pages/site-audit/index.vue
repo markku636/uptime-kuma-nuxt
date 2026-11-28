@@ -18,6 +18,12 @@
         <span class="text-sm text-toned">Expected keyword <span class="text-tertiary">(optional, applied to all)</span></span>
         <input v-model="keyword" type="text" maxlength="200" aria-label="Expected keyword" class="input-field mt-1" />
       </label>
+      <div class="flex flex-wrap gap-3 mt-3">
+        <label v-for="item in checkOptions" :key="item.id" class="flex items-center gap-1 text-sm text-toned">
+          <input v-model="enabledChecks[item.id]" type="checkbox" :aria-label="`Enable ${item.id} check`" />
+          {{ item.label }}
+        </label>
+      </div>
       <p v-if="error" role="alert" class="text-sm text-red-400 mt-3">{{ error }}</p>
       <div class="flex flex-wrap gap-2 mt-4">
         <button type="button" class="btn btn-primary" :disabled="busy || !urls.length" @click="run">
@@ -71,6 +77,11 @@ interface BatchResult { results: BatchRow[]; passed: number; failed: number; err
 
 const rawUrls = ref('')
 const keyword = ref('')
+const checkOptions = [
+  { id: 'tls', label: 'TLS' }, { id: 'dns', label: 'DNS' }, { id: 'headers', label: 'Headers' },
+  { id: 'meta', label: 'Metadata' }, { id: 'links', label: 'Links' }, { id: 'keyword', label: 'Keyword' },
+] as const
+const enabledChecks = ref<Record<string, boolean>>({ tls: true, dns: true, headers: true, meta: true, links: true, keyword: true })
 const busy = ref(false)
 const error = ref('')
 const result = ref<BatchResult | null>(null)
@@ -85,7 +96,11 @@ async function run(): Promise<void> {
   try {
     const response = await $fetch<{ ok: boolean; data: BatchResult }>('/api/v1/site-audit/batch', {
       method: 'POST',
-      body: { urls: urls.value, ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}) },
+      body: {
+        urls: urls.value,
+        ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}),
+        checks: Object.fromEntries(checkOptions.map(option => [option.id, enabledChecks.value[option.id] !== false])),
+      },
     })
     result.value = response.data
   } catch (caught: any) {
