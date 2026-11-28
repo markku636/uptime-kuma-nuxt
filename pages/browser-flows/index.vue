@@ -18,7 +18,7 @@
           <input v-model="name" type="text" maxlength="200" aria-label="Flow name" class="input-field mt-1" placeholder="Checkout journey" />
         </label>
         <label class="block">
-          <span class="text-sm text-toned">Start URL <span class="text-tertiary">(supports {{'{{variable}}'}} from workspace environment)</span></span>
+          <span class="text-sm text-toned">Start URL <span class="text-tertiary">(supports {{ variableHint }} from workspace environment)</span></span>
           <input v-model="url" type="url" maxlength="8192" aria-label="Flow URL" class="input-field mt-1" placeholder="https://example.com" />
         </label>
         <label class="block">
@@ -48,7 +48,7 @@
           <button v-if="canEdit" type="button" class="action-btn" :aria-label="`Remove step ${index + 1}`" @click="steps.splice(index, 1)">&times;</button>
         </div>
       </div>
-      <p class="text-xs text-tertiary mt-2">Selector、value 與 URL 可使用 workspace 環境變數／secret，例如 {{'{{baseUrl}}'}}；值在執行時解析，不會寫入歷史或通知。</p>
+      <p class="text-xs text-tertiary mt-2">Selector、value 與 URL 可使用 workspace 環境變數／secret，例如 {{ baseUrlHint }}；值在執行時解析，不會寫入歷史或通知。</p>
       <p v-if="formError" role="alert" class="text-sm text-red-400 mt-3">{{ formError }}</p>
       <div v-if="canEdit" class="flex flex-wrap gap-2 mt-4">
         <button type="button" class="btn btn-secondary" :disabled="busy || !url" @click="testDraft">Test draft</button>
@@ -105,6 +105,8 @@ interface FlowRow { id: number; name: string; viewStatus: string; scheduleSuppor
 
 const { canEdit } = useWorkspace()
 const toast = useToast()
+const variableHint = '{{' + 'variable' + '}}'
+const baseUrlHint = '{{' + 'baseUrl' + '}}'
 const actions = ['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked'] as const
 const name = ref('')
 const url = ref('')
