@@ -44,9 +44,13 @@ R158 ✅ 事件 outbox 與派送器 — commit `d9d7a85` 後。部署 rev498。
 
 - 部署 rev498，migration 已套用。
   
-R159 🔵 訂閱 UI 與管理端 — 程式完成，待部署。
+R159 ✅ 訂閱 UI 與管理端 — commit `1323f0f` 後。
 - 公開狀態頁新增 Email 訂閱表單（雙重確認提示、SMTP 未設定明確告知、確認成功提示）。
 - 狀態頁編輯頁新增 Email subscribers 面板（列表／手動 Verify／Remove）；新增
   `POST /api/v1/status-pages/{slug}/subscribers/{id}/verify` 供 SMTP 不可用時維運確認。
 - OpenAPI 補 4 個端點。unit 249/249、build 成功；typecheck 我觸摸的檔案 0 error，
   全 repo 仍有另一條 session 正開發 security-scan 的 `NO_FETCHER` 型別錯誤（未碰其檔案）。
+- 部署時與另一條 session 的 GitOps values 寫入碰撞（rev501 後被覆寫）；等對方 rev502 Healthy 後
+  以其 sha 為舊版重新部署，最終 rev506 Healthy/Synced。公開表單與後台面板皆實測存在。
+- R160：補 `GET /api/v1/status-pages/{slug}/subscribers/outbox` 與後台 Notification log；
+  在共用 `HttpFailureCode` 補 `NO_FETCHER`，全 repo typecheck 回到 0。unit 255/255。

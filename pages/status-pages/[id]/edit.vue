@@ -50,14 +50,19 @@ const newDomain = ref('')
 
 // Email subscribers (loaded only for saved pages)
 const subscribers = ref<any[]>([])
+const outboxRows = ref<any[]>([])
 const loadingSubscribers = ref(false)
 async function loadSubscribers(): Promise<void> {
   if (!isEdit.value || !form.value.slug) return
   loadingSubscribers.value = true
   try {
-    const res = await $fetch<any>(`/api/v1/status-pages/${form.value.slug}/subscribers`)
+    const [res, outbox] = await Promise.all([
+      $fetch<any>(`/api/v1/status-pages/${form.value.slug}/subscribers`),
+      $fetch<any>(`/api/v1/status-pages/${form.value.slug}/subscribers/outbox`, { query: { limit: 20 } }),
+    ])
     subscribers.value = res?.data || []
-  } catch { subscribers.value = [] } finally { loadingSubscribers.value = false }
+    outboxRows.value = outbox?.data || []
+  } catch { subscribers.value = []; outboxRows.value = [] } finally { loadingSubscribers.value = false }
 }
 async function verifySubscriber(id: number): Promise<void> {
   await $fetch(`/api/v1/status-pages/${form.value.slug}/subscribers/${id}/verify`, { method: 'POST' })
@@ -318,6 +323,17 @@ const previewUrl = computed(() => {
         <div class="ml-auto flex gap-2">
           <UButton v-if="!row.verified" variant="outline" size="xs" @click="verifySubscriber(row.id)">Verify</UButton>
           <UButton variant="ghost" size="xs" color="error" @click="deleteSubscriber(row.id)">Remove</UButton>
+        </div>
+      </div>
+
+      <div v-if="outboxRows.length" class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Notification log</h3>
+        <div v-for="row in outboxRows" :key="row.id" class="flex flex-wrap gap-3 text-xs text-gray-500 py-1">
+          <span>#{{ row.id }}</span>
+          <span>{{ row.eventType }}</span>
+          <span :class="row.status === 'delivered' ? 'text-green-500' : row.status === 'dead' ? 'text-red-500' : 'text-amber-500'">{{ row.status }}</span>
+          <span>attempts {{ row.attempts }}</span>
+          <span>{{ new Date(row.createdAt).toLocaleString() }}</span>
         </div>
       </div>
     </div>

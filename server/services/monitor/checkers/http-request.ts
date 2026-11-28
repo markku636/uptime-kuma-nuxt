@@ -8,7 +8,7 @@ import type { TLSSocket } from 'node:tls'
 import type { TLSInfo } from './tls-checker'
 import { parseSafeJson } from '../../../utils/assertions'
 
-export type HttpFailureCode='TIMEOUT'|'DESTINATION_DENIED'|'RESPONSE_TOO_LARGE'|'REQUEST_TOO_LARGE'|'INVALID_RESPONSE'|'CONFIG_ERROR'|'NETWORK_ERROR'|'AUTH_ERROR'|'REDIRECT_LIMIT'
+export type HttpFailureCode='TIMEOUT'|'DESTINATION_DENIED'|'RESPONSE_TOO_LARGE'|'REQUEST_TOO_LARGE'|'INVALID_RESPONSE'|'CONFIG_ERROR'|'NETWORK_ERROR'|'AUTH_ERROR'|'REDIRECT_LIMIT'|'NO_FETCHER'
 export class HttpCheckError extends Error { constructor(public code:HttpFailureCode){super(code);this.name='HttpCheckError'} }
 const poolOptions={keepAlive:true,maxSockets:16,maxTotalSockets:256,maxFreeSockets:8,timeout:60_000}
 const httpAgent=new http.Agent(poolOptions),httpsAgent=new https.Agent(poolOptions),insecureAgent=new https.Agent({...poolOptions,rejectUnauthorized:false})
