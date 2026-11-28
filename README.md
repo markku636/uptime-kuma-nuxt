@@ -24,6 +24,10 @@
   Bulk audit 頁面可一次查多筆 URL 或並排比較兩個站點。走 `POST /api/v1/site-audit`，
   強制 deny private/metadata 目的地，不寫歷史、不發通知。對話框的「Schedule (hourly)」可建立
   `site-audit` monitor，分數進心跳、低於門檻發 DOWN 通知，最近 20 份去敏感報告可在監控詳情頁查看／下載。
+- **Security scan（弱點檢查）**：`/security-scan` 以 bounded、SSRF-strict 的方式檢查 security headers、
+  cookie 屬性、TLS 憑證、DNS SPF／DMARC、技術指紋與舊版特徵；`active_light` 需先用 DNS TXT 或
+  well-known 檔證明擁有權才會做 6 條固定路徑的 HEAD 探測。報告給 0–100 分／A–F 等級、
+  仿 OCSF 的 finding（severity／CWE／CVE 參考／修正建議）並可下載 JSON，見 [Security scan 文件](docs/SECURITY_SCAN.md)。
 - **Browser flows（合成瀏覽器流程）**：`/browser-flows` 提供宣告式步驟編輯器
   （goto／click／fill／waitFor／assertVisible／assertText／assertValue）、Test draft、Save、Test now、
   間隔（預設每小時）；worker 以 Playwright headless Chromium 順序執行、逐步計時與失敗原因，不執行任意 JS。
