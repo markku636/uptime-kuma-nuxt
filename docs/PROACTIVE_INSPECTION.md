@@ -91,6 +91,9 @@
 `startUrl`／selector／value／URL 可用工作區環境變數與 secret（例如 `{{baseUrl}}`）：
 `resolveMonitorConfig` 會在排程與 trial 前解析 `body` 中的變數，值不寫入心跳或通知。
 
+流程管理：`/browser-flows` 的步驟可用 ↑／↓ 調整順序；已儲存的流程可 **Test now／Duplicate／Export JSON／Delete**，
+並顯示最近一次執行結果與時間；Export 的 JSON 可用「Import flow」載入為草稿再調整（不直接覆蓋既有 monitor）。
+
 安全邊界：未知欄位、未知 action 一律拒絕；最多 20 步，selector ≤512 字、value ≤4096 字、
 `waitTimeoutMs` ≤30000。**不執行 JavaScript**、不支援登入態 cookie 注入、不做截圖比對
 （跑版請用既有 `visual-diff` monitor）。每一步結果（行動／耗時／狀態／錯誤碼）會出現在
