@@ -280,6 +280,13 @@ const overallStatusConfig = computed(() => {
         bgClass: 'bg-green-500',
         textClass: 'text-white'
       }
+    case 'degraded-performance':
+      return {
+        text: 'Degraded Performance',
+        icon: '●',
+        bgClass: 'bg-orange-500',
+        textClass: 'text-white'
+      }
     case 'partial-outage':
       return { 
         text: 'Partial System Outage', 
@@ -318,9 +325,12 @@ const groupSummaries = computed(() => publicGroupList.value.map(group => {
   const rows = group.monitorList || []
   const up = rows.filter(row => row.heartbeats?.at(-1)?.status === 1).length
   const down = rows.filter(row => row.heartbeats?.at(-1)?.status === 0).length
-  const uptime = rows.map(row => row.uptime24).filter((value): value is number => typeof value === 'number')
-  const avgUptime = uptime.length ? uptime.reduce((sum, value) => sum + value, 0) / uptime.length : null
-  return { id: group.id, name: group.name, total: rows.length, up, down, avgUptime }
+  const average = (field: 'uptime24' | 'uptime7' | 'uptime30') => {
+    const values = rows.map(row => (row as any)[field]).filter((value): value is number => typeof value === 'number')
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+  }
+  return { id: group.id, name: group.name, total: rows.length, up, down,
+    avgUptime: average('uptime24'), avgUptime7: average('uptime7'), avgUptime30: average('uptime30') }
 }))
 
 const activeGroup = computed(() => {
@@ -817,6 +827,18 @@ function formatLastUpdated(date: Date | null) {
             <div class="stat-label">24h uptime (avg)</div>
             <div class="stat-value">
               {{ (() => { const vals = groupSummaries.map(g => g.avgUptime).filter((v): v is number => v !== null); return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) + '%' : '—' })() }}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">7d uptime (avg)</div>
+            <div class="stat-value">
+              {{ (() => { const vals = groupSummaries.map(g => g.avgUptime7).filter((v): v is number => v !== null); return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) + '%' : '—' })() }}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">30d uptime (avg)</div>
+            <div class="stat-value">
+              {{ (() => { const vals = groupSummaries.map(g => g.avgUptime30).filter((v): v is number => v !== null); return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) + '%' : '—' })() }}
             </div>
           </div>
         </div>
