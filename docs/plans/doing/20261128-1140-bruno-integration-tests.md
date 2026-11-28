@@ -183,3 +183,24 @@
 - 前一步 `res.body.token` 能帶到下一步 Authorization，且報告中看不到 token 值。
 - JSON／CSV 可下載，CSV 無公式注入。
 - 上述所有驗證指令全綠，並完成一次正式站部署與線上使用者的真實 collection 驗收。
+
+## 實作紀錄（2026-11-28 14:05 CST）
+
+- **Phase 0**：`docs/validation/20261128-bruno-tests-spike.md` 確認官方 AST 直接給
+  `{name,value,enabled}` 的 `vars:post-response` pairs，且 Postgres partial unique index 可用。。
+- **Phase 1**：migration `20261128120000_bruno_integration_tests`（3 表 + partial unique index，只加不刪）；
+  CRUD/preview API 在 `server/api/v1/bruno/tests/*`，定義與 secret 處理在
+  `server/services/bruno/test-definition.ts`。
+- **Phase 2**：`server/services/bruno/test-runner.ts` 順序執行並重用 HTTP guard／assertion；
+  `test-variables.ts` 做白名單萃取；`test-report.ts` 做 redacted 報告與 CSV（含公式注入防護）。
+  下次執行時清除 90 天前已結束的 run/step。
+- **Phase 3**：`pages/bruno-tests/{index,new,[id]}.vue` 與三處 nav 連結；支援貼上／多 .bru／ZIP、
+  preview、建立、Run、報告歷史、JSON／CSV 下載。
+- **文件**：`docs/BRUNO_COMPATIBILITY.md` 明示此模式會執行白名單 `vars:post-response`，
+  mono-monitor 仍不執行 script；OpenAPI 補 7 個端點通過 REST contract 測試。
+- **驗證**：unit 212/212、typecheck 0、build 成功、目標整合測試 2/2、REST contract 1/1；
+  正式站瀏覽器實測：貼上單支 .bru → Preview → Create → Run → 報告 `pass · 1 passed` →
+  JSON／CSV 下載 200；測試資料已刪除，artifact releases 維持 2。
+- **上線**：已隨當前行動 deployment artifact 上線（API `/api/v1/bruno/tests` 200）；
+  revision 以當下 Helm release 為準（期間另一條 session 同時部署）。
+- **仍是範圍外**：排程執行、通知整合、PDF／HTML 報告、GitHub repo 同步。

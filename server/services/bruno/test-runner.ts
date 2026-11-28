@@ -8,6 +8,7 @@ import { extractTestVariables } from './test-variables'
 import { unsealTestSecrets, type TestDefinition } from './test-definition'
 
 const STALE_MS = 10 * 60_000
+const RETENTION_MS = 90 * 24 * 60 * 60_000
 const STEP_LIMIT_MS = 10_000
 const SENSITIVE = /(token|secret|password|authorization|cookie|api[-_]?key|session)/i
 const empty = { version: 1, mode: 'all', rules: [] } as const
@@ -82,6 +83,9 @@ export async function runBrunoTestSuite(scope: { workspaceId: number; environmen
     where: { suiteId, status: 'running', startedAt: { lt: new Date(Date.now() - STALE_MS) } },
     data: { status: 'error', finishedAt: new Date(), summary: { error: 'STALE_RUN' } },
   })
+  // Keep report history bounded: finished runs older than 90 days are removed on the next run.
+  await prisma.brunoTestRun.deleteMany({ where: { workspaceId: scope.workspaceId, suiteId,
+    status: { not: 'running' }, finishedAt: { lt: new Date(Date.now() - RETENTION_MS) } } })
   let run: any
   try {
     run = await prisma.brunoTestRun.create({
