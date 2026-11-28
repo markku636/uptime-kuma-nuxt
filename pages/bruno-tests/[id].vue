@@ -10,6 +10,12 @@ const busy = ref(false)
 const error = ref('')
 
 const editingStep = ref<string | null>(null)
+const expandedSteps = ref<Set<number>>(new Set())
+function toggleDetail(index: number) {
+  const next = new Set(expandedSteps.value)
+  if (next.has(index)) next.delete(index); else next.add(index)
+  expandedSteps.value = next
+}
 const drafts = ref<Record<string, Array<{ name: string; expression: string }>>>({})
 
 function ruleToExpression(rule: any) {
@@ -187,20 +193,39 @@ onMounted(load)
               <table class="table">
                 <thead><tr><th>#</th><th>Name</th><th>Status</th><th>HTTP</th><th>Elapsed</th><th>Assertions</th><th>Error</th></tr></thead>
                 <tbody>
-                  <tr v-for="step in report.steps" :key="step.stepIndex">
-                    <td>{{ step.stepIndex + 1 }}</td>
-                    <td>{{ step.name }} <span class="text-xs text-secondary">{{ step.method }}</span></td>
-                    <td>{{ step.status }}</td>
-                    <td>{{ step.httpStatus ?? '—' }}</td>
-                    <td>{{ step.elapsedMs }} ms</td>
-                    <td class="text-xs">
-                      <template v-if="step.assertions?.rules?.length">
-                        {{ step.assertions.rules.filter((rule: any) => rule.passed).length }} / {{ step.assertions.rules.length }} passed
-                      </template>
-                      <template v-else>—</template>
-                    </td>
-                    <td class="text-xs">{{ step.errorCode || '—' }}</td>
-                  </tr>
+                  <template v-for="step in report.steps" :key="step.stepIndex">
+                    <tr>
+                      <td>{{ step.stepIndex + 1 }}</td>
+                      <td>{{ step.name }} <span class="text-xs text-secondary">{{ step.method }}</span></td>
+                      <td>{{ step.status }}</td>
+                      <td>{{ step.httpStatus ?? '—' }}</td>
+                      <td>{{ step.elapsedMs }} ms</td>
+                      <td class="text-xs">
+                        <button v-if="step.assertions?.rules?.length" class="link" @click="toggleDetail(step.stepIndex)">
+                          {{ step.assertions.rules.filter((rule: any) => rule.passed).length }} / {{ step.assertions.rules.length }} passed · {{ expandedSteps.has(step.stepIndex) ? 'hide' : 'details' }}
+                        </button>
+                        <template v-else>—</template>
+                      </td>
+                      <td class="text-xs">{{ step.errorCode || '—' }}</td>
+                    </tr>
+                    <tr v-if="expandedSteps.has(step.stepIndex) && step.assertions?.rules?.length">
+                      <td colspan="7" class="bg-[var(--bg-secondary)]">
+                        <table class="table text-xs">
+                          <thead><tr><th>Rule</th><th>Source</th><th>Operator</th><th>Actual</th><th>Passed</th><th>Reason</th></tr></thead>
+                          <tbody>
+                            <tr v-for="rule in step.assertions.rules" :key="rule.ruleId">
+                              <td class="font-mono">{{ rule.ruleId }}</td>
+                              <td>{{ rule.source }}{{ rule.path ? ` ${rule.path}` : '' }}</td>
+                              <td>{{ rule.operator }}</td>
+                              <td class="font-mono">{{ rule.actual ?? '—' }}</td>
+                              <td>{{ rule.passed ? 'yes' : 'no' }}</td>
+                              <td>{{ rule.reason }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>
