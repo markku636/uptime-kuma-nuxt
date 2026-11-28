@@ -156,15 +156,22 @@
       <div v-if="showAuditReports" class="section-card space-y-3">
         <div class="flex items-center justify-between gap-3">
           <h3 class="section-title">Website audit reports</h3>
-          <button class="text-sm underline" :disabled="loadingAuditReports" @click="loadAuditReports">重新整理</button>
+          <div class="flex gap-3">
+            <button class="text-sm underline" :disabled="runningAudit" @click="runAuditNow">{{ runningAudit ? '執行中…' : 'Run audit now' }}</button>
+            <button class="text-sm underline" :disabled="loadingAuditReports" @click="loadAuditReports">重新整理</button>
+          </div>
         </div>
+        <p v-if="auditTrial" class="text-sm text-secondary">上次試跑：{{ auditTrial }}</p>
         <p v-if="loadingAuditReports" class="text-sm text-secondary">載入中…</p>
         <p v-else-if="!auditReports.length" class="text-sm text-secondary">尚無報告。</p>
-        <div v-for="item in auditReports" :key="item.id" class="border rounded-lg p-3 text-sm">
+        <div v-for="(item, index) in auditReports" :key="item.id" class="border rounded-lg p-3 text-sm">
           <div class="flex flex-wrap items-center gap-3 justify-between">
             <div>
               <span class="font-semibold">{{ item.score }}/100</span>
-              <span class="badge ml-2">{{ item.grade }}</span>
+              <span v-if="auditDelta(index) !== null" class="ml-1 text-xs" :class="auditDelta(index)! >= 0 ? 'text-emerald-400' : 'text-red-400'">
+                {{ auditDelta(index)! >= 0 ? '▲' : '▼' }} {{ Math.abs(auditDelta(index)!) }}
+              </span>
+              <span class="badge ml-2" :class="gradeClass(item.grade)">{{ item.grade }}</span>
               <span class="text-secondary ml-2">{{ formatDateTime(item.checkedAt) }}</span>
             </div>
             <button class="text-sm underline" @click="downloadAuditReport(item)">Download JSON</button>
@@ -518,6 +525,26 @@ const isScoreMonitor = computed(() => monitor.value?.type === 'site-audit')
 const showAuditReports = computed(() => monitor.value?.type === 'site-audit')
 const auditReports = ref<any[]>([])
 const loadingAuditReports = ref(false)
+const runningAudit = ref(false)
+const auditTrial = ref('')
+async function runAuditNow() {
+  if (!monitor.value || runningAudit.value) return
+  runningAudit.value = true
+  auditTrial.value = ''
+  try {
+    let config: any = {}
+    try { config = JSON.parse(monitor.value.body || '{}') } catch { config = {} }
+    const res = await $fetch<any>('/api/v1/monitors/test', {
+      method: 'POST',
+      body: { ...monitor.value, url: config.url || monitor.value.url, type: 'site-audit' },
+    })
+    auditTrial.value = `${res.data?.msg || 'done'} · ${res.data?.code || ''} (score ${res.data?.ping ?? '—'})`
+  } catch (error: any) {
+    auditTrial.value = error?.data?.message || error?.message || 'Audit failed.'
+  } finally {
+    runningAudit.value = false
+  }
+}
 async function loadAuditReports() {
   if (!showAuditReports.value) return
   loadingAuditReports.value = true
@@ -529,6 +556,14 @@ async function loadAuditReports() {
   } finally {
     loadingAuditReports.value = false
   }
+}
+function auditDelta(index: number): number | null {
+  const current = auditReports.value[index], previous = auditReports.value[index + 1]
+  if (!current || !previous || typeof current.score !== 'number' || typeof previous.score !== 'number') return null
+  return current.score - previous.score
+}
+function gradeClass(grade: string | null): string {
+  return grade === 'A' ? 'badge-success' : grade === 'B' ? 'badge-info' : grade === 'C' ? 'badge-warning' : 'badge-danger'
 }
 function downloadAuditReport(item: any) {
   const blob = new Blob([JSON.stringify(item.report ?? item, null, 2)], { type: 'application/json' })
