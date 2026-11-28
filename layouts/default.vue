@@ -18,6 +18,12 @@
         <NuxtLink to="/bruno-tests" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-play-circle" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Bruno Tests</span>
         </NuxtLink>
+        <NuxtLink to="/browser-flows" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-cursor-arrow-rays" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Browser Flows</span>
+        </NuxtLink>
+        <NuxtLink to="/site-audit" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 shrink-0 opacity-70" />
+          <span>Site Audit</span>
+        </NuxtLink>
         <NuxtLink to="/maintenance" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-wrench-screwdriver" class="w-4 h-4 shrink-0 opacity-70" />
           <span>Maintenance</span>
         </NuxtLink>
@@ -82,6 +88,20 @@
               active-class="nav-link-active"
             >
               Bruno Tests
+            </NuxtLink>
+            <NuxtLink
+              to="/browser-flows"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              Browser Flows
+            </NuxtLink>
+            <NuxtLink
+              to="/site-audit"
+              class="nav-link"
+              active-class="nav-link-active"
+            >
+              Site Audit
             </NuxtLink>
             <NuxtLink
               to="/settings"
@@ -210,6 +230,22 @@
               @click="mobileMenuOpen = false"
             >
               Bruno Tests
+            </NuxtLink>
+            <NuxtLink
+              to="/browser-flows"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              Browser Flows
+            </NuxtLink>
+            <NuxtLink
+              to="/site-audit"
+              class="mobile-nav-link"
+              active-class="mobile-nav-link-active"
+              @click="mobileMenuOpen = false"
+            >
+              Site Audit
             </NuxtLink>
             <NuxtLink
               to="/reports"

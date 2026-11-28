@@ -29,6 +29,9 @@
 6. `links`：最多 8 個同站連結做 HEAD 檢查，並標記混合內容（`http:` on HTTPS）。
 7. `keyword`：選填，檢查回應內文是否包含指定字串。
 
+可在请求（或排程 monitor 的 `body.checks`）关闭个别项目：`tls`／`dns`／`headers`／`meta`／
+`links`／`keyword`；关闭的项目在报告中为 `skip` 且不计分，HTTP 一定执行。`linkLimit` 可调 1–20。
+
 限制：每次最多 10 次/分鐘/使用者、全域同時 3 次；單一回應 1 MiB、單步 10 秒。
 按需呼叫**不寫資料庫、不進心跳、不發通知**；若要定期巡檢，用對話框的「Schedule (hourly)」
 建立 `type=site-audit` monitor（設定放在 `body`：`{url, keyword, minScore}`，預設門檻 60）：
