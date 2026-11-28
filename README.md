@@ -31,6 +31,9 @@
 - **Bruno multi-API tests**：Bruno collection 可宣告式建立測試流程（suite），跨步驟以
   `res.body.token` 等白名單萃取變數帶到下一步，手動執行後在站內看逐步報告並下載 JSON／CSV；
   不執行 Bruno script/tests、不進 availability／通知，見 [Bruno 相容矩陣](docs/BRUNO_COMPATIBILITY.md)。
+- **失敗自動事件**：Settings › General 開啟 `autoIncidentOnDown` 後，monitor 轉為 DOWN 時會在
+  已發布且包含該 monitor 的狀態頁自動開一件事件（含 investigating 更新），恢復 UP 時補 resolved
+  並從公開頁隱藏；以事件標題綁定 monitor，避免重複開立。
 - PostgreSQL lease/fencing、多 API／worker、Kubernetes 多節點部署設定。
 
 舊 TCP、Ping、DNS、Docker、gRPC、database、MQTT、Kafka、RabbitMQ、GameDig 等配置可保留，但目前分散 worker 沒有對應 bounded adapter，會顯示 unsupported；不要視為已可排程。HTTP proxy、NTLM/mTLS 同樣未支援，不會悄悄改成直接連線。
