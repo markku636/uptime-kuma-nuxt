@@ -26,6 +26,15 @@
           </select>
         </div>
 
+        <!-- Auto incidents -->
+        <div>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input v-model="form.autoIncidentOnDown" type="checkbox" class="text-green-500" />
+            <span class="text-sm text-gray-700 dark:text-gray-200">Auto-open status page incidents when a linked monitor goes DOWN</span>
+          </label>
+          <p class="text-xs text-gray-500 mt-1">Applies to published pages that contain the monitor. Recovery adds a resolved update and hides the incident from the public page.</p>
+        </div>
+
         <!-- Runtime hints -->
         <div>
           <label class="flex items-center gap-2 cursor-pointer">
@@ -129,7 +138,8 @@ const form = reactive({
   chromeExecutable: '',
   dnsServers: '',
   statusPageSlug: '',
-  showRuntimeHints: true
+  showRuntimeHints: true,
+  autoIncidentOnDown: false
 })
 
 const loading = ref(false)
@@ -188,7 +198,8 @@ const saveSettings = async () => {
         chromePath: form.chromeExecutable,
         dnsServers: form.dnsServers,
         statusPageSlug: form.entryPage === 'status' ? form.statusPageSlug : undefined,
-        showRuntimeHints: form.showRuntimeHints
+        showRuntimeHints: form.showRuntimeHints,
+        autoIncidentOnDown: form.autoIncidentOnDown
       }
     })
     // Reflect the new values immediately instead of waiting for a reload.
@@ -218,6 +229,7 @@ onMounted(async () => {
       form.chromeExecutable = settings.chromePath || ''
       form.dnsServers = settings.dnsServers || '8.8.8.8\n1.1.1.1'
       form.statusPageSlug = settings.statusPageSlug || ''
+      form.autoIncidentOnDown = settings.autoIncidentOnDown ?? false
     }
     const pages = await $fetch<any>('/api/v1/status-pages')
     statusPages.value = pages?.data || []

@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto'
 import type {CheckResult} from './checker'
 import {TLS_EXPIRY_SETTING_KEY,parseTlsExpiryDays} from '../../utils/tls-expiry-settings'
 import {readAlertDelayMinutes} from '../../utils/alert-delay'
+import {syncAutoIncident} from './auto-incident'
 function safeCode(code:unknown){return typeof code==='string'&&/^[A-Z0-9_]{1,64}$/.test(code)?code:'CHECK_COMPLETE'}
 function msgSafe(value:unknown){return String(value||'').replace(/https?:\/\/[^\s)）"'，,]+/gi,raw=>{try{const u=new URL(raw);return `${u.origin}${u.pathname}`}catch{return '[redacted-url]'}})}
 function safeAssertions(input:any){
@@ -21,6 +22,7 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
     }
     const heartbeat=await tx.heartbeat.create({data:{monitorId:monitor.id,runId:monitor.runId,scheduledFor:monitor.scheduledFor,configVersion:monitor.configVersion,coverageSeconds:Math.min(7200,Math.max(2,monitor.interval*2)),time:now,status:result.status,ping,msg:result.status===1?'Up':result.status===3?'Under maintenance':result.status===2?'Pending':'Check failed',checkCode:code,assertionResults:safeAssertions(result.assertionResults)??Prisma.DbNull,important:changed,duration:previous?Math.max(0,Math.floor((now.getTime()-previous.checkedAt.getTime())/1000)):0}})
     const state=await tx.monitorState.upsert({where:{monitorId:monitor.id},create:{monitorId:monitor.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,heartbeatId:heartbeat.id,runId:monitor.runId,status:result.status,ping,checkCode:code,assertionResults:safeAssertions(result.assertionResults)??Prisma.DbNull,checkedAt:now,statusChangedAt:now},update:{heartbeatId:heartbeat.id,runId:monitor.runId,status:result.status,ping,checkCode:code,assertionResults:safeAssertions(result.assertionResults)??Prisma.DbNull,checkedAt:now,statusChangedAt:changed?now:previous.statusChangedAt,revision:{increment:1}}})
+    if(changed)try{await syncAutoIncident(tx,monitor,result.status,now)}catch{/* 事件自動化失敗不影響判定 */}
     const tls=(result as any).tlsInfo
     const tlsWarning=monitor.expiryNotification&&!monitor.ignoreTls&&tls&&Number.isFinite(tls.daysRemaining)&&typeof tls.fingerprint==='string'&&tls.fingerprint.length>0
     const slowThreshold=Number(monitor.responseTimeThreshold)

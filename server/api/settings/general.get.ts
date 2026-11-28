@@ -24,7 +24,8 @@ export default defineEventHandler(async (event) => {
           'checkBeta',
           'showRuntimeHints',
           'alertDelayMinutes',
-          'statusPageSlug'
+          'statusPageSlug',
+          'autoIncidentOnDown'
         ]
       }
     }
@@ -47,7 +48,8 @@ export default defineEventHandler(async (event) => {
     checkBeta: false,
     showRuntimeHints: true,
     alertDelayMinutes: 0,
-    statusPageSlug: ''
+    statusPageSlug: '',
+    autoIncidentOnDown: false
   }
 
   settings.forEach(setting => {
