@@ -1297,6 +1297,9 @@
   "btDownloadHtml": "Download HTML",
   "btRunTest": "Run test",
   "btSaveSettings": "Save settings",
+  "btEditRequest": "Edit request",
+  "btCloseRequest": "Close request",
+  "btSaveRequest": "Save request",
   "btStopFirst": "Stop on first failure",
   "btCreating": "Creating…"
 }

@@ -1,7 +1,12 @@
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
+import BrunoRequestEditor from '../../components/monitor/BrunoRequestEditor.vue'
+import { useWorkspace } from '../../composables/useWorkspace'
+
 const route = useRoute()
 const toast = useToast()
+const { environment } = useWorkspace()
+const environmentId = computed(() => Number(environment.value?.id || 0) || undefined)
 const id = computed(() => Number(route.params.id))
 const suite = ref<any>(null)
 const runs = ref<any[]>([])
@@ -13,6 +18,9 @@ const editingStep = ref<string | null>(null)
 const expandedSteps = ref<Set<number>>(new Set())
 const editingSource = ref<string | null>(null)
 const sourceDrafts = ref<Record<string, string>>({})
+const requestTrials = ref<Record<string, any>>({})
+const requestTrialErrors = ref<Record<string, string>>({})
+const requestTrialLoading = ref<string | null>(null)
 function toggleDetail(index: number) {
   const next = new Set(expandedSteps.value)
   if (next.has(index)) next.delete(index); else next.add(index)
@@ -115,6 +123,27 @@ async function saveSource(path: string) {
   }
 }
 
+async function testRequest(step: any): Promise<void> {
+  const source = sourceDrafts.value[step.path]
+  if (!source || requestTrialLoading.value) return
+  requestTrialLoading.value = step.path
+  requestTrialErrors.value = { ...requestTrialErrors.value, [step.path]: '' }
+  try {
+    const result = await $fetch<{ ok: boolean; data: any }>('/api/v1/monitors/test', {
+      method: 'POST',
+      body: {
+        name: `Trial · ${step.name}`, type: 'bruno', body: source,
+        interval: 60, timeout: 30, method: 'GET', active: true,
+      },
+    })
+    requestTrials.value = { ...requestTrials.value, [step.path]: result.data }
+  } catch (e: any) {
+    requestTrialErrors.value = { ...requestTrialErrors.value, [step.path]: e.data?.message || 'Request trial failed' }
+  } finally {
+    requestTrialLoading.value = null
+  }
+}
+
 async function saveSettings() {
   try {
     const stepExtract = collectExtract()
@@ -174,15 +203,27 @@ onMounted(load)
                 <td class="font-mono text-xs">{{ step.path }}</td>
                 <td class="text-xs">{{ step.extract.map((rule: any) => rule.name).join(', ') || '—' }}</td>
                 <td class="text-right space-x-1">
-                  <button v-if="typeof step.source === 'string'" class="btn btn-secondary btn-sm" @click="editingSource = editingSource === step.path ? null : step.path">{{ editingSource === step.path ? 'Close .bru' : 'Edit .bru' }}</button>
+                  <button v-if="typeof step.source === 'string'" class="btn btn-secondary btn-sm" @click="editingSource = editingSource === step.path ? null : step.path">{{ editingSource === step.path ? $t('btCloseRequest') : $t('btEditRequest') }}</button>
                   <button class="btn btn-secondary btn-sm" @click="editingStep = editingStep === step.path ? null : step.path">{{ editingStep === step.path ? 'Close' : 'Edit extract' }}</button>
                 </td>
               </tr>
               <tr v-if="editingSource === step.path">
                 <td colspan="6" class="bg-[var(--bg-secondary)]">
-                  <div class="space-y-2 py-2">
-                    <textarea v-model="sourceDrafts[step.path]" rows="14" class="input-field w-full font-mono text-xs" :aria-label="`Raw Bruno source for ${step.name}`"></textarea>
-                    <button class="btn btn-primary btn-sm" @click="saveSource(step.path)">Save request</button>
+                  <div class="space-y-3 py-2">
+                    <p class="text-xs text-secondary">使用全站共用的 Bruno request 編輯器；Scripts／Tests 不會執行，變數取自目前環境。</p>
+                    <BrunoRequestEditor
+                      v-model="sourceDrafts[step.path]"
+                      :environment-id="environmentId"
+                      :disabled="busy"
+                      :trial-result="requestTrials[step.path]"
+                      :trial-loading="requestTrialLoading === step.path"
+                      :trial-error="requestTrialErrors[step.path] || ''"
+                      @send="testRequest(step)"
+                    />
+                    <div class="flex flex-wrap gap-2">
+                      <button class="btn btn-primary btn-sm" :disabled="busy" @click="saveSource(step.path)">{{ $t('btSaveRequest') }}</button>
+                      <button class="btn btn-secondary btn-sm" @click="editingSource = null">{{ $t('btCloseRequest') }}</button>
+                    </div>
                   </div>
                 </td>
               </tr>
