@@ -25,6 +25,7 @@ function page(overrides: Partial<AuditFetchResult> = {}): AuditFetchResult {
 
 const fakeLookup = (async () => [{ address: '93.184.216.34', family: 4 }]) as unknown as typeof lookup
 const noTxt = (async () => { throw Object.assign(new Error('ENODATA'), { code: 'ENODATA' }) }) as unknown as typeof resolveTxt
+const noLegacyTls = async () => ({ legacy: false, errors: [] })
 const fakeTxt = (records: Record<string, string[]>) => (async (name: string) => {
   if (!records[name]) throw Object.assign(new Error('ENODATA'), { code: 'ENODATA' })
   return records[name]!.map(value => [value])
@@ -40,7 +41,7 @@ function finding(rule: string, severity: SecurityFinding['severity']): SecurityF
 test('被動掃描：缺少標頭與 DMARC 會產生 finding，分數低於 100 且微調項目為 info/low', async () => {
   const fetcher: AuditFetcher = async () => page({ headers: { 'content-type': 'text/html' } })
   const report = await runSecurityScan({ url: 'https://example.com/' }, {
-    fetcher, lookupFn: fakeLookup, resolveTxtFn: noTxt,
+    fetcher, lookupFn: fakeLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls,
   })
   assert.equal(report.profile, 'passive')
   assert.ok(report.score < 100)
@@ -59,7 +60,7 @@ test('未驗證擁有權時 active_light 自動降級，不送出探測請求', 
   const calls: string[] = []
   const fetcher: AuditFetcher = async (url, method) => { calls.push(`${method} ${url}`); return page() }
   const report = await runSecurityScan({ url: 'https://example.com/', profile: 'active_light' }, {
-    fetcher, lookupFn: fakeLookup, resolveTxtFn: noTxt,
+    fetcher, lookupFn: fakeLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls,
   })
   assert.equal(report.profile, 'passive')
   assert.equal(report.limits.probesUsed, 0)
@@ -75,7 +76,7 @@ test('已驗證擁有權才跑 active_light 探測，且只送出允許的少數
     return page({ status: 404, headers: { 'content-type': 'text/html' }, body: '' })
   }
   const report = await runSecurityScan({ url: 'https://example.com/', profile: 'active_light', maxProbes: 2 }, {
-    fetcher, lookupFn: fakeLookup, resolveTxtFn: noTxt,
+    fetcher, lookupFn: fakeLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls,
     verifyOwnership: async () => true,
   })
   assert.equal(report.profile, 'active_light')
@@ -89,7 +90,7 @@ test('SSRF：私人／metadata 位址在送出任何請求前就被擋下', asyn
   const fetcher: AuditFetcher = async () => { called = true; return page() }
   const privateLookup = (async () => [{ address: '127.0.0.1', family: 4 }]) as unknown as typeof lookup
   await assert.rejects(runSecurityScan({ url: 'http://example.com/' }, {
-    fetcher, lookupFn: privateLookup, resolveTxtFn: noTxt,
+    fetcher, lookupFn: privateLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls,
   }), /DESTINATION_DENIED/)
   assert.equal(called, false)
 })
@@ -108,7 +109,7 @@ test('TLS 過期為 critical，即將過期為 high；jQuery 舊版有 CVE 參�
       tlsInfo: tls,
       body: '<html><script src="/jquery-3.4.1.min.js"></script></html>',
     }),
-    lookupFn: fakeLookup, resolveTxtFn: noTxt,
+    lookupFn: fakeLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls,
   })
   assert.equal(report.findings.find(f => f.rule === 'tls.cert.expired')?.severity, 'critical')
   const jquery = report.findings.find(f => f.rule === 'fingerprint.jquery.outdated')
@@ -120,7 +121,7 @@ test('TLS 過期為 critical，即將過期為 high；jQuery 舊版有 CVE 參�
 test('DNS 已有 SPF/DMARC 時不產生相對應 finding', async () => {
   const report = await runSecurityScan({ url: 'https://example.com/' }, {
     fetcher: async () => page(), lookupFn: fakeLookup,
-    resolveTxtFn: fakeTxt({ 'example.com': ['v=spf1 -all'], '_dmarc.example.com': ['v=DMARC1; p=reject'] }),
+    resolveTxtFn: fakeTxt({ 'example.com': ['v=spf1 -all'], '_dmarc.example.com': ['v=DMARC1; p=reject'] }), tlsProber: noLegacyTls,
   })
   assert.ok(!report.findings.some(f => f.rule === 'dns.spf.missing'))
   assert.ok(!report.findings.some(f => f.rule === 'dns.dmarc.missing'))
@@ -130,7 +131,7 @@ test('categories 可關閉整類檢查', async () => {
   const report = await runSecurityScan({
     url: 'https://example.com/',
     categories: { headers: false, cookies: false, tls: false, dns: false, fingerprint: false, redirect: false, exposure: false },
-  }, { fetcher: async () => page({ headers: {} }), lookupFn: fakeLookup, resolveTxtFn: noTxt })
+  }, { fetcher: async () => page({ headers: {} }), lookupFn: fakeLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls })
   assert.deepEqual(report.findings, [])
   assert.equal(report.score, 100)
   assert.equal(report.grade, 'A')
@@ -140,6 +141,32 @@ test('沒有注入 fetcher 時使用真正的 site-audit fetcher（避免 NO_FET
   assert.equal(resolveAuditFetcher({}), defaultAuditFetcher)
   const injected: AuditFetcher = async () => page()
   assert.equal(resolveAuditFetcher({ fetcher: injected }), injected)
+})
+
+test('TLS 探測到舊協定時給 high finding，modern 時不給', async () => {
+  const legacy = await runSecurityScan({ url: 'https://example.com/', categories: { dns: false } }, {
+    fetcher: async () => page(), lookupFn: fakeLookup, resolveTxtFn: noTxt,
+    tlsProber: async () => ({ legacy: true, errors: [] }),
+  })
+  const finding = legacy.findings.find(f => f.rule === 'tls.protocol.legacy')
+  assert.equal(finding?.severity, 'high')
+  assert.ok(finding?.refs.some(ref => ref.includes('rfc8996')))
+  const modern = await runSecurityScan({ url: 'https://example.com/', categories: { dns: false } }, {
+    fetcher: async () => page(), lookupFn: fakeLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls,
+  })
+  assert.ok(!modern.findings.some(f => f.rule === 'tls.protocol.legacy'))
+})
+
+test('SameSite=None 但沒有 Secure 的 cookie 單獨列為 high', async () => {
+  const report = await runSecurityScan({ url: 'https://example.com/', categories: { dns: false, tls: false } }, {
+    fetcher: async () => page({
+      headers: { ...secureHeaders, 'set-cookie': 'session=abc; Path=/; HttpOnly; SameSite=None' },
+    }),
+    lookupFn: fakeLookup, resolveTxtFn: noTxt, tlsProber: noLegacyTls,
+  })
+  const finding = report.findings.find(f => f.rule === 'cookies.samesite_none_without_secure')
+  assert.equal(finding?.severity, 'high')
+  assert.equal(finding?.location.param, 'session')
 })
 
 test('scoreFindings 依嚴重度扣分並給風險等級', () => {

@@ -143,4 +143,17 @@ R170 🔵 歷史報告 API 與 UI —
 - OpenAPI 補 path；`docs/SECURITY_SCAN.md` 補排程與歷史說明。
 - 驗證：unit **266/266 pass**、`tsc --noEmit` **0 error**、build exit 0
   （第一次 build 遇到另一條 session 並行 `prisma generate` 的 tmp engine ENOENT，重跑即通過）。
-- 待部署與線上驗收。
+- 待部署與線上驗收。**線上已確認 route 存在且 swagger 已補**（由另一條 session 22:43 的 build/部署帶上）。
+
+R171 ✅ 更多弱點規則 —
+- `server/services/security-scan/tls-probe.ts`：釘住已驗證 public IP 後用 TLS 1.0／1.1 handshake 探測，
+  成功即 `tls.protocol.legacy`（high，CWE-327，RFC 8996）；任何錯誤都降級為 warning，不影響其他檢查。
+- `scan.ts` 新增 `cookies.samesite_none_without_secure`（high）；deps 可注入 `tlsProber` 供測試。
+- `tests/security-scan.test.ts` 補 2 項（舊 TLS／SameSite），既有測試改注入 no-op prober 避免打真網路。22/22 pass。
+
+R172 🔵 批次掃描 —
+- `server/services/security-scan/batch.ts`：1–20 URL、併發上限 3、保留順序、單筆失敗隔離、一律 passive。
+- `POST /api/v1/security-scan/batch`（editor，3 次/分、全域 2 個批次）。
+- `/security-scan` 頁新增 Batch scan 文字框、結果表與 CSV 下載（公式注入防護）。
+- OpenAPI／文件更新；`tests/security-scan-batch.test.ts` 3 項。
+- 驗證：security-scan 系列 **25/25 pass**、`tsc --noEmit` **0 error**。待 build＋部署。

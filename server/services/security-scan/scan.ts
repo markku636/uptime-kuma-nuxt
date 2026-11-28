@@ -14,6 +14,7 @@ import type {
 import { SECURITY_SCAN_SEVERITIES } from '../../../shared/types/security-scan'
 import type { AuditFetchResult, AuditFetcher } from '../site-audit/audit'
 import { defaultAuditFetcher } from '../site-audit/audit'
+import { defaultTlsProber, type TlsProber } from './tls-probe'
 import { HttpCheckError, isForbiddenAddress } from '../monitor/checkers/http-request'
 
 export { SECURITY_SCAN_SEVERITIES }
@@ -34,6 +35,8 @@ export interface SecurityScanDeps {
   resolveTxtFn?: typeof resolveTxt
   /** 由 API 注入：只有持有該 host 的驗證 token 才回 true。引擎本身不信任 input.verify。 */
   verifyOwnership?: (input: SecurityScanInput) => Promise<boolean>
+  /** TLS 版本探測；可注入以便測試，不注入時用釘 IP 的 handshake。 */
+  tlsProber?: TlsProber
   now?: Date
 }
 
@@ -191,6 +194,16 @@ function cookieFindings(setCookie: string | undefined, isHttps: boolean, url: st
     if (isHttps && !/;\s*secure\b/.test(lower)) missing.push('Secure')
     if (!/;\s*httponly\b/.test(lower)) missing.push('HttpOnly')
     if (!/;\s*samesite\b/.test(lower)) missing.push('SameSite')
+    const sameSiteNoneWithoutSecure = /;\s*samesite\s*=\s*none\b/.test(lower) && !/;\s*secure\b/.test(lower)
+    if (!missing.length && !sameSiteNoneWithoutSecure) continue
+    if (sameSiteNoneWithoutSecure) out.push({
+      rule: 'cookies.samesite_none_without_secure', category: 'cookies', severity: 'high',
+      title: `工作階段 cookie ${name} 使用 SameSite=None 但沒有 Secure`,
+      detail: 'SameSite=None 且缺少 Secure 時，瀏覽器可能拒絕該 cookie，或讓它在跨站情境下被送出。',
+      recommendation: '加上 Secure；若不需要跨站傳送，改用 SameSite=Lax。',
+      location: { url, param: name }, evidence: { cookie: name, sameSite: 'None' },
+      cwe: ['CWE-614'], refs: ['https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesitesamesite-value'], tags: ['passive', 'cookie'],
+    })
     if (!missing.length) continue
     out.push({
       rule: 'cookies.attributes', category: 'cookies', severity: missing.includes('Secure') && isHttps ? 'high' : 'medium',
@@ -372,6 +385,23 @@ export async function runSecurityScan(input: SecurityScanInput, deps: SecuritySc
   if (enabled('headers')) findings.push(...headerFindings(page.headers, page.finalUrl.startsWith('https:'), target.href))
   if (enabled('cookies')) findings.push(...cookieFindings(page.headers['set-cookie'], page.finalUrl.startsWith('https:'), target.href))
   if (enabled('tls')) findings.push(...tlsFindings(page, target, target.href))
+  if (enabled('tls') && target.protocol === 'https:') {
+    try {
+      const port = target.port ? Number(target.port) : 443
+      const probe = await (deps.tlsProber || defaultTlsProber)(normalizedHost(target), port, normalizedHost(target))
+      if (probe.legacy) findings.push({
+        rule: 'tls.protocol.legacy', category: 'tls', severity: 'high',
+        title: '伺服器仍接受舊版 TLS（1.0／1.1）',
+        detail: '以 TLS 1.0／1.1 握手成功；這些協定已被淘汰，可能受到降級攻擊。',
+        recommendation: '在反向代理／伺服器設定最低 TLS 1.2（建議 1.3），關閉 TLS 1.0／1.1。',
+        location: { url: target.href, host: normalizedHost(target) },
+        evidence: { legacyAccepted: true }, cwe: ['CWE-327'],
+        refs: ['https://datatracker.ietf.org/doc/html/rfc8996'], tags: ['passive', 'tls'],
+      })
+    } catch (error) {
+      warnings.push(`TLS_PROBE_FAILED: ${error instanceof Error ? error.message.slice(0, 100) : 'ERROR'}`)
+    }
+  }
   if (enabled('redirect')) findings.push(...redirectFindings(page, target, target.href))
 
   if (enabled('dns')) {

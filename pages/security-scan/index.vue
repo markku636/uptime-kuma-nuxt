@@ -70,6 +70,37 @@
       </div>
     </div>
 
+    <div class="card card-body mb-6">
+      <h2 class="section-title">Batch scan (passive)</h2>
+      <label class="block">
+        <span class="text-sm text-toned">URLs (one per line, max 20)</span>
+        <textarea v-model="batchRaw" rows="6" maxlength="20000" aria-label="URLs to scan"
+          placeholder="https://example.com&#10;https://example.org" class="input-field mt-1 font-mono text-sm"></textarea>
+      </label>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <button type="button" class="btn btn-secondary" :disabled="batchBusy || !batchUrls.length" @click="runBatch">
+          {{ batchBusy ? `Scanning ${batchUrls.length} sites…` : `Scan ${batchUrls.length || ''} sites` }}
+        </button>
+        <button v-if="batchResult" type="button" class="btn btn-secondary" @click="downloadBatchCsv">Download CSV</button>
+      </div>
+      <div v-if="batchResult" class="overflow-x-auto mt-4">
+        <table class="table">
+          <thead><tr><th>URL</th><th>Score</th><th>Grade</th><th>Risk</th><th>Findings</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr v-for="row in batchResult.results" :key="row.url">
+              <td class="max-w-md truncate" :title="row.url">{{ row.url }}</td>
+              <td>{{ row.score ?? '—' }}</td>
+              <td>{{ row.grade || row.status }}</td>
+              <td>{{ row.riskLevel || row.error || '—' }}</td>
+              <td>{{ row.findings }}</td>
+              <td>{{ row.durationMs }} ms</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-sm text-secondary mt-2">{{ batchResult.passed }} healthy · {{ batchResult.failed }} low score · {{ batchResult.errors }} errors</p>
+      </div>
+    </div>
+
     <div v-if="report" class="card card-body">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h2 class="section-title !mb-0">Report</h2>
@@ -173,6 +204,10 @@ const enabled = ref<Record<CategoryId, boolean>>({
   fingerprint: true, headers: true, cookies: true, tls: true, dns: true, redirect: true, exposure: true,
 })
 const maxProbes = ref(3)
+const batchRaw = ref('')
+const batchResult = ref<{ results: Array<{ url: string; status: string; score: number | null; grade: string | null; riskLevel: string | null; findings: number; durationMs: number; error: string | null }>; passed: number; failed: number; errors: number } | null>(null)
+const batchBusy = ref(false)
+const batchUrls = computed(() => batchRaw.value.split('\n').map(line => line.trim()).filter(Boolean).slice(0, 20))
 const busy = ref(false)
 const scheduling = ref(false)
 const issuing = ref(false)
@@ -235,6 +270,46 @@ async function run(): Promise<void> {
   } finally {
     busy.value = false
   }
+}
+
+async function runBatch(): Promise<void> {
+  if (!batchUrls.value.length || batchBusy.value) return
+  batchBusy.value = true
+  error.value = ''
+  batchResult.value = null
+  try {
+    const response = await $fetch<{ ok: boolean; data: NonNullable<typeof batchResult.value> }>('/api/v1/security-scan/batch', {
+      method: 'POST', body: { urls: batchUrls.value },
+    })
+    batchResult.value = response.data
+  } catch (caught: any) {
+    error.value = caught?.data?.message || caught?.message || 'Batch scan failed.'
+  } finally {
+    batchBusy.value = false
+  }
+}
+
+function csvCell(value: unknown): string {
+  const text = value === null || value === undefined ? '' : String(value)
+  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text
+  return `"${safe.replace(/"/g, '""')}"`
+}
+function downloadBatchCsv(): void {
+  if (!batchResult.value) return
+  const lines = [
+    ['url', 'status', 'score', 'grade', 'risk', 'findings', 'durationMs'].join(','),
+    ...batchResult.value.results.map(row => [
+      csvCell(row.url), csvCell(row.status), csvCell(row.score), csvCell(row.grade),
+      csvCell(row.riskLevel || row.error), csvCell(row.findings), csvCell(row.durationMs),
+    ].join(',')),
+  ]
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+  const link = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = link
+  anchor.download = `security-scan-batch-${Date.now()}.csv`
+  anchor.click()
+  URL.revokeObjectURL(link)
 }
 
 async function schedule(): Promise<void> {
