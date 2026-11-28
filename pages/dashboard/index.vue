@@ -7,6 +7,10 @@
     <!-- Header with Connection Status -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-2">
+        <button v-if="canEdit" class="btn btn-secondary" @click="auditOpen = true">
+          <UIcon name="i-heroicons-magnifying-glass-circle" class="w-4 h-4 mr-2" />
+          Website audit
+        </button>
         <button v-if="canEdit" class="btn btn-secondary" @click="openQuickAdd">
           <UIcon name="i-heroicons-bolt" class="w-4 h-4 mr-2" />
           Quick add
@@ -315,6 +319,9 @@
 
   </div>
 
+  <!-- On-demand website health check (HTTP/TLS/DNS/headers/meta/links) -->
+  <DashboardSiteAuditDialog :open="auditOpen" @close="auditOpen = false" />
+
   <!-- Quick add: one URL, sensible defaults, advanced form still available -->
   <div v-if="quickAddOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="quickAddOpen = false">
     <form class="card w-full max-w-lg p-6 space-y-4" @submit.prevent="submitQuickAdd">
@@ -361,6 +368,7 @@ let socket:any=null
 
 // Quick add (UptimeRobot-style single URL flow)
 const toast = useToast()
+const auditOpen = ref(false)
 const quickAddOpen = ref(false)
 const quickAddUrl = ref('')
 const quickAddBusy = ref(false)
