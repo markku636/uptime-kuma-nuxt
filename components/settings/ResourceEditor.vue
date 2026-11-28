@@ -37,6 +37,7 @@ async function test(){testing.value=true;result.value='';try{
     <label v-if="editing" class="flex gap-2"><input v-model="replaceConfig" type="checkbox" aria-label="Replace stored configuration" />Replace stored configuration</label>
     <fieldset v-if="replaceConfig" class="space-y-3">
       <label v-for="field in configFields" :key="field[0]" class="block">{{field[1]}}<input v-model="form.config[field[0]!]" :aria-label="field[1]" :type="/token/i.test(field[0]!)?'password':'text'" autocomplete="off" maxlength="8192" class="input-field mt-1" /></label>
+      <label v-if="form.type==='discord'" class="flex gap-2 text-sm"><input v-model="form.config.mentionEveryone" type="checkbox" aria-label="Allow everyone mention" />Allow @everyone / @here (off by default)</label>
       <label v-if="form.type==='webhook'" class="block">Headers (JSON)<textarea v-model="headers" aria-label="Headers (JSON)" class="input-field mt-1" rows="3" maxlength="32768" /></label>
     </fieldset>
   </template>
