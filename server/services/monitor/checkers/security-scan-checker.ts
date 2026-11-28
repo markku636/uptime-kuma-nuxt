@@ -4,7 +4,8 @@
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import type { CheckResult } from '../checker'
-import { runSecurityScan, type SecurityScanReport } from '../../security-scan/scan'
+import { runSecurityScan } from '../../security-scan/scan'
+import type { SecurityScanReport } from '../../../../shared/types/security-scan'
 import { SECURITY_SCAN_CATEGORIES } from '../../../../shared/types/security-scan'
 import { workerPrisma } from '../../../utils/worker-prisma'
 
