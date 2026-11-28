@@ -92,7 +92,12 @@ R165 ✅ 事件影響程度 — commit `0e43e91` 後；部署 rev564，實測建
 - unit 279/279、typecheck 0、build 成功。
 - 完整整合測試 119 pass / 0 fail / 1 skip。
 
-R166 🔵 維護通知訂閱 — 程式完成，待部署。
+R166 ✅ 維護通知訂閱 — commit `3865e12` 後；部署 rev571。
 - `maintenanceHandler` 在 active 狀態切換且有綁定狀態頁時 enqueue `maintenance-started`／
   `maintenance-ended` 給已驗證訂閱者；訂閱通知失敗不影響維護設定。unit 279/279、typecheck 0。
+
+R167 🔵 合成流程逐步 trace — 程式完成，待部署。
+- 排程 browser-flow 成功時也寫入 `visualCheckArtifact`（`viewportLabel='flow-trace'`，只留最近一筆，
+  存 flowSteps／耗時／錯誤碼，不存 body）；trial 不寫。監控詳情頁以「最近成功／最近失敗」顯示。
+- unit 280/280、typecheck 0、build 成功。
 - unit 266/266；build 成功（第一次與另一條 session 並行 build 撞 cache，重跑通過）。

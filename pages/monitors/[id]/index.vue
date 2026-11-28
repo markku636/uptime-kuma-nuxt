@@ -122,7 +122,7 @@
         <div v-for="item in latestVisualByViewport" :key="item.viewportLabel" class="border rounded-lg p-4 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <span class="font-medium">{{ item.viewportLabel }}</span>
+              <span class="font-medium">{{ item.viewportLabel === 'flow-fail' ? '最近失敗' : item.viewportLabel === 'flow-trace' ? '最近成功' : item.viewportLabel }}</span>
               <span class="ml-2 text-sm" :class="item.status === 1 ? 'text-emerald-400' : 'text-red-400'">
                 {{ item.status === 1 ? '正常' : monitor.type === 'browser-flow' ? '失敗' : '跑版' }}
                 <template v-if="item.diffRatio != null"> · {{ (item.diffRatio * 100).toFixed(2) }}%（{{ item.diffPixels }}px）</template>

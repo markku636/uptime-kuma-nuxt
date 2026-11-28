@@ -91,6 +91,20 @@ test('form controls and checked assertions are supported', async () => {
   assert.match(failed.msg, /NOT_CHECKED/)
 })
 
+test('scheduled passes save a step trace but trials do not', async () => {
+  const page = fakePage()
+  const traces: any[] = []
+  const withTrace = { ...deps(page), saveTrace: async (id: number, metrics: any) => { traces.push({ id, metrics }) } }
+  const config = { steps: [{ action: 'goto' }, { action: 'assertVisible', selector: '#title' }] }
+  await checkBrowserFlow({ id: 11, url: 'https://example.com', body: JSON.stringify(config) }, Date.now(), undefined, withTrace)
+  assert.equal(traces.length, 1)
+  assert.equal(traces[0].id, 11)
+  assert.equal(traces[0].metrics.code, 'FLOW_OK')
+  assert.equal(traces[0].metrics.flowSteps.length, 2)
+  await checkBrowserFlow({ id: 11, url: 'https://example.com', body: JSON.stringify(config), includeTrialResponse: true }, Date.now(), undefined, withTrace)
+  assert.equal(traces.length, 1)
+})
+
 test('assertCount compares element count and rejects non-numeric values', async () => {
   const page = fakePage()
   const good = { steps: [{ action: 'goto' }, { action: 'assertCount', selector: '#title', value: '1' }] }

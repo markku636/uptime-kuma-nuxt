@@ -31,6 +31,7 @@ export interface BrowserFlowDeps {
   /** 每次導向／請求都要重新驗證，不能用起點的一次解析代替。 */
   resolve?: (url: URL) => Promise<unknown>
   saveFailure?: (artifact: FlowFailureArtifact) => Promise<void>
+  saveTrace?: (monitorId: number, metrics: Record<string, unknown>) => Promise<void>
 }
 
 const METADATA_HOSTS = new Set(['metadata.google.internal', 'metadata.google', 'instance-data.ec2.internal', 'metadata.azure.internal'])
@@ -70,7 +71,18 @@ async function launchBrowser(): Promise<any> {
     }
   }
 }
-export const defaultDeps: BrowserFlowDeps = { launch: launchBrowser, parse: parseBrowserFlowConfig, resolve: strictResolve, saveFailure: defaultSaveFailure }
+const defaultSaveTrace: NonNullable<BrowserFlowDeps['saveTrace']> = async (monitorId, metrics) => {
+  await workerPrisma.visualCheckArtifact.deleteMany({ where: { monitorId, viewportLabel: 'flow-trace' } })
+  await workerPrisma.visualCheckArtifact.create({ data: {
+    monitorId, viewportLabel: 'flow-trace', status: 1, currentImage: null, diffImage: null,
+    metrics: metrics as Prisma.InputJsonValue,
+  } })
+}
+
+export const defaultDeps: BrowserFlowDeps = {
+  launch: launchBrowser, parse: parseBrowserFlowConfig, resolve: strictResolve,
+  saveFailure: defaultSaveFailure, saveTrace: defaultSaveTrace,
+}
 
 function failure(startTime: number, code: string, msg: string, flowSteps?: FlowStepResult[]): CheckResult {
   return { status: 0, ping: Date.now() - startTime, code, msg, ...(flowSteps ? { flowSteps } : {}) }
@@ -216,6 +228,9 @@ export async function checkBrowserFlow(
         await persistFailure('FLOW_STEP_FAILED')
         return failure(startTime, 'FLOW_STEP_FAILED', `Step ${index + 1}/${config.steps.length} (${step.action}) failed: ${message}`, steps)
       }
+    }
+    if (!monitor.includeTrialResponse && monitor.id && deps.saveTrace) {
+      try { await deps.saveTrace(monitor.id, { code: 'FLOW_OK', flowSteps: steps, url: monitor.url, configVersion: monitor.configVersion ?? 1 }) } catch { /* trace 失敗不影響判定 */ }
     }
     return {
       status: 1, ping: Date.now() - startTime, code: 'FLOW_OK',
