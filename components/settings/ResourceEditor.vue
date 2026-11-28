@@ -4,7 +4,7 @@ const emit=defineEmits<{save:[input:any];cancel:[]}>()
 const form=reactive<Record<string,any>>({}),clear=ref<string[]>([]),replaceConfig=ref(false),headers=ref('{}'),testing=ref(false),result=ref('')
 const paths={notification:'notifications',proxy:'proxies',dockerHost:'docker-hosts',remoteBrowser:'remote-browsers'}
 const secretFields=computed(()=>props.kind==='notification'?['config']:props.kind==='proxy'?['host','username','password']:props.kind==='dockerHost'?['dockerDaemon','connectionUrl']:['url'])
-const configFields=computed(()=>form.type==='webhook'?[['url','Webhook URL'],['body','Custom body (optional)']]:form.type==='discord'?[['webhookUrl','Discord webhook URL'],['username','Bot display name']]:form.type==='slack'?[['webhookUrl','Slack webhook URL'],['channel','Channel']]:form.type==='telegram'?[['botToken','Bot token'],['chatId','Chat ID']]:form.type==='email'?[['to','Recipient emails (comma separated)']]:[['channelAccessToken','Channel access token'],['userId','User ID']])
+const configFields=computed(()=>form.type==='webhook'?[['url','Webhook URL'],['body','Custom body (optional)']]:form.type==='discord'?[['webhookUrl','Discord webhook URL'],['username','Bot display name'],['agentHint','Agent instruction (DOWN alerts only)'],['content','Message content (e.g. @mention)'],['monitorUrlBase','Monitor URL base (optional)']]:form.type==='slack'?[['webhookUrl','Slack webhook URL'],['channel','Channel']]:form.type==='telegram'?[['botToken','Bot token'],['chatId','Chat ID']]:form.type==='email'?[['to','Recipient emails (comma separated)']]:[['channelAccessToken','Channel access token'],['userId','User ID']])
 const editing=computed(()=>!!props.resource?.id)
 watch(()=>props.resource,()=>{
   for(const key of Object.keys(form))delete form[key]
