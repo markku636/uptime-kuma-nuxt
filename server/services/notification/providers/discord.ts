@@ -15,6 +15,24 @@ export interface DiscordConfig {
    * 可在此填寫；上限 1000 字。刻意不自動帶入 monitor.url，避免網址內的 token 外洩。
    */
   content?: string
+  /**
+   * 可選：SealWatch 監控详情页的網址前綴。有 monitorId 時組出可點擊的 embed 標題連結，
+   * 而不是把可能被當成 secret 的目標網址放進通知。
+   */
+  monitorUrlBase?: string
+}
+
+function monitorLink(base: unknown, id?: number): string | undefined {
+  if (typeof base !== 'string' || typeof id !== 'number') return undefined
+  const value = base.trim()
+  if (!value || value.length > 2048) return undefined
+  try {
+    const parsed = new URL(value)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return undefined
+  } catch {
+    return undefined
+  }
+  return `${value.replace(/\/+$/, '')}/${id}`
 }
 
 /** 純函式：組 Discord webhook body，方便單元測試不需真的打出去。 */
@@ -26,12 +44,14 @@ export function buildDiscordBody(message: NotificationMessage, config: DiscordCo
     : message.body
 
   const content = typeof config.content === 'string' ? config.content.trim().slice(0, 1000) : ''
+  const link = monitorLink(config.monitorUrlBase, message.monitorId)
 
   return {
     username: config.username || 'SealWatch',
     ...(content ? { content } : {}),
     embeds: [{
       title: message.title,
+      ...(link ? { url: link } : {}),
       description,
       color,
       fields: [

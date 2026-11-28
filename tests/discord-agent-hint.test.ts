@@ -35,6 +35,13 @@ test('有 monitorId 時 Discord embed 帶 Monitor ID 欄位', () => {
   assert.equal(buildDiscordBody(down, { webhookUrl: 'x' }).embeds[0].fields.some((f: any) => f.name === 'Monitor ID'), false)
 })
 
+test('monitorUrlBase 搭配 monitorId 產生可點擊的 embed 標題連結，非法值忽略', () => {
+  const body = buildDiscordBody({ ...down, monitorId: 65 }, { webhookUrl: 'x', monitorUrlBase: 'https://uptime.markkulab.net/monitors/' })
+  assert.equal(body.embeds[0].url, 'https://uptime.markkulab.net/monitors/65')
+  assert.equal('url' in buildDiscordBody(down, { webhookUrl: 'x', monitorUrlBase: 'https://uptime.markkulab.net/monitors/' }).embeds[0], false)
+  assert.equal('url' in buildDiscordBody({ ...down, monitorId: 65 }, { webhookUrl: 'x', monitorUrlBase: 'javascript:alert(1)' }).embeds[0], false)
+})
+
 test('content 可自訂純文字前導且截斷到 1000 字，未設定時不帶此欄位', () => {
   assert.equal('content' in buildDiscordBody(down, { webhookUrl: 'x' }), false)
   const body = buildDiscordBody(down, { webhookUrl: 'x', content: '  CHECK THIS  ' })
