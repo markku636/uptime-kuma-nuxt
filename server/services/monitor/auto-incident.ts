@@ -42,7 +42,7 @@ export async function syncAutoIncident(
       if (!open.length) {
         const incident = await tx.incident.create({ data: {
           statusPageId, title, content: `${monitor.name} is DOWN (auto-created at ${now.toISOString()}).`,
-          style: 'danger', pin: true,
+          style: 'danger', impact: 'major', pin: true,
         } })
         await tx.incidentUpdate.create({ data: { incidentId: incident.id, status: 'investigating', message: `${monitor.name} went DOWN.` } })
         try { await enqueueSubscriberNotifications(tx, Number(statusPageId), {

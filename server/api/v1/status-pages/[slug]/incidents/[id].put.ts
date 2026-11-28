@@ -5,6 +5,7 @@ const updateIncidentSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   content: z.string().min(1, 'Content is required').max(10000),
   style: z.enum(['info', 'warning', 'danger', 'success', 'primary', 'light', 'dark']).default('warning'),
+  impact: z.enum(['none', 'degraded', 'partial', 'major', 'maintenance']).optional(),
   pin: z.boolean().default(true),
 })
 

@@ -1,3 +1,4 @@
+import { raiseStatusByIncidents } from '../../../../services/status-page/overall-status'
 import { visibleStatusPage } from '../../../../utils/public-status'
 import { getRequestSession } from '../../../../utils/request-session'
 // server/api/v1/status-pages/[slug]/monitors.get.ts
@@ -57,6 +58,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const statusPage = { ...basicPage, incidents: await prisma.incident.findMany({ where: { statusPageId: basicPage.id, pin: true }, orderBy: { createdAt: 'desc' }, take: 20, include: { updates: { orderBy: { createdAt: 'desc' }, take: 50 } } }) }
+  // Incident impact can raise the banner above what linked monitors report (Checkly-style).
+  pageOverallStatus = raiseStatusByIncidents(pageOverallStatus, statusPage.incidents as any)
   // Editing is a session capability; API keys never unlock the public editor.
   const session = await getRequestSession(event)
   let editAllowed = false
@@ -282,6 +285,7 @@ function formatIncident(incident: any) {
     title: incident.title,
     content: incident.content,
     style: incident.style,
+    impact: incident.impact,
     pin: incident.pin,
     createdDate: incident.createdAt?.toISOString(),
     lastUpdatedDate: incident.updatedAt?.toISOString(),

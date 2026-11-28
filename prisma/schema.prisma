@@ -364,6 +364,7 @@ model Incident {
   title        String
   content      String
   style        String    @default("warning") // info, warning, danger, primary, light, dark
+  impact       String    @default("none") @map("impact") // none, degraded, partial, major, maintenance
   pin          Boolean   @default(true)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime? @map("updated_at")

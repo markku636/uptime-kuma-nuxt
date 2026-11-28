@@ -21,6 +21,7 @@ const {
 
 const statusLabel: Record<string, string> = {
   operational: 'All systems operational',
+  'degraded-performance': 'Degraded performance',
   'partial-outage': 'Partial outage',
   'major-outage': 'Major outage',
   maintenance: 'Under maintenance',
@@ -28,6 +29,7 @@ const statusLabel: Record<string, string> = {
 }
 const statusColor: Record<string, string> = {
   operational: '#10b981',
+  'degraded-performance': '#f97316',
   'partial-outage': '#f59e0b',
   'major-outage': '#ef4444',
   maintenance: '#3b82f6',

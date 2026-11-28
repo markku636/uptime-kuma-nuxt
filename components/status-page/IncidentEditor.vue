@@ -76,6 +76,17 @@
       </div>
 
       <div class="form-group">
+        <label class="form-label">Impact on overall status</label>
+        <select v-model="localIncident.impact" class="form-control">
+          <option value="major">Major outage</option>
+          <option value="partial">Partial outage</option>
+          <option value="degraded">Degraded performance</option>
+          <option value="maintenance">Under maintenance</option>
+          <option value="none">None (informational)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label class="form-label">Style</label>
         <div class="style-selector">
           <button
@@ -127,6 +138,7 @@ interface Incident {
   title: string
   content: string
   style: 'info' | 'warning' | 'danger' | 'primary' | 'light' | 'dark'
+  impact?: 'none' | 'degraded' | 'partial' | 'major' | 'maintenance'
   pin?: boolean
   createdDate?: string
   lastUpdatedDate?: string
@@ -186,7 +198,8 @@ async function submitUpdate() {
 const localIncident = ref<Incident>({
   title: '',
   content: '',
-  style: 'primary'
+  style: 'primary',
+  impact: 'major'
 })
 
 const styles = [
@@ -219,7 +232,8 @@ function createIncident() {
   localIncident.value = {
     title: '',
     content: '',
-    style: 'primary'
+    style: 'primary',
+    impact: 'major'
   }
   isEditing.value = true
 }

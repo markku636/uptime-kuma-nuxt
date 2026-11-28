@@ -9,6 +9,7 @@ const createIncidentSchema = z.object({
   content: z.string().min(1, 'Content is required'),
   // Align with frontend options (primary/light/dark) while keeping existing values
   style: z.enum(['info', 'warning', 'danger', 'success', 'primary', 'light', 'dark']).default('warning'),
+  impact: z.enum(['none', 'degraded', 'partial', 'major', 'maintenance']).default('major'),
   pin: z.boolean().default(true),
 })
 

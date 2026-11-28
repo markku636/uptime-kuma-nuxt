@@ -77,9 +77,17 @@ R163 ✅ Monitoring as code（套用／UI） — commit `9ea4467` 後；部署 r
 - OpenAPI 補 export／plan／apply。unit 274/274、typecheck 0、build 成功。
   rev548 實測：匯出 33 個 monitor、改 interval 的 plan 回 update/nochange、頁面正常。
 
-R164 🔵 JSON Schema 斷言 — 程式完成，待部署。
+R164 ✅ JSON Schema 斷言 — commit `f22d9a1` 後；部署 rev559。
 - 新增非執行式 JSON Schema 子集（`type`／`required`／`properties`／`items`／`enum`／數值與字串限制／
   `pattern`），未知關鍵字（含 `$ref`）拒絕；`assertionSources` 加 `jsonSchema`、
   `assertionOperators` 加 `schemaValid`；AssertionEditor 加 source／preset／schema 輸入框。
-- unit 277/277、typecheck 0、build 成功。
+- unit 277/277、typecheck 0、build 成功。部署 rev559。
+  （期間別條 session 的 artifact 造成短暫 `.complete` 缺失／rollout Degraded，其後自行恢復 200。）
+
+R165 🔵 事件影響程度 — 程式完成，待部署。
+- `Incident.impact`（none／degraded／partial／major／maintenance）＋migration；建立／編輯 API 與
+  IncidentEditor 下拉；公開 `formatIncident` 回傳 impact；`raiseStatusByIncidents()` 依影響程度
+  提高狀態頁 banner（major > partial > degraded > maintenance > operational），resolved 忽略。
+- 狀態頁與 embed 加 degraded-performance 樣式；自動事件設 major。
+- unit 279/279、typecheck 0、build 成功。
 - unit 266/266；build 成功（第一次與另一條 session 並行 build 撞 cache，重跑通過）。
