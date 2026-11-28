@@ -1338,5 +1338,6 @@
   "btDownloadHtml": "下載 HTML",
   "btRunTest": "執行測試",
   "btSaveSettings": "儲存設定",
-  "btStopFirst": "失敗即停止"
+  "btStopFirst": "失敗即停止",
+  "btCreating": "建立中…"
 }

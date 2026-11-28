@@ -59,7 +59,7 @@ onMounted(load)
         <h1 class="text-2xl font-semibold">{{ $t('btTitle') }}</h1>
         <p class="text-sm text-secondary">{{ $t('btIntro') }}</p>
       </div>
-      <div class="flex gap-2"><button class="btn btn-secondary" :disabled="trying" @click="tryExample">{{ trying ? 'Creating…' : 'Try example test' }}</button><NuxtLink to="/bruno-tests/new" class="btn btn-primary">{{ $t('btNew') }}</NuxtLink></div>
+      <div class="flex gap-2"><button class="btn btn-secondary" :disabled="trying" @click="tryExample">{{ trying ? $t('btCreating') : $t('btTryExample') }}</button><NuxtLink to="/bruno-tests/new" class="btn btn-primary">{{ $t('btNew') }}</NuxtLink></div>
     </div>
     <p v-if="error" role="alert" class="text-red-400">{{ error }}</p>
     <p v-if="loading">Loading…</p>
@@ -70,7 +70,7 @@ onMounted(load)
           <li>Preview the ordered steps and click <strong>Create test</strong>.</li>
           <li>Press <strong>Run test</strong> and read the report.</li>
         </ol>
-        <button class="btn btn-primary" :disabled="trying" @click="tryExample">{{ trying ? 'Creating…' : 'Try example test' }}</button>
+        <button class="btn btn-primary" :disabled="trying" @click="tryExample">{{ trying ? $t('btCreating') : $t('btTryExample') }}</button>
       </div>
     <div v-else class="card overflow-x-auto">
       <table class="table">
@@ -93,8 +93,8 @@ onMounted(load)
             </td>
             <td class="text-xs text-secondary">{{ new Date(row.updatedAt).toLocaleString() }}</td>
             <td class="text-right space-x-2">
-              <button class="btn btn-primary btn-sm" :disabled="runningId === row.id" @click="runSuite(row.id)">{{ runningId === row.id ? 'Running…' : 'Run' }}</button>
-              <button class="btn btn-danger btn-sm" @click="remove(row.id)">Delete</button>
+              <button class="btn btn-primary btn-sm" :disabled="runningId === row.id" @click="runSuite(row.id)">{{ runningId === row.id ? $t('btCreating') : $t('btRun') }}</button>
+              <button class="btn btn-danger btn-sm" @click="remove(row.id)">{{ $t('btDelete') }}</button>
             </td>
           </tr>
         </tbody>

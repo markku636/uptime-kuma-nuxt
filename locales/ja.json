@@ -1313,5 +1313,6 @@
   "btDownloadHtml": "HTML をダウンロード",
   "btRunTest": "テストを実行",
   "btSaveSettings": "設定を保存",
-  "btStopFirst": "最初の失敗で停止"
+  "btStopFirst": "最初の失敗で停止",
+  "btCreating": "作成中…"
 }
