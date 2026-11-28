@@ -9,6 +9,8 @@ const periods = [
   { value: '1y', label: 'Last year' },
 ] as const
 const period = ref<(typeof periods)[number]['value']>('30d')
+const limit = ref(200)
+const search = ref('')
 const loading = ref(true)
 const rows = ref<any[]>([])
 const error = ref('')
@@ -17,7 +19,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const result = await $fetch<any>('/api/v1/monitors', { query: { limit: 200 } })
+    const result = await $fetch<any>('/api/v1/monitors', { query: { limit: limit.value, ...(search.value.trim() ? { search: search.value.trim() } : {}) } })
     const monitors = result?.data || []
     if (!monitors.length) { rows.value = []; return }
     // Batches of 100 keep the endpoint within its bounded fan-out.
@@ -74,7 +76,7 @@ function exportCsv() {
 }
 
 onMounted(load)
-watch(period, load)
+watch([period, limit, search], load)
 </script>
 
 <template>
@@ -82,9 +84,15 @@ watch(period, load)
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-highlighted">{{$t('Availability report')}}</h1>
-        <p class="text-sm text-toned mt-1">{{$t('Uptime, downtime and check counts across your monitors (first 200).')}}</p>
+        <p class="text-sm text-toned mt-1">{{$t('Uptime, downtime and check counts across your monitors.')}}</p>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <input v-model="search" class="input-field max-w-xs" :placeholder="$t('Search monitors')" aria-label="Search monitors" />
+        <label class="text-sm text-secondary">{{$t('Limit')}}
+          <select v-model.number="limit" class="select-field ml-2" aria-label="Report limit">
+            <option :value="200">200</option><option :value="500">500</option><option :value="1000">1000</option>
+          </select>
+        </label>
         <button v-for="item in periods" :key="item.value" class="btn btn-secondary"
           :class="period === item.value ? 'ring-2 ring-primary' : ''" @click="period = item.value">
           {{ $t(item.label) }}
