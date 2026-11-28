@@ -110,7 +110,7 @@
       <!-- Visual diff：每個 viewport 最近一次的差異證據與基準接受 -->
       <div v-if="showVisualPanel" class="section-card space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="section-title">視覺跑版（每個 viewport 最近一次）</h3>
+          <h3 class="section-title">{{ monitor.type === 'browser-flow' ? '瀏覽器流程失敗證據（最近一次）' : '視覺跑版（每個 viewport 最近一次）' }}</h3>
           <button class="text-sm underline" :disabled="loadingVisual" @click="loadVisualArtifacts">重新整理</button>
         </div>
         <p v-if="loadingVisual" class="text-sm text-secondary">載入中…</p>
@@ -120,13 +120,13 @@
             <div>
               <span class="font-medium">{{ item.viewportLabel }}</span>
               <span class="ml-2 text-sm" :class="item.status === 1 ? 'text-emerald-400' : 'text-red-400'">
-                {{ item.status === 1 ? '正常' : '跑版' }}
+                {{ item.status === 1 ? '正常' : monitor.type === 'browser-flow' ? '失敗' : '跑版' }}
                 <template v-if="item.diffRatio != null"> · {{ (item.diffRatio * 100).toFixed(2) }}%（{{ item.diffPixels }}px）</template>
                 <template v-if="item.baseline?.stale"> · 基準已失效</template>
               </span>
             </div>
             <button
-              v-if="item.currentImage"
+              v-if="item.currentImage && monitor.type === 'visual-diff'"
               class="btn btn-secondary text-sm"
               :disabled="acceptingViewport === item.viewportLabel"
               @click="acceptBaseline(item.viewportLabel)"
@@ -482,7 +482,7 @@ const perPage = 25
 const visualArtifacts = ref<any[]>([])
 const loadingVisual = ref(false)
 const acceptingViewport = ref('')
-const showVisualPanel = computed(() => monitor.value?.type === 'visual-diff')
+const showVisualPanel = computed(() => ['visual-diff', 'browser-flow'].includes(monitor.value?.type))
 const latestVisualByViewport = computed(() => {
   const seen = new Set<string>()
   return visualArtifacts.value.filter((item) => {
@@ -494,6 +494,10 @@ const latestVisualByViewport = computed(() => {
 })
 const visualMetricsText = (metrics: any) => {
   if (!metrics) return ''
+  if (Array.isArray(metrics.flowSteps)) {
+    const steps = metrics.flowSteps.map((step: any) => `#${step.index} ${step.action}:${step.status}${step.detail ? `(${step.detail})` : ''}`)
+    return `${metrics.code || 'FLOW_FAILED'} · ${steps.join(' · ')}`.slice(0, 500)
+  }
   const parts = [
     `HTTP ${metrics.httpStatus ?? '?'}`,
     `水平溢出 ${metrics.overflow ?? 0}px`,

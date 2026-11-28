@@ -22,6 +22,7 @@ function fakePage() {
       })
       return { first }
     },
+    async screenshot() { return Buffer.from([0x89, 0x50, 0x4e, 0x47]) },
     async close() {},
   }
 }
@@ -74,6 +75,22 @@ test('failed assertion stops the flow and identifies the step', async () => {
   assert.equal(result.flowSteps?.length, 2)
   assert.equal(result.flowSteps?.[1]?.detail, 'TEXT_MISMATCH')
   assert.deepEqual(page.clicks, [])
+})
+
+test('scheduled failures save one screenshot artifact; trials do not', async () => {
+  const page = fakePage()
+  const saved: any[] = []
+  const config = { steps: [{ action: 'goto' }, { action: 'assertText', selector: '#title', value: 'nope' }] }
+  const depsWithSave = { ...deps(page), saveFailure: async (artifact: any) => { saved.push(artifact) } }
+  const scheduled = await checkBrowserFlow({ id: 7, url: 'https://example.com', body: JSON.stringify(config) }, Date.now(), undefined, depsWithSave)
+  assert.equal(scheduled.status, 0)
+  assert.equal(saved.length, 1)
+  assert.equal(saved[0].monitorId, 7)
+  assert.equal(saved[0].viewportLabel, 'flow-fail')
+  assert.equal(saved[0].metrics.code, 'FLOW_STEP_FAILED')
+
+  await checkBrowserFlow({ id: 7, url: 'https://example.com', body: JSON.stringify(config), includeTrialResponse: true }, Date.now(), undefined, depsWithSave)
+  assert.equal(saved.length, 1)
 })
 
 test('invalid config and missing URL fail before launching the browser', async () => {

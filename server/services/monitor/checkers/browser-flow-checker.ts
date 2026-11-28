@@ -1,7 +1,9 @@
 // 合成瀏覽器流程（Checkly Browser Check 風格的宣告式子集）。
 // 不執行任意 JS：只允許固定 action 列表，selector/value 有長度上限。
 import { chromium } from 'playwright'
+import { Prisma } from '@prisma/client'
 import type { CheckResult } from '../checker'
+import { workerPrisma } from '../../../utils/worker-prisma'
 import { resolveDestination, HttpCheckError } from './http-request'
 import { parseBrowserFlowConfig } from '../../../utils/browser-flow-config'
 import type { BrowserFlowConfig, BrowserFlowStep } from '../../../../shared/types/browser-flow'
@@ -14,10 +16,28 @@ export interface FlowStepResult {
   detail?: string
 }
 
+export interface FlowFailureArtifact {
+  monitorId: number
+  viewportLabel: string
+  status: number
+  currentImage: Buffer
+  metrics: Record<string, unknown>
+}
 export interface BrowserFlowDeps {
   launch: () => Promise<any>
   parse: (raw: unknown) => BrowserFlowConfig
   resolve?: (url: URL, signal: AbortSignal) => Promise<unknown>
+  saveFailure?: (artifact: FlowFailureArtifact) => Promise<void>
+}
+
+const defaultSaveFailure: NonNullable<BrowserFlowDeps['saveFailure']> = async artifact => {
+  // 只保留最近一張失敗截圖，避免每次檢查都新增一列。
+  await workerPrisma.visualCheckArtifact.deleteMany({ where: { monitorId: artifact.monitorId, viewportLabel: artifact.viewportLabel } })
+  await workerPrisma.visualCheckArtifact.create({ data: {
+    monitorId: artifact.monitorId, viewportLabel: artifact.viewportLabel, status: artifact.status,
+    currentImage: new Uint8Array(artifact.currentImage), diffImage: null,
+    metrics: artifact.metrics as Prisma.InputJsonValue,
+  } })
 }
 
 async function launchBrowser(): Promise<any> {
@@ -111,6 +131,18 @@ export async function checkBrowserFlow(
     page.setDefaultTimeout(config.waitTimeoutMs)
     const abortPage = () => { void page.close().catch(() => {}) }
     signal?.addEventListener('abort', abortPage, { once: true })
+    // 只有排程檢查留證據；trial 不寫 DB。截圖上限 2 MiB，失敗時不影響回傳結果。
+    const persistFailure = async (code: string): Promise<void> => {
+      if (monitor.includeTrialResponse || !monitor.id || !deps.saveFailure) return
+      try {
+        const image: Buffer = await page.screenshot({ type: 'png' })
+        if (image.length > 2 * 1024 * 1024) return
+        await deps.saveFailure({
+          monitorId: monitor.id, viewportLabel: 'flow-fail', status: 0, currentImage: image,
+          metrics: { code, flowSteps: steps, url: monitor.url, configVersion: monitor.configVersion ?? 1 },
+        })
+      } catch { /* 證據失敗不應讓檢查本身失敗 */ }
+    }
 
     for (let index = 0; index < config.steps.length; index++) {
       if (signal?.aborted) return failure(startTime, 'ABORTED', 'Check aborted', steps)
@@ -121,12 +153,14 @@ export async function checkBrowserFlow(
         const elapsedMs = Date.now() - before
         if (errorCode) {
           steps.push({ index: index + 1, action: step.action, status: 'fail', elapsedMs, detail: errorCode })
+          await persistFailure('FLOW_STEP_FAILED')
           return failure(startTime, 'FLOW_STEP_FAILED', `Step ${index + 1}/${config.steps.length} (${step.action}) failed: ${errorCode}`, steps)
         }
         steps.push({ index: index + 1, action: step.action, status: 'pass', elapsedMs })
       } catch (error: any) {
         const message = error instanceof HttpCheckError ? error.code : String(error?.message || error).slice(0, 160)
         steps.push({ index: index + 1, action: step.action, status: 'fail', elapsedMs: Date.now() - before, detail: message })
+        await persistFailure('FLOW_STEP_FAILED')
         return failure(startTime, 'FLOW_STEP_FAILED', `Step ${index + 1}/${config.steps.length} (${step.action}) failed: ${message}`, steps)
       }
     }
