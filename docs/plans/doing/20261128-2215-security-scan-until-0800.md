@@ -1,0 +1,55 @@
+# SealWatch 弱點／滲透檢查持續迭代（直到 2026-11-29 08:00 CST）
+
+**截止時間：2026-11-29 08:00 CST（台北，UTC+8）** — 使用者 2026-11-28 22:07 指示
+「https://uptime.markkulab.net/ 幫我優化實作漏洞滲透檢查，參考 ai-security-monitor，直到明天早上 8am」。
+起始：2026-11-28 22:15 CST。
+
+## 範圍與邊界
+
+- 目標 repo：`uptime-iter-20261122`（SealWatch），線上 `uptime.markkulab.net`／`uptime.226network.com`。
+- 延續 `20261128-2145-overnight-iteration.md`；本檔從 **R160** 起算（該檔 R157–R159 由另一條 session 進行中）。
+- **共用工作樹警告**：22:08 時另一條 session 正在部署 R158（status-page subscriber outbox），
+  正在寫 `.data/artifacts/runtime-bundle.tgz` 與 deploy repo chart values。
+  → 本線只新增檔案；不改 `.output`、不碰對方的 bruno／status-page 檔案；
+  不跑 `nuxt build`（會與對方封裝打架），先跑 unit／typecheck；部署等對方完成後再進行。
+- 禁區：不改其他平台共用 chart／secret／DB；不 stash／reset／clean／切分支；commit 只 add 自己檔案。
+  自己要封裝時用私用 `ARTIFACT_OUTPUT_DIR=/tmp/opencode/uptime-artifacts`。
+- 交付：每輪 commit；部署沿用既有授權（loader → migration → app，Healthy/Synced 後驗兩域），
+  但與另一條 session 的部署錯開。
+- 身份：`system_auth_status` 先前為 personal_key／admin／prod deploy allowed。
+
+## 參考（已實際讀過原始碼／文件）
+
+| 來源 | 已讀取 | 借用的設計 |
+| --- | --- | --- |
+| `markku636/ai-security-monitor` | `docs/webscan.md`、`docker/Dockerfile.webscan`、`hub/lib/webscan/{scanners.ts,parse/types.ts}`、`agent/src/webscan/mod.rs` | 兩層掃描（`passive`／`active_light`）、擁有權驗證（DNS TXT／well-known／meta，90 天）、统一 finding 格式（severity/rule/key/title/detail/recommendation/location/evidence/cwe/refs/tags）、擋 injection/DoS/fuzz、擋 third-party 外送、DNS rebinding 防護、工具版本與授權標示 |
+| 本 repo `server/services/site-audit/audit.ts` | 完整讀過 | 重用 `assertPublicDestination` 思路、`executeHttpRequest({ strictPrivate:true, maxRedirects:0 })`、bounded fetcher、rate limit 寫法 |
+| 本 repo `tests/site-audit.test.ts` | 讀過 | node:test + injectable deps 測試風格 |
+
+## 差距清單（按影響排序，隨 Round 更新）
+
+| # | 差距 | 來源 | 狀態 |
+| --- | --- | --- | --- |
+| S1 | 弱點掃描引擎：被動指紋／security headers／cookie／TLS／DNS／重新導向，統一 finding＋風險分數 | ai-security-monitor webscan parse 格式 | 🔵 R160 |
+| S2 | 主動輕量檢查（只對已驗證擁有權的公開路徑探測：`.env`／`.git/config` 等），兩層 profile | ai-security-monitor `active_light` | ⬜ |
+| S3 | 擁有權驗證（DNS TXT／well-known token，90 天）與 API 降級 | ai-security-monitor verify | ⬜ |
+| S4 | UI：`/security-scan` 頁面、dashboard 入口、報告／嚴重度篩選／JSON 匯出 | 本 repo site-audit UI 模式 | ⬜ |
+| S5 | 排程 monitor（score 為心跳）+ 歷史報告 | 本 repo site-audit-checker | ⬜ |
+| S6 | OpenAPI／README／文件／完整驗證／部署 | — | ⬜ |
+| S7 | 用新功能實際掃 `uptime.markkulab.net`，修正本站找到的高風險項 | 使用者指定目標 | ⬜ |
+
+## 迭代紀錄
+
+格式：`R<n> ✅/❌ 標題 — commit／映像／驗證證據`
+
+R160 ✅ 弱點掃描引擎與 finding 格式 — commit 待填。
+- 新增 `shared/types/security-scan.ts`：兩層 profile、五級 severity、七類檢查、統一 finding
+  （rule／key／title／detail／recommendation／location／evidence／cwe／refs／tags）與報告（score／grade／riskLevel／limits）。
+- 新增 `server/services/security-scan/scan.ts`：被動指紋（技術堆疊、版本揭露、舊版 jQuery 的
+  CVE-2020-11022/11023）、security headers、cookie 屬性、TLS 憑證／hostname、DNS SPF／DMARC、
+  重新導向；active_light 才做 6 條固定路徑的 HEAD 探測。所有請求走 site-audit 的 strictPrivate
+  guard（dns rebinding 同輪解析皆擋私網），不注入／不 fuzz／不送第三方；最多 100 findings、6 probes。
+- 未驗證擁有權時 active_light 自動降級並在 warnings 註記，讓引擎本身也不信任呼叫端的 input.verify。
+- 新增 `tests/security-scan.test.ts` 8 項（含 SSRF 阻擋、降級、探測上限、TLS 過期、DNS 命中、排序）。
+- 驗證：targeted **8/8 pass**、`tsc --noEmit` **0 error**；未跑 build（避免與另一條 session 的 artifact 封裝打架）。
+- 下一步 R161：API（rate limit／擁有權 token 驗證）與 zod schema。
