@@ -4,6 +4,7 @@ import type {CheckResult} from './checker'
 import {TLS_EXPIRY_SETTING_KEY,parseTlsExpiryDays} from '../../utils/tls-expiry-settings'
 import {readAlertDelayMinutes} from '../../utils/alert-delay'
 function safeCode(code:unknown){return typeof code==='string'&&/^[A-Z0-9_]{1,64}$/.test(code)?code:'CHECK_COMPLETE'}
+function msgSafe(value:unknown){return String(value||'').replace(/https?:\/\/[^\s)）"'，,]+/gi,raw=>{try{const u=new URL(raw);return `${u.origin}${u.pathname}`}catch{return '[redacted-url]'}})}
 function safeAssertions(input:any){
   if(!input||!Array.isArray(input.rules))return undefined
   return {passed:!!input.passed,...(input.error&&['INVALID_JSON','JSON_LIMIT'].includes(input.error)?{error:input.error}:{}),rules:input.rules.slice(0,21).map((row:any)=>({ruleId:String(row.ruleId||'').slice(0,100),source:String(row.source||'').slice(0,20),operator:String(row.operator||'').slice(0,30),passed:!!row.passed,reason:/^[a-z_]{1,64}$/.test(row.reason)?row.reason:'evaluated'}))}
@@ -37,7 +38,7 @@ export async function commitMonitorResult(tx:any,monitor:any,result:CheckResult)
           const channelDelay=Number(channel.monitorNotifications?.[0]?.delayMinutes)||0
           const delayMinutes=result.status===0?(channelDelay>0?channelDelay:alertDelayMinutes):0
           const deliverAt=new Date(now.getTime()+delayMinutes*60_000)
-          return ({runId:monitor.runId,eventType:'status',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,payload:{monitorId:monitor.id,name:monitor.name,status:result.status,ping,code,detail:String(result.msg||'').slice(0,300),time:now.toISOString()},nextAttemptAt:deliverAt})}),skipDuplicates:true})
+          return ({runId:monitor.runId,eventType:'status',notificationId:channel.id,workspaceId:monitor.workspaceId,environmentId:monitor.environmentId,monitorId:monitor.id,payload:{monitorId:monitor.id,name:monitor.name,status:result.status,ping,code,...(/^(AUDIT_|FLOW_)/.test(code)?{detail:String(msgSafe(result.msg)).slice(0,300)}:{}),time:now.toISOString()},nextAttemptAt:deliverAt})}),skipDuplicates:true})
       }
       if(tlsWarning&&channels.length){
         let days=monitor.tlsExpiryDays

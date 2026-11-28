@@ -62,7 +62,7 @@ test('accepted state transition queues only workspace channels and TLS threshold
   const own=await channel(),otherWorkspace=await db.workspace.create({data:{name:'Other',environments:{create:{name:'default'}}}}),foreign=await channel('/foreign','webhook',true,otherWorkspace.id)
   await db.notification.updateMany({where:{id:{in:[own.id,foreign.id]}},data:{isDefault:true}})
   await db.monitorNotification.create({data:{monitorId,notificationId:foreign.id}})
-  await db.monitor.update({where:{id:monitorId},data:{active:true,expiryNotification:true,url:null,...monitorDbInput({id:monitorId,workspaceId,environmentId,url:origin+'/success'}),nextCheckAt:new Date(0)}})
+  await db.monitor.update({where:{id:monitorId},data:{active:true,expiryNotification:true,tlsExpiryDays:[7],url:null,...monitorDbInput({id:monitorId,workspaceId,environmentId,url:origin+'/success'}),nextCheckAt:new Date(0)}})
   const complete=async(status:number)=>{await db.monitor.update({where:{id:monitorId},data:{nextCheckAt:new Date(0)}});const lease=(await claimMonitors('outbox-state',1,2000,db))[0]!;return completeMonitorRun(lease,{status,ping:1,msg:'REQUEST_SECRET_MUST_NOT_PERSIST',code:'CHECK_OK',tlsInfo:{daysRemaining:6,fingerprint:'CERTIFICATE_FINGERPRINT'}} as any,db)}
   assert.equal((await complete(1)).accepted,true);assert.equal((await complete(0)).accepted,true);assert.equal((await complete(0)).accepted,true)
   const rows=await db.notificationOutbox.findMany();assert.equal(rows.length,2);assert.ok(rows.every(row=>row.notificationId===own.id));assert.equal(rows.filter(row=>row.eventType==='tls-expiry').length,1);assert.equal(rows.filter(row=>row.eventType==='status').length,1)
