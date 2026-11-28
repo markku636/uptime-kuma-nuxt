@@ -23,7 +23,8 @@ import {
   checkRadius,
   checkTailscalePing,
   checkSnmp,
-  checkVisualDiff
+  checkVisualDiff,
+  checkBrowserFlow
 } from './checkers'
 
 export interface CheckResult {
@@ -38,6 +39,8 @@ export interface CheckResult {
   eventType?: string
   threshold?: number
   downMinutes?: number
+  // browser-flow 的逐步結果；只有該型別會回傳。
+  flowSteps?: Array<{ index: number; action: string; status: 'pass' | 'fail' | 'skip'; elapsedMs: number; detail?: string }>
 }
 
 export async function checkMonitor(monitor: any, signal?: AbortSignal): Promise<CheckResult> {
@@ -125,7 +128,10 @@ export async function checkMonitor(monitor: any, signal?: AbortSignal): Promise<
 
       case 'visual-diff':
         return await checkVisualDiff(monitor, startTime, signal)
-      
+
+      case 'browser-flow':
+        return await checkBrowserFlow(monitor, startTime, signal)
+
       default:
         throw new Error(`Unknown monitor type: ${monitor.type}`)
     }

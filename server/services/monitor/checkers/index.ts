@@ -11,3 +11,4 @@ export { checkTcp, checkPing, checkDns, checkRadius, checkTailscalePing, checkSn
 export { checkTLS, getTLSInfo, type TLSInfo } from './tls-checker'
 export { checkRealBrowser, closeBrowser } from './real-browser-checker'
 export { checkVisualDiff, type VisualCheckDeps, type VisualDb, type BaselineRow } from './visual-diff-checker'
+export { checkBrowserFlow, type FlowStepResult, type BrowserFlowDeps } from './browser-flow-checker'
