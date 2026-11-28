@@ -21,6 +21,7 @@ export async function runBatchAudit(
   audit: (input: AuditInput) => Promise<AuditReport> = runSiteAudit,
   concurrency = CONCURRENCY,
   checks?: AuditInput['checks'],
+  expectedStatus?: number,
 ): Promise<BatchAuditResult> {
   const limit = Math.max(1, Math.min(5, concurrency))
   const rows: BatchAuditRow[] = new Array(urls.length)
@@ -30,7 +31,7 @@ export async function runBatchAudit(
       const index = cursor++
       const url = urls[index]!
       try {
-        const report = await audit({ url, ...(keyword ? { keyword } : {}), ...(checks ? { checks } : {}) })
+        const report = await audit({ url, ...(keyword ? { keyword } : {}), ...(checks ? { checks } : {}), ...(expectedStatus ? { expectedStatus } : {}) })
         rows[index] = {
           url, status: 'ok', score: report.score, grade: report.grade,
           finalUrl: report.finalUrl, durationMs: report.durationMs,

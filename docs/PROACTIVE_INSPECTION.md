@@ -34,6 +34,7 @@
 
 可在请求（或排程 monitor 的 `body.checks`）关闭个别项目：`tls`／`dns`／`headers`／`meta`／
 `links`／`keyword`；关闭的项目在报告中为 `skip` 且不计分，HTTP 一定执行。`linkLimit` 可调 1–20。
+`expectedStatus`（100–599）可覆寫預設的 2xx 判定，例如 API 預期 404；報告會記錄重新導向鏈。
 
 限制：每次最多 10 次/分鐘/使用者、全域同時 3 次；單一回應 1 MiB、單步 10 秒。
 按需呼叫**不寫資料庫、不進心跳、不發通知**；若要定期巡檢，用對話框的「Schedule (hourly)」
@@ -76,7 +77,7 @@
 | `click` / `fill` / `selectOption` / `check` / `uncheck` | CSS selector 操作；`fill`／`selectOption` 需 `value` |
 | `waitFor` | 等待 selector 可見 |
 | `assertVisible` | 元素存在且可見 |
-| `assertText` / `assertValue` / `assertChecked` | 包含指定文字／input 值完全相等／核取方塊已勾選 |
+| `assertText` / `assertValue` / `assertChecked` / `assertCount` | 包含指定文字／input 值完全相等／核取方塊已勾選／元素數量等於指定值 |
 
 `startUrl`／selector／value／URL 可用工作區環境變數與 secret（例如 `{{baseUrl}}`）：
 `resolveMonitorConfig` 會在排程與 trial 前解析 `body` 中的變數，值不寫入心跳或通知。

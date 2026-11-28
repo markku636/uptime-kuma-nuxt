@@ -7,6 +7,7 @@ const batchInput = z.object({
   urls: z.array(z.string().trim().url().max(8192)).min(1).max(20),
   keyword: z.string().trim().min(1).max(200).optional(),
   checks: auditChecksSchema.optional(),
+  expectedStatus: z.number().int().min(100).max(599).optional(),
 }).strict()
 
 const WINDOW_MS = 60_000
@@ -30,7 +31,7 @@ export default defineEventHandler(async event => {
   windows.set(scope.user.id, window)
   active++
   try {
-    const data = await runBatchAudit(parsed.data.urls, parsed.data.keyword, undefined, 3, parsed.data.checks)
+    const data = await runBatchAudit(parsed.data.urls, parsed.data.keyword, undefined, 3, parsed.data.checks, parsed.data.expectedStatus)
     return { ok: true, data }
   } finally {
     active--

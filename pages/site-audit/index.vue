@@ -18,6 +18,10 @@
         <span class="text-sm text-toned">Expected keyword <span class="text-tertiary">(optional, applied to all)</span></span>
         <input v-model="keyword" type="text" maxlength="200" aria-label="Expected keyword" class="input-field mt-1" />
       </label>
+      <label class="block mt-3">
+        <span class="text-sm text-toned">Expected HTTP status <span class="text-tertiary">(optional, applied to all)</span></span>
+        <input v-model.number="expectedStatus" type="number" min="100" max="599" aria-label="Expected HTTP status" placeholder="200" class="input-field mt-1 w-40" />
+      </label>
       <div class="flex flex-wrap gap-3 mt-3">
         <label v-for="item in checkOptions" :key="item.id" class="flex items-center gap-1 text-sm text-toned">
           <input v-model="enabledChecks[item.id]" type="checkbox" :aria-label="`Enable ${item.id} check`" />
@@ -109,6 +113,7 @@ interface BatchResult { results: BatchRow[]; passed: number; failed: number; err
 
 const rawUrls = ref('')
 const keyword = ref('')
+const expectedStatus = ref<number | null>(null)
 const compareA = ref('')
 const compareB = ref('')
 const comparing = ref(false)
@@ -149,6 +154,7 @@ async function run(): Promise<void> {
         urls: urls.value,
         ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}),
         checks: Object.fromEntries(checkOptions.map(option => [option.id, enabledChecks.value[option.id] !== false])),
+        ...(Number.isInteger(expectedStatus.value) && Number(expectedStatus.value) >= 100 && Number(expectedStatus.value) <= 599 ? { expectedStatus: Number(expectedStatus.value) } : {}),
       },
     })
     result.value = response.data
