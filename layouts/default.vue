@@ -3,7 +3,8 @@
     <!-- Desktop sidebar -->
     <aside class="hidden lg:flex fixed inset-y-0 left-0 w-60 flex-col border-r border-default bg-[var(--bg-secondary)] z-40">
       <NuxtLink to="/dashboard" class="h-16 flex items-center gap-2 px-5 text-primary shrink-0">
-        <img :src="brandLogoSrc" alt="SealWatch" class="h-8 w-auto" />
+        <img src="/sealwatch-sidebar.png" alt="SealWatch" class="h-8 w-auto brand-logo-light" />
+        <img src="/sealwatch-sidebar-dark.png" alt="SealWatch" class="h-8 w-auto brand-logo-dark" />
       </NuxtLink>
       <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
         <NuxtLink to="/dashboard" class="sidebar-link" active-class="sidebar-link-active"><UIcon name="i-heroicons-squares-2x2" class="w-4 h-4 shrink-0 opacity-70" />
@@ -55,7 +56,8 @@
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <NuxtLink to="/dashboard" class="lg:hidden flex items-center gap-2 shrink-0 text-primary hover:text-emerald-500 transition-colors">
-            <img :src="brandLogoSrc" alt="SealWatch" class="h-8 w-auto" />
+            <img src="/sealwatch-sidebar.png" alt="SealWatch" class="h-8 w-auto brand-logo-light" />
+        <img src="/sealwatch-sidebar-dark.png" alt="SealWatch" class="h-8 w-auto brand-logo-dark" />
           </NuxtLink>
 
           <!-- Navigation -->
@@ -333,7 +335,6 @@
 
 <script setup lang="ts">
 const colorMode = useColorMode()
-const brandLogoSrc = computed(() => colorMode.value === 'dark' ? '/sealwatch-sidebar-dark.png' : '/sealwatch-sidebar.png')
 const route = useRoute()
 // /monitors/groups has its own nav entry
 const monitorsActive = computed(() => route.path.startsWith('/monitors') && !route.path.startsWith('/monitors/groups'))
@@ -457,4 +458,14 @@ async function handleLogout() {
   color: var(--uk-primary-text) !important;
   background-color: var(--uk-primary-soft);
 }
+/* Dark logo: system preference before hydration, explicit .dark class afterwards. */
+.brand-logo-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  .brand-logo-dark { display: block; }
+  .brand-logo-light { display: none; }
+}
+html.dark .brand-logo-dark { display: block; }
+html.dark .brand-logo-light { display: none; }
+html:not(.dark) .brand-logo-dark { display: none; }
+html:not(.dark) .brand-logo-light { display: block; }
 </style>

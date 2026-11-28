@@ -4,7 +4,8 @@
       <form @submit.prevent="handleLogin" class="space-y-6">
         <!-- Brand -->
         <div class="login-brand">
-          <img :src="loginLogoSrc" alt="SealWatch" class="login-brand-image" />
+          <img src="/sealwatch-login.png" alt="SealWatch" class="login-brand-image brand-logo-light" />
+          <img src="/sealwatch-login-dark.png" alt="SealWatch" class="login-brand-image brand-logo-dark" />
         </div>
 
         <!-- Username -->
@@ -94,8 +95,6 @@ definePageMeta({
 })
 
 const { fetch: refreshSession } = useUserSession()
-const colorMode = useColorMode()
-const loginLogoSrc = computed(() => colorMode.value === 'dark' ? '/sealwatch-login-dark.png' : '/sealwatch-login.png')
 
 const form = reactive({
   username: '',
@@ -179,4 +178,14 @@ const handleLogin = async () => {
   height: auto;
   margin: 0 auto;
 }
+/* Dark logo: system preference before hydration, explicit .dark class afterwards. */
+.brand-logo-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  .brand-logo-dark { display: block; }
+  .brand-logo-light { display: none; }
+}
+html.dark .brand-logo-dark { display: block; }
+html.dark .brand-logo-light { display: none; }
+html:not(.dark) .brand-logo-dark { display: none; }
+html:not(.dark) .brand-logo-light { display: block; }
 </style>
