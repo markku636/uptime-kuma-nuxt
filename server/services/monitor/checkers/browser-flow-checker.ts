@@ -24,7 +24,7 @@ async function launchBrowser(): Promise<any> {
   try { return await chromium.launch({ headless: true }) } catch (bundled) {
     try { return await chromium.launch({ headless: true, channel: 'chrome' }) } catch (chrome) {
       // 保留兩次失敗原因：artifact 模式可能缺少 bundled browser 的系統函式庫。
-      const text = (error: any) => String(error?.message || error).slice(0, 1500)
+      const text = (error: any) => String(error?.message || error).slice(-1500)
       throw new Error(`bundled=${text(bundled)}; chrome=${text(chrome)}`)
     }
   }
