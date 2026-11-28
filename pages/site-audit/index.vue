@@ -50,9 +50,12 @@
         </label>
       </div>
       <div class="mt-4">
-        <button type="button" class="btn btn-secondary" :disabled="comparing || !compareA || !compareB" @click="compare">
-          {{ comparing ? 'Comparing…' : 'Compare' }}
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn btn-secondary" :disabled="comparing || !compareA || !compareB" @click="compare">
+            {{ comparing ? 'Comparing…' : 'Compare' }}
+          </button>
+          <button v-if="compareResult" type="button" class="btn btn-secondary" @click="downloadCompareCsv">Download CSV</button>
+        </div>
       </div>
       <div v-if="compareResult" class="overflow-x-auto mt-4">
         <table class="table">
@@ -171,7 +174,11 @@ async function compare(): Promise<void> {
   error.value = ''
   compareResult.value = null
   try {
-    const body = { checks: Object.fromEntries(checkOptions.map(option => [option.id, enabledChecks.value[option.id] !== false])), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}) }
+    const body = {
+      checks: Object.fromEntries(checkOptions.map(option => [option.id, enabledChecks.value[option.id] !== false])),
+      ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}),
+      ...(Number.isInteger(expectedStatus.value) && Number(expectedStatus.value) >= 100 && Number(expectedStatus.value) <= 599 ? { expectedStatus: Number(expectedStatus.value) } : {}),
+    }
     const [a, b] = await Promise.all([compareA.value, compareB.value].map(url =>
       $fetch<{ ok: boolean; data: any }>('/api/v1/site-audit', { method: 'POST', body: { ...body, url } })))
     compareResult.value = { a: a.data, b: b.data }
@@ -180,6 +187,21 @@ async function compare(): Promise<void> {
   } finally {
     comparing.value = false
   }
+}
+
+function downloadCompareCsv(): void {
+  if (!compareResult.value) return
+  const lines = [
+    ['check', `A ${compareA.value}`, `B ${compareB.value}`].join(','),
+    ...compareRows.value.map(row => [csvCell(row.label), csvCell(row.a), csvCell(row.b)].join(',')),
+  ]
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `site-compare-${Date.now()}.csv`
+  anchor.click()
+  URL.revokeObjectURL(url)
 }
 
 function csvCell(value: unknown): string {
