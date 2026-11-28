@@ -116,3 +116,17 @@ R167 🔵 排程弱點監控 —
 - `/security-scan` 報告加「Schedule hourly」；dashboard 與監控詳情把 score 顯示擴充到 `security-scan`。
 - 新增 `tests/security-scan-checker.test.ts` 5 項。
 - 驗證：unit **261/261 pass**、`tsc --noEmit` **0 error**；待 build＋部署。
+
+R168 ✅ 修正版部署與線上端到端驗收 — artifact
+`4844212c24d189ac47751e1ca3385542aaa8cdab4c36252d6e34f76133a0c4a1`（331,758,264 bytes，source `6a5aaac`）。
+- GitOps：loader `a1d8d19`（rev517，Job 1/1 done）→ app `5b0c70d`（rev518）→ **人為失誤**：
+  我只把 load 改 false，忘了把 `application.enabled` 改回 true，rev518 移除 app Deployment，兩域 502。
+  立刻補 `d63c8c4`（rev519）把 application 開回，**rev519 Healthy/Synced、兩域 200**。
+  教訓：app 階段的 values 必須明確檢查 `application.enabled: true`。
+- 線上重掃 `https://uptime.markkulab.net/`：HTTP **200**、fingerprint `Nuxt, React, X-Powered-By`、
+  無 `NO_FETCHER`；分數 **86/100 · B**、risk medium、4 findings（缺 CSP／DMARC／SPF＋一項 info）。
+  R166 的三個標頭已生效（原本的 X-Frame-Options／X-Content-Type-Options／Referrer-Policy 消失）。
+- 排程端到端：點「Schedule hourly」建立 monitor **#80**（`type=security-scan`、`runtimeStatus=scheduled`、
+  `scheduleSupported=true`）；`POST /api/v1/monitors/80/test` 回 `SCAN_OK · ping 86` 與 findings 摘要；
+  測試 monitor 已刪除。
+- 下一步 R169：完整整合測試＋OpenAPI 核對；R170：歷史報告 API／UI。
