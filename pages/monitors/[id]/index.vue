@@ -164,7 +164,7 @@
                 class="heartbeat-bar h-8 w-1.5 rounded-full cursor-pointer"
                 :class="[getHeartbeatClass(beat), i === displayHeartbeats.length - 1 && beat?.status === 1 ? 'pulse' : '']"
                 :style="{ animationDelay: `${i * 20}ms` }"
-                :title="beat ? `${formatDateTime(beat.time)} - ${beat.ping || 0}ms` : 'No data'"
+                :title="beat ? `${formatDateTime(beat.time)} - ${isScoreMonitor ? `${beat.ping || 0}/100` : `${beat.ping || 0}ms`}` : 'No data'"
               ></div>
             </div>
             <p class="text-xs text-gray-500 mt-2">Check every {{ monitor.interval }} seconds</p>
@@ -186,16 +186,16 @@
       <!-- Statistics Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Response Time</div>
+          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">{{ isScoreMonitor ? 'Audit score' : 'Response Time' }}</div>
           <div class="stat-value text-2xl font-bold text-emerald-400" :key="lastPing">
-            <span class="tabular-nums">{{ lastPing === null ? 'N/A' : animatedPing }}</span><span v-if="lastPing !== null" class="text-lg">ms</span>
+            <span class="tabular-nums">{{ lastPing === null ? 'N/A' : animatedPing }}</span><span v-if="lastPing !== null" class="text-lg">{{ isScoreMonitor ? '/100' : 'ms' }}</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">Current</div>
         </div>
         <div class="stat-card card-interactive">
-          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Response</div>
+          <div class="stat-label text-sm text-gray-600 dark:text-gray-400 mb-1">{{ isScoreMonitor ? 'Avg score' : 'Avg Response' }}</div>
           <div class="stat-value text-2xl font-bold text-blue-400">
-            <span class="tabular-nums">{{ avgPing ?? 'N/A' }}</span><span v-if="avgPing !== null" class="text-lg">ms</span>
+            <span class="tabular-nums">{{ avgPing ?? 'N/A' }}</span><span v-if="avgPing !== null" class="text-lg">{{ isScoreMonitor ? '/100' : 'ms' }}</span>
           </div>
           <div class="text-xs text-gray-500 mt-1">24-hour</div>
         </div>
@@ -232,7 +232,7 @@
       <!-- Response Time Chart -->
       <div class="card card-body mb-6">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Response Time ({{ chartPeriodLabel }})</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ isScoreMonitor ? 'Audit score' : 'Response Time' }} ({{ chartPeriodLabel }})</h3>
           <div class="flex gap-1">
             <button v-for="p in chartPeriods" :key="p.value" class="btn btn-secondary text-xs" :class="chartPeriod===p.value?'ring-2 ring-primary':''" @click="chartPeriod=p.value">{{ p.label }}</button>
           </div>
@@ -249,13 +249,13 @@
             <path :d="chartPoints.area" fill="url(#responseTimeFill)" />
             <path :d="chartPoints.line" fill="none" stroke="#5cdd8b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
             <circle v-for="(point, i) in chartPoints.points" :key="i" :cx="point.x" :cy="point.y" r="3.5" :fill="point.down ? '#f87171' : '#5cdd8b'" stroke="#0b1622" stroke-width="1.5">
-              <title>{{ point.label }}: {{ point.ping }}ms</title>
+              <title>{{ point.label }}: {{ point.ping }}{{ isScoreMonitor ? '/100' : 'ms' }}</title>
             </circle>
           </svg>
           <div class="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500 pointer-events-none">
-            <span>{{ maxPing }}ms</span>
-            <span>{{ Math.round(maxPing / 2) }}ms</span>
-            <span>0ms</span>
+            <span>{{ maxPing }}{{ isScoreMonitor ? '/100' : 'ms' }}</span>
+            <span>{{ Math.round(maxPing / 2) }}{{ isScoreMonitor ? '/100' : 'ms' }}</span>
+            <span>{{ isScoreMonitor ? '0/100' : '0ms' }}</span>
           </div>
         </div>
         <div v-else class="h-48 flex items-center justify-center text-sm text-secondary">
@@ -483,6 +483,8 @@ const visualArtifacts = ref<any[]>([])
 const loadingVisual = ref(false)
 const acceptingViewport = ref('')
 const showVisualPanel = computed(() => ['visual-diff', 'browser-flow'].includes(monitor.value?.type))
+// site-audit 的心跳 ping 是 0–100 分數，不是毫秒。
+const isScoreMonitor = computed(() => monitor.value?.type === 'site-audit')
 const latestVisualByViewport = computed(() => {
   const seen = new Set<string>()
   return visualArtifacts.value.filter((item) => {

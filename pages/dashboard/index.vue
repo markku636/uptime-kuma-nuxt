@@ -160,8 +160,8 @@
           <span v-else-if="monitor.hostname" class="ml-2">{{ monitor.hostname }}{{ monitor.port ? `:${monitor.port}` : '' }}</span>
         </div>
         <div class="flex items-center justify-between text-xs text-tertiary mb-2">
-          <span v-if="getLatestPing(monitor)">Response: {{ getLatestPing(monitor) }}ms</span>
-          <span v-else>Response: —</span>
+          <span v-if="getLatestPing(monitor)">{{ monitor.type === 'site-audit' ? 'Score' : 'Response' }}: {{ getLatestPing(monitor) }}{{ monitor.type === 'site-audit' ? '/100' : 'ms' }}</span>
+          <span v-else>{{ monitor.type === 'site-audit' ? 'Score' : 'Response' }}: —</span>
           <span :title="'Recent uptime (24h, or 30d when there is no 24h data)'">{{ uptimeLabel(monitor.id) }}</span>
         </div>
         <div v-if="canEdit" class="mt-3 flex items-center gap-2" @click.prevent>
@@ -230,7 +230,7 @@
               {{ monitor.url || monitor.hostname || '-' }}
             </td>
             <td class="text-secondary">
-              <div>{{ getLatestPing(monitor) ? `${getLatestPing(monitor)}ms` : '-' }}</div>
+              <div>{{ getLatestPing(monitor) ? `${getLatestPing(monitor)}${monitor.type === 'site-audit' ? '/100' : 'ms'}` : '-' }}</div>
               <div class="text-xs">{{ uptimeLabel(monitor.id) }}</div>
             </td>
             <td>
