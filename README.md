@@ -58,6 +58,19 @@ Email 僅能走操作者設定的 SMTP relay（`SMTP_HOST`／`SMTP_PORT`／`SMTP
 未設定 relay 時 email 通知會標記為 `UNSUPPORTED_PROVIDER` 而不重試。其他提供者仍明確 unsupported。
 通知送出後本機 ACK 前故障仍可能重送，不承諾外部 exactly-once。
 
+#### Discord → Hermes agent / OpenClaw
+
+Discord 通知資源（`type: discord`）除了 `webhookUrl`、`username`，可選填三個欄位：
+
+- `agentHint`：只在 DOWN／still-down 事件附加到 embed 描述的操作指令（上限 1000 字）。
+- `content`：embed 上方的純文字，可放 `@提及`（`<@userId>`／`<@&roleId>`／`<#channelId>`）讓訂閱該頻道的 agent 收到；上限 1000 字。
+- `monitorUrlBase`：SealWatch 監控詳情頁前綴（例如 `https://uptime.example.com/monitors/`），
+  搭配 embed 的 `Monitor ID` 產生可點擊標題。刻意不把目標站網址放進通知，避免 query string 中的
+  token 外洩。
+
+Settings → Notifications 的每條 Discord 頻道都有 `Test`（UP）與 `Test DOWN` 兩個按鈕；
+後者等於 `POST /api/v1/notifications/test` 帶 `eventStatus: 'down'`，可用來驗證 agent 是否被觸發。
+
 ### 📊 功能亮點
 - 📈 多語言支援 (70+ 語言)
 - 🎨 深色/淺色主題
