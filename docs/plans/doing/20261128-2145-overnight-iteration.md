@@ -56,10 +56,16 @@ R159 ✅ 訂閱 UI 與管理端 — commit `1323f0f` 後。
   在共用 `HttpFailureCode` 補 `NO_FETCHER`。unit 255/255，部署 rev516，
   實測訂閱→Verify→建立事件→outbox 產生 `incident-created`→清理完成。
 
-R161 🔵失敗调查證據包 — 程式完成，待部署。
+R161 ✅失敗调查證據包 — commit `cd3dc5f` 後。部署 rev523，實測 `/api/v1/monitors/65/investigation` 回 50 筆心跳／20 筆通知紀錄與 agentHint。
 - `buildInvestigationBundle()` 彙整最近 50 筆心跳、快取 TLS、5 份去敏感健檢報告、
   browser-flow 失敗截圖 metadata（不回 base64，指向既有端點）、20 筆通知投遞狀態，
   並產生 `agentHint` 給 Discord／Hermes agent。API `GET /api/v1/monitors/{id}/investigation`。
 - 監控詳情頁「Investigate」按鈕＋對話框＋JSON 下載；OpenAPI 補端點。
 - unit 263/263；typecheck 我觸摸的檔案 0 error，另一條 session 的 security-scan-checker
   仍有型別錯誤（未碰其檔案）。
+
+R162 🔵 Monitoring as code（匯出／diff） — 程式完成，待部署。
+- `GET /api/v1/monitoring/export` 輸出 versioned JSON（URL 去 username/password/query；一般 HTTP body 不匯出，
+  browser-flow／site-audit 的宣告式 body 保留）；`POST /api/v1/monitoring/plan` 回 create／update／nochange
+  與欄位差異。宣告式 schema 拒絕未知欄位。
+- unit 266/266；build 成功（第一次與另一條 session 並行 build 撞 cache，重跑通過）。
