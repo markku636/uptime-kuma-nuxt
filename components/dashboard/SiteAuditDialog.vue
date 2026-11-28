@@ -28,6 +28,11 @@
           </label>
         </div>
         <label class="block">
+          <span class="text-sm text-toned">Expected HTTP status <span class="text-tertiary">(optional, e.g. 404 for an API)</span></span>
+          <input v-model.number="expectedStatus" type="number" min="100" max="599" aria-label="Expected HTTP status"
+            placeholder="200" class="input-field mt-1 w-40" />
+        </label>
+        <label class="block">
           <span class="text-sm text-toned">Schedule threshold <span class="text-tertiary">(0–100, default 60)</span></span>
           <input v-model.number="minScore" type="number" min="0" max="100" aria-label="Minimum score"
             class="input-field mt-1 w-40" />
@@ -94,6 +99,7 @@ const toast = useToast()
 const url = ref('')
 const keyword = ref('')
 const minScore = ref(60)
+const expectedStatus = ref<number | null>(null)
 const checkOptions = [
   { id: 'tls', label: 'TLS' }, { id: 'dns', label: 'DNS' }, { id: 'headers', label: 'Headers' },
   { id: 'meta', label: 'Metadata' }, { id: 'links', label: 'Links' }, { id: 'keyword', label: 'Keyword' },
@@ -108,6 +114,7 @@ watch(() => props.open, value => {
   url.value = ''
   keyword.value = ''
   minScore.value = 60
+  expectedStatus.value = null
   enabledChecks.value = { tls: true, dns: true, headers: true, meta: true, links: true, keyword: true }
   error.value = ''
   report.value = null
@@ -121,6 +128,10 @@ function close(): void {
 function checksConfig(): Record<string, boolean> {
   return Object.fromEntries(checkOptions.map(option => [option.id, enabledChecks.value[option.id] !== false]))
 }
+function statusConfig(): { expectedStatus?: number } {
+  const value = Number(expectedStatus.value)
+  return Number.isInteger(value) && value >= 100 && value <= 599 ? { expectedStatus: value } : {}
+}
 
 async function run(): Promise<void> {
   if (!url.value || busy.value) return
@@ -130,7 +141,7 @@ async function run(): Promise<void> {
   try {
     const response = await $fetch<{ ok: boolean; data: AuditReportView }>('/api/v1/site-audit', {
       method: 'POST',
-      body: { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), checks: checksConfig() },
+      body: { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), checks: checksConfig(), ...statusConfig() },
     })
     report.value = response.data
   } catch (caught: any) {
@@ -145,7 +156,7 @@ async function schedule(): Promise<void> {
   busy.value = true
   error.value = ''
   try {
-    const config = { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), checks: checksConfig(), minScore: Math.max(0, Math.min(100, Number(minScore.value) || 60)) }
+    const config = { url: url.value.trim(), ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}), checks: checksConfig(), ...statusConfig(), minScore: Math.max(0, Math.min(100, Number(minScore.value) || 60)) }
     let name = url.value.trim()
     try { name = new URL(name).hostname.replace(/^www\./, '') } catch { /* keep raw input */ }
     await $fetch('/api/v1/monitors', {

@@ -96,6 +96,14 @@ test('site audit reports failures and does not throw on network errors', async (
   assert.equal(byId.headers, 'fail')
 })
 
+test('expectedStatus overrides the default 2xx gate', async () => {
+  const ok = await runSiteAudit({ url: 'https://example.com/', expectedStatus: 503 }, { fetcher: fakeFetcher({ status: 503 }), lookupFn: fakeLookup })
+  assert.equal(ok.checks.find(check => check.id === 'http')?.status, 'pass')
+  assert.match(ok.checks.find(check => check.id === 'http')?.summary || '', /expected 503/)
+  const bad = await runSiteAudit({ url: 'https://example.com/', expectedStatus: 404 }, { fetcher: fakeFetcher({ status: 503 }), lookupFn: fakeLookup })
+  assert.equal(bad.checks.find(check => check.id === 'http')?.status, 'fail')
+})
+
 test('site audit honours disabled checks without scoring them', async () => {
   const report = await runSiteAudit({
     url: 'https://example.com/',

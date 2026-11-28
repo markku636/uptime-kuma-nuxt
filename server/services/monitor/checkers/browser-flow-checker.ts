@@ -112,6 +112,13 @@ async function runStep(page: any, step: BrowserFlowStep, config: BrowserFlowConf
       if (!checked) return 'NOT_CHECKED'
       return undefined
     }
+    case 'assertCount': {
+      const expected = Number(step.value)
+      if (!Number.isSafeInteger(expected) || expected < 0) return 'INVALID_COUNT'
+      const actual = await page.locator(step.selector!).count()
+      if (actual !== expected) return `COUNT_MISMATCH:${actual}`
+      return undefined
+    }
     case 'waitFor':
       await page.waitForSelector(step.selector!, { timeout, state: 'visible' })
       return undefined

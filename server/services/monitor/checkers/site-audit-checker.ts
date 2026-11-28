@@ -11,6 +11,7 @@ export const siteAuditConfigSchema = z.object({
   keyword: z.string().min(1).max(200).optional(),
   minScore: z.number().int().min(0).max(100).default(60),
   checks: auditChecksSchema.optional(),
+  expectedStatus: z.number().int().min(100).max(599).optional(),
 }).strict()
 
 export interface SiteAuditCheckDeps {
@@ -65,7 +66,7 @@ export async function checkSiteAudit(
   if (signal?.aborted) return { status: 0, ping: Date.now() - startTime, code: 'ABORTED', msg: 'Check aborted' }
 
   try {
-    const report = await deps.audit({ url: target, ...(config.keyword ? { keyword: config.keyword } : {}), ...(config.checks ? { checks: config.checks } : {}) })
+    const report = await deps.audit({ url: target, ...(config.keyword ? { keyword: config.keyword } : {}), ...(config.checks ? { checks: config.checks } : {}), ...(config.expectedStatus ? { expectedStatus: config.expectedStatus } : {}) })
     if (signal?.aborted) return { status: 0, ping: Date.now() - startTime, code: 'ABORTED', msg: 'Check aborted' }
     if (!monitor.includeTrialResponse && monitor.id && deps.saveReport) {
       try { await deps.saveReport(monitor.id, report) } catch { /* 報告保存失敗不影響判定 */ }

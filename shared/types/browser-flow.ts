@@ -12,6 +12,7 @@ export type BrowserFlowAction =
   | 'assertText'
   | 'assertValue'
   | 'assertChecked'
+  | 'assertCount'
 
 export interface BrowserFlowStep {
   action: BrowserFlowAction

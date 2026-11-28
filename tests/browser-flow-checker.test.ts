@@ -24,7 +24,7 @@ function fakePage() {
         inputValue: async () => state[selector] ?? '',
         isChecked: async () => state[selector] === 'checked',
       })
-      return { first }
+      return { first, count: async () => state[selector] === undefined ? 0 : 1 }
     },
     async screenshot() { return Buffer.from([0x89, 0x50, 0x4e, 0x47]) },
     async close() {},
@@ -89,6 +89,16 @@ test('form controls and checked assertions are supported', async () => {
   const failed = await checkBrowserFlow({ url: 'https://example.com', body: JSON.stringify(bad) }, Date.now(), undefined, deps(page))
   assert.equal(failed.code, 'FLOW_STEP_FAILED')
   assert.match(failed.msg, /NOT_CHECKED/)
+})
+
+test('assertCount compares element count and rejects non-numeric values', async () => {
+  const page = fakePage()
+  const good = { steps: [{ action: 'goto' }, { action: 'assertCount', selector: '#title', value: '1' }] }
+  const result = await checkBrowserFlow({ url: 'https://example.com', body: JSON.stringify(good) }, Date.now(), undefined, deps(page))
+  assert.equal(result.code, 'FLOW_OK')
+  const bad = { steps: [{ action: 'goto' }, { action: 'assertCount', selector: '#title', value: '2' }] }
+  const failed = await checkBrowserFlow({ url: 'https://example.com', body: JSON.stringify(bad) }, Date.now(), undefined, deps(page))
+  assert.match(failed.msg, /COUNT_MISMATCH:1/)
 })
 
 test('failed assertion stops the flow and identifies the step', async () => {

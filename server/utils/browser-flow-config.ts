@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { BrowserFlowConfig } from '../../shared/types/browser-flow'
 
 const stepSchema = z.object({
-  action: z.enum(['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked']),
+  action: z.enum(['goto', 'click', 'fill', 'selectOption', 'check', 'uncheck', 'waitFor', 'assertVisible', 'assertText', 'assertValue', 'assertChecked', 'assertCount']),
   selector: z.string().min(1).max(512).optional(),
   value: z.string().max(4096).optional(),
   // 0 在 Playwright 代表「不逾時」，會讓 trial 永久佔住 slot，故禁止。
@@ -12,7 +12,7 @@ const stepSchema = z.object({
 }).strict().superRefine((step, ctx) => {
   const needsSelector = step.action !== 'goto'
   if (needsSelector && !step.selector) ctx.addIssue({ code: 'custom', message: 'selector is required', path: ['selector'] })
-  if (['fill', 'selectOption', 'assertText', 'assertValue'].includes(step.action) && step.value === undefined) {
+  if (['fill', 'selectOption', 'assertText', 'assertValue', 'assertCount'].includes(step.action) && step.value === undefined) {
     ctx.addIssue({ code: 'custom', message: 'value is required', path: ['value'] })
   }
   if (step.action === 'goto' && step.selector) ctx.addIssue({ code: 'custom', message: 'goto 不使用 selector', path: ['selector'] })

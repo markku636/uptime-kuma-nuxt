@@ -33,6 +33,8 @@ export interface AuditInput {
   /** 可關閉個別檢查；HTTP 必做，其餘預設開啟。 */
   checks?: Partial<Record<AuditCheckId, boolean>>
   linkLimit?: number
+  /** 預期 HTTP 狀態碼（例如 API 預期 404）；未提供時用 2xx 判定。 */
+  expectedStatus?: number
 }
 export interface AuditFetchResult {
   status: number
@@ -195,10 +197,13 @@ export async function runSiteAudit(input: AuditInput, deps: AuditDeps = {}): Pro
   try {
     page = await fetcher(input.url, 'GET')
     const status = page.status
+    const httpStatus: AuditStatus = Number.isInteger(input.expectedStatus)
+      ? status === input.expectedStatus ? 'pass' : 'fail'
+      : status >= 200 && status < 300 ? 'pass' : status < 400 || status === 401 || status === 403 ? 'warn' : 'fail'
     checks.push({
       id: 'http', label: 'HTTP response',
-      status: status >= 200 && status < 300 ? 'pass' : status < 400 || status === 401 || status === 403 ? 'warn' : 'fail',
-      summary: `HTTP ${status} · ${page.elapsed} ms`,
+      status: httpStatus,
+      summary: Number.isInteger(input.expectedStatus) ? `HTTP ${status} (expected ${input.expectedStatus}) · ${page.elapsed} ms` : `HTTP ${status} · ${page.elapsed} ms`,
       detail: page.redirectChain?.length ? page.redirectChain.map((from, index) => `${index + 1}. ${from}`) : page.finalUrl !== input.url ? [`重新導向至 ${page.finalUrl}`] : undefined,
     })
   } catch (error) {

@@ -7,6 +7,7 @@ const auditInput = z.object({
   keyword: z.string().trim().min(1).max(200).optional(),
   checks: auditChecksSchema.optional(),
   linkLimit: z.number().int().min(1).max(20).optional(),
+  expectedStatus: z.number().int().min(100).max(599).optional(),
 })
 
 const WINDOW_MS = 60_000
