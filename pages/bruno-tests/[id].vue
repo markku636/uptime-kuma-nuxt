@@ -137,7 +137,7 @@ onMounted(load)
         <h1 class="text-2xl font-semibold">{{ suite?.name || 'Bruno test' }}</h1>
         <p v-if="suite" class="text-sm text-secondary">{{ suite.collectionId }} · {{ suite.steps?.length }} steps</p>
       </div>
-      <button class="btn btn-primary" :disabled="busy || !suite" @click="run">{{ busy ? 'Running…' : 'Run test' }}</button>
+      <button class="btn btn-primary" :disabled="busy || !suite" @click="run">{{ busy ? 'Running…' : $t('btRunTest') }}</button>
     </div>
     <p v-if="error" role="alert" class="text-red-400">{{ error }}</p>
     <p v-if="!suite">Loading…</p>
@@ -147,7 +147,7 @@ onMounted(load)
         <div class="space-y-4 mt-4">
         <div class="grid sm:grid-cols-3 gap-4 items-end">
           <label class="text-sm">Name<input v-model="suite.name" class="input-field mt-1" /></label>
-          <label class="flex items-center gap-2 text-sm"><input v-model="suite.failFast" type="checkbox" /> Stop on first failure</label>
+          <label class="flex items-center gap-2 text-sm"><input v-model="suite.failFast" type="checkbox" /> {{ $t('btStopFirst') }}</label>
           <label class="text-sm">Total timeout (s)<input v-model.number="suite.timeoutSec" type="number" min="30" max="180" class="input-field mt-1" /></label>
           <label class="text-sm">Schedule
             <select v-model.number="suite.scheduleIntervalSec" class="input-field mt-1">
@@ -159,7 +159,7 @@ onMounted(load)
           </label>
         </div>
         <p v-if="suite.nextRunAt" class="text-xs text-secondary">Next scheduled run: {{ new Date(suite.nextRunAt).toLocaleString() }}</p>
-        <button class="btn btn-secondary btn-sm" @click="saveSettings">Save settings</button>
+        <button class="btn btn-secondary btn-sm" @click="saveSettings">{{ $t('btSaveSettings') }}</button>
         </div>
       </details>
 
@@ -206,11 +206,11 @@ onMounted(load)
 
       <section class="card p-5">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <h2 class="font-semibold">Reports</h2>
+          <h2 class="font-semibold">{{ $t('btReports') }}</h2>
           <div v-if="report" class="flex gap-2">
-            <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=json`">Download JSON</a>
-            <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=csv`">Download CSV</a>
-            <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=html`">Download HTML</a>
+            <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=json`">{{ $t('btDownloadJson') }}</a>
+            <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=csv`">{{ $t('btDownloadCsv') }}</a>
+            <a class="btn btn-secondary btn-sm" :href="`/api/v1/bruno/tests/${id}/runs/${report.id}/export?format=html`">{{ $t('btDownloadHtml') }}</a>
           </div>
         </div>
         <div v-if="!runs.length" class="text-sm text-secondary">No runs yet. Press “Run test” to generate the first report.</div>

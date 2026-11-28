@@ -56,15 +56,15 @@ onMounted(load)
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-semibold">Bruno Tests</h1>
-        <p class="text-sm text-secondary">Run a Bruno collection as one ordered API test and keep the report.</p>
+        <h1 class="text-2xl font-semibold">{{ $t('btTitle') }}</h1>
+        <p class="text-sm text-secondary">{{ $t('btIntro') }}</p>
       </div>
-      <div class="flex gap-2"><button class="btn btn-secondary" :disabled="trying" @click="tryExample">{{ trying ? 'Creating…' : 'Try example test' }}</button><NuxtLink to="/bruno-tests/new" class="btn btn-primary">New test from collection</NuxtLink></div>
+      <div class="flex gap-2"><button class="btn btn-secondary" :disabled="trying" @click="tryExample">{{ trying ? 'Creating…' : 'Try example test' }}</button><NuxtLink to="/bruno-tests/new" class="btn btn-primary">{{ $t('btNew') }}</NuxtLink></div>
     </div>
     <p v-if="error" role="alert" class="text-red-400">{{ error }}</p>
     <p v-if="loading">Loading…</p>
     <div v-else-if="!rows.length" class="card p-8 text-center space-y-4">
-        <p class="text-secondary">No Bruno test suites yet. Start in three steps:</p>
+        <p class="text-secondary">{{ $t('btEmptySteps') }}</p>
         <ol class="text-sm text-secondary mx-auto max-w-md text-left list-decimal list-inside space-y-1">
           <li>Upload a Bruno collection (.bru files or ZIP), or paste one request.</li>
           <li>Preview the ordered steps and click <strong>Create test</strong>.</li>
@@ -74,7 +74,7 @@ onMounted(load)
       </div>
     <div v-else class="card overflow-x-auto">
       <table class="table">
-        <thead><tr><th>Name</th><th>Collection</th><th>Steps</th><th>Schedule</th><th>Last run</th><th>Updated</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Collection</th><th>Steps</th><th>{{ $t('btSchedule') }}</th><th>{{ $t('btLastRun') }}</th><th>Updated</th><th></th></tr></thead>
         <tbody>
           <tr v-for="row in rows" :key="row.id">
             <td><NuxtLink :to="`/bruno-tests/${row.id}`" class="link">{{ row.name }}</NuxtLink></td>
@@ -82,7 +82,7 @@ onMounted(load)
             <td>{{ row.steps }}</td>
             <td class="text-xs text-secondary">
               <template v-if="row.scheduleIntervalSec">{{ row.scheduleIntervalSec / 60 }} min · {{ row.nextRunAt ? new Date(row.nextRunAt).toLocaleString() : 'pending' }}</template>
-              <template v-else>Manual</template>
+              <template v-else>{{ $t('btManual') }}</template>
             </td>
             <td class="text-xs">
               <template v-if="row.lastRun">

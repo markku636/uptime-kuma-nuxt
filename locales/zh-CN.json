@@ -1331,5 +1331,22 @@
   "appearanceCertificate": "显示证书到期天数",
   "appearanceCompatNote": "兼容设置 — 已保存，但当前运行环境不会应用。",
   "appearancePageNote": "兼容设置 — 由各公开状态页控制。",
-  "appearanceSelectLanguage": "选择首选语言"
+  "appearanceSelectLanguage": "选择首选语言",
+  "btTitle": "Bruno 测试",
+  "btIntro": "将 Bruno collection 作为一个有序 API 测试运行并保留报告。",
+  "btNew": "从 collection 新建测试",
+  "btTryExample": "试用示例测试",
+  "btEmptySteps": "尚无 Bruno 测试。三步开始：",
+  "btRun": "运行",
+  "btDelete": "删除",
+  "btLastRun": "最近运行",
+  "btSchedule": "定时",
+  "btManual": "手动",
+  "btReports": "报告",
+  "btDownloadJson": "下载 JSON",
+  "btDownloadCsv": "下载 CSV",
+  "btDownloadHtml": "下载 HTML",
+  "btRunTest": "运行测试",
+  "btSaveSettings": "保存设置",
+  "btStopFirst": "失败即停止"
 }

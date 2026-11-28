@@ -1321,5 +1321,22 @@
   "appearanceCertificate": "顯示憑證到期天數",
   "appearanceCompatNote": "相容性設定 — 已儲存，但此运行環境不會套用。",
   "appearancePageNote": "相容性設定 — 由各公開狀態頁自行控制。",
-  "appearanceSelectLanguage": "選擇偏好語言"
+  "appearanceSelectLanguage": "選擇偏好語言",
+  "btTitle": "Bruno 測試",
+  "btIntro": "將 Bruno collection 當作一個有序 API 測試執行，並保留報告。",
+  "btNew": "從 collection 新增測試",
+  "btTryExample": "試用範例測試",
+  "btEmptySteps": "尚無 Bruno 測試。三個步驟開始：",
+  "btRun": "執行",
+  "btDelete": "刪除",
+  "btLastRun": "最近執行",
+  "btSchedule": "排程",
+  "btManual": "手動",
+  "btReports": "報告",
+  "btDownloadJson": "下載 JSON",
+  "btDownloadCsv": "下載 CSV",
+  "btDownloadHtml": "下載 HTML",
+  "btRunTest": "執行測試",
+  "btSaveSettings": "儲存設定",
+  "btStopFirst": "失敗即停止"
 }

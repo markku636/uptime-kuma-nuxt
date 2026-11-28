@@ -1296,5 +1296,22 @@
   "appearanceCertificate": "証明書の有効期限日数を表示",
   "appearanceCompatNote": "互換性設定 — 保存されますが、このランタイムでは適用されません。",
   "appearancePageNote": "互換性設定 — 公開ステータスページごとに制御します。",
-  "appearanceSelectLanguage": "優先言語を選択"
+  "appearanceSelectLanguage": "優先言語を選択",
+  "btTitle": "Bruno テスト",
+  "btIntro": "Bruno コレクションを順序付き API テストとして実行し、レポートを保存します。",
+  "btNew": "コレクションから新規作成",
+  "btTryExample": "サンプルを試す",
+  "btEmptySteps": "Bruno テストはまだありません。3 ステップで開始：",
+  "btRun": "実行",
+  "btDelete": "削除",
+  "btLastRun": "最終実行",
+  "btSchedule": "スケジュール",
+  "btManual": "手動",
+  "btReports": "レポート",
+  "btDownloadJson": "JSON をダウンロード",
+  "btDownloadCsv": "CSV をダウンロード",
+  "btDownloadHtml": "HTML をダウンロード",
+  "btRunTest": "テストを実行",
+  "btSaveSettings": "設定を保存",
+  "btStopFirst": "最初の失敗で停止"
 }
