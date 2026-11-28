@@ -74,12 +74,16 @@ onMounted(load)
       </div>
     <div v-else class="card overflow-x-auto">
       <table class="table">
-        <thead><tr><th>Name</th><th>Collection</th><th>Steps</th><th>Last run</th><th>Updated</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Collection</th><th>Steps</th><th>Schedule</th><th>Last run</th><th>Updated</th><th></th></tr></thead>
         <tbody>
           <tr v-for="row in rows" :key="row.id">
             <td><NuxtLink :to="`/bruno-tests/${row.id}`" class="link">{{ row.name }}</NuxtLink></td>
             <td class="font-mono text-xs">{{ row.collectionId }}</td>
             <td>{{ row.steps }}</td>
+            <td class="text-xs text-secondary">
+              <template v-if="row.scheduleIntervalSec">{{ row.scheduleIntervalSec / 60 }} min · {{ row.nextRunAt ? new Date(row.nextRunAt).toLocaleString() : 'pending' }}</template>
+              <template v-else>Manual</template>
+            </td>
             <td class="text-xs">
               <template v-if="row.lastRun">
                 <span :class="row.lastRun.status === 'pass' ? 'text-green-500' : 'text-red-400'">{{ row.lastRun.status }}</span>

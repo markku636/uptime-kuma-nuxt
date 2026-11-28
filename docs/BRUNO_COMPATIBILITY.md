@@ -75,3 +75,7 @@ source environment變更與監測寫入同一transaction。Monitor request配置
   （DB partial unique index；第二個請求回 409）。
 - 報告只保存 status／HTTP status／耗時／assertion 摘要／萃取變數**名稱**，不保存 response body；
   assertion actual 值對含 token／secret／password／authorization／cookie／key 的路徑一律省略。
+
+**選用排程（2026-11-28）**：suite 可設每 5／15／60 分鐘執行一次（預設手動）；API pod 每 30 秒輪詢到期 suite，
+以 DB `running` partial unique index 防止多 pod 重複執行，並與手動 run 共用容量限制（同一使用者同時 1 個、全站 2 個、每分鐘 10 個）。
+排程 run 仍不發通知、不算 availability；報告同樣只保存 redacted 摘要。
