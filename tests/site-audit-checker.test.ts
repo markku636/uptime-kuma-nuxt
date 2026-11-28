@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { checkSiteAudit } from '../server/services/monitor/checkers/site-audit-checker'
+import { checkSiteAudit, redactAuditReport } from '../server/services/monitor/checkers/site-audit-checker'
 import { runSiteAudit, type AuditReport } from '../server/services/site-audit/audit'
 
 function report(score: number): AuditReport {
@@ -34,6 +34,28 @@ test('site-audit checker fails below threshold and lists failed checks', async (
   assert.equal(result.ping, 20)
   assert.equal(result.code, 'AUDIT_LOW')
   assert.match(result.msg, /fail: http/)
+})
+
+test('report redaction strips credentials, query strings and linked URLs', () => {
+  const original = report(90)
+  original.url = 'https://user:secret@example.com/path?token=abc'
+  original.finalUrl = 'https://example.com/final?key=xyz#frag'
+  original.checks[0]!.detail = ['重新導向至 https://user:pw@example.com/next?token=abc', '缺少 HSTS']
+  const clean = redactAuditReport(original)
+  assert.equal(clean.url, 'https://example.com/path')
+  assert.equal(clean.finalUrl, 'https://example.com/final')
+  assert.equal(clean.checks[0]!.detail?.[0], '重新導向至 https://example.com/next')
+  assert.equal(clean.checks[0]!.detail?.[1], '缺少 HSTS')
+})
+
+test('scheduled checks save redacted reports but trials do not', async () => {
+  const saved: any[] = []
+  const deps = { audit: async () => report(88), saveReport: async (id: number, r: AuditReport) => { saved.push({ id, r }) } }
+  await checkSiteAudit({ id: 9, url: 'https://example.com' }, Date.now(), undefined, deps)
+  assert.equal(saved.length, 1)
+  assert.equal(saved[0].id, 9)
+  await checkSiteAudit({ id: 9, url: 'https://example.com', includeTrialResponse: true }, Date.now(), undefined, deps)
+  assert.equal(saved.length, 1)
 })
 
 test('site-audit config in body can override the monitor URL and reject bad config', async () => {

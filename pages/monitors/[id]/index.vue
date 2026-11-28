@@ -152,6 +152,36 @@
         </div>
       </div>
 
+      <!-- Site audit：最近 20 次去敏感健檢報告 -->
+      <div v-if="showAuditReports" class="section-card space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="section-title">Website audit reports</h3>
+          <button class="text-sm underline" :disabled="loadingAuditReports" @click="loadAuditReports">重新整理</button>
+        </div>
+        <p v-if="loadingAuditReports" class="text-sm text-secondary">載入中…</p>
+        <p v-else-if="!auditReports.length" class="text-sm text-secondary">尚無報告。</p>
+        <div v-for="item in auditReports" :key="item.id" class="border rounded-lg p-3 text-sm">
+          <div class="flex flex-wrap items-center gap-3 justify-between">
+            <div>
+              <span class="font-semibold">{{ item.score }}/100</span>
+              <span class="badge ml-2">{{ item.grade }}</span>
+              <span class="text-secondary ml-2">{{ formatDateTime(item.checkedAt) }}</span>
+            </div>
+            <button class="text-sm underline" @click="downloadAuditReport(item)">Download JSON</button>
+          </div>
+          <details class="mt-2">
+            <summary class="cursor-pointer text-secondary">檢查項目 ({{ item.report?.checks?.length || 0 }})</summary>
+            <ul class="mt-2 space-y-1">
+              <li v-for="check in item.report?.checks || []" :key="check.id" class="flex flex-wrap gap-2">
+                <span class="font-medium">{{ check.label }}</span>
+                <span class="text-tertiary">{{ check.status }}</span>
+                <span class="text-secondary">{{ check.summary }}</span>
+              </li>
+            </ul>
+          </details>
+        </div>
+      </div>
+
       <!-- Status & Heartbeat Bar -->
       <div class="card card-body mb-6 card-interactive">
         <div class="flex flex-col lg:flex-row lg:items-center gap-6">
@@ -485,6 +515,30 @@ const acceptingViewport = ref('')
 const showVisualPanel = computed(() => ['visual-diff', 'browser-flow'].includes(monitor.value?.type))
 // site-audit 的心跳 ping 是 0–100 分數，不是毫秒。
 const isScoreMonitor = computed(() => monitor.value?.type === 'site-audit')
+const showAuditReports = computed(() => monitor.value?.type === 'site-audit')
+const auditReports = ref<any[]>([])
+const loadingAuditReports = ref(false)
+async function loadAuditReports() {
+  if (!showAuditReports.value) return
+  loadingAuditReports.value = true
+  try {
+    const res = await $fetch<any>(`/api/v1/monitors/${monitorId.value}/audit-reports`, { query: { limit: 20 } })
+    auditReports.value = res?.data || []
+  } catch {
+    auditReports.value = []
+  } finally {
+    loadingAuditReports.value = false
+  }
+}
+function downloadAuditReport(item: any) {
+  const blob = new Blob([JSON.stringify(item.report ?? item, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `audit-${monitorId.value}-${item.id}.json`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
 const latestVisualByViewport = computed(() => {
   const seen = new Set<string>()
   return visualArtifacts.value.filter((item) => {
@@ -620,6 +674,7 @@ onMounted(async () => {
     void loadPushUrl()
     void loadPingSeries()
     void loadVisualArtifacts()
+    void loadAuditReports()
 
     // Fetch certificate info for HTTPS monitors
     if (monitor.value?.tlsConfigured) {
