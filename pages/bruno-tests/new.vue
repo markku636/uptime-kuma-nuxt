@@ -5,6 +5,7 @@ import { readBrunoZip } from '../../composables/useBruno'
 definePageMeta({ middleware: ['auth'] })
 const router = useRouter()
 const toast = useToast()
+const { canManage } = useWorkspace()
 const source = ref<'files' | 'zip' | 'paste'>('files')
 const files = ref<BrunoFile[]>([])
 const pasted = ref('')
@@ -12,6 +13,7 @@ const zipName = ref('')
 const collectionId = ref('collection')
 const name = ref('')
 const variablesText = ref('')
+const secretsText = ref('')
 const busy = ref(false)
 const error = ref('')
 const preview = ref<any>(null)
@@ -28,9 +30,9 @@ const manifestFiles = computed<BrunoFile[]>(() => {
   return files.value
 })
 
-function parseVariables(): Record<string, string> {
+function parseLines(text: string): Record<string, string> {
   const result: Record<string, string> = {}
-  for (const line of variablesText.value.split('\n')) {
+  for (const line of text.split('\n')) {
     const match = /^\s*([A-Za-z_][\w.-]*)\s*:\s*(.*?)\s*$/.exec(line)
     if (match && match[1]) result[match[1]] = match[2] || ''
   }
@@ -40,7 +42,9 @@ function parseVariables(): Record<string, string> {
 function payload(digest?: string) {
   return {
     collectionId: collectionId.value, name: name.value, files: manifestFiles.value,
-    variables: parseVariables(), ...(digest ? { digest } : {}),
+    variables: parseLines(variablesText.value),
+    ...(canManage.value && secretsText.value.trim() ? { secrets: parseLines(secretsText.value) } : {}),
+    ...(digest ? { digest } : {}),
   }
 }
 
@@ -61,7 +65,7 @@ async function onZip(event: Event) {
   preview.value = null
 }
 
-watch([source, collectionId, name, variablesText, manifestFiles], () => { preview.value = null }, { deep: true })
+watch([source, collectionId, name, variablesText, secretsText, manifestFiles], () => { preview.value = null }, { deep: true })
 
 async function doPreview() {
   busy.value = true
@@ -118,6 +122,9 @@ async function create() {
       </div>
       <label class="block text-sm">Extra variables (one <code>name: value</code> per line)
         <textarea v-model="variablesText" rows="3" class="input-field w-full mt-1" placeholder="baseUrl: https://api.example.com"></textarea>
+      </label>
+      <label v-if="canManage" class="block text-sm">Secrets (stored encrypted, never returned)
+        <textarea v-model="secretsText" rows="3" class="input-field w-full mt-1" placeholder="token: abc123"></textarea>
       </label>
       <div class="flex gap-3">
         <button class="btn btn-secondary" :disabled="busy || !manifestFiles.length" @click="doPreview">{{ busy ? 'Working…' : 'Preview' }}</button>

@@ -9,6 +9,59 @@ const report = ref<any>(null)
 const busy = ref(false)
 const error = ref('')
 
+const editingStep = ref<string | null>(null)
+const drafts = ref<Record<string, Array<{ name: string; expression: string }>>>({})
+
+function ruleToExpression(rule: any) {
+  if (rule?.source === 'status') return 'res.status'
+  if (rule?.source === 'responseTime') return 'res.responseTime'
+  if (rule?.source === 'header') return `res.headers.${rule.path || ''}`
+  if (rule?.source === 'json') return rule.path && rule.path !== '$' ? `res.body${rule.path.slice(1)}` : 'res.body'
+  return ''
+}
+
+function expressionToRule(name: string, expression: string) {
+  const value = expression.trim()
+  if (value === 'res.status') return { name, source: 'status' }
+  if (value === 'res.responseTime') return { name, source: 'responseTime' }
+  const header = /^res\.headers\.([A-Za-z0-9-]{1,128})$/.exec(value)
+  if (header) return { name, source: 'header', path: header[1]!.toLowerCase() }
+  const body = /^res\.body(?:\.([\s\S]+))?$/.exec(value)
+  if (body) return { name, source: 'json', path: '$' + (body[1] ? `.${body[1]}` : '') }
+  return null
+}
+
+function initDrafts() {
+  const next: Record<string, Array<{ name: string; expression: string }>> = {}
+  for (const step of suite.value?.steps || []) {
+    next[step.path] = (step.extract || []).map((rule: any) => ({ name: rule.name, expression: ruleToExpression(rule) }))
+  }
+  drafts.value = next
+}
+
+function addRule(path: string) {
+  ;(drafts.value[path] ||= []).push({ name: '', expression: 'res.body.' })
+}
+
+function removeRule(path: string, index: number) {
+  drafts.value[path]?.splice(index, 1)
+}
+
+function collectExtract() {
+  const result: Record<string, any[]> = {}
+  for (const [path, rules] of Object.entries(drafts.value)) {
+    const parsed: any[] = []
+    for (const rule of rules) {
+      if (!rule.name.trim() && !rule.expression.trim()) continue
+      const converted = expressionToRule(rule.name.trim(), rule.expression)
+      if (!converted) throw new Error(`不支援的萃取表达式：${rule.expression}`)
+      parsed.push(converted)
+    }
+    result[path] = parsed
+  }
+  return result
+}
+
 async function load() {
   error.value = ''
   try {
@@ -17,6 +70,7 @@ async function load() {
       $fetch<any>(`/api/v1/bruno/tests/${id.value}/runs`),
     ])
     suite.value = detail.data
+    initDrafts()
     runs.value = history.data || []
     if (runs.value.length) await openRun(runs.value[0]!.id)
   } catch (e: any) { error.value = e.data?.message || 'Unable to load test suite' }
@@ -43,8 +97,9 @@ async function run() {
 
 async function saveSettings() {
   try {
+    const stepExtract = collectExtract()
     await $fetch(`/api/v1/bruno/tests/${id.value}`, { method: 'PUT', body: {
-      name: suite.value.name, failFast: suite.value.failFast, timeoutSec: suite.value.timeoutSec,
+      name: suite.value.name, failFast: suite.value.failFast, timeoutSec: suite.value.timeoutSec, stepExtract,
     } })
     toast.add({ title: 'Settings saved', color: 'success' })
   } catch (e: any) { error.value = e.data?.message || 'Save failed' }
@@ -79,13 +134,29 @@ onMounted(load)
       <section class="card p-5 overflow-x-auto">
         <h2 class="font-semibold mb-3">Steps</h2>
         <table class="table">
-          <thead><tr><th>#</th><th>Name</th><th>Method</th><th>Path</th><th>Extract</th></tr></thead>
+          <thead><tr><th>#</th><th>Name</th><th>Method</th><th>Path</th><th>Extract</th><th></th></tr></thead>
           <tbody>
-            <tr v-for="(step, index) in suite.steps" :key="step.path">
-              <td>{{ Number(index) + 1 }}</td><td>{{ step.name }}</td><td>{{ step.method }}</td>
-              <td class="font-mono text-xs">{{ step.path }}</td>
-              <td class="text-xs">{{ step.extract.map((rule: any) => rule.name).join(', ') || '—' }}</td>
-            </tr>
+            <template v-for="(step, index) in suite.steps" :key="step.path">
+              <tr>
+                <td>{{ Number(index) + 1 }}</td><td>{{ step.name }}</td><td>{{ step.method }}</td>
+                <td class="font-mono text-xs">{{ step.path }}</td>
+                <td class="text-xs">{{ step.extract.map((rule: any) => rule.name).join(', ') || '—' }}</td>
+                <td class="text-right"><button class="btn btn-secondary btn-sm" @click="editingStep = editingStep === step.path ? null : step.path">{{ editingStep === step.path ? 'Close' : 'Edit extract' }}</button></td>
+              </tr>
+              <tr v-if="editingStep === step.path">
+                <td colspan="6" class="bg-[var(--bg-secondary)]">
+                  <div class="space-y-2 py-2">
+                    <div v-for="(rule, ruleIndex) in (drafts[step.path] || [])" :key="ruleIndex" class="flex flex-wrap gap-2 items-center">
+                      <input v-model="rule.name" class="input-field" placeholder="variable name" aria-label="Extract variable name" />
+                      <input v-model="rule.expression" class="input-field flex-1" placeholder="res.body.token" aria-label="Extract expression" />
+                      <button class="btn btn-danger btn-sm" @click="removeRule(step.path, ruleIndex)">Remove</button>
+                    </div>
+                    <p class="text-xs text-secondary">Only declarative expressions are accepted: res.status, res.responseTime, res.headers.name, res.body.path. Values are never shown in reports.</p>
+                    <button class="btn btn-secondary btn-sm" @click="addRule(step.path)">Add extraction</button>
+                  </div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </section>
